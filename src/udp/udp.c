@@ -392,6 +392,51 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 
 
 /**
+ * Create an UDP socket with specified address family.
+ *
+ * @param usp   Pointer to returned UDP Socket
+ * @param af    Address family AF_INET or AF_INET6
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int udp_open(struct udp_sock **usp, int af)
+{
+	struct udp_sock *us = NULL;
+	int err = 0;
+	int fd = -1;
+
+	if (!usp)
+		return EINVAL;
+
+	us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	us->fd  = -1;
+	us->fd6 = -1;
+
+	fd = SOK_CAST socket(af, SOCK_DGRAM, IPPROTO_UDP);
+	if (fd < 0) {
+		err = errno;
+		goto out;
+	}
+
+	if (af == AF_INET)
+		us->fd = fd;
+	else
+		us->fd6 = fd;
+
+ out:
+	if (err)
+		mem_deref(us);
+	else
+		*usp = us;
+
+	return err;
+}
+
+
+/**
  * Connect a UDP Socket to a specific peer.
  * When connected, this UDP Socket will only receive data from that peer.
  *
