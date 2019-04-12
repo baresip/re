@@ -537,6 +537,28 @@ int pl_strcmp(const struct pl *pl, const char *str)
 
 
 /**
+ * Compare n characters of a pointer-length object with a NULL-terminated
+ * string (case-sensitive)
+ *
+ * @param pl  Pointer-length object
+ * @param str NULL-terminated string
+ * @param n   number of characters that should be compared
+ *
+ * @return 0 if match, otherwise errorcode
+ */
+int pl_strncmp(const struct pl *pl, const char *str, size_t n)
+{
+	if (!pl_isset(pl) || !str || !n)
+		return EINVAL;
+
+	if (pl->l < n)
+		return EINVAL;
+
+	return strncmp(pl->p, str, n) == 0 ? 0 : EINVAL;
+}
+
+
+/**
  * Compare a pointer-length object with a NULL-terminated string
  * (case-insensitive)
  *
