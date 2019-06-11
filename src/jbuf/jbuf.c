@@ -1,17 +1,24 @@
 /**
  * @file jbuf.c  Jitter Buffer implementation
  *
+ * This is an adaptive jitter buffer implementation. See doc/jbuf for further
+ * details!
+ *
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+#include <stdint.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_mbuf.h>
 #include <re_mem.h>
 #include <re_rtp.h>
+#include <re_lock.h>
+#include <re_tmr.h>
 #include <re_jbuf.h>
 
+#include <stdlib.h>
 
 #define DEBUG_MODULE "jbuf"
 #define DEBUG_LEVEL 5
@@ -31,12 +38,45 @@
 #define STAT_INC(var)
 #endif
 
+enum {
+	JBUF_JITTER_PERIOD   = 512,
+	JBUF_JITTER_UP_SPEED = 64,
+	JBUF_BUFTIME_PERIOD  = 128,
+	JBUF_LO_BOUND        = 125,  /* 125% of jitter */
+	JBUF_HI_BOUND        = 200,  /* 200% of jitter */
+};
+
 
 /** Defines a packet frame */
 struct frame {
 	struct le le;           /**< Linked list element       */
 	struct rtp_header hdr;  /**< RTP Header                */
 	void *mem;              /**< Reference counted pointer */
+};
+
+
+enum jb_state {
+	JS_GOOD = 0,
+	JS_LOW,
+	JS_HIGH
+};
+
+
+/** Jitter statistics */
+struct jitter_stat {
+	int32_t jitter;
+
+	uint32_t ts0;        /**< previous timestamp              */
+	uint64_t tr0;        /**< previous time of arrival        */
+#if DEBUG_LEVEL >= 6
+	uint64_t tr00;       /**< arrival of first packet         */
+#endif
+
+	enum jb_state st;    /**< computed jitter buffer state    */
+
+	int32_t avbuftime;   /**< average buffered time           */
+	int32_t jtime;       /**< JBUF_JITTER_PERIOD * ptime      */
+	int32_t mintime;     /**< minimum buffer time             */
 };
 
 
@@ -52,10 +92,17 @@ struct jbuf {
 	uint32_t n;          /**< [# frames] Current # of frames in buffer  */
 	uint32_t min;        /**< [# frames] Minimum # of frames to buffer  */
 	uint32_t max;        /**< [# frames] Maximum # of frames to buffer  */
+	uint32_t wish;       /**< [# frames] Startup wish size for buffer   */
+	uint32_t ptime;      /**< packet delta in ms                        */
 	uint16_t seq_put;    /**< Sequence number for last jbuf_put()       */
 	uint16_t seq_get;    /**< Sequence number of last played frame      */
+	uint32_t ssrc;       /**< Previous ssrc                             */
+	bool started;        /**< Jitter buffer is in start phase           */
 	bool running;        /**< Jitter buffer is running                  */
+	bool silence;        /**< Silence detected. Set externally.         */
+	struct jitter_stat jitst;  /**< Jitter statistics.                  */
 
+	struct lock *lock;   /**< Makes jitter buffer thread safe           */
 #if JBUF_STAT
 	struct jbuf_stat stat; /**< Jitter buffer Statistics       */
 #endif
@@ -120,15 +167,63 @@ static void jbuf_destructor(void *data)
 
 	/* Free all frames in the pool list */
 	list_flush(&jb->pooll);
+	mem_deref(jb->lock);
+}
+
+
+static uint32_t calc_ptime(struct jbuf *jb)
+{
+	struct le *lt;
+	struct frame *ft, *ftt;
+	uint32_t ptime = jb->ptime;
+	int seqd;
+
+	lt = jb->framel.tail;
+	if (lt && lt->prev) {
+		ft  = lt->data;
+		ftt = lt->prev->data;
+		seqd = ft->hdr.seq - ftt->hdr.seq;
+		if (ftt && ft && seqd > 0)
+			ptime = (ft->hdr.ts - ftt->hdr.ts) / (8 * seqd);
+
+	}
+
+#if DEBUG_LEVEL >= 6
+	if (ptime != jb->ptime)
+		DEBUG_INFO("ptime changed %u -> %u.", jb->ptime, ptime);
+#endif
+
+	return ptime;
+}
+
+
+static void init_jitst(struct jbuf *jb)
+{
+	struct jitter_stat *st = &jb->jitst;
+	memset(st, 0, sizeof(jb->jitst));
+
+	jb->ptime = calc_ptime(jb);
+	st->jtime = (int32_t) jb->ptime * JBUF_JITTER_PERIOD;
+
+	/* We start with wish size. */
+	st->avbuftime = jb->wish * st->jtime;
+
+	/* Compute a good start value for jitter fitting to wish size.
+	 * Note: JBUF_LO_BOUND and JBUF_HI_BOUND are in percent.
+	 *
+	 * jitter = buftime * 100% / ( (JBUF_LO_BOUND + JBUF_HI_BOUND) / 2 )
+	 *                                                                   */
+	st->jitter = st->avbuftime * 100 * 2 / (JBUF_LO_BOUND + JBUF_HI_BOUND);
+	st->mintime = jb->min * st->jtime - st->jtime / 3;
 }
 
 
 /**
  * Allocate a new jitter buffer
  *
- * @param jbp  Pointer to returned jitter buffer
- * @param min  Minimum delay in [frames]
- * @param max  Maximum delay in [frames]
+ * @param jbp    Pointer to returned jitter buffer
+ * @param min    Minimum delay in [frames]
+ * @param max    Maximum delay in [frames]
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -140,8 +235,6 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 
 	if (!jbp || ( min > max))
 		return EINVAL;
-
-	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
 	/* self-test: x < y (also handle wrap around) */
 	if (!seq_less(10, 20) || seq_less(20, 10) || !seq_less(65535, 0)) {
@@ -156,8 +249,20 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	list_init(&jb->pooll);
 	list_init(&jb->framel);
 
-	jb->min  = min;
-	jb->max  = max;
+	/* apply constraints to min, max and wish for a good audio start */
+	jb->min   = MAX(min, 1);
+	jb->max   = MAX(max, jb->min + 3);
+	jb->max   = MAX(jb->max, jb->min * JBUF_HI_BOUND / JBUF_LO_BOUND);
+	jb->wish  = jb->min;
+
+	DEBUG_INFO("alloc: delay min=%u max=%u wish=%u frames\n",
+			jb->min, jb->max, jb->wish);
+
+	jb->ptime = 20;
+	jb->silence = true;
+	err = lock_alloc(&jb->lock);
+	if (err)
+		goto out;
 
 	/* Allocate all frames now */
 	for (i=0; i<jb->max; i++) {
@@ -171,12 +276,149 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		DEBUG_INFO("alloc: adding to pool list %u\n", i);
 	}
 
+out:
 	if (err)
 		mem_deref(jb);
 	else
 		*jbp = jb;
 
 	return err;
+}
+
+
+/**
+ * Set the wish delay in [frames] that has to be reached at startup before
+ * jbuf_get() provides the first frame.
+ *
+ * @param jb     The jitter buffer.
+ * @param wish   Wish delay in [frames].
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int jbuf_set_wish(struct jbuf *jb, uint32_t wish)
+{
+	if (!jb)
+		return EINVAL;
+
+	jb->wish  = MAX(jb->min, MIN(jb->max - 1, wish));
+	return 0;
+}
+
+
+static uint32_t calc_bufftime(struct jbuf *jb)
+{
+	struct frame *fh, *ft;
+	uint32_t buftime = jb->ptime;
+	uint32_t diff;
+
+	jb->ptime = calc_ptime(jb);
+	buftime = jb->ptime;
+	if (jb->n) {
+		fh = jb->framel.head->data;
+		ft = jb->framel.tail->data;
+		diff = (ft->hdr.ts - fh->hdr.ts) / 8;
+		buftime = diff + jb->ptime;
+	}
+
+	return buftime;
+}
+
+
+/**
+ * Computes the jitter for packet arrival. Should be called by
+ * jbuf_put.
+ *
+ * @param jb  Jitter buffer
+ * @param ts  The timestamp in rtp header.
+ * @param seq The sequence number in rtp header.
+ *
+ */
+static void jbuf_jitter_calc(struct jbuf *jb, uint32_t ts)
+{
+	struct jitter_stat *st = &jb->jitst;
+	uint64_t tr = tmr_jiffies();
+	int32_t buftime, bufmax, bufmin;
+	int32_t d;
+	int32_t da;
+	int32_t s;
+	int32_t djit;
+
+	if (!st->ts0)
+		goto out;
+
+	buftime = calc_bufftime(jb) * JBUF_JITTER_PERIOD;
+	d = (int32_t) ( ((int64_t) tr - (int64_t) st->tr0) -
+			((int64_t) ts - (int64_t) st->ts0) / 8 );
+
+	/* Multiply timebase by JBUF_JITTER_PERIOD in order to avoid float
+	 * computing. Thus the jitter is expressed in ms multiplied by
+	 * JBUF_JITTER_PERIOD. */
+	da = abs(d) * JBUF_JITTER_PERIOD;
+	s = da > st->jitter ? JBUF_JITTER_UP_SPEED : 1;
+
+	djit = (da - st->jitter) * s / JBUF_JITTER_PERIOD;
+	st->jitter = st->jitter + djit;
+	if (st->jitter < 0)
+		st->jitter = 0;
+
+	if (st->avbuftime)
+		st->avbuftime += (buftime - (int32_t) st->avbuftime) /
+				 JBUF_BUFTIME_PERIOD;
+	else
+		st->avbuftime = buftime;
+
+	bufmin = st->jitter * JBUF_LO_BOUND / 100;
+	bufmax = st->jitter * JBUF_HI_BOUND / 100;
+
+	bufmin = MAX(bufmin, st->mintime);
+	bufmax = MAX(bufmax, bufmin + 4 * st->jtime / 3);
+
+	if (jb->n < jb->max && st->avbuftime < bufmin) {
+		/* early adjustment */
+		jb->jitst.avbuftime += jb->jitst.jtime;
+		st->st = JS_LOW;
+	}
+	else if (jb->n > jb->min && st->avbuftime > bufmax) {
+		st->st = JS_HIGH;
+	}
+	else {
+		st->st = JS_GOOD;
+	}
+
+#if DEBUG_LEVEL >= 6
+	if (!st->tr00)
+		st->tr00 = tr;
+
+	uint32_t treal = (uint32_t) (tr - st->tr00);
+	DEBUG_INFO("%s, %u, %i, %u, %u, %u, %i, %i, %u\n",
+			__func__, treal, d,
+			st->jitter / JBUF_JITTER_PERIOD,
+			buftime / JBUF_JITTER_PERIOD,
+			st->avbuftime / JBUF_JITTER_PERIOD,
+			bufmin / JBUF_JITTER_PERIOD,
+			bufmax / JBUF_JITTER_PERIOD,
+			st->st);
+#endif
+
+out:
+	st->ts0 = ts;
+	st->tr0 = tr;
+}
+
+
+/**
+ * Checks if the number of packets present in the jitter buffer is ok
+ * (JS_GOOD), should be increased (JS_LOW) or decremented (JS_HIGH).
+ *
+ * @param jb Jitter buffer
+ *
+ * @return JS_GOOD, JS_LOW, JS_HIGH.
+ */
+/* ------------------------------------------------------------------------- */
+static enum jb_state jbuf_state(const struct jbuf *jb)
+{
+	const struct jitter_stat *st = &jb->jitst;
+	return st->st;
 }
 
 
@@ -201,18 +443,29 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	seq = hdr->seq;
 
-	STAT_INC(n_put);
+	if (jb->ssrc && jb->ssrc != hdr->ssrc) {
+		DEBUG_INFO("ssrc changed %u %u\n", jb->ssrc, hdr->ssrc);
+		jbuf_flush(jb);
+	}
+
+	lock_write_get(jb->lock);
+	jb->ssrc = hdr->ssrc;
 
 	if (jb->running) {
 
 		/* Packet arrived too late to be put into buffer */
-		if (seq_less((seq + jb->n), jb->seq_put)) {
+		if (jb->seq_get && seq_less(seq, jb->seq_get + 1)) {
 			STAT_INC(n_late);
-			DEBUG_INFO("packet too late: seq=%u (seq_put=%u)\n",
-				   seq, jb->seq_put);
-			return ETIMEDOUT;
+			DEBUG_INFO("packet too late: seq=%u "
+				   "(seq_put=%u seq_get=%u)\n",
+				   seq, jb->seq_put, jb->seq_get);
+			err = ETIMEDOUT;
+			goto out;
 		}
+
 	}
+
+	STAT_INC(n_put);
 
 	frame_alloc(jb, &f);
 
@@ -223,7 +476,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 	*/
 	if (!tail || seq_less(((struct frame *)tail->data)->hdr.seq, seq)) {
 		list_append(&jb->framel, &f->le, f);
-		goto out;
+		goto success;
 	}
 
 	/* Out-of-sequence, find right position */
@@ -243,7 +496,8 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 			STAT_INC(n_dups);
 			list_insert_after(&jb->framel, le, &f->le, f);
 			frame_deref(jb, f);
-			return EALREADY;
+			err = EALREADY;
+			goto out;
 		}
 
 		/* sequence number less than current seq, continue */
@@ -258,7 +512,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	STAT_INC(n_oos);
 
- out:
+success:
 	/* Update last timestamp */
 	jb->running = true;
 	jb->seq_put = seq;
@@ -267,7 +521,22 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 	f->hdr = *hdr;
 	f->mem = mem_ref(mem);
 
+	if (jb->started)
+		jbuf_jitter_calc(jb, hdr->ts);
+
+out:
+	lock_rel(jb->lock);
 	return err;
+}
+
+
+void jbuf_silence(struct jbuf *jb, bool on)
+{
+	if (!jb)
+		return;
+
+/*    DEBUG_INFO("set silence to %s\n", on ? "on" : "off");*/
+	jb->silence = on;
 }
 
 
@@ -278,27 +547,61 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
  * @param hdr  Returned RTP Header
  * @param mem  Pointer to memory object storage - referenced on success
  *
- * @return 0 if success, otherwise errorcode
+ * @return 0 if success, EAGAIN if it should be called again in order to avoid
+ * a jitter buffer overflow, otherwise errorcode
  */
 int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 {
 	struct frame *f;
+	int err = 0;
+	struct jitter_stat *st = &jb->jitst;
+#if DEBUG_LEVEL >= 6
+	uint32_t treal = (uint32_t) (tmr_jiffies() - st->tr00);
+	DEBUG_INFO("%s treal=%u\n", __func__, treal);
+#endif
 
 	if (!jb || !hdr || !mem)
 		return EINVAL;
 
-	STAT_INC(n_get);
+	lock_write_get(jb->lock);
 
-	if (jb->n <= jb->min || !jb->framel.head) {
-		DEBUG_INFO("not enough buffer frames - wait.. (n=%u min=%u)\n",
-			   jb->n, jb->min);
+	if (!jb->started) {
+		if (jb->n < jb->wish) {
+			DEBUG_INFO("not enough buffer frames - wait.. "
+				   "(n=%u wish=%u)\n",
+				   jb->n, jb->wish);
+			err = ENOENT;
+			goto out;
+		}
+
+		jb->started = true;
+		init_jitst(jb);
+	}
+	else if (!jb->framel.head) {
 		STAT_INC(n_underflow);
-		return ENOENT;
+		st->st = JS_LOW;
+		err = ENOENT;
+		DEBUG_INFO("buffer underflow (%u/%u underflows)\n",
+				jb->stat.n_underflow, jb->stat.n_get);
+		goto out;
 	}
 
+	if (jb->silence) {
+		if (jb->n < jb->max-1 && jbuf_state(jb) == JS_LOW) {
+			DEBUG_INFO("inc buffer due to high "
+				   "jitter=%ums n=%u max=%u\n",
+				   jb->jitst.jitter / JBUF_JITTER_PERIOD,
+				   jb->n, jb->max);
+			err = ENOENT;
+			goto out;
+		}
+	}
+
+	STAT_INC(n_get);
+
 	/* When we get one frame F[i], check that the next frame F[i+1]
-	   is present and have a seq no. of seq[i] + 1 !
-	   if not, we should consider that packet lost */
+	   is present and have a seq no. of seq[i] + 1.
+	   If not, we should consider that packet lost. */
 
 	f = jb->framel.head->data;
 
@@ -325,7 +628,22 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	frame_deref(jb, f);
 
-	return 0;
+	if ( (jb->n > jb->min && jbuf_state(jb) == JS_HIGH) ||
+	     (jb->n == jb->max )) {
+		DEBUG_INFO("reducing jitter buffer "
+				"(jitter=%ums n=%u min=%u max=%u)\n",
+				jb->jitst.jitter / JBUF_JITTER_PERIOD,
+				jb->n, jb->min, jb->max);
+
+		/* early adjustment */
+		jb->jitst.avbuftime -= jb->jitst.jtime;
+		jb->jitst.st = JS_GOOD;
+		err = EAGAIN;
+	}
+
+out:
+	lock_rel(jb->lock);
+	return err;
 }
 
 
@@ -344,6 +662,7 @@ void jbuf_flush(struct jbuf *jb)
 	if (!jb)
 		return;
 
+	lock_write_get(jb->lock);
 	if (jb->framel.head) {
 		DEBUG_INFO("flush: %u frames\n", jb->n);
 	}
@@ -365,7 +684,9 @@ void jbuf_flush(struct jbuf *jb)
 	memset(&jb->stat, 0, sizeof(jb->stat));
 	jb->stat.n_flush = n_flush;
 #endif
-
+	init_jitst(jb);
+	jb->started = false;
+	lock_rel(jb->lock);
 }
 
 
