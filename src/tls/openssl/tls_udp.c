@@ -434,8 +434,11 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 				break;
 
 			case SSL_ERROR_ZERO_RETURN:
-				conn_close(tc, ECONNRESET);
-				return;
+				if (!mb->pos) {
+					conn_close(tc, ECONNRESET);
+					return;
+				}
+				break;
 
 			default:
 				DEBUG_WARNING("read error: %i\n", ssl_err);
