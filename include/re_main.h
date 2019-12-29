@@ -4,6 +4,20 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#ifdef HAVE_SELECT
+#include <sys/select.h>
+#endif
+#ifdef HAVE_POLL
+#include <poll.h>
+#endif
+#ifdef HAVE_EPOLL
+#include <sys/epoll.h>
+#endif
+#ifdef HAVE_KQUEUE
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#endif
 
 enum {
 #ifndef FD_READ
@@ -43,6 +57,22 @@ void  libre_close(void);
 int   re_main(re_signal_h *signalh);
 void  re_cancel(void);
 int   re_debug(struct re_printf *pf, void *unused);
+
+#ifdef HAVE_SELECT
+int re_prepare_select(int maxfds,
+		fd_set *rfds, fd_set *wfds, fd_set *efds);
+#endif
+#ifdef HAVE_POLL
+int re_prepare_poll(int maxfds, struct pollfd *fds);
+#endif
+#ifdef HAVE_EPOLL
+int re_prepare_epoll(int maxfds, struct epoll_event *events, int epfd);
+#endif
+#ifdef HAVE_KQUEUE
+int re_prepare_kqueue(int maxfds, struct kevent *evlist, int kqfd);
+#endif
+int re_process(int n);
+uint64_t re_next_timeout(void);
 
 int  re_thread_init(void);
 void re_thread_close(void);

@@ -83,6 +83,13 @@ struct re {
 	bool polling;                /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct list tmrl;            /**< List of timers                    */
+	bool extpoll;                /**< External polling flag             */
+
+#ifdef HAVE_SELECT
+	fd_set *rfds;                /**< The read file descriptors         */
+	fd_set *wfds;                /**< The write file descriptors        */
+	fd_set *efds;                /**< The exception file descriptors    */
+#endif
 
 #ifdef HAVE_POLL
 	struct pollfd *fds;          /**< Event set for poll()              */
@@ -105,6 +112,7 @@ static struct re *re_global = NULL;
 static tss_t key;
 static once_flag flag = ONCE_FLAG_INIT;
 
+static int poll_process(struct re *re, int n);
 static void poll_close(struct re *re);
 
 /** fallback destructor if thread gets destroyed before re_thread_close() */
@@ -448,6 +456,21 @@ static int poll_init(struct re *re)
 
 	switch (re->method) {
 
+#ifdef HAVE_SELECT
+	case METHOD_SELECT:
+		if (!re->rfds) {
+			re->rfds = mem_zalloc(sizeof(*re->rfds), NULL);
+			re->wfds = mem_zalloc(sizeof(*re->wfds), NULL);
+			re->efds = mem_zalloc(sizeof(*re->efds), NULL);
+			if (!re->rfds || !re->wfds || !re->efds) {
+				re->rfds = mem_deref(re->rfds);
+				re->wfds = mem_deref(re->wfds);
+				re->efds = mem_deref(re->efds);
+				return ENOMEM;
+			}
+		}
+		break;
+#endif
 #ifdef HAVE_POLL
 	case METHOD_POLL:
 		if (!re->fds) {
@@ -520,6 +543,14 @@ static void poll_close(struct re *re)
 	re->fhs = mem_deref(re->fhs);
 	re->maxfds = 0;
 
+	if (re->extpoll)
+		return;
+
+#ifdef HAVE_SELECT
+	re->rfds = mem_deref(re->rfds);
+	re->wfds = mem_deref(re->wfds);
+	re->efds = mem_deref(re->efds);
+#endif
 #ifdef HAVE_POLL
 	re->fds = mem_deref(re->fds);
 #endif
@@ -690,10 +721,7 @@ void fd_close(re_sock_t fd)
 static int fd_poll(struct re *re)
 {
 	const uint64_t to = tmr_next_timeout(&re->tmrl);
-	int i, n, index;
-#ifdef HAVE_SELECT
-	fd_set rfds, wfds, efds;
-#endif
+	int n;
 
 	DEBUG_INFO("next timer: %llu ms\n", to);
 
@@ -709,12 +737,13 @@ static int fd_poll(struct re *re)
 #endif
 #ifdef HAVE_SELECT
 	case METHOD_SELECT: {
+		int i;
 		struct timeval tv;
 
 		/* Clear and update fd sets */
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		FD_ZERO(&efds);
+		FD_ZERO(re->rfds);
+		FD_ZERO(re->wfds);
+		FD_ZERO(re->efds);
 
 		for (i=0; i<re->nfds; i++) {
 			re_sock_t fd = re->fhs[i].fd;
@@ -722,11 +751,11 @@ static int fd_poll(struct re *re)
 				continue;
 
 			if (re->fhs[i].flags & FD_READ)
-				FD_SET(fd, &rfds);
+				FD_SET(fd, re->rfds);
 			if (re->fhs[i].flags & FD_WRITE)
-				FD_SET(fd, &wfds);
+				FD_SET(fd, re->wfds);
 			if (re->fhs[i].flags & FD_EXCEPT)
-				FD_SET(fd, &efds);
+				FD_SET(fd, re->efds);
 		}
 
 #ifdef WIN32
@@ -736,7 +765,8 @@ static int fd_poll(struct re *re)
 #endif
 		tv.tv_usec = (uint32_t) (to % 1000) * 1000;
 		re_unlock(re);
-		n = select(re->nfds, &rfds, &wfds, &efds, to ? &tv : NULL);
+		n = select(re->nfds, re->rfds, re->wfds, re->efds,
+			   to ? &tv : NULL);
 		re_lock(re);
 	}
 		break;
@@ -771,8 +801,22 @@ static int fd_poll(struct re *re)
 		return EINVAL;
 	}
 
+	return poll_process(re, n);
+}
+
+
+static int poll_process(struct re *re, int n)
+{
+	int i, index;
+
+#ifdef WIN32
+	if (n == SOCKET_ERROR) {
+		return WSAGetLastError();
+	}
+#else
 	if (n < 0)
 		return ERRNO_SOCK;
+#endif
 
 	/* Check for events */
 	for (i=0; (n > 0) && (i < re->nfds); i++) {
@@ -804,11 +848,11 @@ static int fd_poll(struct re *re)
 #ifdef HAVE_SELECT
 		case METHOD_SELECT:
 			fd = re->fhs[i].fd;
-			if (FD_ISSET(fd, &rfds))
+			if (FD_ISSET(fd, re->rfds))
 				flags |= FD_READ;
-			if (FD_ISSET(fd, &wfds))
+			if (FD_ISSET(fd, re->wfds))
 				flags |= FD_WRITE;
-			if (FD_ISSET(fd, &efds))
+			if (FD_ISSET(fd, re->efds))
 				flags |= FD_EXCEPT;
 			break;
 #endif
@@ -898,6 +942,183 @@ static int fd_poll(struct re *re)
 
 	return 0;
 }
+
+
+/**
+ * Processes file descriptor changes. Should be called in the applications
+ * thread. Use this function only if the application has it's own file
+ * descriptor poll loop and you don't want to run a thread that calls blocking
+ * re_main!
+ *
+ * @param n Number of file descriptors ready for IO. The return value of
+ *            epoll_wait, poll, select. (Currently only epoll is supported.)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_process(int n)
+{
+	int err;
+	struct re *re = re_get();
+	if (METHOD_NULL == re->method)
+		poll_setup(re);
+
+	err = poll_process(re, n);
+	tmr_poll(&re->tmrl);
+
+	return err;
+}
+
+
+uint64_t re_next_timeout(void)
+{
+	struct re *re = re_get();
+
+	return tmr_next_timeout(&re->tmrl);
+}
+
+
+static int prepare_poll(struct re *re)
+{
+	int err;
+	err = fd_setsize(re->maxfds);
+	if (err)
+		goto out;
+
+	re->extpoll = true;
+	err = poll_method_set(re->method);
+	if (err)
+		goto out;
+
+	err = poll_init(re);
+
+ out:
+	if (err)
+		poll_close(re);
+
+	return err;
+}
+
+
+#ifdef HAVE_SELECT
+/**
+ * If libre should run in the applications thread this function can be used
+ * before calling libre_init (and baresip_init) or any call to fd_listen. In
+ * this case the application will have a file descriptor select loop.
+ * This function tells libre the fd_set structures used in the applications
+ * select loop. See man page of select!
+ * @param maxfds Maximum number of file descriptors possible.
+ * @param rfds   The array of file descriptors that are ready for reading.
+ * @param wfds   The array of file descriptors that are ready for writing.
+ * @param efds   The array of file descriptors with execeptions.
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_prepare_select(int maxfds, fd_set *rfds, fd_set *wfds,
+		fd_set *efds)
+{
+	struct re *re = re_get();
+
+	if (!rfds || !wfds || !efds)
+		return EINVAL;
+
+	re->maxfds = maxfds;
+
+	re->rfds = rfds;
+	re->wfds = wfds;
+	re->efds = efds;
+
+	re->method = METHOD_SELECT;
+	prepare_poll(re);
+	return 0;
+}
+#endif
+
+
+#ifdef HAVE_POLL
+/**
+ * Similar to re_prepare_select. Instead of select the application uses poll
+ * method in the file descriptor polling loop. This function tells libre the
+ * pollfd structure used by the application.
+ *
+ * @param maxfds Maximum number of file descriptors possible.
+ * @param fds    The array pollfd structures. See man page of poll!
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_prepare_poll(int maxfds, struct pollfd *fds)
+{
+	struct re *re = re_get();
+
+	if (!fds)
+		return EINVAL;
+
+	re->maxfds = maxfds;
+	re->fds = fds;
+
+	re->method = METHOD_POLL;
+	prepare_poll(re);
+
+	return 0;
+}
+#endif
+
+
+#ifdef HAVE_EPOLL
+/**
+ * Similar to re_prepare_poll. The application uses epoll method. See man
+ * page of epoll, epoll_wait and epoll_create!
+ * @param maxfds Maximum number of file descriptors possible.
+ * @param events The epoll_event array.
+ * @param epfd   The epoll file descriptor created with epoll_create.
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_prepare_epoll(int maxfds, struct epoll_event *events, int epfd)
+{
+	struct re *re = re_get();
+
+	if (!events || epfd == -1)
+		return EINVAL;
+
+	re->maxfds = maxfds;
+	re->events = events;
+	re->epfd = epfd;
+
+	re->method = METHOD_EPOLL;
+	prepare_poll(re);
+
+	return 0;
+}
+#endif
+
+
+#ifdef HAVE_KQUEUE
+/**
+ * Similar to re_prepare_poll. The application uses kqueue method
+ *
+ * @param maxfds  Maximum number of file descriptors possible
+ * @param evlist  Array of kevent structures
+ * @param kqfd    Descriptor of the kernel event queue
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int   re_prepare_kqueue(int maxfds, struct kevent *evlist, int kqfd)
+{
+	struct re *re = re_get();
+
+	if (!evlist)
+		return EINVAL;
+
+	re->maxfds = maxfds;
+	re->evlist = evlist;
+	re->kqfd = kqfd;
+
+	re->method = METHOD_KQUEUE;
+	prepare_poll(re);
+
+	return 0;
+}
+#endif
 
 
 /**
