@@ -105,6 +105,7 @@ uint8_t ch_hex(char ch);
 
 
 /* String functions */
+int  str_bool(bool *val, const char *str);
 int  str_hex(uint8_t *hex, size_t len, const char *str);
 void str_ncpy(char *dst, const char *src, size_t n);
 int  str_dup(char **dst, const char *src);

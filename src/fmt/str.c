@@ -140,3 +140,56 @@ size_t str_len(const char *s)
 {
 	return s ? strlen(s) : 0;
 }
+
+
+/**
+ * Convert various possible boolean strings to a bool
+ *
+ * @param val  Pointer to bool for returned value
+ * @param str  String to be converted
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int str_bool(bool *val, const char *str)
+{
+	int err = 0;
+
+	if (!val || !str_isset(str))
+		return EINVAL;
+
+	if (!str_casecmp(str, "0")) {
+		*val = false;
+	}
+	else if (!str_casecmp(str, "1")) {
+		*val = true;
+	}
+	else if (!str_casecmp(str, "false")) {
+		*val = false;
+	}
+	else if (!str_casecmp(str, "true")) {
+		*val = true;
+	}
+	else if (!str_casecmp(str, "disable")) {
+		*val = false;
+	}
+	else if (!str_casecmp(str, "enable")) {
+		*val = true;
+	}
+	else if (!str_casecmp(str, "off")) {
+		*val = false;
+	}
+	else if (!str_casecmp(str, "on")) {
+		*val = true;
+	}
+	else if (!str_casecmp(str, "no")) {
+		*val = false;
+	}
+	else if (!str_casecmp(str, "yes")) {
+		*val = true;
+	}
+	else {
+		err = EINVAL;
+	}
+
+	return err;
+}
