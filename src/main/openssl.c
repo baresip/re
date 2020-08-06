@@ -103,6 +103,7 @@ static void dynlock_destroy_handler(struct CRYPTO_dynlock_value *l,
 #endif
 
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #ifdef SIGPIPE
 static void sigpipe_handler(int x)
 {
@@ -110,10 +111,11 @@ static void sigpipe_handler(int x)
 	(void)signal(SIGPIPE, sigpipe_handler);
 }
 #endif
-
+#endif
 
 int openssl_init(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #if defined (HAVE_PTHREAD) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	int err, i;
 
@@ -151,6 +153,7 @@ int openssl_init(void)
 
 	SSL_library_init();
 	SSL_load_error_strings();
+#endif
 
 	return 0;
 }
@@ -158,7 +161,9 @@ int openssl_init(void)
 
 void openssl_close(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ERR_free_strings();
+#endif
 #if defined (HAVE_PTHREAD) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	lockv = mem_deref(lockv);
 #endif

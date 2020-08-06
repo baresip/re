@@ -24,6 +24,10 @@
 #include <re_tls.h>
 #include "tls.h"
 
+#if OPENSSL_API_COMPAT < 0x10100000L
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
+#endif
 
 /* also defined by wincrypt.h */
 #ifdef WIN32
@@ -291,8 +295,8 @@ int tls_set_selfsigned(struct tls *tls, const char *cn)
 	    !X509_set_subject_name(cert, subj))
 		goto out;
 
-	if (!X509_gmtime_adj(X509_get_notBefore(cert), -3600*24*365) ||
-	    !X509_gmtime_adj(X509_get_notAfter(cert),   3600*24*365*10))
+	if (!X509_gmtime_adj(X509_getm_notBefore(cert), -3600*24*365) ||
+	    !X509_gmtime_adj(X509_getm_notAfter(cert),   3600*24*365*10))
 		goto out;
 
 	if (!X509_set_pubkey(cert, key))
