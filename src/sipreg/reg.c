@@ -237,6 +237,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
  out:
 	if (!reg->expires) {
+		reg->resph(err, msg, reg->arg);
 		mem_deref(reg);
 	}
 	else if (reg->terminated) {
@@ -406,4 +407,17 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 const struct sa *sipreg_laddr(const struct sipreg *reg)
 {
 	return reg ? &reg->laddr : NULL;
+}
+
+
+/**
+ * Get the expire value of a SIP Registration client.
+ *
+ * @param regp SIP Registration client
+ *
+ * @return The expire value in [seconds].
+ */
+uint32_t sipreg_expires(struct sipreg *reg)
+{
+	return reg ? reg->expires : 0;
 }
