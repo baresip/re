@@ -150,10 +150,10 @@ int openssl_init(void)
 #endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    int err;
-    err = OPENSSL_init_ssl(OPENSSL_INIT_SSL_DEFAULT, NULL);
-    if (!err)
-	    return !err;
+	int err;
+	err = OPENSSL_init_ssl(OPENSSL_INIT_SSL_DEFAULT, NULL);
+	if (!err)
+		return !err;
 #else
 	SSL_library_init();
 	SSL_load_error_strings();
