@@ -12,7 +12,9 @@ jobs:
   include:
       - os: linux
         stage: ccheck
-        env: RE_BUILD="ccheck" 
+        script:
+          - wget "https://raw.githubusercontent.com/baresip/baresip/master/test/ccheck.py"
+          - python3 ccheck.py
       - os: linux
         dist: xenial # OpenSSL 1.0.2g  1 Mar 2016
         stage: openssl
@@ -33,9 +35,6 @@ addons:
     packages:
       libssl-dev
 
-install:
-  - wget "https://raw.githubusercontent.com/baresip/baresip/master/test/ccheck.py"
-
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         make EXTRA_CFLAGS=-Werror CCACHE=;
@@ -43,4 +42,3 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         make EXTRA_CFLAGS="-I/usr/local/opt/openssl/include -Werror" EXTRA_LFLAGS="-L/usr/local/opt/openssl/lib" CCACHE=;
     fi
-  - if [[ "$RE_BUILD" == "ccheck" ]]; then python3 ccheck.py ; fi
