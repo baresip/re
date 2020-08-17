@@ -12,6 +12,7 @@ jobs:
   include:
       - os: linux
         stage: ccheck
+        addons: []
         script:
           - wget "https://raw.githubusercontent.com/baresip/baresip/master/test/ccheck.py"
           - python3 ccheck.py
