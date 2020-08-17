@@ -8,6 +8,11 @@ compiler:
     - clang
     - gcc
 
+dist:
+    - trusty
+    - xenial
+    - bionic
+
 addons:
   apt:
     packages:
