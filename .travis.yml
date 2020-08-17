@@ -12,12 +12,20 @@ jobs:
   include:                                                                                                                                                                                    
       - os: linux
         dist: trusty
+        stage: openssl
       - os: linux
-        dist: xenial
-      - os: osx
-        osx_image: xcode9.4
+        dist: bionic
+        stage: openssl
+      - os: linux
+        dist: focal
+        stage: openssl
       - os: osx
         osx_image: xcode12.0
+        stage: openssl
+
+stages:
+  - test
+  - openssl
 
 addons:
   apt:
