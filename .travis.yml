@@ -18,16 +18,20 @@ jobs:
         script:
           - wget "https://raw.githubusercontent.com/baresip/baresip/master/test/ccheck.py"
           - python3 ccheck.py
-      - os: linux
-        dist: xenial # OpenSSL 1.0.2g  1 Mar 2016
+      - name: OpenSSL 1.0.2g
+        os: linux
+        dist: xenial
         stage: openssl
-      - os: linux
-        dist: focal # OpenSSL 1.1.1f  31 Mar 2020
+      - name: OpenSSL 1.1.1f
+        os: linux
+        dist: focal
         stage: openssl
-      - os: osx
+      - name: macOS 10.15.5
+        os: osx
         osx_image: xcode12.0
         stage: openssl
-      - os: linux
+      - name: LibreSSL
+        os: linux
         dist: xenial
         script:
           - wget "https://github.com/baresip/ci/releases/download/v0.1/assets.tar.gz"
