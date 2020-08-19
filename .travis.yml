@@ -61,7 +61,12 @@ addons:
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         make EXTRA_CFLAGS=-Werror CCACHE=;
-        cd .. && git clone https://github.com/baresip/retest.git && make -C retest STATIC=1 LIBRE_SO=../re && ./retest -r && cd -;
+        cd ..;
+        git clone https://github.com/creytiv/rem;
+        make -C rem librem.a;
+        git clone https://github.com/baresip/retest.git;
+        make -C retest STATIC=1 LIBRE_SO=../re && ./retest -r;
+        cd -;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         make EXTRA_CFLAGS="-I/usr/local/opt/openssl/include -Werror" EXTRA_LFLAGS="-L/usr/local/opt/openssl/lib" CCACHE=;
