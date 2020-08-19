@@ -27,6 +27,14 @@ jobs:
       - os: osx
         osx_image: xcode12.0
         stage: openssl
+      - os: linux
+        dist: xenial
+        script:
+          - wget "https://github.com/baresip/ci/releases/download/v0.1/assets.tar.gz"
+          - tar -xf assets.tar.gz
+          - make EXTRA_CFLAGS="-Iassets/libressl/include -Werror" EXTRA_LFLAGS="-Lassets/libressl" CCACHE=;
+        stage: openssl
+
 
 stages:
   - ccheck
