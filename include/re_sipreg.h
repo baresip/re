@@ -16,5 +16,6 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 		    const char *params, const char *fmt, ...);
 
 uint32_t sipreg_expires(struct sipreg *regp);
+int sipreg_set_rwait(struct sipreg *reg, uint32_t rwait);
 
 const struct sa *sipreg_laddr(const struct sipreg *reg);
