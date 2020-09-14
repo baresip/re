@@ -225,18 +225,21 @@ static struct re *re_get(void)
 
 #ifdef WIN32
 /**
- * This code emulates POSIX numbering. There is no locking, so zero thread-safety.
+ * This code emulates POSIX numbering. There is no locking,
+ * so zero thread-safety.
  */
 static int lookup_fd_index(struct re* re, int fd) {
 	int i = 0;
 
-        /* First a linear search through the list of file handles to find existing descriptor. */
+        /* First a linear search through the list of file handles
+	 * to find existing descriptor. */
 	for (i = 0; i < re->nfds; i++) {
 		if (re->fhs[i].fd == fd)
 			return i;
 	}
 
-	/* And if nothing is found a linear search for the first zeroed handler */
+	/* And if nothing is found a linear search for the first
+	 * zeroed handler */
 	for (i = 0; i < re->maxfds; i++) {
 		if (re->fhs[i].fd == 0)
 			return i;
