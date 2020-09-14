@@ -231,7 +231,7 @@ static struct re *re_get(void)
 static int lookup_fd_index(struct re* re, int fd) {
 	int i = 0;
 
-        /* First a linear search through the list of file handles
+	/* First a linear search through the list of file handles
 	 * to find existing descriptor. */
 	for (i = 0; i < re->nfds; i++) {
 		if (re->fhs[i].fd == fd)
