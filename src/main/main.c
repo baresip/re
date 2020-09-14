@@ -224,17 +224,19 @@ static struct re *re_get(void)
 #endif
 
 #ifdef WIN32
-// This code emulates possix numbering. There is no locking, so zero thread-safety.
-// First a linear search through the list of file handles to find existing descriptor.
+/**
+ * This code emulates POSIX numbering. There is no locking, so zero thread-safety.
+ */
 static int lookup_fd_index(struct re* re, int fd) {
 	int i = 0;
 
+        /* First a linear search through the list of file handles to find existing descriptor. */
 	for (i = 0; i < re->nfds; i++) {
 		if (re->fhs[i].fd == fd)
 			return i;
 	}
 
-	// And if nothing is found a linear search for the first zeroed handler
+	/* And if nothing is found a linear search for the first zeroed handler */
 	for (i = 0; i < re->maxfds; i++) {
 		if (re->fhs[i].fd == 0)
 			return i;
@@ -593,9 +595,9 @@ int fd_listen(int fd, int flags, fd_h *fh, void *arg)
 
 
 #ifdef WIN32
-	// Windows file descriptors do not follow possix standard ranges.
+	/* Windows file descriptors do not follow POSIX standard ranges. */
 	i = lookup_fd_index(re, fd);
-#endif // #ifdef WIN32
+#endif
 
 	if (fd < 0) {
 		DEBUG_WARNING("fd_listen: corrupt fd %d\n", fd);
