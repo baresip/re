@@ -306,7 +306,8 @@ int https_listen(struct http_sock **sockp, const struct sa *laddr,
 		return err;
 
 #ifdef USE_TLS
-	err = tls_alloc(&sock->tls, TLS_METHOD_SSLV23, cert, NULL);
+	err = tls_alloc(&sock->tls, TLS_METHOD_SSLV23, TCP_IDLE_TIMEOUT,
+		cert, NULL);
 #else
 	err = EPROTONOSUPPORT;
 #endif

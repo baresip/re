@@ -7,6 +7,14 @@ struct sa;
 struct tcp_sock;
 struct tcp_conn;
 
+enum {
+	TCP_ACCEPT_TIMEOUT    = 32,
+	TCP_IDLE_TIMEOUT      = 900,
+	TCP_IDLE_TIMEOUT_MIN  = 180,
+	TCP_KEEPALIVE_TIMEOUT = 10,
+	TCP_KEEPALIVE_INTVAL  = 120,
+	TCP_BUFSIZE_MAX       = 65536,
+};
 
 /**
  * Defines the incoming TCP connection handler

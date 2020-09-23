@@ -36,6 +36,7 @@ struct tls {
 	SSL_CTX *ctx;
 	X509 *cert;
 	char *pass;  /* password for private key */
+	uint16_t timeout;
 };
 
 

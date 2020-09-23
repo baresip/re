@@ -30,8 +30,8 @@ enum tls_keytype {
 };
 
 
-int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
-	      const char *pwd);
+int tls_alloc(struct tls **tlsp, enum tls_method method, uint16_t timeout,
+	      const char *keyfile, const char *pwd);
 int tls_add_ca(struct tls *tls, const char *cafile);
 int tls_set_selfsigned(struct tls *tls, const char *cn);
 int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits);
@@ -105,4 +105,5 @@ void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 struct ssl_ctx_st;
 
 struct ssl_ctx_st *tls_openssl_context(const struct tls *tls);
+uint16_t tls_timeout(const struct tls *tls);
 #endif

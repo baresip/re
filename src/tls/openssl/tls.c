@@ -90,15 +90,16 @@ static int keytype2int(enum tls_keytype type)
 /**
  * Allocate a new TLS context
  *
- * @param tlsp    Pointer to allocated TLS context
- * @param method  TLS method
- * @param keyfile Optional private key file
- * @param pwd     Optional password
+ * @param tlsp         Pointer to allocated TLS context
+ * @param method       TLS method
+ * @param timeout      Idle timeout of underlying TCP layer
+ * @param keyfile      Optional private key file
+ * @param pwd          Optional password
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
-	      const char *pwd)
+int tls_alloc(struct tls **tlsp, enum tls_method method, uint16_t timeout,
+	      const char *keyfile, const char *pwd)
 {
 	struct tls *tls;
 	int r, err;
@@ -109,6 +110,8 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	tls = mem_zalloc(sizeof(*tls), destructor);
 	if (!tls)
 		return ENOMEM;
+
+	tls->timeout = timeout;
 
 	switch (method) {
 
@@ -1158,4 +1161,17 @@ int tls_get_subject(struct tls *tls, struct mbuf *mb)
 
 	return tls_get_ca_chain_field(tls, mb, &X509_get_subject_name,
 		XN_FLAG_RFC2253);
+}
+
+
+/**
+ * Get the idle timeout of the underlying tcp layer
+ *
+ * @param tls  Generic TLS Context
+ *
+ * @return idle timeout
+ */
+uint16_t tls_timeout(const struct tls *tls)
+{
+	return tls ? tls->timeout : 0;
 }
