@@ -34,8 +34,25 @@
 #define NET_ADDRSTRLEN INET_ADDRSTRLEN
 #endif
 
+#ifndef NET_MAX_NS
+#define NET_MAX_NS (4)
+#endif
+
 /* forward declarations */
 struct sa;
+struct network;
+
+
+/** Network Configuration */
+struct config_net {
+	int af;                 /**< AF_UNSPEC, AF_INET or AF_INET6 */
+	char ifname[64];        /**< Bind to interface (optional)   */
+	struct {
+		char addr[64];
+		bool fallback;
+	} nsv[NET_MAX_NS];      /**< Configured DNS nameservers     */
+	size_t nsc;             /**< Number of DNS nameservers      */
+};
 
 
 /* Net generic */
@@ -105,3 +122,23 @@ int net_rt_debug(struct re_printf *pf, void *unused);
 /* Net strings */
 const char *net_proto2name(int proto);
 const char *net_af2name(int af);
+
+
+/* functions belonging to struct network */
+typedef void (net_change_h)(void *arg);
+
+bool net_check(struct network *net);
+bool net_af_enabled(const struct network *net, int af);
+int net_alloc(struct network **netp, const struct config_net *cfg);
+int net_use_nameserver(struct network *net,
+		const struct sa *srvv, size_t srvc);
+int net_set_address(struct network *net, const struct sa *ip);
+void net_change(struct network *net, uint32_t interval,
+		net_change_h *ch, void *arg);
+void net_force_change(struct network *net);
+int net_dns_debug(struct re_printf *pf, const struct network *net);
+int net_set_af(struct network *net, int af);
+const struct sa *net_laddr_af(const struct network *net, int af);
+struct dnsc *net_dnsc(const struct network *net);
+const char *net_domain(const struct network *net);
+int net_debug(struct re_printf *pf, const struct network *net);
