@@ -227,12 +227,15 @@ static struct re *re_get(void)
 /**
  * This code emulates POSIX numbering. There is no locking,
  * so zero thread-safety.
+ *
+ * @param re     Poll state
+ * @param fd     File descriptor
+ *
+ * @return fhs index if success, otherwise -1
  */
 static int lookup_fd_index(struct re* re, int fd) {
-	int i = 0;
+	int i;
 
-	/* First a linear search through the list of file handles
-	 * to find existing descriptor. */
 	for (i = 0; i < re->nfds; i++) {
 		if (!re->fhs[i].fh)
 			continue;
@@ -241,7 +244,7 @@ static int lookup_fd_index(struct re* re, int fd) {
 			return i;
 	}
 
-	/* And if nothing is found a linear search for the first
+	/* if nothing is found a linear search for the first
 	 * zeroed handler */
 	for (i = 0; i < re->maxfds; i++) {
 		if (!re->fhs[i].fh)
