@@ -257,21 +257,21 @@ static int lookup_fd_index(struct re* re, int fd) {
  * @param fd     File descriptor
  * @param flags  Event flags
  */
-static void fd_handler(struct re *re, int i, int flags)
+static void fd_handler(struct re *re, int fd, int flags)
 {
 	const uint64_t tick = tmr_jiffies();
 	uint32_t diff;
 
-	DEBUG_INFO("event on fd=%d (flags=0x%02x)...\n", re->fhs[i].fd, flags);
+	DEBUG_INFO("event on fd=%d (flags=0x%02x)...\n", fd, flags);
 
-	re->fhs[i].fh(flags, re->fhs[i].arg);
+	re->fhs[fd].fh(flags, re->fhs[fd].arg);
 
 	diff = (uint32_t)(tmr_jiffies() - tick);
 
 	if (diff > MAX_BLOCKING) {
 		DEBUG_WARNING("long async blocking: %u>%u ms (h=%p arg=%p)\n",
 			      diff, MAX_BLOCKING,
-			      re->fhs[i].fh, re->fhs[i].arg);
+			      re->fhs[fd].fh, re->fhs[fd].arg);
 	}
 }
 #endif
@@ -804,14 +804,12 @@ static int fd_poll(struct re *re)
 #ifdef HAVE_SELECT
 		case METHOD_SELECT:
 			fd = re->fhs[i].fd;
-			if (fd) {
-				if (FD_ISSET(fd, &rfds))
-					flags |= FD_READ;
-				if (FD_ISSET(fd, &wfds))
-					flags |= FD_WRITE;
-				if (FD_ISSET(fd, &efds))
-					flags |= FD_EXCEPT;
-			}
+			if (FD_ISSET(fd, &rfds))
+				flags |= FD_READ;
+			if (FD_ISSET(fd, &wfds))
+				flags |= FD_WRITE;
+			if (FD_ISSET(fd, &efds))
+				flags |= FD_EXCEPT;
 			break;
 #endif
 #ifdef HAVE_EPOLL
@@ -876,11 +874,11 @@ static int fd_poll(struct re *re)
 		if (!flags)
 			continue;
 
-		if (re->fhs[i].fh) {
+		if (re->fhs[fd].fh) {
 #if MAIN_DEBUG
-			fd_handler(re, i, flags);
+			fd_handler(re, fd, flags);
 #else
-			re->fhs[i].fh(flags, re->fhs[i].arg);
+			re->fhs[fd].fh(flags, re->fhs[fd].arg);
 #endif
 		}
 
