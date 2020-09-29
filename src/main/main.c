@@ -260,24 +260,25 @@ static int lookup_fd_index(struct re* re, int fd) {
  * Call the application event handler
  *
  * @param re     Poll state
- * @param fd     File descriptor
+ * @param i	 File descriptor handler index
  * @param flags  Event flags
  */
-static void fd_handler(struct re *re, int fd, int flags)
+static void fd_handler(struct re *re, int i, int flags)
 {
 	const uint64_t tick = tmr_jiffies();
 	uint32_t diff;
 
-	DEBUG_INFO("event on fd=%d (flags=0x%02x)...\n", fd, flags);
+	DEBUG_INFO("event on fd=%d index=%d (flags=0x%02x)...\n",
+		   re->fhs[i].fd, i, flags);
 
-	re->fhs[fd].fh(flags, re->fhs[fd].arg);
+	re->fhs[i].fh(flags, re->fhs[i].arg);
 
 	diff = (uint32_t)(tmr_jiffies() - tick);
 
 	if (diff > MAX_BLOCKING) {
 		DEBUG_WARNING("long async blocking: %u>%u ms (h=%p arg=%p)\n",
 			      diff, MAX_BLOCKING,
-			      re->fhs[fd].fh, re->fhs[fd].arg);
+			      re->fhs[i].fh, re->fhs[i].arg);
 	}
 }
 #endif
@@ -602,10 +603,13 @@ int fd_listen(int fd, int flags, fd_h *fh, void *arg)
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
-
 #ifdef WIN32
 	/* Windows file descriptors do not follow POSIX standard ranges. */
 	i = lookup_fd_index(re, fd);
+	if (i < 0) {
+		DEBUG_WARNING("fd_listen: fd=%d - no free fd_index\n", fd);
+		return EMFILE;
+	}
 #endif
 
 	if (fd < 0) {
@@ -697,7 +701,7 @@ void fd_close(int fd)
 static int fd_poll(struct re *re)
 {
 	const uint64_t to = tmr_next_timeout(&re->tmrl);
-	int i, n;
+	int i, n, index;
 #ifdef HAVE_SELECT
 	fd_set rfds, wfds, efds;
 #endif
@@ -879,12 +883,17 @@ static int fd_poll(struct re *re)
 
 		if (!flags)
 			continue;
-
-		if (re->fhs[fd].fh) {
-#if MAIN_DEBUG
-			fd_handler(re, fd, flags);
+#ifdef WIN32
+		index = i;
 #else
-			re->fhs[fd].fh(flags, re->fhs[fd].arg);
+		index = fd;
+#endif
+
+		if (re->fhs[index].fh) {
+#if MAIN_DEBUG
+			fd_handler(re, index, flags);
+#else
+			re->fhs[index].fh(flags, re->fhs[index].arg);
 #endif
 		}
 
