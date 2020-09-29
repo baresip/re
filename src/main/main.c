@@ -234,6 +234,9 @@ static int lookup_fd_index(struct re* re, int fd) {
 	/* First a linear search through the list of file handles
 	 * to find existing descriptor. */
 	for (i = 0; i < re->nfds; i++) {
+		if (!re->fhs[i].fh)
+			continue;
+
 		if (re->fhs[i].fd == fd)
 			return i;
 	}
@@ -241,7 +244,7 @@ static int lookup_fd_index(struct re* re, int fd) {
 	/* And if nothing is found a linear search for the first
 	 * zeroed handler */
 	for (i = 0; i < re->maxfds; i++) {
-		if (re->fhs[i].fd == 0)
+		if (!re->fhs[i].fh)
 			return i;
 	}
 
