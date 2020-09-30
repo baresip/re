@@ -603,15 +603,6 @@ int fd_listen(int fd, int flags, fd_h *fh, void *arg)
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
-#ifdef WIN32
-	/* Windows file descriptors do not follow POSIX standard ranges. */
-	i = lookup_fd_index(re, fd);
-	if (i < 0) {
-		DEBUG_WARNING("fd_listen: fd=%d - no free fd_index\n", fd);
-		return EMFILE;
-	}
-#endif
-
 	if (fd < 0) {
 		DEBUG_WARNING("fd_listen: corrupt fd %d\n", fd);
 		return EBADF;
@@ -622,6 +613,15 @@ int fd_listen(int fd, int flags, fd_h *fh, void *arg)
 		if (err)
 			return err;
 	}
+
+#ifdef WIN32
+	/* Windows file descriptors do not follow POSIX standard ranges. */
+	i = lookup_fd_index(re, fd);
+	if (i < 0) {
+		DEBUG_WARNING("fd_listen: fd=%d - no free fd_index\n", fd);
+		return EMFILE;
+	}
+#endif
 
 	if (i >= re->maxfds) {
 		if (flags) {
