@@ -22,6 +22,12 @@
 #include "sip.h"
 
 
+enum {
+	TCP_IDLE_TIMEOUT_DEF  = 900,
+	TCP_IDLE_TIMEOUT_MIN  = 180,
+};
+
+
 static void websock_shutdown_handler(void *arg)
 {
 	struct sip *sip = arg;
@@ -126,6 +132,7 @@ int sip_alloc(struct sip **sipp, struct dnsc *dnsc, uint32_t ctsz,
 	if (!sip)
 		return ENOMEM;
 
+	sip->timeout = TCP_IDLE_TIMEOUT_DEF;
 	err = sip_transp_init(sip, tcsz);
 	if (err)
 		goto out;
@@ -278,4 +285,13 @@ void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh)
 		return;
 
 	sip->traceh = traceh;
+}
+
+
+void sip_set_timeout(struct sip *sip, uint64_t timeout)
+{
+	if (!sip)
+		return;
+
+	sip->timeout = max(timeout, TCP_IDLE_TIMEOUT_MIN);
 }

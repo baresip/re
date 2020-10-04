@@ -262,6 +262,7 @@ int  sip_debug(struct re_printf *pf, const struct sip *sip);
 int  sip_send(struct sip *sip, void *sock, enum sip_transp tp,
 	      const struct sa *dst, struct mbuf *mb);
 void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh);
+void sip_set_timeout(struct sip *sip, uint64_t timeout);
 
 
 /* transport */

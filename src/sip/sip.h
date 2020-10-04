@@ -22,6 +22,7 @@ struct sip {
 	sip_trace_h *traceh;
 	void *arg;
 	bool closing;
+	uint32_t timeout;
 };
 
 
