@@ -766,7 +766,8 @@ int http_client_set_tls_hostname(struct http_cli *cli,
 	if (!cli || !hostname)
 		return EINVAL;
 
-	return tls_set_hostname(cli->tls_hostname, hostname);
+	cli->tls_hostname = mem_deref(cli->tls_hostname);
+	return tls_set_hostname(&cli->tls_hostname, hostname);
 }
 #endif
 
