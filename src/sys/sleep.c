@@ -29,7 +29,15 @@ void sys_usleep(unsigned int us)
 		return;
 
 #ifdef WIN32
-	Sleep(us / 1000);
+	HANDLE timer;
+	LARGE_INTEGER ft;
+
+	ft.QuadPart = -(10 * (int64_t)us);
+
+	timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+	WaitForSingleObject(timer, INFINITE);
+	CloseHandle(timer);
 #elif defined(HAVE_SELECT)
 	do {
 		struct timeval tv;
