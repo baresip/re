@@ -6,15 +6,22 @@ on:
   pull_request:
     branches: [ master ]
 
+strategy:
+  matrix:
+    compiler: [gcc, clang]
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
+    env:
+      CC: ${{ matrix.compiler }}
+
     steps:
     - uses: actions/checkout@v2
     - name: make
-      run: make EXTRA_CFLAGS=-Werror CCACHE=;
+      run: make EXTRA_CFLAGS=-Werror CCACHE=
     - name: retest
       run: |
         cd ..
