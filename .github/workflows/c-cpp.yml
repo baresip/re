@@ -17,5 +17,6 @@ jobs:
       run: make EXTRA_CFLAGS=-Werror CCACHE=;
     - name: retest
       run: |
+        cd ..
         git clone https://github.com/baresip/retest.git
         cd retest && make STATIC=1 LIBRE_SO=../re && ./retest -r
