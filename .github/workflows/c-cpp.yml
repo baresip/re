@@ -18,5 +18,8 @@ jobs:
     - name: retest
       run: |
         cd ..
+        rm re/libre.so
+        git clone https://github.com/creytiv/rem
+        make -C rem librem.a
         git clone https://github.com/baresip/retest.git
         cd retest && make STATIC=1 LIBRE_SO=../re && ./retest -r
