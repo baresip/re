@@ -29,7 +29,8 @@ jobs:
     - name: retest
       run: |
         cd ..
-        rm re/libre.so
+        rm re/libre.so || true
+        rm re/libre.dylib || true
         git clone https://github.com/creytiv/rem
         make -C rem librem.a
         git clone https://github.com/baresip/retest.git
