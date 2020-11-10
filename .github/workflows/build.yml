@@ -1,11 +1,6 @@
-name: C/C++ CI
+name: Build
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+on: [push, pull_request]
 
 jobs:
   build:
@@ -18,7 +13,6 @@ jobs:
         exclude:
            - os: macos-latest
              compiler: gcc
-
     env:
       CC: ${{ matrix.compiler }}
 
