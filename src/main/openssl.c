@@ -165,9 +165,9 @@ int openssl_init(void)
 
 void openssl_close(void)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+//#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ERR_free_strings();
-#endif
+//#endif
 #if defined (HAVE_PTHREAD) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	lockv = mem_deref(lockv);
 #endif
