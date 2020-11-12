@@ -255,34 +255,6 @@ static int lookup_fd_index(struct re* re, int fd) {
 }
 #endif
 
-#if MAIN_DEBUG
-/**
- * Call the application event handler
- *
- * @param re     Poll state
- * @param i	 File descriptor handler index
- * @param flags  Event flags
- */
-static void fd_handler(struct re *re, int i, int flags)
-{
-	const uint64_t tick = tmr_jiffies();
-	uint32_t diff;
-
-	DEBUG_INFO("event on fd=%d index=%d (flags=0x%02x)...\n",
-		   re->fhs[i].fd, i, flags);
-
-	re->fhs[i].fh(flags, re->fhs[i].arg);
-
-	diff = (uint32_t)(tmr_jiffies() - tick);
-
-	if (diff > MAX_BLOCKING) {
-		DEBUG_WARNING("long async blocking: %u>%u ms (h=%p arg=%p)\n",
-			      diff, MAX_BLOCKING,
-			      re->fhs[i].fh, re->fhs[i].arg);
-	}
-}
-#endif
-
 
 #ifdef HAVE_POLL
 static int set_poll_fds(struct re *re, int fd, int flags)
@@ -890,11 +862,7 @@ static int fd_poll(struct re *re)
 #endif
 
 		if (re->fhs[index].fh) {
-#if MAIN_DEBUG
-			fd_handler(re, index, flags);
-#else
 			re->fhs[index].fh(flags, re->fhs[index].arg);
-#endif
 		}
 
 		/* Check if polling method was changed */
