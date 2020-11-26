@@ -57,8 +57,9 @@ struct frame {
 
 enum jb_state {
 	JS_GOOD = 0,
+	JS_EMPTY,
 	JS_LOW,
-	JS_HIGH
+	JS_HIGH,
 };
 
 
@@ -70,6 +71,12 @@ struct jitter_stat {
 	uint64_t tr0;        /**< previous time of arrival        */
 #if DEBUG_LEVEL >= 6
 	uint64_t tr00;       /**< arrival of first packet         */
+	struct {
+		int32_t d;
+		int32_t buftime;
+		int32_t bufmin;
+		int32_t bufmax;
+	} plot;
 #endif
 
 	enum jb_state st;    /**< computed jitter buffer state    */
@@ -324,6 +331,27 @@ static uint32_t calc_bufftime(struct jbuf *jb)
 }
 
 
+#if DEBUG_LEVEL >= 6
+static void plot_stat(struct jitter_stat *st, uint64_t tr)
+{
+	uint32_t treal;
+
+	if (!st->tr00)
+		st->tr00 = tr;
+
+	treal = (uint32_t) (tr - st->tr00);
+	DEBUG_INFO("%s, %u, %i, %u, %u, %u, %i, %i, %u\n",
+			__func__, treal, st->plot.d,
+			st->jitter / JBUF_JITTER_PERIOD,
+			st->plot.buftime,
+			st->avbuftime / JBUF_JITTER_PERIOD,
+			st->plot.bufmin,
+			st->plot.bufmax,
+			st->st);
+}
+#endif
+
+
 /**
  * Computes the jitter for packet arrival. Should be called by
  * jbuf_put.
@@ -386,18 +414,11 @@ static void jbuf_jitter_calc(struct jbuf *jb, uint32_t ts)
 	}
 
 #if DEBUG_LEVEL >= 6
-	if (!st->tr00)
-		st->tr00 = tr;
-
-	uint32_t treal = (uint32_t) (tr - st->tr00);
-	DEBUG_INFO("%s, %u, %i, %u, %u, %u, %i, %i, %u\n",
-			__func__, treal, d,
-			st->jitter / JBUF_JITTER_PERIOD,
-			buftime / JBUF_JITTER_PERIOD,
-			st->avbuftime / JBUF_JITTER_PERIOD,
-			bufmin / JBUF_JITTER_PERIOD,
-			bufmax / JBUF_JITTER_PERIOD,
-			st->st);
+	st->plot.d = d;
+	st->plot.buftime = buftime / JBUF_JITTER_PERIOD;
+	st->plot.bufmin  = bufmin / JBUF_JITTER_PERIOD;
+	st->plot.bufmax  = bufmax / JBUF_JITTER_PERIOD;
+	plot_stat(st, tr);
 #endif
 
 out:
@@ -579,10 +600,13 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	}
 	else if (!jb->framel.head) {
 		STAT_INC(n_underflow);
-		st->st = JS_LOW;
 		err = ENOENT;
 		DEBUG_INFO("buffer underflow (%u/%u underflows)\n",
 				jb->stat.n_underflow, jb->stat.n_get);
+		st->st = JS_EMPTY;
+#if DEBUG_LEVEL >= 6
+		plot_stat(st, tmr_jiffies());
+#endif
 		goto out;
 	}
 

@@ -6,7 +6,7 @@
 # increment the DEBUG_LEVEL in jbuf.c if you want to get the table for
 # jbuf.dat. Then call baresip like this:
 #
-# ./baresip 2>&1 | grep -E -o "jbuf_jitter_calc.*" > jbuf.dat
+# ./baresip 2>&1 | grep -Eo "plot_stat.*" jbuf.log > jbuf.dat
 #
 # Call this script. Then compare the plot legend with the variables in jbuf.c!
 #
@@ -71,8 +71,9 @@ plot \
 'jbuf.dat' using 2:6 title 'avbuftime' with linespoints linecolor "skyblue", \
 'jbuf.dat' using 2:7 title 'bufmin' with linespoints linecolor "sea-green", \
 'jbuf.dat' using 2:8 title 'bufmax' with linespoints linecolor "sea-green", \
-'jbuf.dat' using 2:($9*10) title 'Good/Low/High' linecolor "red", \
+'jbuf.dat' using 2:($9*10) title 'Good/Empty/Low/High' linecolor "red", \
 'jbuf.dat' using 2:5 title 'buftime' linecolor "light-grey", \
-10 title "Low=10" linecolor "red", \
-20 title "High=20" linecolor "red"
+10 title "Empty=10" linecolor "red", \
+20 title "Low=20" linecolor "red", \
+30 title "High=30" linecolor "red"
 
