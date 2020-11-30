@@ -20,7 +20,16 @@ struct jbuf_stat {
 };
 
 
+/** Jitter buffer type */
+enum jbuf_type {
+	JBUF_OFF,
+	JBUF_FIXED,
+	JBUF_ADAPTIVE
+};
+
+
 int  jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max);
+int  jbuf_set_type(struct jbuf *jb, enum jbuf_type jbtype);
 int  jbuf_set_wish(struct jbuf *jb, uint32_t wish);
 int  jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem);
 int  jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem);
