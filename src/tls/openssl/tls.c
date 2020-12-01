@@ -81,6 +81,44 @@ static int keytype2int(enum tls_keytype type)
 }
 
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
+static int verify_handler(int ok, X509_STORE_CTX *ctx)
+{
+	int err, depth;
+
+	err = X509_STORE_CTX_get_error(ctx);
+
+#if (DEBUG_LEVEL >= 6)
+	char    buf[128];
+	X509   *err_cert;
+
+	err_cert = X509_STORE_CTX_get_current_cert(ctx);
+
+	X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 128);
+	DEBUG_INFO("%s: subject_name = %s\n", __func__, buf);
+
+	X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, 128);
+	DEBUG_INFO("%s: issuer_name  = %s\n", __func__, buf);
+#endif
+
+	if (err) {
+		depth = X509_STORE_CTX_get_error_depth(ctx);
+		DEBUG_WARNING("%s: err          = %d\n", __func__, err);
+		DEBUG_WARNING("%s: error_string = %s\n", __func__,
+				X509_verify_cert_error_string(err));
+		DEBUG_WARNING("%s: depth        = %d\n", __func__, depth);
+	}
+
+#if (DEBUG_LEVEL >= 6)
+	DEBUG_INFO("tls verify ok = %d\n", ok);
+#endif
+
+	return ok;
+}
+#endif
+
+
 /**
  * Allocate a new TLS context
  *
@@ -722,7 +760,7 @@ int tls_set_certificate(struct tls *tls, const char *pem, size_t len)
 }
 
 
-static int verify_handler(int ok, X509_STORE_CTX *ctx)
+static int verify_trust_all(int ok, X509_STORE_CTX *ctx)
 {
 	(void)ok;
 	(void)ctx;
@@ -743,7 +781,7 @@ void tls_set_verify_client(struct tls *tls)
 
 	SSL_CTX_set_verify_depth(tls->ctx, 0);
 	SSL_CTX_set_verify(tls->ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
-			   verify_handler);
+			   verify_trust_all);
 }
 
 
@@ -1101,7 +1139,7 @@ int tls_set_servername(struct tls_conn *tc, const char *servername)
 
 
 /**
- * Enable verification of server certificate and hostname
+ * Enable verification of server certificate and hostname (SNI)
  *
  * @param tc   TLS Connection
  * @param host Server hostname
@@ -1112,17 +1150,29 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
 	!defined(LIBRESSL_VERSION_NUMBER)
+	struct sa sa;
 
 	if (!tc || !host)
 		return EINVAL;
 
-	SSL_set_hostflags(tc->ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-	if (!SSL_set1_host(tc->ssl, host)) {
-		ERR_clear_error();
-		return EPROTO;
+	if (sa_set_str(&sa, host, 0)) {
+		SSL_set_hostflags(tc->ssl,
+				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+
+		if (!SSL_set1_host(tc->ssl, host)) {
+			DEBUG_WARNING("SSL_set1_host error\n");
+			ERR_clear_error();
+			return EPROTO;
+		}
+
+		if (!SSL_set_tlsext_host_name(tc->ssl, host)) {
+			DEBUG_WARNING("SSL_set_tlsext_host_name error\n");
+			ERR_clear_error();
+			return EPROTO;
+		}
 	}
 
-	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, NULL);
+	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, verify_handler);
 
 	return 0;
 #else
