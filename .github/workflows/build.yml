@@ -22,17 +22,19 @@ jobs:
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
-    - uses: sreimers/pr-dependency-action@2ebb604
+    - uses: sreimers/pr-dependency-action@704a2fe
       with:
         name: rem
         repo: https://github.com/creytiv/rem
         secret: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: '../.'
 
-    - uses: sreimers/pr-dependency-action@2ebb604
+    - uses: sreimers/pr-dependency-action@704a2fe
       with:
         name: retest
         repo: https://github.com/baresip/retest.git
         secret: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: '../.'
 
     - name: retest
       run: |
