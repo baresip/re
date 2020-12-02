@@ -346,32 +346,6 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 
 
 /**
- * Set SSL verification of hostname
- *
- * @param tc       TLS Connection
- * @param hostname Certificate hostname
- *
- * @return int     0 if success, errorcode otherwise
- */
-int tls_peer_set_verify_host(struct tls_conn *tc, const char *hostname)
-{
-	int err = 0;
-
-	if (!tc)
-		return EINVAL;
-
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	err = SSL_set1_host(tc->ssl, hostname);
-#else
-	DEBUG_WARNING("verify hostname needs openssl version 1.1.0\n");
-	return ENOSYS;
-#endif
-
-	return err == 1 ? 0 : EINVAL;
-}
-
-
-/**
  * Generate and set selfsigned certificate on TLS context
  *
  * @param tls TLS Context
@@ -1112,29 +1086,6 @@ int tls_set_ciphers(struct tls *tls, const char *cipherv[], size_t count)
 	mem_deref(mb);
 
 	return err;
-}
-
-
-/**
- * Set the server name on a TLS Connection, using TLS SNI extension.
- *
- * @param tc         TLS Connection
- * @param servername Server name
- *
- * @return 0 if success, otherwise errorcode
- */
-int tls_set_servername(struct tls_conn *tc, const char *servername)
-{
-	if (!tc || !servername)
-		return EINVAL;
-
-	if (1 != SSL_set_tlsext_host_name(tc->ssl, servername)) {
-		DEBUG_WARNING("tls: SSL_set_tlsext_host_name error\n");
-		ERR_clear_error();
-		return EPROTO;
-	}
-
-	return 0;
 }
 
 
