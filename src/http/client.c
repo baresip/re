@@ -158,11 +158,11 @@ static void conn_idle(struct conn *conn)
 		return;
 
 	req =  conn->req;
-	if (req)
+	if (!req)
 		return;
 
 	cli = req->cli;
-	if (cli)
+	if (!cli)
 		return;
 
 	tmr_start(&conn->tmr, cli->conf.idle_timeout, timeout_handler, conn);
@@ -181,10 +181,13 @@ static void req_close(struct http_req *req, int err,
 		if (req->connh)
 			req->connh(req->conn->tc, req->conn->sc, req->arg);
 
-		if (err || req->close || req->connh)
+		if (err || req->close || req->connh) {
 			mem_deref(req->conn);
-		else
+		}
+		else {
 			conn_idle(req->conn);
+			req->conn->req = NULL;
+		}
 
 		req->conn = NULL;
 	}
