@@ -145,7 +145,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 	req->ct = NULL;
 
-	if (!req->canceled && (err || msg->scode == 503) &&
+	if (!req->canceled && (err || (msg && msg->scode == 503)) &&
 	    (req->addrl.head || req->srvl.head)) {
 
 		err = request_next(req);
