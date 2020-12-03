@@ -19,6 +19,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: make info
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
+        ${{ matrix.compiler }} - --version
+        echo "--- make info ---"
+        make info
+
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
