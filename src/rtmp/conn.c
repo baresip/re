@@ -575,7 +575,7 @@ static int server_handle_packet(struct rtmp_conn *conn, struct mbuf *mb)
 static void tcp_recv_handler(struct mbuf *mb_pkt, void *arg)
 {
 	struct rtmp_conn *conn = arg;
-	int err;
+	int err = 0;
 
 	conn->total_bytes += mbuf_get_left(mb_pkt);
 
