@@ -261,7 +261,7 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 		return true;
 	}
 
-	if (SSL_state(tc->ssl) != SSL_ST_OK) {
+	if (SSL_get_state(tc->ssl) != SSL_ST_OK) {
 
 		if (tc->up) {
 			*err = EPROTO;
@@ -275,10 +275,10 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 			*err = tls_accept(tc);
 		}
 
-		DEBUG_INFO("state=0x%04x\n", SSL_state(tc->ssl));
+		DEBUG_INFO("state=0x%04x\n", SSL_get_state(tc->ssl));
 
 		/* TLS connection is established */
-		if (SSL_state(tc->ssl) != SSL_ST_OK)
+		if (SSL_get_state(tc->ssl) != SSL_ST_OK)
 			return true;
 
 		*estab = true;
