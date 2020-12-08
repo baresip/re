@@ -507,15 +507,11 @@ static int conn_connect(struct http_req *req)
 			goto out;
 
 		if (req->cli->tlshn)
-			err = tls_peer_set_verify_host(conn->sc,
-				req->cli->tlshn);
+			err  = tls_set_verify_server(conn->sc,
+					req->cli->tlshn);
 		else
-			err = tls_peer_set_verify_host(conn->sc, req->host);
+			err  = tls_set_verify_server(conn->sc, req->host);
 
-		if (err)
-			goto out;
-
-		err = tls_set_servername(conn->sc, req->host);
 		if (err)
 			goto out;
 	}
