@@ -773,8 +773,12 @@ LIBRE_INC := $(shell [ -f /usr/include/re/re.h ] && echo "/usr/include/re")
 endif
 
 # Library path
+LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre.a ] \
+	&& echo "$(LIBRE_PATH)")
+ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre$(LIB_SUFFIX) ] \
 	&& echo "$(LIBRE_PATH)")
+endif
 ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f /usr/local/lib/libre$(LIB_SUFFIX) ] \
 	&& echo "/usr/local/lib")
