@@ -16,6 +16,7 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_dns.h>
+#include <re_mem.h>
 #include "dns.h"
 
 
@@ -46,10 +47,26 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 	}
 
 	err = 0;
+#ifdef OPENBSD
 	for (i=0; i<min(*n, (uint32_t)state.nscount) && !err; i++) {
 		struct sockaddr_in *addr = &state.nsaddr_list[i];
 		err |= sa_set_sa(&nsv[i], (struct sockaddr *)addr);
 	}
+#else
+	union res_sockaddr_union *addr_union = mem_alloc(state.nscount * sizeof(union res_sockaddr_union), NULL);
+	int servers = res_getservers(&state, addr_union,  state.nscount);
+	
+	for (i = 0; i < min(*n, (uint32_t)servers) && !err; i++) {
+		if (addr_union[i].sin.sin_family == AF_INET) {
+			err |= sa_set_sa(&nsv[i], (struct sockaddr *)&addr_union[i].sin);
+		} else if (addr_union[i].sin6.sin6_family == AF_INET6) {
+			err |= sa_set_sa(&nsv[i], (struct sockaddr *)&addr_union[i].sin6);
+		} else {
+			(void)re_fprintf(stderr, "Undefined family.\n");
+		}
+	}
+	mem_deref(addr_union);
+#endif
 	if (err)
 		goto out;
 
