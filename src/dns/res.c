@@ -47,12 +47,7 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 	}
 
 	err = 0;
-#ifdef OPENBSD
-	for (i=0; i<min(*n, (uint32_t)state.nscount) && !err; i++) {
-		struct sockaddr_in *addr = &state.nsaddr_list[i];
-		err |= sa_set_sa(&nsv[i], (struct sockaddr *)addr);
-	}
-#else
+#ifdef DARWIN
 	union res_sockaddr_union *addr_union = mem_alloc(state.nscount * sizeof(union res_sockaddr_union), NULL);
 	int servers = res_getservers(&state, addr_union,  state.nscount);
 	
@@ -66,6 +61,11 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 		}
 	}
 	mem_deref(addr_union);
+#else
+	for (i=0; i<min(*n, (uint32_t)state.nscount) && !err; i++) {
+		struct sockaddr_in *addr = &state.nsaddr_list[i];
+		err |= sa_set_sa(&nsv[i], (struct sockaddr *)addr);
+	}
 #endif
 	if (err)
 		goto out;
