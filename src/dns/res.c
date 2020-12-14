@@ -49,18 +49,20 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 	err = 0;
 #ifdef DARWIN
 	int memsize = state.nscount * sizeof(union res_sockaddr_union);
-	union res_sockaddr_union *addr_union = mem_alloc(memsize, NULL);
-	int servers = res_getservers(&state, addr_union,  state.nscount);
-	
+	union res_sockaddr_union *addr = mem_alloc(memsize, NULL);
+	int servers = res_getservers(&state, addr,  state.nscount);
+
 	for (i = 0; i < min(*n, (uint32_t)servers) && !err; i++) {
-		if (addr_union[i].sin.sin_family == AF_INET)
-			err |= sa_set_sa(&nsv[i], (struct sockaddr *)&addr_union[i].sin);
-		else if (addr_union[i].sin6.sin6_family == AF_INET6)
-			err |= sa_set_sa(&nsv[i], (struct sockaddr *)&addr_union[i].sin6);
+		if (addr[i].sin.sin_family == AF_INET)
+			err |= sa_set_sa(&nsv[i],
+					(struct sockaddr *)&addr[i].sin);
+		else if (addr[i].sin6.sin6_family == AF_INET6)
+			err |= sa_set_sa(&nsv[i],
+					(struct sockaddr *)&addr[i].sin6);
 		else
 			(void)re_fprintf(stderr, "Undefined family.\n");
 	}
-	mem_deref(addr_union);
+	mem_deref(addr);
 #else
 	for (i=0; i<min(*n, (uint32_t)state.nscount) && !err; i++) {
 		struct sockaddr_in *addr = &state.nsaddr_list[i];
