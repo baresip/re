@@ -16,7 +16,9 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_dns.h>
+#ifdef DARWIN
 #include <re_mem.h>
+#endif
 #include "dns.h"
 
 
