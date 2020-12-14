@@ -60,7 +60,8 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 			err |= sa_set_sa(&nsv[i],
 					(struct sockaddr *)&addr[i].sin6);
 		else
-			(void)re_fprintf(stderr, "Undefined family.\n");
+			(void)re_fprintf(stderr,
+					"get_resolv_dns: Undefined family.\n");
 	}
 	mem_deref(addr);
 #else
