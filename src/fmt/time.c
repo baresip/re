@@ -3,9 +3,12 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#include <time.h>
+
 #include <re_types.h>
 #include <re_fmt.h>
+
+#define __USE_POSIX 1 /**< Use POSIX flag */
+#include <time.h>
 
 
 static const char *dayv[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -24,7 +27,7 @@ static const char *monv[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
  */
 int fmt_gmtime(struct re_printf *pf, void *ts)
 {
-	const struct tm *tm;
+	struct tm tm;
 	time_t t;
 
 	if (!ts) {
@@ -32,16 +35,20 @@ int fmt_gmtime(struct re_printf *pf, void *ts)
 		ts = &t;
 	}
 
-	tm = gmtime(ts);
-	if (!tm)
-		return EINVAL;
+#ifdef WIN32
+	if (gmtime_s(&tm, ts))
+	 	return EINVAL;
+#else
+	if (!gmtime_r(ts, &tm))
+	 	return EINVAL;
+#endif
 
 	return re_hprintf(pf, "%s, %02u %s %u %02u:%02u:%02u GMT",
-			  dayv[min((unsigned)tm->tm_wday, ARRAY_SIZE(dayv)-1)],
-			  tm->tm_mday,
-			  monv[min((unsigned)tm->tm_mon, ARRAY_SIZE(monv)-1)],
-			  tm->tm_year + 1900,
-			  tm->tm_hour, tm->tm_min, tm->tm_sec);
+			  dayv[min((unsigned)tm.tm_wday, ARRAY_SIZE(dayv)-1)],
+			  tm.tm_mday,
+			  monv[min((unsigned)tm.tm_mon, ARRAY_SIZE(monv)-1)],
+			  tm.tm_year + 1900,
+			  tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
 
