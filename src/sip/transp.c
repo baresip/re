@@ -182,6 +182,7 @@ static struct sip_conn *ws_conn_find(struct sip *sip, const struct sa *paddr,
 				     enum sip_transp tp)
 {
 	struct le *le;
+	(void) tp;
 
 	le = list_head(hash_list(sip->ht_conn, sa_hash(paddr, SA_ALL)));
 
@@ -768,6 +769,7 @@ static void websock_recv_handler(const struct websock_hdr *hdr,
 	struct sip_msg *msg;
 	size_t start;
 	int err;
+	(void) hdr;
 
 #if 0
 	re_printf(
