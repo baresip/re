@@ -99,8 +99,6 @@ void dbg_close(void)
  */
 int dbg_logfile_set(const char *name)
 {
-	time_t t;
-
 	dbg_close();
 
 	if (!name)
@@ -110,8 +108,7 @@ int dbg_logfile_set(const char *name)
 	if (!dbg.f)
 		return errno;
 
-	(void)time(&t);
-	(void)re_fprintf(dbg.f, "\n===== Log Started: %s", ctime(&t));
+	(void)re_fprintf(dbg.f, "\n===== Log Started: %H", fmt_gmtime, NULL);
 	(void)fflush(dbg.f);
 
 	return 0;
