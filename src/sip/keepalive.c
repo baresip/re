@@ -52,7 +52,7 @@ void sip_keepalive_signal(struct list *kal, int err)
 
 uint64_t sip_keepalive_wait(uint32_t interval)
 {
-	return interval * (800 + rand_u16() % 201);
+	return (uint64_t) interval * (800 + rand_u16() % 201);
 }
 
 
