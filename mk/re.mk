@@ -179,17 +179,11 @@ endif
 
 ifneq ($(OPTIMIZE),)
 CFLAGS	+= -Wuninitialized
-ifneq ($(CC_SHORTVER), 2.9x)
 CFLAGS	+= -Wno-strict-aliasing
-endif
 endif
 
 # Compiler dependency flags
-ifeq ($(CC_SHORTVER), 2.9x)
-	DFLAGS		= -MD
-else
-	DFLAGS		= -MD -MF $(@:.o=.d) -MT $@
-endif
+DFLAGS		= -MD -MF $(@:.o=.d) -MT $@
 
 
 ##############################################################################
@@ -343,16 +337,8 @@ endif
 
 CFLAGS	+= -DOS=\"$(OS)\"
 
-ifeq ($(CC_SHORTVER),2.9x)
-CFLAGS  += -Wno-long-long
-else
 CFLAGS  += -std=c99
-PEDANTIC := 1
-endif # CC_SHORTVER
-
-ifneq ($(PEDANTIC),)
 CFLAGS  += -pedantic
-endif
 
 
 ifeq ($(OS),)
