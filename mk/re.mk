@@ -150,6 +150,7 @@ endif
 
 # Compiler warning flags
 CFLAGS	+= -Wall
+CFLAGS	+= -Wextra
 CFLAGS	+= -Wmissing-declarations
 CFLAGS	+= -Wmissing-prototypes
 CFLAGS	+= -Wstrict-prototypes
@@ -159,13 +160,8 @@ CFLAGS	+= -Wnested-externs
 CFLAGS	+= -Wshadow
 CFLAGS	+= -Waggregate-return
 CFLAGS	+= -Wcast-align
-
-
-ifeq ($(CC_SHORTVER),4.x)
-CFLAGS	+= -Wextra
 CFLAGS	+= -Wold-style-definition
 CFLAGS	+= -Wdeclaration-after-statement
-endif
 
 CFLAGS  += -g
 ifneq ($(OPT_SPEED),)
