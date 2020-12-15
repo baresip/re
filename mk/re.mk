@@ -79,60 +79,25 @@ ifeq ($(CC),cc)
 	CC := gcc
 endif
 LD := $(CC)
-CC_LONGVER := $(shell if $(CC) -v 2>/dev/null; then \
-						$(CC) -v 2>&1 ;\
-					else \
-						$(CC) -V 2>&1 ; \
-					fi )
+CC_LONGVER := $(shell $(CC) - --version|head -n 1)
 
 # find-out the compiler's name
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME := gcc
-	CC_VER := $(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|\
-		cut -d" " -f 3|\
-		sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
-		-e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
-	# sun sed is a little brain damaged => this complicated expression
+	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"| \
+		sed -e 's/.* \([0-9]*\.[0-9]\).*/\1/g')
+	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
-	#transform gcc version into 2.9x, 3.x or 4.x
-	CC_SHORTVER := $(shell echo "$(CC_VER)" | cut -d" " -f 2| \
-			 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
-			 sed -e 's/2\.9.*/2.9x/' -e 's/3\.[0-3]\..*/3.0/' -e \
-			 	's/3\.[0-3]/3.0/' -e 's/3\.[4-9]\..*/3.4/' -e\
-				's/3\.[4-9]/3.4/' -e 's/4\.[0-9]\..*/4.x/' -e\
-				's/4\.[0-9]/4.x/' )
 endif
 
 ifeq ($(CC_NAME),)
 ifneq (,$(findstring clang, $(CC_LONGVER)))
 	CC_NAME := clang
-	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"|head -n 1| \
-		sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
+	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"| \
+		sed -e 's/.* \([0-9]*\.[0-9]\).*/\1/g')
 	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
-endif
-endif
-
-ifeq ($(CC_NAME),)
-ifneq (, $(findstring Sun, $(CC_LONGVER)))
-	CC_NAME := suncc
-	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"|head -n 1| \
-					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
-	CC_VER := $(CC) $(CC_SHORTVER)
-	MKDEP  := $(CC) -xM1
-endif
-endif
-
-ifeq ($(CC_NAME),)
-ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
-	# very nice: gcc compatible
-	CC_NAME := icc
-	CC_FULLVER := $(shell echo "$(CC_LONGVER)"|head -n 1| \
-			sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g')
-	CC_SHORTVER := $(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
-	CC_VER := $(CC) $(CC_FULLVER)
-	MKDEP  := $(CC) -MM
 endif
 endif
 
@@ -144,7 +109,7 @@ ifeq (,$(CC_NAME))
 	CC_VER      := unknown
 	MKDEP       := gcc -MM
 $(warning	Unknown compiler $(CC)\; supported compilers: \
-			gcc, clang, sun cc, intel icc )
+			gcc, clang)
 endif
 
 
