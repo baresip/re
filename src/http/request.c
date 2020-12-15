@@ -289,8 +289,9 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 			conn->body ? strlen(conn->body) : 0,
 			auth ? "with" : "without");
 
-	if (auth)
+	if (auth) {
 		DEBUG_INFO("auth=|%r|\n", auth);
+	}
 
 #if (DEBUG_LEVEL >= 7)
 	if (conn->body) {
