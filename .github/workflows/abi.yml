@@ -1,0 +1,36 @@
+name: ABI Checks
+
+on: [push, pull_request]
+
+jobs:
+  abicheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          ref: 'v1.1.0'
+          path: old
+
+    - uses: actions/checkout@v2
+      with:
+          path: current
+
+    - name: install abidiff
+      run: sudo apt-get update && sudo apt-get install -y abigail-tools
+
+    - name: make shared lib
+      run: |
+        make -C old libre.so
+
+    - name: make current shared lib
+      run: make -C current libre.so
+
+    - name: abidiff compare
+      id: abidiff
+      run: abidiff old/libre.so current/libre.so
+      continue-on-error: true
+
+    - name: display warning
+      if: steps.abidiff.outcome != 'success'
+      run: echo "::warning::ABI Check failed - bump ABI version"
