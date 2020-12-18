@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#define _DEFAULT_SOURCE 1
+#define _POSIX_C_SOURCE 199309L
 
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
