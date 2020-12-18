@@ -28,6 +28,7 @@ extern const struct pl pl_null;
 
 void     pl_set_str(struct pl *pl, const char *str);
 void     pl_set_mbuf(struct pl *pl, const struct mbuf *mb);
+int32_t  pl_i32(const struct pl *pl);
 uint32_t pl_u32(const struct pl *pl);
 uint32_t pl_x32(const struct pl *pl);
 uint64_t pl_u64(const struct pl *pl);
