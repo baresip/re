@@ -96,6 +96,47 @@ int32_t pl_i32(const struct pl *pl)
 
 
 /**
+ * Convert a pointer-length object to an int64_t.
+ *
+ * @param pl Pointer-length object
+ *
+ * @return int value
+ */
+int64_t pl_i64(const struct pl *pl)
+{
+	int64_t v = 0;
+	uint64_t mul = 1;
+	const char *p;
+	bool neg = false;
+
+	if (!pl || !pl->p)
+		return 0;
+
+	p = &pl->p[pl->l];
+	while (p > pl->p) {
+		const char ch = *--p;
+
+		if ('0' <= ch && ch <= '9') {
+			v += mul * (ch - '0');
+			mul *= 10;
+		}
+		else if (ch == '-' && p == pl->p) {
+			neg = true;
+			break;
+		}
+		else if (ch == '+' && p == pl->p) {
+			break;
+		}
+		else {
+			return 0;
+		}
+	}
+
+	return neg ? -v : v;
+}
+
+
+/**
  * Convert a pointer-length object to a numeric 32-bit value
  *
  * @param pl Pointer-length object
