@@ -3,7 +3,11 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#ifdef DARWIN
+#define _DEFAULT_SOURCE 1
+#else
 #define _POSIX_C_SOURCE 199309L
+#endif
 
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
