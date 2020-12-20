@@ -80,13 +80,12 @@ ifeq ($(CC),cc)
 endif
 LD := $(CC)
 CC_LONGVER := $(shell $(CC) - --version|head -n 1)
+CC_SHORTVER := $(shell $(CC) -dumpversion)
 
 # find-out the compiler's name
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME := gcc
-	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"| \
-		sed -e 's/.* \([0-9]*\.[0-9]\).*/\1/g')
 	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
 endif
@@ -94,8 +93,6 @@ endif
 ifeq ($(CC_NAME),)
 ifneq (,$(findstring clang, $(CC_LONGVER)))
 	CC_NAME := clang
-	CC_SHORTVER := $(shell echo "$(CC_LONGVER)"| \
-		sed -e 's/.* \([0-9]*\.[0-9]\).*/\1/g')
 	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
 endif
