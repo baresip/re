@@ -83,7 +83,7 @@ LD := $(CC)
 CC_LONGVER  := $(shell $(CC) - --version|head -n 1)
 CC_SHORTVER := $(shell $(CC) -dumpversion)
 CC_MAJORVER := $(shell echo $(CC_SHORTVER) |\
-			sed -e 's/\([1-9]\+[0-9]*\)\.[0-9]\+\.[0-9]\+/\1/g')
+			sed -e 's/\([0-9]*\)\.[0-9]\+\.[0-9]\+/\1/g')
 
 # find-out the compiler's name
 
@@ -308,9 +308,14 @@ ifeq ($(CC_C11),)
 CFLAGS  += -std=c99
 else
 CFLAGS  += -std=c11
+HAVE_ATOMIC := 1
 endif
 
 CFLAGS  += -pedantic
+
+ifneq ($(HAVE_ATOMIC),)
+CFLAGS  += -DHAVE_ATOMIC
+endif
 
 
 ifeq ($(OS),)
