@@ -79,8 +79,11 @@ ifeq ($(CC),cc)
 	CC := gcc
 endif
 LD := $(CC)
-CC_LONGVER := $(shell $(CC) - --version|head -n 1)
+
+CC_LONGVER  := $(shell $(CC) - --version|head -n 1)
 CC_SHORTVER := $(shell $(CC) -dumpversion)
+CC_MAJORVER := $(shell echo $(CC_SHORTVER) |\
+			sed -e 's/\([1-9]\+[0-9]*\)\.[0-9]\+\.[0-9]\+/\1/g')
 
 # find-out the compiler's name
 
@@ -88,6 +91,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME := gcc
 	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
+ifneq ($(CC_MAJORVER), 4)
+	CC_C11 := 1
+endif
 endif
 
 ifeq ($(CC_NAME),)
@@ -95,6 +101,9 @@ ifneq (,$(findstring clang, $(CC_LONGVER)))
 	CC_NAME := clang
 	CC_VER := $(CC) $(CC_SHORTVER)
 	MKDEP := $(CC) -MM
+ifneq ($(CC_MAJORVER), 4)
+	CC_C11 := 1
+endif
 endif
 endif
 
@@ -295,7 +304,12 @@ endif
 
 CFLAGS	+= -DOS=\"$(OS)\"
 
+ifeq ($(CC_C11),)
 CFLAGS  += -std=c99
+else
+CFLAGS  += -std=c11
+endif
+
 CFLAGS  += -pedantic
 
 

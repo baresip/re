@@ -88,7 +88,7 @@ Please send private feedback to libre [at] creytiv.com
 
 ## Design goals
 
-* Portable POSIX source code (ANSI C89 and ISO C99 standard)
+* Portable POSIX source code (ISO C99 and C11 standard)
 * Robust, fast, low memory footprint
 * RFC compliance
 * IPv4 and IPv6 support
