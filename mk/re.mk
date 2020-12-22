@@ -79,22 +79,31 @@ ifeq ($(CC),cc)
 	CC := gcc
 endif
 LD := $(CC)
-CC_LONGVER := $(shell $(CC) - --version|head -n 1)
+
+CC_LONGVER  := $(shell $(CC) - --version|head -n 1)
 CC_SHORTVER := $(shell $(CC) -dumpversion)
+CC_MAJORVER := $(shell echo $(CC_SHORTVER) |\
+			sed -e 's/\([0-9]*\)\.[0-9]\+\.[0-9]\+/\1/g')
 
 # find-out the compiler's name
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME := gcc
-	CC_VER := $(CC) $(CC_SHORTVER)
+	CC_VER := $(CC) $(CC_SHORTVER) ($(CC_MAJORVER).x)
 	MKDEP := $(CC) -MM
+ifneq ($(CC_MAJORVER), 4)
+	CC_C11 := 1
+endif
 endif
 
 ifeq ($(CC_NAME),)
 ifneq (,$(findstring clang, $(CC_LONGVER)))
 	CC_NAME := clang
-	CC_VER := $(CC) $(CC_SHORTVER)
+	CC_VER := $(CC) $(CC_SHORTVER) ($(CC_MAJORVER).x)
 	MKDEP := $(CC) -MM
+ifneq ($(CC_MAJORVER), 4)
+	CC_C11 := 1
+endif
 endif
 endif
 
@@ -295,8 +304,18 @@ endif
 
 CFLAGS	+= -DOS=\"$(OS)\"
 
+ifeq ($(CC_C11),)
 CFLAGS  += -std=c99
+else
+CFLAGS  += -std=c11
+HAVE_ATOMIC := 1
+endif
+
 CFLAGS  += -pedantic
+
+ifneq ($(HAVE_ATOMIC),)
+CFLAGS  += -DHAVE_ATOMIC
+endif
 
 
 ifeq ($(OS),)
@@ -613,7 +632,7 @@ info:
 	@echo "  OS:            $(OS)"
 	@echo "  BUILD:         $(BUILD)"
 	@echo "  CCACHE:        $(CCACHE)"
-	@echo "  CC:            $(CC_NAME) $(CC_SHORTVER)"
+	@echo "  CC:            $(CC_VER)"
 	@echo "  CFLAGS:        $(CFLAGS)"
 	@echo "  DFLAGS:        $(DFLAGS)"
 	@echo "  LFLAGS:        $(LFLAGS)"
