@@ -8,6 +8,8 @@
 #   ARCH           Target architecture
 #   CC             Compiler
 #   CROSS_COMPILE  Cross-compiler prefix (optional)
+#   LIBRE_INC      Libre include path (optional)
+#   LIBRE_SO       Libre library search path (optional)
 #   EXTRA_CFLAGS   Extra compiler flags appended to CFLAGS
 #   EXTRA_LFLAGS   Extra linker flags appended to LFLAGS
 #   GCOV           If non-empty, enable GNU Coverage testing
@@ -725,8 +727,10 @@ rpm:    tar
 LIBRE_PATH := ../re
 
 # Include path
+ifeq ($(LIBRE_INC),)
 LIBRE_INC := $(shell [ -f $(LIBRE_PATH)/include/re.h ] && \
 	echo "$(LIBRE_PATH)/include")
+endif
 ifeq ($(LIBRE_INC),)
 LIBRE_INC := $(shell [ -f /usr/local/include/re/re.h ] && \
 	echo "/usr/local/include/re")
@@ -736,8 +740,10 @@ LIBRE_INC := $(shell [ -f /usr/include/re/re.h ] && echo "/usr/include/re")
 endif
 
 # Library path
+ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre.a ] \
 	&& echo "$(LIBRE_PATH)")
+endif
 ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre$(LIB_SUFFIX) ] \
 	&& echo "$(LIBRE_PATH)")
