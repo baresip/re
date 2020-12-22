@@ -1,0 +1,15 @@
+name: C99 check
+
+on: [push, pull_request]
+
+jobs:
+  c99:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: make
+      run: | 
+        make info EXTRA_CFLAGS="-Werror" CC_C11= CCACHE=
+        make EXTRA_CFLAGS="-Werror" CC_C11= CCACHE=
