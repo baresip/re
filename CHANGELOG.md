@@ -23,21 +23,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - http: setting of timeouts for http client [#35]
 - http: set default path for http requests [#35]
 - tls: set selfsigned Elliptic Curve (EC) function [#17]
+- tls: extend server verification by host name check (SNI) [#45]
+- jbuf: adapative jitter buffer [#41]
+- tmr: add tmr_jiffies_usec() - get accurate microseconds [#52]
+- fmt: add pl_i32() that converts pl to int32_t [#60]
+- fmt: add pl_i64() that converts pl to int64_t [#60]
+- mk/re: add C11 and Atomic detection [#61]
 
 ### Removed
 
 - openssl: remove obsolete function tls_set_hostname() [#33]
+- mk/re: remove gcc 2.x/3.x support [#58]
 
 ### Changed
 
 - http/client: cleanup doxygen [#33]
 - http/client: use host of http_req for the host name validation [#37]
+- main: disable MAIN_DEBUG, TMR_DEBUG and increase MAX_BLOCKING to 500ms [#43]
+- sipreg: dont't force digest challenge for register [#49]
+- mk/re: do not override LIBRE_INC, LIBRE_SO and LIBRE_PATH [#62]
 
 ### Fixed
 
 - dns/client: fix HAVE_INET6 and win32/vcxproj: updates [#28]
 - http: fix segfault in response.c [#35]
 - http/request: parameter NULL check for http_reqconn_send() [#37]
+- http/client: fix conn_idle [#46]
+- http/httpreq: mem leak fix [#47]
+- sip/request: fix msg->scode null pointer dereference
+- rtmp/conn: initialize err
+- mk/re: fix LIBRE_SO static detection
+- dns/res: Properly process IPV4 and IPV6 addresses (DARWIN) [#56]
+- sip/keepalive: fix codeql cpp/integer-multiplication-cast-to-long
+- fmt/time: fix codeql gmtime warning
+- mk/re: fix gcc 4.x and newer compiler warnings
 
 
 ## [v1.1.0] - 2020-10-04
@@ -105,6 +124,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Richard Aas
 - Sebastian Reimers
 
+
+[#61]: https://github.com/baresip/re/pull/61
+[#62]: https://github.com/baresip/re/pull/62
+[#60]: https://github.com/baresip/re/pull/60
+[#58]: https://github.com/baresip/re/pull/58
+[#56]: https://github.com/baresip/re/pull/56
+[#52]: https://github.com/baresip/re/pull/52
+[#49]: https://github.com/baresip/re/pull/49
+[#47]: https://github.com/baresip/re/pull/47
+[#46]: https://github.com/baresip/re/pull/46
+[#45]: https://github.com/baresip/re/pull/45
+[#43]: https://github.com/baresip/re/pull/43
+[#41]: https://github.com/baresip/re/pull/41
 [#37]: https://github.com/baresip/re/pull/37
 [#35]: https://github.com/baresip/re/pull/35
 [#33]: https://github.com/baresip/re/pull/33
