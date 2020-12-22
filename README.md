@@ -59,13 +59,6 @@ $ sudo ldconfig
 ```
 
 
-## Documentation
-
-The online documentation generated with doxygen is available in
-the main [website](http://creytiv.com/doxygen/re-dox/html/)
-
-
-
 ### Examples
 
 Coding examples are available from the
@@ -80,10 +73,7 @@ The libre project is using the BSD license.
 ## Contributing
 
 Patches can sent via Github
-[Pull-Requests](https://github.com/baresip/re/pulls) or to the RE devel
-[mailing-list](http://lists.creytiv.com/mailman/listinfo/re-devel).
-Currently we only accept small patches.
-Please send private feedback to libre [at] creytiv.com
+[Pull-Requests](https://github.com/baresip/re/pulls)
 
 
 ## Design goals
@@ -215,6 +205,7 @@ legend:
 * Apple Mac OS X and iOS
 * Android (5.0 or later)
 
+
 ### Supported versions of C Standard library
 
 * Android bionic
@@ -226,20 +217,18 @@ legend:
 
 ### Supported compilers:
 
-* gcc 3.x
-* gcc 4.x
-* gcc 5.x
-* gcc 6.x
+* gcc 4.x or later
 * ms vc2003 compiler
-* clang
+* clang 3.x or later
+
 
 ### Supported versions of OpenSSL
 
-* OpenSSL version 1.0.1 (Not supported)
 * OpenSSL version 1.0.2
 * OpenSSL version 1.1.0
 * OpenSSL version 1.1.1
 * LibreSSL version 2.x
+* LibreSSL version 3.x
 
 
 ## Coding guidelines
@@ -278,18 +267,11 @@ legend:
 
 ## Related projects
 
-* [librem](https://github.com/creytiv/rem)
+* [librem](https://github.com/baresip/rem)
 * [retest](https://github.com/baresip/retest)
 * [baresip](https://github.com/baresip/baresip)
-* [restund](http://creytiv.com/restund.html)
-
 
 
 ## References
 
-http://creytiv.com/re.html
-
 https://github.com/creytiv/re
-
-http://lists.creytiv.com/mailman/listinfo/re-devel
-
