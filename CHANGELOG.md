@@ -58,6 +58,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fmt/time: fix codeql gmtime warning
 - mk/re: fix gcc 4.x and newer compiler warnings
 
+### Contributors (many thanks)
+
+- [alfredh](https://github.com/alfredh)
+- [cHuberCoffee](https://github.com/cHuberCoffee)
+- [cspiel1](https://github.com/cspiel1)
+- [johnjuuljensen](https://github.com/johnjuuljensen)
+- [jurjen-van-dijk](https://github.com/jurjen-van-dijk)
+- [rolizo](https://github.com/rolizo)
+- [sreimers](https://github.com/sreimers)
+
 
 ## [v1.1.0] - 2020-10-04
 
