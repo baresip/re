@@ -644,6 +644,7 @@ info:
 	@echo "  APP_LFLAGS:    $(APP_LFLAGS)"
 	@echo "  LIBS:          $(LIBS)"
 	@echo "  LIBRE_MK:      $(LIBRE_MK)"
+	@echo "  LIBRE_PATH:    $(LIBRE_PATH)"
 	@echo "  LIBRE_INC:     $(LIBRE_INC)"
 	@echo "  LIBRE_SO:      $(LIBRE_SO)"
 	@echo "  USE_OPENSSL:   $(USE_OPENSSL)"
