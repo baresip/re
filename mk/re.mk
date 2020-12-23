@@ -725,6 +725,11 @@ rpm:    tar
 # - system installation
 #
 
+ifneq ($(SYSROOT),/usr)
+LIBRE_PATH := $(shell [ -f $(SYSROOT)/include/re/re.h ] && \
+	echo "$(SYSROOT)")
+endif
+
 ifeq ($(LIBRE_PATH),)
 LIBRE_PATH := ../re
 endif
