@@ -756,6 +756,10 @@ LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre$(LIB_SUFFIX) ] \
 	&& echo "$(LIBRE_PATH)")
 endif
 ifeq ($(LIBRE_SO),)
+LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/lib/libre$(LIB_SUFFIX) ] \
+	&& echo "$(LIBRE_PATH)/lib")
+endif
+ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f /usr/local/lib/libre$(LIB_SUFFIX) ] \
 	&& echo "/usr/local/lib")
 endif
