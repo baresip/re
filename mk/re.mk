@@ -626,7 +626,7 @@ distclean:
 	@rm -f `find . -name "*.dylib"`
 
 .PHONY: info
-info:
+info::
 	@echo "info - $(PROJECT) version $(VERSION)"
 	@echo "  MODULES:       $(MODULES)"
 #	@echo "  SRCS:          $(SRCS)"
