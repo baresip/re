@@ -644,6 +644,7 @@ info::
 	@echo "  APP_LFLAGS:    $(APP_LFLAGS)"
 	@echo "  LIBS:          $(LIBS)"
 	@echo "  LIBRE_MK:      $(LIBRE_MK)"
+	@echo "  LIBRE_PATH:    $(LIBRE_PATH)"
 	@echo "  LIBRE_INC:     $(LIBRE_INC)"
 	@echo "  LIBRE_SO:      $(LIBRE_SO)"
 	@echo "  USE_OPENSSL:   $(USE_OPENSSL)"
@@ -725,8 +726,15 @@ rpm:    tar
 # - system installation
 #
 
+ifndef LIBRE_PATH
+LIBRE_PATH := $(shell [ -d ../re ] && echo "../re")
+endif
+
 ifeq ($(LIBRE_PATH),)
-LIBRE_PATH := ../re
+ifneq ($(SYSROOT),/usr)
+LIBRE_PATH := $(shell [ -f $(SYSROOT)/include/re/re.h ] && \
+	echo "$(SYSROOT)")
+endif
 endif
 
 # Include path
@@ -754,6 +762,10 @@ endif
 ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/libre$(LIB_SUFFIX) ] \
 	&& echo "$(LIBRE_PATH)")
+endif
+ifeq ($(LIBRE_SO),)
+LIBRE_SO  := $(shell [ -f $(LIBRE_PATH)/lib/libre$(LIB_SUFFIX) ] \
+	&& echo "$(LIBRE_PATH)/lib")
 endif
 ifeq ($(LIBRE_SO),)
 LIBRE_SO  := $(shell [ -f /usr/local/lib/libre$(LIB_SUFFIX) ] \
