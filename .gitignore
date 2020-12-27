@@ -21,3 +21,7 @@ tags
 
 # Vim swp files
 *.swp
+
+# clangd
+.cache
+compile_commands.json
