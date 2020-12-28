@@ -284,7 +284,7 @@ int tls_add_capem(struct tls *tls, const char *capem)
 	if (!store)
 		return EINVAL;
 
-	bio  = BIO_new_mem_buf((char *)capem, strlen(capem));
+	bio  = BIO_new_mem_buf((char *)capem, (int)strlen(capem));
 	if (!bio)
 		return EINVAL;
 

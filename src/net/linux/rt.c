@@ -57,7 +57,7 @@ static int read_sock(int fd, uint8_t *buf, size_t size, int seq, int pid)
 
 	do {
 		/* Receive response from the kernel */
-		if ((n = recv(fd, buf, size - len, 0)) < 0) {
+		if ((n = (int)recv(fd, buf, size - len, 0)) < 0) {
 			DEBUG_WARNING("SOCK READ: %m\n", errno);
 			return -1;
 		}
