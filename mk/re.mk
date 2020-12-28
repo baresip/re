@@ -136,6 +136,9 @@ CFLAGS	+= -Waggregate-return
 CFLAGS	+= -Wcast-align
 CFLAGS	+= -Wold-style-definition
 CFLAGS	+= -Wdeclaration-after-statement
+ifeq ($(CC_NAME), clang)
+CFLAGS	+= -Wshorten-64-to-32
+endif
 
 CFLAGS  += -g
 ifneq ($(OPT_SPEED),)
