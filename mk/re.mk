@@ -722,6 +722,7 @@ rpm:    tar
 # Library and header files location section - in prioritised order
 #
 # - relative path
+# - custom SYSROOT
 # - local installation
 # - system installation
 #
