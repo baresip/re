@@ -17,6 +17,8 @@
 #include <re_mbuf.h>
 #include <re_sa.h>
 #include <re_net.h>
+#include <re_udp.h>
+#include <re_mem.h>
 
 
 #define DEBUG_MODULE "net"
@@ -57,6 +59,43 @@ int net_hostaddr(int af, struct sa *ip)
 
 
 /**
+ * Get the source IP address for a specified destination
+ *
+ * @param dst Destination IP address
+ * @param ip  Returned Source IP address
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int net_dst_source_addr_get(struct sa *dst, struct sa *ip)
+{
+	int err;
+	struct udp_sock *us;
+
+	if (sa_af(dst) == AF_INET6)
+		err = sa_set_str(ip, "::", 0);
+	else
+		err = sa_set_str(ip, "0.0.0.0", 0);
+
+	if (err)
+		return err;
+
+	err = udp_listen(&us, ip, NULL, NULL);
+	if (err)
+		return err;
+
+	err = udp_connect(us, dst);
+	if (err)
+		goto out;
+
+	err = udp_local_get(us, ip);
+
+out:
+	mem_deref(us);
+	return err;
+}
+
+
+/**
  * Get the default source IP address
  *
  * @param af  Address Family
@@ -66,10 +105,26 @@ int net_hostaddr(int af, struct sa *ip)
  */
 int net_default_source_addr_get(int af, struct sa *ip)
 {
+	struct sa dst;
+	int err;
+#if !defined(WIN32)
+	char ifname[64] = "";
+#endif
+
+	sa_init(&dst, af);
+
+	if (af == AF_INET6)
+		sa_set_str(&dst, "1::1", 53);
+	else
+		sa_set_str(&dst, "1.1.1.1", 53);
+
+	err = net_dst_source_addr_get(&dst, ip);
+	if (!err)
+		return 0;
+
 #if defined(WIN32)
 	return net_hostaddr(af, ip);
 #else
-	char ifname[64] = "";
 
 #ifdef HAVE_ROUTE_LIST
 	/* Get interface with default route */
