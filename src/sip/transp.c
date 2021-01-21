@@ -632,7 +632,7 @@ static void tcp_connect_handler(const struct sa *paddr, void *arg)
 
 
 static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
-		     const struct sa *dst, struct mbuf *mb,
+		     const struct sa *dst, char *host, struct mbuf *mb,
 		     sip_transp_h *transph, void *arg)
 {
 	struct sip_conn *conn, *new_conn = NULL;
@@ -681,6 +681,10 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		}
 
 		err = tls_start_tcp(&conn->sc, transp->tls, conn->tc, 0);
+		if (err)
+			goto out;
+
+		err = tls_set_verify_server(conn->sc, host);
 		if (err)
 			goto out;
 	}
@@ -1155,8 +1159,8 @@ void sip_transp_flush(struct sip *sip)
 
 
 int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
-		    enum sip_transp tp, const struct sa *dst, struct mbuf *mb,
-		    sip_transp_h *transph, void *arg)
+		    enum sip_transp tp, const struct sa *dst, char *host,
+		    struct mbuf *mb, sip_transp_h *transph, void *arg)
 {
 	const struct sip_transport *transp;
 	struct sip_conn *conn;
@@ -1196,7 +1200,7 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 			err = tcp_send(conn->tc, mb);
 		}
 		else
-			err = conn_send(qentp, sip, secure, dst, mb,
+			err = conn_send(qentp, sip, secure, dst, host, mb,
 					transph, arg);
 		break;
 
