@@ -19,6 +19,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: install macOS homebrew packages
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        brew install openssl
+
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
