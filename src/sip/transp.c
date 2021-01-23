@@ -639,6 +639,10 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	struct sip_connqent *qent;
 	int err = 0;
 
+#ifndef USE_TLS
+	(void) host;
+#endif
+
 	conn = conn_find(sip, dst, secure);
 	if (conn) {
 		if (!conn->established)
