@@ -355,7 +355,7 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
  */
 int tls_set_selfsigned(struct tls *tls, const char *cn)
 {
-	return tls_set_selfsigned_rsa(tls, cn, 1024);
+	return tls_set_selfsigned_rsa(tls, cn, 2048);
 }
 
 
