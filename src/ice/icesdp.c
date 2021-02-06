@@ -205,7 +205,7 @@ static int cand_decode(struct icem *icem, const char *val)
 		return err;
 
 	if (ICE_TRANSP_NONE == transp_resolve(&transp)) {
-		DEBUG_NOTICE("<%s> ignoring candidate with"
+		DEBUG_INFO("<%s> ignoring candidate with"
 			     " unknown transport=%r (%r:%r)\n",
 			     icem->name, &transp, &cand_type, &addr);
 		return 0;
