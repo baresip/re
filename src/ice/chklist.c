@@ -101,7 +101,7 @@ static void candpair_prune(struct icem *icem)
 
 	uint32_t n = ice_list_unique(&icem->checkl, unique_handler);
 	if (n > 0) {
-		DEBUG_NOTICE("%s: pruned candidate pairs: %u\n",
+		DEBUG_INFO("%s: pruned candidate pairs: %u\n",
 			     icem->name, n);
 	}
 }
