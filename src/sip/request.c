@@ -644,17 +644,8 @@ int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
 
 	if (!msg_param_decode(&route->params, "transport", &pl)) {
 
-		if (!pl_strcasecmp(&pl, "udp"))
-			req->tp = SIP_TRANSP_UDP;
-		else if (!pl_strcasecmp(&pl, "tcp"))
-			req->tp = SIP_TRANSP_TCP;
-		else if (!pl_strcasecmp(&pl, "tls"))
-			req->tp = SIP_TRANSP_TLS;
-		else if (!pl_strcasecmp(&pl, "ws"))
-			req->tp = SIP_TRANSP_WS;
-		else if (!pl_strcasecmp(&pl, "wss"))
-			req->tp = SIP_TRANSP_WSS;
-		else {
+		req->tp = sip_transp_decode(&pl);
+		if (req->tp  == SIP_TRANSP_NONE) {
 			err = EPROTONOSUPPORT;
 			goto out;
 		}
