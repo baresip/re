@@ -1352,6 +1352,24 @@ const char *sip_transp_param(enum sip_transp tp)
 }
 
 
+enum sip_transp sip_transp_decode(const struct pl *pl)
+{
+	enum sip_transp tp = SIP_TRANSP_NONE;
+	if (!pl_strcasecmp(pl, "udp"))
+		tp = SIP_TRANSP_UDP;
+	else if (!pl_strcasecmp(pl, "tcp"))
+		tp = SIP_TRANSP_TCP;
+	else if (!pl_strcasecmp(pl, "tls"))
+		tp = SIP_TRANSP_TLS;
+	else if (!pl_strcasecmp(pl, "ws"))
+		tp = SIP_TRANSP_WS;
+	else if (!pl_strcasecmp(pl, "wss"))
+		tp = SIP_TRANSP_WSS;
+
+	return tp;
+}
+
+
 bool sip_transp_reliable(enum sip_transp tp)
 {
 	switch (tp) {
