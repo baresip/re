@@ -275,6 +275,7 @@ bool sip_transp_isladdr(const struct sip *sip, enum sip_transp tp,
 			const struct sa *laddr);
 const char *sip_transp_name(enum sip_transp tp);
 const char *sip_transp_param(enum sip_transp tp);
+enum sip_transp sip_transp_decode(const struct pl *pl);
 uint16_t sip_transp_port(enum sip_transp tp, uint16_t port);
 int  sip_transp_laddr(struct sip *sip, struct sa *laddr, enum sip_transp tp,
 		      const struct sa *dst);
