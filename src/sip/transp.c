@@ -639,7 +639,7 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	struct sip_connqent *qent;
 	int err = 0;
 
-#ifndef SIP_VERIFY_SERVER
+#ifndef USE_TLS
 	(void) host;
 #endif
 
@@ -687,11 +687,10 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		err = tls_start_tcp(&conn->sc, transp->tls, conn->tc, 0);
 		if (err)
 			goto out;
-#ifdef SIP_VERIFY_SERVER
+
 		err = tls_set_verify_server(conn->sc, host);
 		if (err)
 			goto out;
-#endif
 	}
 #endif
 

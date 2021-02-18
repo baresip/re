@@ -33,6 +33,7 @@
 /* NOTE: shadow struct defined in tls_*.c */
 struct tls_conn {
 	SSL *ssl;
+	struct tls *tls;
 };
 
 
@@ -142,6 +143,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	if (!tls)
 		return ENOMEM;
 
+	tls->verify_server = true;
 	switch (method) {
 
 	case TLS_METHOD_SSLV23:
@@ -1106,6 +1108,9 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 	if (!tc || !host)
 		return EINVAL;
 
+	if (!tc->tls->verify_server)
+		return 0;
+
 	if (sa_set_str(&sa, host, 0)) {
 		SSL_set_hostflags(tc->ssl,
 				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
@@ -1286,4 +1291,18 @@ int tls_get_subject(struct tls *tls, struct mbuf *mb)
 
 	return tls_get_ca_chain_field(tls, mb, &X509_get_subject_name,
 		XN_FLAG_RFC2253);
+}
+
+
+/**
+ * Disables SIP TLS server verifications for following requests
+ *
+ * @param tls     TLS Object
+ */
+void tls_disable_verify_server(struct tls *tls)
+{
+	if (!tls)
+		return;
+
+	tls->verify_server = false;
 }

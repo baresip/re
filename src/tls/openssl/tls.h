@@ -39,7 +39,8 @@ typedef X509_NAME*(tls_get_certfield_h)(X509 *);
 struct tls {
 	SSL_CTX *ctx;
 	X509 *cert;
-	char *pass;  /* password for private key */
+	char *pass;          /**< password for private key             */
+	bool verify_server;  /**< Enable SIP TLS server verification   */
 };
 
 

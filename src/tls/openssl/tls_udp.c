@@ -47,6 +47,7 @@ struct dtls_sock {
 /* NOTE: shadow struct defined in tls_*.c */
 struct tls_conn {
 	SSL *ssl;             /* inheritance */
+	struct tls *tls;      /* inheritance */
 #ifdef TLS_BIO_OPAQUE
 	BIO_METHOD *biomet;
 #endif
@@ -479,6 +480,7 @@ static int conn_alloc(struct tls_conn **ptc, struct tls *tls,
 	tc->recvh  = recvh;
 	tc->closeh = closeh;
 	tc->arg    = arg;
+	tc->tls    = tls;
 
 #ifdef TLS_BIO_OPAQUE
 	tc->biomet = bio_method_udp();

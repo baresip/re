@@ -26,7 +26,8 @@
 
 /* NOTE: shadow struct defined in tls_*.c */
 struct tls_conn {
-	SSL *ssl;
+	SSL *ssl;             /* inheritance */
+	struct tls *tls;      /* inheritance */
 #ifdef TLS_BIO_OPAQUE
 	BIO_METHOD *biomet;
 #endif
@@ -375,6 +376,7 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 		goto out;
 
 	tc->tcp = mem_ref(tcp);
+	tc->tls = tls;
 
 #ifdef TLS_BIO_OPAQUE
 	tc->biomet = bio_method_tcp();
