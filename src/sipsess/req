@@ -1,0 +1,212 @@
+./accept.c:25:	(void)sip_treply(&sess->st, sess->sip, sess->msg,
+./accept.c:28:	sess->peerterm = true;
+./accept.c:30:	if (sess->terminated)
+./accept.c:86:	err = sip_dialog_accept(&sess->dlg, msg);
+./accept.c:91:		    hash_joaat_str(sip_dialog_callid(sess->dlg)),
+./accept.c:92:		    &sess->he, sess);
+./accept.c:94:	sess->msg = mem_ref((void *)msg);
+./accept.c:96:	err = sip_strans_alloc(&sess->st, sess->sip, msg, cancel_handler,
+./accept.c:109:		sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
+./accept.c:111:		err = sip_treplyf(&sess->st, NULL, sess->sip,
+./accept.c:122:				  desc ? sess->ctype : "",
+./accept.c:162:	if (!sess || !sess->st || !sess->msg || scode < 101 || scode > 199)
+./accept.c:167:	sip_contact_set(&contact, sess->cuser, &sess->msg->dst, sess->msg->tp);
+./accept.c:169:	err = sip_treplyf(&sess->st, NULL, sess->sip, sess->msg, true,
+./accept.c:180:			  desc ? sess->ctype : "",
+./accept.c:209:	if (!sess || !sess->st || !sess->msg || scode < 200 || scode > 299)
+./accept.c:213:	err = sipsess_reply_2xx(sess, sess->msg, scode, reason, desc,
+./accept.c:237:	if (!sess || !sess->st || !sess->msg || scode < 300)
+./accept.c:241:	err = sip_treplyf(&sess->st, NULL, sess->sip, sess->msg, false,
+./close.c:25:	if (err || sip_request_loops(&sess->ls, msg->scode))
+./close.c:35:		if (sess->peerterm)
+./close.c:42:			err = sip_auth_authenticate(sess->auth, msg);
+./close.c:61:	if (sess->req)
+./close.c:65:		sip_loopstate_reset(&sess->ls);
+./close.c:67:	return sip_drequestf(&sess->req, sess->sip, true, "BYE",
+./close.c:68:			     sess->dlg, 0, sess->auth,
+./close.c:73:			     sess->close_hdrs);
+./connect.c:32:	sip_contact_set(&contact, sess->cuser, src, tp);
+./connect.c:43:	if (err || sip_request_loops(&sess->ls, msg->scode))
+./connect.c:47:		sess->progrh(msg, sess->arg);
+./connect.c:52:		sess->hdrs = mem_deref(sess->hdrs);
+./connect.c:54:		err = sip_dialog_create(sess->dlg, msg);
+./connect.c:58:		if (sess->sent_offer)
+./connect.c:59:			err = sess->answerh(msg, sess->arg);
+./connect.c:61:			sess->modify_pending = false;
+./connect.c:62:			err = sess->offerh(&desc, msg, sess->arg);
+./connect.c:65:		err |= sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
+./connect.c:66:				   sess->auth, sess->ctype, desc);
+./connect.c:68:		sess->established = true;
+./connect.c:71:		if (err || sess->terminated)
+./connect.c:74:		if (sess->modify_pending)
+./connect.c:77:			sess->desc = mem_deref(sess->desc);
+./connect.c:79:		sess->estabh(msg, sess->arg);
+./connect.c:86:		if (sess->terminated)
+./connect.c:89:		err = sip_dialog_update(sess->dlg, msg);
+./connect.c:100:		if (sess->terminated)
+./connect.c:107:			err = sip_auth_authenticate(sess->auth, msg);
+./connect.c:122:	if (!sess->terminated)
+./connect.c:131:	sess->sent_offer = sess->desc ? true : false;
+./connect.c:132:	sess->modify_pending = false;
+./connect.c:134:	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+./connect.c:135:			     sess->dlg, 0, sess->auth,
+./connect.c:142:			     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
+./connect.c:143:			     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
+./connect.c:144:			     sess->desc ? "Content-Type: " : "",
+./connect.c:145:			     sess->desc ? sess->ctype : "",
+./connect.c:146:			     sess->desc ? "\r\n" : "",
+./connect.c:147:			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+./connect.c:148:			     sess->desc ? mbuf_buf(sess->desc) : NULL,
+./connect.c:149:			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+./connect.c:208:		sess->hdrs = mbuf_alloc(256);
+./connect.c:209:		if (!sess->hdrs) {
+./connect.c:215:		err = mbuf_vprintf(sess->hdrs, fmt, ap);
+./connect.c:216:		sess->hdrs->pos = 0;
+./connect.c:223:	sess->owner = true;
+./connect.c:225:	err = sip_dialog_alloc(&sess->dlg, to_uri, to_uri, from_name,
+./connect.c:231:		    hash_joaat_str(sip_dialog_callid(sess->dlg)),
+./connect.c:232:		    &sess->he, sess);
+./request.c:31:	if (req->sess->terminated && !req->sess->requestl.head)
+./request.c:52:	if (!reqp || !sess || sess->terminated)
+./request.c:59:	list_append(&sess->requestl, &req->le, req);
+./modify.c:36:	if (err || sip_request_loops(&sess->ls, msg->scode))
+./modify.c:44:		(void)sip_dialog_update(sess->dlg, msg);
+./modify.c:46:		if (sess->sent_offer)
+./modify.c:47:			(void)sess->answerh(msg, sess->arg);
+./modify.c:49:			sess->modify_pending = false;
+./modify.c:50:			(void)sess->offerh(&desc, msg, sess->arg);
+./modify.c:53:		(void)sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
+./modify.c:54:				  sess->auth, sess->ctype, desc);
+./modify.c:58:		if (sess->terminated)
+./modify.c:65:			err = sip_auth_authenticate(sess->auth, msg);
+./modify.c:83:			tmr_start(&sess->tmr, sess->owner ? 3000 : 1000,
+./modify.c:92:			tmr_start(&sess->tmr, pl_u32(&hdr->val) * 1000,
+./modify.c:98:	if (sess->terminated)
+./modify.c:102:	else if (sess->modify_pending)
+./modify.c:105:		sess->desc = mem_deref(sess->desc);
+./modify.c:116:	sip_contact_set(&contact, sess->cuser, src, tp);
+./modify.c:124:	if (sess->req)
+./modify.c:127:	sess->sent_offer = sess->desc ? true : false;
+./modify.c:128:	sess->modify_pending = false;
+./modify.c:131:		sip_loopstate_reset(&sess->ls);
+./modify.c:133:	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+./modify.c:134:			     sess->dlg, 0, sess->auth,
+./modify.c:140:			     sess->desc ? "Content-Type: " : "",
+./modify.c:141:			     sess->desc ? sess->ctype : "",
+./modify.c:142:			     sess->desc ? "\r\n" : "",
+./modify.c:143:			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+./modify.c:144:			     sess->desc ? mbuf_buf(sess->desc) : NULL,
+./modify.c:145:			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+./modify.c:159:	if (!sess || sess->st || sess->terminated)
+./modify.c:162:	mem_deref(sess->desc);
+./modify.c:163:	sess->desc = mem_ref(desc);
+./modify.c:165:	if (sess->req || sess->tmr.th || sess->replyl.head) {
+./modify.c:166:		sess->modify_pending = true;
+./info.c:38:		if (req->sess->terminated)
+./info.c:45:			err = sip_auth_authenticate(req->sess->auth, msg);
+./info.c:65:	if (!req->sess->terminated) {
+./info.c:78:	return sip_drequestf(&req->req, req->sess->sip, true, "INFO",
+./info.c:79:			     req->sess->dlg, 0, req->sess->auth,
+./info.c:108:	if (!sess || sess->terminated || !ctype || !body)
+./info.c:111:	if (!sip_dialog_established(sess->dlg))
+./sess.c:68:	sess->terminated = 1;
+./sess.c:69:	sess->offerh  = internal_offer_handler;
+./sess.c:70:	sess->answerh = internal_answer_handler;
+./sess.c:71:	sess->progrh  = internal_progress_handler;
+./sess.c:72:	sess->estabh  = internal_establish_handler;
+./sess.c:73:	sess->infoh   = NULL;
+./sess.c:74:	sess->referh  = NULL;
+./sess.c:75:	sess->closeh  = internal_close_handler;
+./sess.c:76:	sess->arg     = sess;
+./sess.c:78:	tmr_cancel(&sess->tmr);
+./sess.c:80:	if (sess->st) {
+./sess.c:81:		(void)sip_treply(&sess->st, sess->sip, sess->msg,
+./sess.c:85:	if (sess->req) {
+./sess.c:86:		sip_request_cancel(sess->req);
+./sess.c:91:	if (sess->replyl.head) {
+./sess.c:96:	if (sess->requestl.head) {
+./sess.c:107:	sess->terminated = 2;
+./sess.c:109:	if (!sess->established || sess->peerterm)
+./sess.c:124:	switch (sess->terminated) {
+./sess.c:138:	hash_unlink(&sess->he);
+./sess.c:139:	tmr_cancel(&sess->tmr);
+./sess.c:140:	list_flush(&sess->replyl);
+./sess.c:141:	list_flush(&sess->requestl);
+./sess.c:142:	mem_deref((void *)sess->msg);
+./sess.c:143:	mem_deref(sess->req);
+./sess.c:144:	mem_deref(sess->dlg);
+./sess.c:145:	mem_deref(sess->auth);
+./sess.c:146:	mem_deref(sess->cuser);
+./sess.c:147:	mem_deref(sess->ctype);
+./sess.c:148:	mem_deref(sess->close_hdrs);
+./sess.c:149:	mem_deref(sess->hdrs);
+./sess.c:150:	mem_deref(sess->desc);
+./sess.c:151:	mem_deref(sess->sock);
+./sess.c:152:	mem_deref(sess->sip);
+./sess.c:153:	mem_deref(sess->st);
+./sess.c:172:	err = sip_auth_alloc(&sess->auth, authh, aarg, aref);
+./sess.c:176:	err = str_dup(&sess->cuser, cuser);
+./sess.c:180:	err = str_dup(&sess->ctype, ctype);
+./sess.c:184:	sess->sock    = mem_ref(sock);
+./sess.c:185:	sess->desc    = mem_ref(desc);
+./sess.c:186:	sess->sip     = mem_ref(sock->sip);
+./sess.c:187:	sess->offerh  = offerh  ? offerh  : internal_offer_handler;
+./sess.c:188:	sess->answerh = answerh ? answerh : internal_answer_handler;
+./sess.c:189:	sess->progrh  = progrh  ? progrh  : internal_progress_handler;
+./sess.c:190:	sess->estabh  = estabh  ? estabh  : internal_establish_handler;
+./sess.c:191:	sess->infoh   = infoh;
+./sess.c:192:	sess->referh  = referh;
+./sess.c:193:	sess->closeh  = closeh  ? closeh  : internal_close_handler;
+./sess.c:194:	sess->arg     = arg;
+./sess.c:212:	if (sess->terminated)
+./sess.c:215:	closeh = sess->closeh;
+./sess.c:216:	arg    = sess->arg;
+./sess.c:234:	return sess ? sess->dlg : NULL;
+./sess.c:255:	sess->close_hdrs = mem_deref(sess->close_hdrs);
+./sess.c:259:		err = re_vsdprintf(&sess->close_hdrs, hdrs, ap);
+./sess.c:272:	return sip_request_enverify(sess->req, verify);
+./reply.c:54:	if (sess->replyl.head)
+./reply.c:58:	sess->established = true;
+./reply.c:60:	if (!sess->terminated)
+./reply.c:71:	(void)sip_send(reply->sess->sip, reply->msg->sock, reply->msg->tp,
+./reply.c:92:	list_append(&sess->replyl, &reply->le, reply);
+./reply.c:97:	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
+./reply.c:99:	err = sip_treplyf(&sess->st, &reply->mb, sess->sip,
+./reply.c:110:			  desc ? sess->ctype : "",
+./reply.c:124:		sess->awaiting_answer = true;
+./reply.c:129:		sess->st = mem_deref(sess->st);
+./reply.c:151:	reply = list_ledata(list_apply(&sess->replyl, false, cmp_handler,
+./listen.c:47:	return sip_dialog_cmp(sess->dlg, msg);
+./listen.c:66:	if (!sess || sess->terminated) {
+./listen.c:71:	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
+./listen.c:76:	if (!sess->infoh) {
+./listen.c:81:	sess->infoh(sip, msg, sess->arg);
+./listen.c:91:	if (!sess || sess->terminated) {
+./listen.c:96:	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
+./listen.c:101:	if (!sess->referh) {
+./listen.c:106:	sess->referh(sip, msg, sess->arg);
+./listen.c:121:	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
+./listen.c:130:			  sess->close_hdrs);
+./listen.c:132:	sess->peerterm = true;
+./listen.c:134:	if (sess->terminated)
+./listen.c:137:	if (sess->st) {
+./listen.c:138:		(void)sip_treply(&sess->st, sess->sip, sess->msg,
+./listen.c:159:	if (sess->terminated) {
+./listen.c:160:		if (!sess->replyl.head) {
+./listen.c:161:			sess->established = true;
+./listen.c:168:		sess->awaiting_answer = false;
+./listen.c:169:		err = sess->answerh(msg, sess->arg);
+./listen.c:172:	if (sess->modify_pending && !sess->replyl.head)
+./listen.c:175:	if (sess->established)
+./listen.c:178:	sess->msg = mem_deref((void *)sess->msg);
+./listen.c:179:	sess->established = true;
+./listen.c:184:		sess->estabh(msg, sess->arg);
+./listen.c:198:	if (!sess || sess->terminated) {
+./listen.c:203:	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
+./listen.c:208:	if (sess->st || sess->awaiting_answer) {
+./listen.c:217:	if (sess->req) {
+./listen.c:222:	err = sess->offerh(&desc, msg, sess->arg);
+./listen.c:228:	(void)sip_dialog_update(sess->dlg, msg);
+./listen.c:234:	sess->desc = mem_deref(sess->desc);
+./listen.c:235:	sess->modify_pending = false;
+./listen.c:236:	tmr_cancel(&sess->tmr);

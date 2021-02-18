@@ -192,6 +192,7 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 	sess->referh  = referh;
 	sess->closeh  = closeh  ? closeh  : internal_close_handler;
 	sess->arg     = arg;
+	sess->sverify = true;
 
  out:
 	if (err)
@@ -261,4 +262,14 @@ int sipsess_set_close_headers(struct sipsess *sess, const char *hdrs, ...)
 	}
 
 	return err;
+}
+
+
+int sipsess_enverify(struct sipsess *sess, bool verify)
+{
+	if (!sess)
+		return EINVAL;
+
+	sess->sverify = verify;
+	return sip_request_enverify(sess->req, verify);
 }

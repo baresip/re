@@ -37,6 +37,7 @@ struct sipsess {
 	bool modify_pending;
 	bool established;
 	bool peerterm;
+	bool sverify;
 	int terminated;
 };
 

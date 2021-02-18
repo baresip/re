@@ -119,5 +119,8 @@ int sipsess_info(struct sipsess *sess, const char *ctype, struct mbuf *body,
 	if (err)
 		mem_deref(req);
 
+	if (!sess->sverify)
+		sipsess_enverify(sess, false);
+
 	return err;
 }

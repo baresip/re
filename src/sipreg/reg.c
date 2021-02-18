@@ -483,3 +483,12 @@ int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint)
 	reg->fbregint = fbregint;
 	return 0;
 }
+
+
+int sipreg_enverify(struct sipreg *reg, bool verify)
+{
+	if (!reg)
+		return EINVAL;
+
+	return sip_request_enverify(reg->req, verify);
+}

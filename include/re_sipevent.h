@@ -72,7 +72,7 @@ int sipevent_notify(struct sipnot *sipnot, struct mbuf *mb,
 int sipevent_notifyf(struct sipnot *sipnot, struct mbuf **mbp,
 		     enum sipevent_subst state, enum sipevent_reason reason,
 		     uint32_t retry_after, const char *fmt, ...);
-
+int sipnot_enverify(struct sipnot *sipnot, bool verify);
 
 /* Subscriber */
 
@@ -121,3 +121,4 @@ int sipevent_fork(struct sipsub **subp, struct sipsub *osub,
 		  sip_auth_h *authh, void *aarg, bool aref,
 		  sipsub_notify_h *notifyh, sipsub_close_h *closeh,
 		  void *arg);
+int sipsub_enverify(struct sipsub *sub, bool verify);

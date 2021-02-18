@@ -121,6 +121,8 @@ static int send_handler(enum sip_transp tp, const struct sa *src,
 
 int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 {
+	int err;
+
 	if (sess->req)
 		return EPROTO;
 
@@ -130,7 +132,7 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 	if (reset_ls)
 		sip_loopstate_reset(&sess->ls);
 
-	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+	err = sip_drequestf(&sess->req, sess->sip, true, "INVITE",
 			     sess->dlg, 0, sess->auth,
 			     send_handler, reinvite_resp_handler, sess,
 			     "%s%s%s"
@@ -143,6 +145,14 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
 			     sess->desc ? mbuf_buf(sess->desc) : NULL,
 			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+
+	if (err)
+		return err;
+
+	if (!sess->sverify)
+		sipsess_enverify(sess, false);
+
+	return 0;
 }
 
 

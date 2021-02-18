@@ -486,3 +486,12 @@ int sipevent_notifyf(struct sipnot *not, struct mbuf **mbp,
 
 	return err;
 }
+
+
+int sipnot_enverify(struct sipnot *not, bool verify)
+{
+	if (!not)
+		return EINVAL;
+
+	return sip_request_enverify(not->req, verify);
+}

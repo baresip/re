@@ -667,3 +667,12 @@ int sipevent_fork(struct sipsub **subp, struct sipsub *osub,
 
 	return err;
 }
+
+
+int sipsub_enverify(struct sipsub *sub, bool verify)
+{
+	if (!sub)
+		return EINVAL;
+
+	return sip_request_enverify(sub->req, verify);
+}
