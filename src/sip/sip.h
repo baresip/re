@@ -56,6 +56,7 @@ int  sip_ctrans_request(struct sip_ctrans **ctp, struct sip *sip,
 int  sip_ctrans_cancel(struct sip_ctrans *ct);
 int  sip_ctrans_init(struct sip *sip, uint32_t sz);
 int  sip_ctrans_debug(struct re_printf *pf, const struct sip *sip);
+int  sip_ctrans_enverify(struct sip_ctrans *ct, bool verify);
 
 
 /* strans */
@@ -76,6 +77,8 @@ bool sip_transp_supported(struct sip *sip, enum sip_transp tp, int af);
 const char *sip_transp_srvid(enum sip_transp tp);
 bool sip_transp_reliable(enum sip_transp tp);
 int  sip_transp_debug(struct re_printf *pf, const struct sip *sip);
+int  sip_transp_enverify(struct sip *sip, const struct sa *dst,
+		const char *host);
 
 
 /* auth */

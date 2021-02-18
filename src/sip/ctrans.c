@@ -358,6 +358,15 @@ int sip_ctrans_request(struct sip_ctrans **ctp, struct sip *sip,
 }
 
 
+int sip_ctrans_enverify(struct sip_ctrans *ct, bool verify)
+{
+	if (verify)
+		return sip_transp_enverify(ct->sip, &ct->dst, ct->host);
+	else
+		return sip_transp_enverify(ct->sip, &ct->dst, NULL);
+}
+
+
 int sip_ctrans_cancel(struct sip_ctrans *ct)
 {
 	struct mbuf *mb = NULL;

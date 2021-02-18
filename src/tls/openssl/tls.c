@@ -1135,6 +1135,17 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 }
 
 
+void tls_disable_verify(struct tls_conn *tc)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
+	SSL_set_verify(tc->ssl, SSL_VERIFY_NONE, NULL);
+#else
+	(void)tc;
+#endif
+}
+
+
 static int print_error(const char *str, size_t len, void *unused)
 {
 	(void)unused;

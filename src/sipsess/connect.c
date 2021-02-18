@@ -243,3 +243,12 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	return err;
 }
+
+
+int sipsess_enverify(struct sipsess *sess, bool verify)
+{
+	if (!sess)
+		return EINVAL;
+
+	return sip_request_enverify(sess->req, verify);
+}

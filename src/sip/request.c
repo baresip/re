@@ -866,6 +866,12 @@ void sip_request_cancel(struct sip_request *req)
 }
 
 
+int sip_request_enverify(struct sip_request *req, bool verify)
+{
+	return sip_ctrans_enverify(req->ct, verify);
+}
+
+
 void sip_request_close(struct sip *sip)
 {
 	if (!sip)
