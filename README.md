@@ -88,53 +88,53 @@ Patches can sent via Github
 
 | Name     | Status   | Description                                    |
 |----------|----------|------------------------------------------------|
-| aes      | unstable | AES (Advanced Encryption Standard)             |
-| base64   | testing  | Base-64 encoding/decoding functions            |
-| bfcp     | unstable | The Binary Floor Control Protocol (BFCP)       |
-| conf     | testing  | Configuration file parser                      |
-| crc32    | testing  | 32-bit CRC defined in ITU V.42                 |
-| dbg      | testing  | Debug printing                                 |
+| aes      | stable   | AES (Advanced Encryption Standard)             |
+| base64   | stable   | Base-64 encoding/decoding functions            |
+| bfcp     | stable   | The Binary Floor Control Protocol (BFCP)       |
+| conf     | stable   | Configuration file parser                      |
+| crc32    | stable   | 32-bit CRC defined in ITU V.42                 |
+| dbg      | stable   | Debug printing                                 |
 | dns      | stable   | DNS resolving (NAPTR, SRV, A)                  |
-| fmt      | testing  | Formatted printing and regular expression      |
-| hash     | testing  | Hashmap table                                  |
-| hmac     | testing  | HMAC: Keyed-Hashing for Message Authentication |
-| http     | unstable | HTTP parser (RFC 2616)                         |
-| httpauth | testing  | HTTP-based Authentication (RFC 2617)           |
-| ice      | unstable | Interactive Connectivity Establishment (ICE)   |
-| jbuf     | testing  | Jitter buffer                                  |
-| json     | unstable | JavaScript Object Notation (JSON)              |
+| fmt      | stable   | Formatted printing and regular expression      |
+| hash     | stable   | Hashmap table                                  |
+| hmac     | stable   | HMAC: Keyed-Hashing for Message Authentication |
+| http     | stable   | HTTP parser (RFC 2616)                         |
+| httpauth | stable   | HTTP-based Authentication (RFC 2617)           |
+| ice      | stable   | Interactive Connectivity Establishment (ICE)   |
+| jbuf     | stable   | Jitter buffer                                  |
+| json     | stable   | JavaScript Object Notation (JSON)              |
 | list     | stable   | Sortable doubly-linked list handling           |
-| lock     | testing  | Resource locking functions                     |
-| main     | testing  | Main poll loop                                 |
+| lock     | stable   | Resource locking functions                     |
+| main     | stable   | Main poll loop                                 |
 | mbuf     | stable   | Linear memory buffers                          |
 | md5      | stable   | The MD5 Message-Digest Algorithm (RFC 1321)    |
 | mem      | stable   | Memory referencing                             |
-| mod      | testing  | Run-time module loading                        |
-| mqueue   | testing  | Thread-safe message queue                      |
-| msg      | unstable | Generic message component library              |
-| natbd    | unstable | NAT Behavior Discovery using STUN              |
-| net      | testing  | Networking routines                            |
-| odict    | unstable | Ordered Dictionary                             |
-| rtmp     | unstable | Real Time Messaging Protocol                   |
-| rtp      | testing  | Real-time Transport Protocol                   |
+| mod      | stable   | Run-time module loading                        |
+| mqueue   | stable   | Thread-safe message queue                      |
+| msg      | stable   | Generic message component library              |
+| natbd    | stable   | NAT Behavior Discovery using STUN              |
+| net      | stable   | Networking routines                            |
+| odict    | stable   | Ordered Dictionary                             |
+| rtmp     | stable   | Real Time Messaging Protocol                   |
+| rtp      | stable   | Real-time Transport Protocol                   |
 | sa       | stable   | Socket Address functions                       |
-| sdp      | testing  | Session Description Protocol                   |
-| sha      | testing  | Secure Hash Standard, NIST, FIPS PUB 180-1     |
+| sdp      | stable   | Session Description Protocol                   |
+| sha      | stable   | Secure Hash Standard, NIST, FIPS PUB 180-1     |
 | sip      | stable   | Core SIP library                               |
-| sipevent | testing  | SIP Event framework                            |
+| sipevent | stable   | SIP Event framework                            |
 | sipreg   | stable   | SIP register client                            |
 | sipsess  | stable   | SIP Sessions                                   |
-| srtp     | unstable | Secure Real-time Transport Protocol (SRTP)     |
+| srtp     | stable   | Secure Real-time Transport Protocol (SRTP)     |
 | stun     | stable   | Session Traversal Utilities for NAT (STUN)     |
-| sys      | testing  | System information                             |
-| tcp      | testing  | TCP transport                                  |
-| telev    | testing  | Telephony Events (RFC 4733)                    |
-| tls      | unstable | Transport Layer Security                       |
+| sys      | stable   | System information                             |
+| tcp      | stable   | TCP transport                                  |
+| telev    | stable   | Telephony Events (RFC 4733)                    |
+| tls      | stable   | Transport Layer Security                       |
 | tmr      | stable   | Timer handling                                 |
 | turn     | stable   | Obtaining Relay Addresses from STUN (TURN)     |
-| udp      | testing  | UDP transport                                  |
-| uri      | testing  | Generic URI library                            |
-| websock  | unstable | WebSocket Client and Server                    |
+| udp      | stable   | UDP transport                                  |
+| uri      | stable   | Generic URI library                            |
+| websock  | stable   | WebSocket Client and Server                    |
 
 legend:
 * *stable* - code complete; stable code and stable API
