@@ -601,13 +601,14 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 
 #ifdef USE_TLS
-static int read_file(char **buf, const char *path)
+static int read_file(char **pbuf, const char *path)
 {
 	FILE *f = NULL;
 	size_t s = 0;
 	size_t n = 0;
+	char *buf;
 
-	if (!buf || !path)
+	if (!pbuf || !path)
 		return EINVAL;
 
 	f = fopen(path, "r");
@@ -620,7 +621,7 @@ static int read_file(char **buf, const char *path)
 	s = ftell(f);
 	fseek(f, 0L, SEEK_SET);
 
-	*buf = mem_alloc(s + 1, NULL);
+	buf = mem_alloc(s + 1, NULL);
 	if (!buf) {
 		DEBUG_WARNING("Could not allocate cert file buffer\n");
 		fclose(f);
@@ -631,10 +632,11 @@ static int read_file(char **buf, const char *path)
 	fclose(f);
 	buf[s] = 0;
 	if (n < s) {
-		*buf = mem_deref(*buf);
+		buf = mem_deref(buf);
 		return EIO;
 	}
 
+	*pbuf = buf;
 	return 0;
 }
 #endif
