@@ -249,7 +249,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
  */
 int tls_add_ca(struct tls *tls, const char *cafile)
 {
-	if (!tls || !cafile)
+	if (!tls || !cafile || !tls->ctx)
 		return EINVAL;
 
 	/* Load the CAs we trust */
