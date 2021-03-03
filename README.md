@@ -199,14 +199,30 @@ legend:
 
 ## Supported platforms
 
-* Linux
-* FreeBSD
-* OpenBSD
-* NetBSD
-* Solaris 11
-* Windows
-* Apple Mac OS X and iOS
-* Android (5.0 or later)
+|  System | Support type | Supported versions | Notes |
+|---|---|---|---|
+| Linux | Tier 1 | glibc >= 2.17 (CentOS 7) | |
+| macOS | Tier 1 | macOS >= 10.10 | |
+| Windows | Tier 1 | >= Windows 8 | MinGW-w64 |
+| Android | Tier 2 | | |
+| iOS | Tier 2 | | |
+| FreeBSD | Tier 2 | >= 11 | |
+| OpenBSD | Tier 2 | >= 6.7 | |
+| Linux | Tier 2 | uClibc | |
+| Windows | Tier 3 | | e.g. VS 2015 |
+
+
+### Support types
+
+* **Tier 1**: Officially supported and tested with CI. Any contributed patch
+  MUST NOT break such systems.
+
+* **Tier 2**: Officially supported, but not necessarily tested with CI. These
+  systems are maintained to the best of collaborators ability, without being
+  a top priority.
+
+* **Tier 3**: Community maintained. These systems may inadvertently break and the
+  community and interested parties are expected to help with the maintenance.
 
 
 ### Supported versions of C Standard library
