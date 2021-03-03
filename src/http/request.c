@@ -532,7 +532,7 @@ int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri)
 
 	err = http_uri_decode(&hu, uri);
 	if (err) {
-		DEBUG_WARNING("http uri %r decode error (%m)", uri, err);
+		DEBUG_WARNING("http uri %r decode error (%m)\n", uri, err);
 		return EINVAL;
 	}
 
