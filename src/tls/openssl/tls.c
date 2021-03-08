@@ -1218,7 +1218,7 @@ static int convert_X509_NAME_to_mbuf(X509_NAME *field, struct mbuf *mb,
  *
  * @param tls           TLS Object
  * @param mb            Memory buffer
- * @param field_getter  Functionpointer to the X509 getter functon
+ * @param field_getter  Functionpointer to the X509 getter function
  * @param flags         X509_NAME_print_ex flags
  *
  * @return 0 if success, othewise errorcode
@@ -1226,35 +1226,18 @@ static int convert_X509_NAME_to_mbuf(X509_NAME *field, struct mbuf *mb,
 static int tls_get_ca_chain_field(struct tls *tls, struct mbuf *mb,
 	tls_get_certfield_h *field_getter, unsigned long flags)
 {
-	STACK_OF(X509) *certstack;
-	X509 *cert;
+	X509 *crt = NULL;
 	X509_NAME *field;
-	int err = EINVAL;
 
-	if (!field_getter)
+	crt = SSL_CTX_get0_certificate(tls->ctx);
+	if (!crt)
 		return EINVAL;
 
-	if (!SSL_CTX_get0_chain_certs(tls->ctx, &certstack) || !certstack)
-		goto out;
+	field = field_getter(crt);
+	if (!field)
+		return EINVAL;
 
-	for (int i = 0; i < sk_X509_num(certstack); i++) {
-		cert = sk_X509_value(certstack, i);
-		if (!cert)
-			goto out;
-
-		field = field_getter(cert);
-		if (!field)
-			goto out;
-
-		err = convert_X509_NAME_to_mbuf(field, mb, flags);
-		if (err)
-			goto out;
-	}
-
-	err = 0;
-
- out:
-	return err;
+	return convert_X509_NAME_to_mbuf(field, mb, flags);
 }
 
 
