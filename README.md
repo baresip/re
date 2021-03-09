@@ -137,6 +137,7 @@ Patches can sent via Github
 | udp      | stable   | UDP transport                                  |
 | uri      | stable   | Generic URI library                            |
 | websock  | stable   | WebSocket Client and Server                    |
+| trace    | development | Trace Helpers JSON traces (chrome://tracing)|
 
 legend:
 * *stable* - code complete; stable code and stable API
