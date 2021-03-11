@@ -4,10 +4,11 @@
 # Copyright (C) 2010 Creytiv.com
 #
 
-# Master version number
+# Main version number
 VER_MAJOR := 1
 VER_MINOR := 1
 VER_PATCH := 0
+VER_PRE   := dev
 
 # Libtool similar ABI versioning
 # https://github.com/baresip/re/wiki/ABI-Versioning
@@ -18,7 +19,11 @@ ABI_AGE   := 0
 ABI_MAJOR := $(shell expr $(ABI_CUR) - $(ABI_AGE))
 
 PROJECT   := re
+ifeq ($(VER_PRE),)
 VERSION   := $(VER_MAJOR).$(VER_MINOR).$(VER_PATCH)
+else
+VERSION   := $(VER_MAJOR).$(VER_MINOR).$(VER_PATCH)-$(VER_PRE)
+endif
 
 MK	:= mk/re.mk
 
@@ -77,14 +82,14 @@ all: $(SHARED) $(STATIC)
 -include $(OBJS:.o=.d)
 
 
-$(SHARED): $(OBJS)
+$(SHARED): $(OBJS) libre.pc
 	@echo "  LD      $@"
-	@$(LD) $(LFLAGS) $(SH_LFLAGS) $^ $(LIBS) -o $@
+	@$(LD) $(LFLAGS) $(SH_LFLAGS) $(OBJS) $(LIBS) -o $@
 
 
-$(STATIC): $(OBJS)
+$(STATIC): $(OBJS) libre.pc
 	@echo "  AR      $@"
-	@$(AR) $(AFLAGS) $@ $^
+	@$(AR) $(AFLAGS) $@ $(OBJS)
 ifneq ($(RANLIB),)
 	@$(RANLIB) $@
 endif
@@ -98,7 +103,7 @@ libre.pc:
 	@echo 'Name: libre' >> libre.pc
 	@echo 'Description: ' >> libre.pc
 	@echo 'Version: '$(VERSION) >> libre.pc
-	@echo 'URL: http://creytiv.com/re.html' >> libre.pc
+	@echo 'URL: https://github.com/baresip/re' >> libre.pc
 	@echo 'Libs: -L$${libdir} -lre' >> libre.pc
 	@echo 'Libs.private: -L$${libdir} -lre ${LIBS}' >> libre.pc
 	@echo 'Cflags: -I$${includedir}' >> libre.pc
