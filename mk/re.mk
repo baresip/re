@@ -43,6 +43,7 @@
 #   SH_LFLAGS      Linker flags for shared libraries
 #   USE_TLS        Defined if TLS is available
 #   USE_DTLS       Defined if DTLS is available
+#   PKG_CONFIG     Defined if pkg-config available
 #
 
 
@@ -600,7 +601,7 @@ CFLAGS  += \
 	-DVER_MAJOR=$(VER_MAJOR) \
 	-DVER_MINOR=$(VER_MINOR) \
 	-DVER_PATCH=$(VER_PATCH)
-
+PKG_CONFIG := $(shell pkg-config --version)
 
 # Enable gcov Coverage testing
 #
@@ -654,6 +655,7 @@ info::
 	@echo "  ARCH:          $(ARCH)"
 	@echo "  OS:            $(OS)"
 	@echo "  BUILD:         $(BUILD)"
+	@echo "  PKG_CONFIG:    $(PKG_CONFIG)"
 	@echo "  CCACHE:        $(CCACHE)"
 	@echo "  CC:            $(CC_VER)"
 	@echo "  CFLAGS:        $(CFLAGS)"
