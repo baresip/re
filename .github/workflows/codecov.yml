@@ -33,7 +33,7 @@ jobs:
         rm re/libre.so || true
         rm re/libre.dylib || true
         make -C rem librem.a
-        cd retest; make EXTRA_LFLAGS="--coverage" && ./retest -r
+        cd retest; make EXTRA_LFLAGS="--coverage" && ./retest -a
 
     - name: gcov
       run: | 
