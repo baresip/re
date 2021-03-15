@@ -3,7 +3,7 @@ name: Code coverage
 on: [push, pull_request]
 
 jobs:
-  c99:
+  codecov:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,10 +33,10 @@ jobs:
         rm re/libre.so || true
         rm re/libre.dylib || true
         make -C rem librem.a
-        make -C retest EXTRA_LFLAGS="--coverage" && retest/retest -r
+        cd retest; make EXTRA_LFLAGS="--coverage" && ./retest -r
 
     - name: gcov
       run: | 
-        cd re
+        cd ../re
         gcov build-x86_64/**/*.o
         bash <(curl -s https://codecov.io/bash)
