@@ -249,12 +249,32 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
  */
 int tls_add_ca(struct tls *tls, const char *cafile)
 {
-	if (!tls || !cafile || !tls->ctx)
+	return tls_add_cafile_path(tls, cafile, NULL);
+}
+
+
+/**
+ * Set default file and path for trusted CA certificates
+ *
+ * @param tls    TLS Context
+ * @param cafile PEM file with CA certificate
+ * @param capath Path containing CA certificates
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_add_cafile_path(struct tls *tls, const char *cafile,
+	const char *capath)
+{
+	if (!tls || (!cafile && !capath) || !tls->ctx)
 		return EINVAL;
 
 	/* Load the CAs we trust */
-	if (!(SSL_CTX_load_verify_locations(tls->ctx, cafile, NULL))) {
-		DEBUG_WARNING("Can't read CA file: %s\n", cafile);
+	if (!(SSL_CTX_load_verify_locations(tls->ctx, cafile, capath))) {
+		if (str_isset(cafile))
+			DEBUG_WARNING("Can't read CA file: %s\n", cafile);
+		if (str_isset(capath))
+			DEBUG_WARNING("Can't read CA path: %s\n", capath);
+
 		ERR_clear_error();
 		return EINVAL;
 	}
