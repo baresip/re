@@ -270,7 +270,7 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 
 	if (capath && !fs_isdir(capath)) {
 		DEBUG_WARNING("capath is not a directory\n");
-		return ENOENT;
+		return ENOTDIR;
 	}
 
 	/* Load the CAs we trust */
