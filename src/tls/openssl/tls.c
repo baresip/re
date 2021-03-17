@@ -276,7 +276,7 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 			DEBUG_WARNING("Can't read CA path: %s\n", capath);
 
 		ERR_clear_error();
-		return EINVAL;
+		return ENOENT;
 	}
 
 	return 0;
