@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#define _DEFAULT_SOURCE 1
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -104,4 +105,28 @@ int fs_gethome(char *path, size_t sz)
 	(void)sz;
 	return ENOSYS;
 #endif
+}
+
+
+/**
+ * Check if given path is directory
+ *
+ * @param path Directory
+ *
+ * @return True if directory, False if not
+ */
+bool fs_isdir(const char *path)
+{
+	struct stat st;
+
+	if (!path)
+		return false;
+
+	if (stat(path, &st) < 0)
+		return false;
+
+	if ((st.st_mode & S_IFMT) != S_IFDIR)
+		return false;
+
+	return true;
 }
