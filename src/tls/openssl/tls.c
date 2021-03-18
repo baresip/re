@@ -257,8 +257,8 @@ int tls_add_ca(struct tls *tls, const char *cafile)
  * Set default file and path for trusted CA certificates
  *
  * @param tls    TLS Context
- * @param cafile PEM file with CA certificate
- * @param capath Path containing CA certificates
+ * @param cafile PEM file with CA certificate(s)
+ * @param capath Path containing CA certificates files
  *
  * @return 0 if success, otherwise errorcode
  */
