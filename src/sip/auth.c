@@ -270,6 +270,7 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		++realm->nc;
 
+		err |= mbuf_write_str(mb, ", algorithm=MD5");
 		err |= mbuf_write_str(mb, "\r\n");
 		if (err)
 			break;
