@@ -9,10 +9,18 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 0.5%
-        paths: 
+        threshold: 0.1%
+        paths:
           - "src"
-        if_ci_failed: error #success, failure, error, ignore
+        if_ci_failed: error
+        informational: false
+        only_pulls: false
+      patch:
+        target: auto
+        threshold: 0.1%
+        paths:
+          - "src"
+        if_ci_failed: error
         informational: false
         only_pulls: false
 
