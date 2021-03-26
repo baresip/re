@@ -19,6 +19,7 @@
 #   OPT_SPEED      If non-empty, optimize for speed
 #   PROJECT        Project name
 #   RELEASE        Release build
+#   TRACE_ERR      Trace error codes
 #   SYSROOT        System root of library and include files
 #   SYSROOT_ALT    Alternative system root of library and include files
 #   USE_OPENSSL    If non-empty, link to libssl library
@@ -49,6 +50,9 @@ CFLAGS  += -DRELEASE
 OPT_SPEED=1
 endif
 
+ifneq ($(TRACE_ERR),)
+CFLAGS  += -DTRACE_ERR
+endif
 
 # Default system root
 ifeq ($(SYSROOT),)
