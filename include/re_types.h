@@ -143,6 +143,40 @@ typedef bool _Bool;
 #define BREAKPOINT
 #endif
 
+/* Error return/goto debug helpers */
+#ifdef TRACE_ERR
+#define PRINT_TRACE_ERR							\
+		(void)re_fprintf(stderr, "TRACE_ERR: %s:%u: %s():"	\
+			      " %m (%d)\n",				\
+			      __FILE__, __LINE__, __func__,		\
+			      (err), (err));
+#else
+#define PRINT_TRACE_ERR
+#endif
+
+#define IF_ERR_GOTO_OUT(err)	\
+	if ((err)) {		\
+		PRINT_TRACE_ERR	\
+		goto out;	\
+	}
+
+#define IF_ERR_GOTO_OUT1(err)	\
+	if ((err)) {		\
+		PRINT_TRACE_ERR	\
+		goto out1;	\
+	}
+
+#define IF_ERR_GOTO_OUT2(err)	\
+	if ((err)) {		\
+		PRINT_TRACE_ERR	\
+		goto out2;	\
+	}
+
+#define IF_ERR_RETURN(exp)	\
+	if ((exp)) {		\
+		PRINT_TRACE_ERR	\
+		return err;	\
+	}
 
 /* Error codes */
 #include <errno.h>
