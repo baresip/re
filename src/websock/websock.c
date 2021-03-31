@@ -510,6 +510,7 @@ int websock_accept(struct websock_conn **connp, struct websock *sock,
 	const struct http_hdr *key;
 	struct websock_conn *conn;
 	int err;
+	const struct http_hdr* sub_proto;
 
 	if (!connp || !sock || !htconn || !msg || !recvh || !closeh)
 		return EINVAL;
@@ -527,16 +528,32 @@ int websock_accept(struct websock_conn **connp, struct websock *sock,
 	if (!key)
 		return EBADMSG;
 
+	sub_proto = http_msg_hdr(msg, HTTP_HDR_SEC_WEBSOCKET_PROTOCOL);
+
 	conn = mem_zalloc(sizeof(*conn), conn_destructor);
 	if (!conn)
 		return ENOMEM;
 
-	err = http_reply(htconn, 101, "Switching Protocols",
-			 "Upgrade: websocket\r\n"
-			 "Connection: Upgrade\r\n"
-			 "Sec-WebSocket-Accept: %H\r\n"
-			 "\r\n",
-			 accept_print, &key->val);
+	if (sub_proto) {
+		char buf[32];
+		pl_strcpy(&sub_proto->val, buf, sizeof(buf));
+		err = http_reply(htconn, 101, "Switching Protocols",
+						 "Upgrade: websocket\r\n"
+						 "Connection: Upgrade\r\n"
+						 "Sec-WebSocket-Accept: %H\r\n"
+						 "Sec-WebSocket-Protocol: %s\r\n"
+						 "\r\n",
+						 accept_print, &key->val,
+						 buf);
+	}
+	else {
+		err = http_reply(htconn, 101, "Switching Protocols",
+						 "Upgrade: websocket\r\n"
+						 "Connection: Upgrade\r\n"
+						 "Sec-WebSocket-Accept: %H\r\n"
+						 "\r\n",
+						 accept_print, &key->val);
+	}
 	if (err)
 		goto out;
 
