@@ -4,7 +4,7 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: "52...100"
+  range: "70...100"
   status:
     project:
       default:
@@ -18,7 +18,7 @@ coverage:
     patch:
       default:
         target: auto
-        threshold: 0.1%
+        threshold: 1%
         paths:
           - "src"
         if_ci_failed: error
