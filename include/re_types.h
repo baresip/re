@@ -145,38 +145,51 @@ typedef bool _Bool;
 
 /* Error return/goto debug helpers */
 #ifdef TRACE_ERR
-#define PRINT_TRACE_ERR							\
+#define PRINT_TRACE_ERR(err)						\
 		(void)re_fprintf(stderr, "TRACE_ERR: %s:%u: %s():"	\
 			      " %m (%d)\n",				\
 			      __FILE__, __LINE__, __func__,		\
 			      (err), (err));
 #else
-#define PRINT_TRACE_ERR
+#define PRINT_TRACE_ERR(err)
 #endif
 
-#define IF_ERR_GOTO_OUT(err)	\
-	if ((err)) {		\
-		PRINT_TRACE_ERR	\
-		goto out;	\
+#define IF_ERR_GOTO_OUT(err)		\
+	if ((err)) {			\
+		PRINT_TRACE_ERR((err))	\
+		goto out;		\
 	}
 
-#define IF_ERR_GOTO_OUT1(err)	\
-	if ((err)) {		\
-		PRINT_TRACE_ERR	\
-		goto out1;	\
+#define IF_ERR_GOTO_OUT1(err)		\
+	if ((err)) {			\
+		PRINT_TRACE_ERR((err))	\
+		goto out1;		\
 	}
 
-#define IF_ERR_GOTO_OUT2(err)	\
-	if ((err)) {		\
-		PRINT_TRACE_ERR	\
-		goto out2;	\
+#define IF_ERR_GOTO_OUT2(err)		\
+	if ((err)) {			\
+		PRINT_TRACE_ERR((err))	\
+		goto out2;		\
 	}
 
-#define IF_ERR_RETURN(exp)	\
-	if ((exp)) {		\
-		PRINT_TRACE_ERR	\
-		return err;	\
+#define IF_ERR_RETURN(err)		\
+	if ((err)) {			\
+		PRINT_TRACE_ERR((err))	\
+		return (err);		\
 	}
+
+#define IF_RETURN_EINVAL(exp)		\
+	if ((exp)) {			\
+		PRINT_TRACE_ERR(EINVAL)	\
+		return (EINVAL);	\
+	}
+
+#define RETURN_ERR(err)			\
+	if ((err)) {			\
+		PRINT_TRACE_ERR((err))	\
+	}				\
+	return (err);
+
 
 /* Error codes */
 #include <errno.h>
