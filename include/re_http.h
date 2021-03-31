@@ -178,6 +178,7 @@ struct tcp_sock *http_sock_tcp(struct http_sock *sock);
 const struct sa *http_conn_peer(const struct http_conn *conn);
 struct tcp_conn *http_conn_tcp(struct http_conn *conn);
 struct tls_conn *http_conn_tls(struct http_conn *conn);
+void http_conn_reset_timeout(struct http_conn *conn);
 void http_conn_close(struct http_conn *conn);
 int  http_reply(struct http_conn *conn, uint16_t scode, const char *reason,
 		const char *fmt, ...);

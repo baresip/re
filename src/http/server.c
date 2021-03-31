@@ -375,6 +375,12 @@ struct tls_conn *http_conn_tls(struct http_conn *conn)
 }
 
 
+void http_conn_reset_timeout(struct http_conn *conn)
+{
+	tmr_start(&conn->tmr, TIMEOUT_IDLE, timeout_handler, conn);
+}
+
+
 /**
  * Close the HTTP connection
  *
