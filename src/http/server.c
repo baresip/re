@@ -375,6 +375,11 @@ struct tls_conn *http_conn_tls(struct http_conn *conn)
 }
 
 
+/**
+ * Reset IDLE Timeout of an HTTP Connection
+ *
+ * @param conn HTTP connection
+ */
 void http_conn_reset_timeout(struct http_conn *conn)
 {
 	tmr_start(&conn->tmr, TIMEOUT_IDLE, timeout_handler, conn);
