@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #define _DEFAULT_SOURCE 1
+#define _BSD_SOURCE 1
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
