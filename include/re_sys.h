@@ -72,3 +72,4 @@ void     rand_bytes(uint8_t *p, size_t size);
 int  fs_mkdir(const char *path, uint16_t mode);
 int  fs_gethome(char *path, size_t sz);
 bool fs_isdir(const char *path);
+bool fs_isfile(const char *file);
