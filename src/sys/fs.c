@@ -131,3 +131,27 @@ bool fs_isdir(const char *path)
 
 	return true;
 }
+
+
+/**
+ * Check if given file exists and is a regular file
+ *
+ * @param file Filepath
+ *
+ * @return True if exists and is regular file, False if not
+ */
+bool fs_isfile(const char *file)
+{
+	struct stat st;
+
+	if (!file)
+		return false;
+
+	if (stat(file, &st) < 0)
+		return false;
+
+	if ((st.st_mode & S_IFMT) != S_IFREG)
+		return false;
+
+	return true;
+}
