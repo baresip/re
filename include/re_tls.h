@@ -69,6 +69,7 @@ void tls_disable_verify_server(struct tls *tls);
 
 /* TCP */
 
+int tls_conn_change_cert(struct tls_conn *tc, const char *file);
 int tls_start_tcp(struct tls_conn **ptc, struct tls *tls,
 		  struct tcp_conn *tcp, int layer);
 

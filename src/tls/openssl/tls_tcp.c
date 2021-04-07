@@ -348,6 +348,44 @@ static bool send_handler(int *err, struct mbuf *mb, void *arg)
 
 
 /**
+ * Change used certificate+key of an existing SSL object
+ *
+ * @param tc   TLS connection object
+ * @param file Cert+Key file
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int tls_conn_change_cert(struct tls_conn *tc, const char *file)
+{
+	int r = 0;
+
+	if (!tc || !file)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	r = SSL_use_certificate_chain_file(tc->ssl, file);
+#else
+	r = SSL_use_certificate_file(tc->ssl, file, SSL_FILETYPE_PEM);
+#endif
+	if (r <= 0) {
+		DEBUG_WARNING("change cert: "
+			"cant't read certificate file: %s\n", file);
+		ERR_clear_error();
+		return EINVAL;
+	}
+
+	r = SSL_use_PrivateKey_file(tc->ssl, file, SSL_FILETYPE_PEM);
+	if (r <= 0) {
+		DEBUG_WARNING("change cert: key missmatch in %s\n", file);
+		ERR_clear_error();
+		return EKEYREJECTED;
+	}
+
+	return 0;
+}
+
+
+/**
  * Start TLS on a TCP-connection
  *
  * @param ptc   Pointer to allocated TLS connectioon
