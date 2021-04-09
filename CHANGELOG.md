@@ -29,11 +29,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fmt: add pl_i32() that converts pl to int32_t [#60]
 - fmt: add pl_i64() that converts pl to int64_t [#60]
 - mk/re: add C11 and Atomic detection [#61]
+- ci: add abi check [#39]
+- trace: add re_trace api [#48]
+- Add function that resets the timeout timer for a connection of the HTTP server. [#88]
+- add error trace helpers [#87]
+- sip/auth: add algorithm=MD5 [#86]
+- sys: filesystem isdir function
+- tls: use ENOENT in tls_add_cafile_path as error code
+- tls: more generic function to set cafile and capath
+- mk: add .so name versioning, resolves #32
+- mk/re: add clang shorten-64-to-32 warning
+- mk/re: document new library/header prioritised order with custom SYSROOT
+- mk/re: info double colon rule (#64) [#64]
+- udp: Add function udp_open for socket without bind
+- rtp: Add rtp_open which creates an RTP object only for sending. [#77]
+- sip: add decode function for SIP transport
+- sip: SIP/TLS Server Name Indication (#67) [#67]
+- transp: add flag to disable SIP TLS server verification [#76]
 
 ### Removed
 
 - openssl: remove obsolete function tls_set_hostname() [#33]
 - mk/re: remove gcc 2.x/3.x support [#58]
+- ci: drop ubuntu 16.04 support - end of life
 
 ### Changed
 
@@ -42,6 +60,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - main: disable MAIN_DEBUG, TMR_DEBUG and increase MAX_BLOCKING to 500ms [#43]
 - sipreg: dont't force digest challenge for register [#49]
 - mk/re: do not override LIBRE_INC, LIBRE_SO and LIBRE_PATH [#62]
+- readme: update supported systems and add tiers [#81]
+- tls: use ENOTDIR in tls_add_cafile_path if capath is not a dir [#84]
+- tls: check capath is directory
+- net: get default source addr from udp local test socket [#66]
+- Update chklist.c [#70]
+- Update icesdp.c [#69]
+- mk: cross build changes (#63) [#63]
+- sip: use sip_transp_decode() [#71]
+- tls: tls_get_issuer/subject return the info of the first loaded ca [#80]
 
 ### Fixed
 
@@ -57,6 +84,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - sip/keepalive: fix codeql cpp/integer-multiplication-cast-to-long
 - fmt/time: fix codeql gmtime warning
 - mk/re: fix gcc 4.x and newer compiler warnings
+- sys: add _BSD_SOURCE 1 for compatibility reasons [#92]
+- fix weak self-signed certificates [#68]
+- net/tls: fixing shorten-64-to-32 warnings [#65]
+- http: add missing newline to warning [#78]
+- http: fix file read for client certificates
+- mk/re: do not override LIBRE_INC, LIBRE_SO and LIBRE_PATH [#62]
+- tls: safety NULL pointer check in tls_add_ca() [#79]
 
 ### Contributors (many thanks)
 
@@ -134,9 +168,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Richard Aas
 - Sebastian Reimers
 
-
-[#61]: https://github.com/baresip/re/pull/61
+[#81]: https://github.com/baresip/re/pull/81
+[#48]: https://github.com/baresip/re/pull/48
+[#92]: https://github.com/baresip/re/pull/92
+[#88]: https://github.com/baresip/re/pull/88
+[#87]: https://github.com/baresip/re/pull/87
+[#86]: https://github.com/baresip/re/pull/86
+[#84]: https://github.com/baresip/re/pull/84
+[#83]: https://github.com/baresip/re/pull/83
+[#82]: https://github.com/baresip/re/pull/82
+[#80]: https://github.com/baresip/re/pull/80
+[#79]: https://github.com/baresip/re/pull/79
+[#78]: https://github.com/baresip/re/pull/78
+[#77]: https://github.com/baresip/re/pull/77
+[#76]: https://github.com/baresip/re/pull/76
+[#39]: https://github.com/baresip/re/pull/39
+[#66]: https://github.com/baresip/re/pull/66
+[#74]: https://github.com/baresip/re/pull/74
+[#67]: https://github.com/baresip/re/pull/67
+[#71]: https://github.com/baresip/re/pull/71
+[#70]: https://github.com/baresip/re/pull/70
+[#69]: https://github.com/baresip/re/pull/69
+[#68]: https://github.com/baresip/re/pull/68
+[#65]: https://github.com/baresip/re/pull/65
+[#63]: https://github.com/baresip/re/pull/63
+[#64]: https://github.com/baresip/re/pull/64
 [#62]: https://github.com/baresip/re/pull/62
+[#61]: https://github.com/baresip/re/pull/61
 [#60]: https://github.com/baresip/re/pull/60
 [#58]: https://github.com/baresip/re/pull/58
 [#56]: https://github.com/baresip/re/pull/56
@@ -167,6 +225,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[v1.0.0]: https://github.com/baresip/re/compare/v0.6.1...v1.0.0
-[v1.1.0]: https://github.com/baresip/re/compare/v1.0.0...v1.1.0
 [Unreleased]: https://github.com/baresip/re/compare/v1.1.0...HEAD
+[v1.1.0]: https://github.com/baresip/re/compare/v1.0.0...v1.1.0
+[v1.0.0]: https://github.com/baresip/re/compare/v0.6.1...v1.0.0
