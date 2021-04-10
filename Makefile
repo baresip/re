@@ -4,14 +4,14 @@
 # Copyright (C) 2010 Creytiv.com
 #
 
-# Master version number
-VER_MAJOR := 1
-VER_MINOR := 1
+# Main version number
+VER_MAJOR := 2
+VER_MINOR := 0
 VER_PATCH := 0
 
 # Libtool similar ABI versioning
 # https://github.com/baresip/re/wiki/ABI-Versioning
-ABI_CUR   := 0
+ABI_CUR   := 1
 ABI_REV   := 0
 ABI_AGE   := 0
 
