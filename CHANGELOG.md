@@ -94,16 +94,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Contributors (many thanks)
 
-- [alfredh](https://github.com/alfredh)
-- [cspiel1](https://github.com/cspiel1)
-- [juha-h](https://github.com/juha-h)
-- [ahinrichs](https://github.com/ahinrichs)
-- [jurjen-van-dijk](https://github.com/jurjen-van-dijk)
 - [sreimers](https://github.com/sreimers)
 - [cHuberCoffee](https://github.com/cHuberCoffee)
-- [webstean](https://github.com/webstean)
-- [viric](https://github.com/viric)
-
+- [RobertMi21](https://github.com/RobertMi21)
+- [cspiel1](https://github.com/cspiel1)
+- [alfredh](https://github.com/alfredh)
+- [fippo](https://github.com/fippo)
+- [jurjen-van-dijk](https://github.com/jurjen-van-dijk)
+- [rolizo](https://github.com/rolizo)
 
 
 ## [v1.1.0] - 2020-10-04
