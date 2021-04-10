@@ -95,12 +95,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Contributors (many thanks)
 
 - [alfredh](https://github.com/alfredh)
-- [cHuberCoffee](https://github.com/cHuberCoffee)
 - [cspiel1](https://github.com/cspiel1)
-- [johnjuuljensen](https://github.com/johnjuuljensen)
+- [juha-h](https://github.com/juha-h)
+- [ahinrichs](https://github.com/ahinrichs)
 - [jurjen-van-dijk](https://github.com/jurjen-van-dijk)
-- [rolizo](https://github.com/rolizo)
 - [sreimers](https://github.com/sreimers)
+- [cHuberCoffee](https://github.com/cHuberCoffee)
+- [webstean](https://github.com/webstean)
+- [viric](https://github.com/viric)
+
 
 
 ## [v1.1.0] - 2020-10-04
