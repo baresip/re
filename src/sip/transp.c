@@ -35,10 +35,17 @@ enum {
 };
 
 
+struct sip_ccert {
+	struct le he;
+	struct pl file;
+};
+
+
 struct sip_transport {
 	struct le le;
 	struct sa laddr;
 	struct sip *sip;
+	struct hash *ht_ccert;
 	struct tls *tls;
 	void *sock;
 	enum sip_transp tp;
@@ -95,6 +102,8 @@ static void transp_destructor(void *arg)
 		udp_handler_set(transp->sock, NULL, NULL);
 
 	list_unlink(&transp->le);
+	hash_flush(transp->ht_ccert);
+	mem_deref(transp->ht_ccert);
 	mem_deref(transp->sock);
 	mem_deref(transp->tls);
 	mem_deref(transp->http_cli);
@@ -630,6 +639,40 @@ static void tcp_connect_handler(const struct sa *paddr, void *arg)
 	}
 }
 
+#ifdef USE_TLS
+static uint32_t get_hash_of_fromhdr(struct mbuf *mb)
+{
+	struct sip_msg *msg;
+	struct mbuf *sup = NULL;
+	uint32_t hsup = 0;
+	int err = 0;
+
+	err = sip_msg_decode(&msg, mb);
+	if (err)
+		return 0;
+
+	sup = mbuf_alloc(30);
+	if (!sup)
+		return ENOMEM;
+
+	err = mbuf_printf(sup, "\"%r\" <%r:%r@%r:%d>", &msg->from.uri.user,
+		&msg->from.uri.scheme, &msg->from.uri.user,
+		&msg->from.uri.host, msg->from.uri.port);
+	if (err)
+		goto out;
+
+	mbuf_set_pos(sup, 0);
+	hsup = hash_joaat(mbuf_buf(sup), mbuf_get_left(sup));
+	mbuf_set_pos(mb, 0);
+
+ out:
+	mem_deref(msg);
+	mem_deref(sup);
+
+	return hsup;
+}
+#endif
+
 
 static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		     const struct sa *dst, char *host, struct mbuf *mb,
@@ -677,6 +720,8 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 #ifdef USE_TLS
 	if (secure) {
 		const struct sip_transport *transp;
+		struct sip_ccert *ccert;
+		uint32_t hash = 0;
 
 		transp = transp_find(sip, SIP_TRANSP_TLS, sa_af(dst), dst);
 		if (!transp || !transp->tls) {
@@ -688,7 +733,22 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		if (err)
 			goto out;
 
-		err = tls_set_verify_server(conn->sc, host);
+		hash = get_hash_of_fromhdr(mb);
+		ccert = list_ledata(
+				list_head(hash_list(transp->ht_ccert, hash)));
+		if (ccert) {
+			char *f;
+			err = pl_strdup(&f, &ccert->file);
+			if (err)
+				goto out;
+
+			err = tls_conn_change_cert(conn->sc, f);
+			mem_deref(f);
+			if (err)
+				goto out;
+		}
+
+		err |= tls_set_verify_server(conn->sc, host);
 		if (err)
 			goto out;
 	}
@@ -1036,6 +1096,14 @@ int sip_transp_add(struct sip *sip, enum sip_transp tp,
 	if (!transp)
 		return ENOMEM;
 
+	if (tp == SIP_TRANSP_TLS) {
+		err = hash_alloc(&transp->ht_ccert, 32);
+		if (err) {
+			mem_deref(transp);
+			return err;
+		}
+	}
+
 	list_append(&sip->transpl, &transp->le, transp);
 	transp->sip = sip;
 	transp->tp  = tp;
@@ -1143,6 +1211,71 @@ int sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 	if (err)
 		mem_deref(transp);
 
+	return err;
+}
+
+
+/**
+ * Add a client certificate to the TLS transport object
+ * Client certificates are saved as hash-table.
+ * Hashtable-Key: "username" <sip:username\@address:port>
+ *
+ * @param sip Global SIP stack
+ * @param uri Account uri information
+ * @param cert Certificate + Key file
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
+			 const char *cert)
+{
+	int err = 0;
+	const struct sip_transport *transp = NULL;
+	struct sip_ccert *ccert = NULL;
+	struct mbuf *sup = NULL;
+	uint32_t hsup = 0;
+
+	if (!sip || !uri || !cert)
+		return EINVAL;
+
+	sup = mbuf_alloc(30);
+	if (!sup)
+		return ENOMEM;
+
+	err = mbuf_printf(sup, "\"%r\" <%r:%r@%r:%d>", &uri->user,
+		&uri->scheme, &uri->user, &uri->host, uri->port);
+	if (err)
+		goto out;
+
+	mbuf_set_pos(sup, 0);
+
+	hsup = hash_joaat(mbuf_buf(sup), mbuf_get_left(sup));
+	transp = transp_find(sip, SIP_TRANSP_TLS, AF_INET, NULL);
+	if (transp) {
+		ccert = mem_zalloc(sizeof(*ccert), NULL);
+		if (!ccert) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		pl_set_str(&ccert->file, cert);
+		hash_append(transp->ht_ccert, hsup, &ccert->he, ccert);
+	}
+
+	transp = transp_find(sip, SIP_TRANSP_TLS, AF_INET6, NULL);
+	if (transp) {
+		ccert = mem_zalloc(sizeof(*ccert), NULL);
+		if (!ccert) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		pl_set_str(&ccert->file, cert);
+		hash_append(transp->ht_ccert, hsup, &ccert->he, ccert);
+	}
+
+ out:
+	mem_deref(sup);
 	return err;
 }
 

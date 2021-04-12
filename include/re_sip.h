@@ -270,6 +270,8 @@ int  sip_transp_add(struct sip *sip, enum sip_transp tp,
 int  sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 			    const struct sa *laddr,
 			    bool server, const char *cert);
+int  sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
+			  const char *ccertfile);
 void sip_transp_flush(struct sip *sip);
 bool sip_transp_isladdr(const struct sip *sip, enum sip_transp tp,
 			const struct sa *laddr);

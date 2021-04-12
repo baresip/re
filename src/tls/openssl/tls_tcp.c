@@ -362,7 +362,8 @@ int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 	if (!tc || !file)
 		return EINVAL;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
 	r = SSL_use_certificate_chain_file(tc->ssl, file);
 #else
 	r = SSL_use_certificate_file(tc->ssl, file, SSL_FILETYPE_PEM);
