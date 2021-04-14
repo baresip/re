@@ -798,7 +798,7 @@ CLANG_SRCS    += $(filter-out $(CLANG_IGNORE), $(patsubst %,src/%,$(SRCS)))
 
 .PHONY:
 clang:
-	clang --analyze $(CLANG_OPTIONS) $(CFLAGS) $(CLANG_SRCS)
+	@clang --analyze $(CLANG_OPTIONS) $(CFLAGS) $(CLANG_SRCS)
 	@rm -f *.plist
 
 
