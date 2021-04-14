@@ -792,12 +792,13 @@ endif
 # Clang section
 #
 
-CLANG_OPTIONS := -Iinclude -I$(LIBRE_INC) $(CFLAGS)
+CLANG_OPTIONS := -Iinclude -I$(LIBRE_INC)
 CLANG_IGNORE  :=
 CLANG_SRCS    += $(filter-out $(CLANG_IGNORE), $(patsubst %,src/%,$(SRCS)))
 
+.PHONY:
 clang:
-	@clang --analyze $(CLANG_OPTIONS) $(CLANG_SRCS)
+	clang --analyze $(CLANG_OPTIONS) $(CFLAGS) $(CLANG_SRCS)
 	@rm -f *.plist
 
 
