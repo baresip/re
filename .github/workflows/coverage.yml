@@ -1,9 +1,9 @@
-name: Code coverage
+name: Coverage
 
 on: [push, pull_request]
 
 jobs:
-  codecov:
+  coverage:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,4 +39,14 @@ jobs:
       run: | 
         cd ../re
         gcov build-x86_64/**/*.o
-        bash <(curl -s https://codecov.io/bash)
+
+    - name: install gcovr
+      run: |
+        pip install gcovr
+
+    - name: coverage check
+      run: |
+        min_cov="54.3"
+        cov=$(~/.local/bin/gcovr -r . -s | grep lines | awk '{ print $2 }' | sed 's/%//')
+        echo "Coverage: ${cov}% (min $min_cov%)"
+        exit $(echo "$cov < $min_cov" | bc -l)
