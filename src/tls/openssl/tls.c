@@ -1254,11 +1254,11 @@ static int tls_get_ca_chain_field(struct tls *tls, struct mbuf *mb,
 
 	crt = SSL_CTX_get0_certificate(tls->ctx);
 	if (!crt)
-		return EINVAL;
+		return ENOENT;
 
 	field = field_getter(crt);
 	if (!field)
-		return EINVAL;
+		return ENOTSUP;
 
 	return convert_X509_NAME_to_mbuf(field, mb, flags);
 }
