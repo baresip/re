@@ -639,6 +639,19 @@ int udp_sockbuf_set(struct udp_sock *us, int size)
 }
 
 
+int udp_settos(struct udp_sock *us, uint8_t tos)
+{
+	int err = 0;
+	int v = tos;
+
+	if (!us)
+		return EINVAL;
+
+	err = udp_setsockopt(us, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	return err;
+}
+
+
 /**
  * Set the maximum receive chunk size on a UDP Socket
  *
