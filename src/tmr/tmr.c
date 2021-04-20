@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#ifdef DARWIN
+#if defined(FREEBSD) || defined(OPENBSD) || defined(DARWIN)
 #define _DEFAULT_SOURCE 1
 #else
 #define _POSIX_C_SOURCE 199309L
@@ -142,7 +142,11 @@ uint64_t tmr_jiffies_usec(void)
 #else
 	struct timespec now;
 
+#if defined(FREEBSD) || defined(OPENBSD)
+	if (0 != clock_gettime(CLOCK_MONOTONIC, &now)) {
+#else
 	if (0 != clock_gettime(CLOCK_MONOTONIC_RAW, &now)) {
+#endif
 		DEBUG_WARNING("jiffies: clock_gettime() failed (%m)\n", errno);
 		return 0;
 	}
