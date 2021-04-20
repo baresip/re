@@ -57,6 +57,8 @@ int  tcp_accept(struct tcp_conn **tcp, struct tcp_sock *ts, tcp_estab_h *eh,
 		tcp_recv_h *rh, tcp_close_h *ch, void *arg);
 void tcp_reject(struct tcp_sock *ts);
 int  tcp_sock_local_get(const struct tcp_sock *ts, struct sa *local);
+int  tcp_settos(struct tcp_sock *ts, uint32_t tos);
+int  tcp_conn_settos(struct tcp_conn *tc, uint32_t tos);
 
 
 /* TCP Connection */
