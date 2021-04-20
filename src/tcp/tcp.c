@@ -61,6 +61,7 @@ struct tcp_sock {
 	int fdc;              /**< Cached connection file descriptor */
 	tcp_conn_h *connh;    /**< TCP Connect handler               */
 	void *arg;            /**< Handler argument                  */
+	uint8_t tos;          /**< Type-of-service field             */
 };
 
 
@@ -79,6 +80,7 @@ struct tcp_conn {
 	size_t txqsz_max;
 	bool active;          /**< We are connecting flag            */
 	bool connected;       /**< Connection is connected flag      */
+	uint8_t tos;          /**< Type-of-service field             */
 };
 
 
@@ -485,6 +487,30 @@ static void tcp_sockopt_set(int fd)
 #else
 	(void)fd;
 #endif
+}
+
+
+static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
+		    const void *optval, uint32_t optlen)
+{
+	int err = 0;
+
+	if (!ts)
+		return EINVAL;
+
+	if (-1 != ts->fdc) {
+		if (0 != setsockopt(ts->fdc, level, optname,
+				    BUF_CAST optval, optlen))
+			err |= errno;
+	}
+
+	if (-1 != ts->fd) {
+		if (0 != setsockopt(ts->fd, level, optname,
+				    BUF_CAST optval, optlen))
+			err |= errno;
+	}
+
+	return err;
 }
 
 
@@ -1412,4 +1438,38 @@ int tcp_register_helper(struct tcp_helper **thp, struct tcp_conn *tc,
 		*thp = th;
 
 	return 0;
+}
+
+
+int tcp_settos(struct tcp_sock *ts, uint32_t tos)
+{
+	int err = 0;
+	int v = tos;
+
+	if (!ts)
+		return EINVAL;
+
+	ts->tos = tos;
+	err = tcp_sock_setopt(ts, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+
+	return err;
+}
+
+
+int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
+{
+	int err = 0;
+	int v = tos;
+
+	if (!tc)
+		return EINVAL;
+
+	tc->tos = tos;
+	if (-1 != tc->fdc) {
+		if (0 != setsockopt(tc->fdc, IPPROTO_IP, IP_TOS,
+					BUF_CAST &v, sizeof(v)))
+			err = errno;
+	}
+
+	return err;
 }
