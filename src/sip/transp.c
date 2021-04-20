@@ -49,6 +49,7 @@ struct sip_transport {
 	struct tls *tls;
 	void *sock;
 	enum sip_transp tp;
+	uint8_t tos;
 
 	struct http_cli *http_cli;
 	struct http_sock *http_sock;
@@ -619,6 +620,7 @@ static void tcp_connect_handler(const struct sa *paddr, void *arg)
 	if (err)
 		goto out;
 
+	(void)tcp_conn_settos(conn->tc, transp->tos);
 #ifdef USE_TLS
 	if (transp->tls) {
 		err = tls_start_tcp(&conn->sc, transp->tls, conn->tc, 0);
@@ -717,6 +719,7 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	if (err)
 		goto out;
 
+	(void)tcp_conn_settos(conn->tc, sip->tos);
 #ifdef USE_TLS
 	if (secure) {
 		const struct sip_transport *transp;
@@ -1547,6 +1550,42 @@ uint16_t sip_transp_port(enum sip_transp tp, uint16_t port)
 	case SIP_TRANSP_WSS: return 443;
 	default:             return 0;
 	}
+}
+
+
+int  sip_settos(struct sip *sip, uint8_t tos)
+{
+	struct le *le;
+	int err = 0;
+
+	if (!sip)
+		return EINVAL;
+
+	sip->tos = tos;
+
+	for (le = sip->transpl.head; le; le = le->next) {
+
+		struct sip_transport *transp = le->data;
+		transp->tos = tos;
+		switch (transp->tp) {
+		case SIP_TRANSP_UDP:
+			err = udp_settos(transp->sock, tos);
+			break;
+
+		case SIP_TRANSP_TCP:
+		case SIP_TRANSP_TLS:
+			err = tcp_settos(transp->sock, tos);
+			break;
+			break;
+		default:
+			break;
+		}
+
+		if (err)
+			break;
+	}
+
+	return err;
 }
 
 

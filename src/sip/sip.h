@@ -22,6 +22,7 @@ struct sip {
 	sip_trace_h *traceh;
 	void *arg;
 	bool closing;
+	uint8_t tos;
 };
 
 
