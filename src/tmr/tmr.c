@@ -142,7 +142,11 @@ uint64_t tmr_jiffies_usec(void)
 #else
 	struct timespec now;
 
+#if defined(FREEBSD)
+	if (0 != clock_gettime(CLOCK_MONOTONIC, &now)) {
+#else
 	if (0 != clock_gettime(CLOCK_MONOTONIC_RAW, &now)) {
+#endif
 		DEBUG_WARNING("jiffies: clock_gettime() failed (%m)\n", errno);
 		return 0;
 	}
