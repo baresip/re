@@ -7,12 +7,12 @@
 # Main version number
 VER_MAJOR := 2
 VER_MINOR := 0
-VER_PATCH := 0
+VER_PATCH := 1
 
 # Libtool similar ABI versioning
 # https://github.com/baresip/re/wiki/ABI-Versioning
 ABI_CUR   := 1
-ABI_REV   := 0
+ABI_REV   := 1
 ABI_AGE   := 0
 
 ABI_MAJOR := $(shell expr $(ABI_CUR) - $(ABI_AGE))
