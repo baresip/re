@@ -222,6 +222,9 @@ static int media_decode(struct sdp_media **mp, struct sdp_session *sess,
 
 	m->rdir = sess->rdir;
 
+	if (!pl_u32(&port))
+		m->rdir = SDP_INACTIVE;
+
 	*mp = m;
 
 	return 0;
