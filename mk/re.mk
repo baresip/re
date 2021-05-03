@@ -140,6 +140,7 @@ CFLAGS	+= -Waggregate-return
 CFLAGS	+= -Wcast-align
 CFLAGS	+= -Wold-style-definition
 CFLAGS	+= -Wdeclaration-after-statement
+CFLAGS	+= -Wvla # Avoid insecure variable-length arrays
 ifeq ($(CC_NAME), clang)
 CFLAGS	+= -Wshorten-64-to-32
 endif
