@@ -22,6 +22,7 @@
 
 struct sip_auth {
 	struct list realml;
+	struct sip *sip;
 	sip_auth_h *authh;
 	void *arg;
 	bool ref;
@@ -70,6 +71,8 @@ static void realm_destructor(void *arg)
 static void auth_destructor(void *arg)
 {
 	struct sip_auth *auth = arg;
+
+	mem_deref(auth->sip);
 
 	if (auth->ref)
 		mem_deref(auth->arg);
@@ -196,6 +199,12 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 /**
  * Update a SIP authentication state from a SIP message
  *
+ * @note This function will check the received message and collect all
+ *       information into auth. Checking if it is a message from a non known
+ *       proxy address is necessary. We should ignore the challenge.
+ *       Upcoming challenges from any source can not leak a password
+ *       by the digests.
+ *
  * @param auth SIP Authentication state
  * @param msg  SIP Message
  *
@@ -205,6 +214,9 @@ int sip_auth_authenticate(struct sip_auth *auth, const struct sip_msg *msg)
 {
 	if (!auth || !msg)
 		return EINVAL;
+
+	if (!sip_is_regip(auth->sip, &msg->src))
+		return ECONNABORTED;
 
 	if (sip_msg_hdr_apply(msg, true, SIP_HDR_WWW_AUTHENTICATE,
 			      auth_handler, auth))
@@ -284,24 +296,26 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
  * Allocate a SIP authentication state
  *
  * @param authp Pointer to allocated SIP authentication state
+ * @param sip   SIP stack
  * @param authh Authentication handler
  * @param arg   Handler argument
  * @param ref   True to mem_ref() argument
  *
  * @return 0 if success, otherwise errorcode
  */
-int sip_auth_alloc(struct sip_auth **authp, sip_auth_h *authh,
+int sip_auth_alloc(struct sip_auth **authp, struct sip *sip, sip_auth_h *authh,
 		   void *arg, bool ref)
 {
 	struct sip_auth *auth;
 
-	if (!authp)
+	if (!authp || !sip)
 		return EINVAL;
 
 	auth = mem_zalloc(sizeof(*auth), auth_destructor);
 	if (!auth)
 		return ENOMEM;
 
+	auth->sip = mem_ref(sip);
 	auth->authh = authh ? authh : dummy_handler;
 	auth->arg   = ref ? mem_ref(arg) : arg;
 	auth->ref   = ref;

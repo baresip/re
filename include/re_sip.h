@@ -263,6 +263,10 @@ int  sip_send(struct sip *sip, void *sock, enum sip_transp tp,
 	      const struct sa *dst, struct mbuf *mb);
 void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh);
 
+int sip_add_regip(struct sip *sip, const struct sa *addr);
+void sip_rm_regip(struct sip *sip, const struct sa *addr);
+bool sip_is_regip(struct sip *sip, const struct sa *addr);
+
 
 /* transport */
 int  sip_transp_add(struct sip *sip, enum sip_transp tp,
@@ -323,8 +327,8 @@ void sip_reply_addr(struct sa *addr, const struct sip_msg *msg, bool rport);
 
 /* auth */
 int  sip_auth_authenticate(struct sip_auth *auth, const struct sip_msg *msg);
-int  sip_auth_alloc(struct sip_auth **authp, sip_auth_h *authh,
-		    void *arg, bool ref);
+int  sip_auth_alloc(struct sip_auth **authp, struct sip *sip,
+		    sip_auth_h *authh, void *arg, bool ref);
 void sip_auth_reset(struct sip_auth *auth);
 
 

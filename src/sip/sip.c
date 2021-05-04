@@ -78,6 +78,7 @@ static void destructor(void *arg)
 
 	list_flush(&sip->transpl);
 	list_flush(&sip->lsnrl);
+	list_flush(&sip->regipl);
 
 	mem_deref(sip->software);
 	mem_deref(sip->dnsc);
@@ -278,4 +279,85 @@ void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh)
 		return;
 
 	sip->traceh = traceh;
+}
+
+
+static bool regipl_contains_ip(struct le *le, void *arg)
+{
+	struct sip_regip *regip = le->data;
+	struct sa *addr = arg;
+
+	return sa_cmp(&regip->addr, addr, SA_ALL);
+}
+
+
+/**
+ * Add a SIP registrar IP address to the list tracked in the sip stack
+ *
+ * @param sip  SIP stack
+ * @param addr Address of the known server
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int sip_add_regip(struct sip *sip, const struct sa *addr)
+{
+	if (!sip || !addr)
+		return EINVAL;
+
+	if (!list_apply(&sip->regipl, true, regipl_contains_ip,
+		(void *)addr)) {
+		struct sip_regip *regip = mem_zalloc(sizeof(*regip), NULL);
+		if (!regip)
+			return ENOMEM;
+
+		sa_cpy(&regip->addr, addr);
+
+		list_append(&sip->regipl, &regip->le, regip);
+	}
+
+	return 0;
+}
+
+
+/**
+ * Remove a SIP registrar IP address from the list tracked in the sip stack
+ *
+ * @param sip  SIP stack
+ * @param addr Address of the server to remove
+ */
+void sip_rm_regip(struct sip *sip, const struct sa *addr)
+{
+	struct sip_regip *regip = NULL;
+	struct le *le = NULL;
+
+	if (!sip || !addr)
+		return;
+
+	le = list_head(&sip->regipl);
+	while (le) {
+		regip = le->data;
+		le = le->next;
+
+		if (sa_cmp(&regip->addr, addr, SA_ALL)) {
+			list_unlink(&regip->le);
+			mem_deref(regip);
+			break;
+		}
+	}
+}
+
+
+/**
+ * Check if a given address is part of the registrar tracked list
+ * in the sip stack
+ *
+ * @param sip  SIP stack
+ * @param addr Address to check
+ *
+ * @return true if the addess is a known server, false otherwise
+ */
+bool sip_is_regip(struct sip *sip, const struct sa *addr)
+{
+	return list_apply(&sip->regipl, true, regipl_contains_ip,
+		(void *)addr);
 }

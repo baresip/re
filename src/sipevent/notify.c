@@ -363,7 +363,7 @@ int sipevent_accept(struct sipnot **notp, struct sipevent_sock *sock,
 		    hash_joaat_str(sip_dialog_callid(not->dlg)),
 		    &not->he, not);
 
-	err = sip_auth_alloc(&not->auth, authh, aarg, aref);
+	err = sip_auth_alloc(&not->auth, sock->sip, authh, aarg, aref);
 	if (err)
 		goto out;
 

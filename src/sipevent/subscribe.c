@@ -391,7 +391,7 @@ static int sipsub_alloc(struct sipsub **subp, struct sipevent_sock *sock,
 		    hash_joaat_str(sip_dialog_callid(sub->dlg)),
 		    &sub->he, sub);
 
-	err = sip_auth_alloc(&sub->auth, authh, aarg, aref);
+	err = sip_auth_alloc(&sub->auth, sock->sip, authh, aarg, aref);
 	if (err)
 		goto out;
 
@@ -636,7 +636,7 @@ int sipevent_fork(struct sipsub **subp, struct sipsub *osub,
 		    hash_joaat_str(sip_dialog_callid(sub->dlg)),
 		    &sub->he, sub);
 
-	err = sip_auth_alloc(&sub->auth, authh, aarg, aref);
+	err = sip_auth_alloc(&sub->auth, osub->sip, authh, aarg, aref);
 	if (err)
 		goto out;
 

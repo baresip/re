@@ -9,6 +9,7 @@ struct sip {
 	struct list transpl;
 	struct list lsnrl;
 	struct list reql;
+	struct list regipl;
 	struct hash *ht_ctrans;
 	struct hash *ht_strans;
 	struct hash *ht_strans_mrg;
@@ -40,6 +41,12 @@ struct sip_keepalive {
 	struct sip_keepalive **kap;
 	sip_keepalive_h *kah;
 	void *arg;
+};
+
+
+struct sip_regip {
+	struct le le;
+	struct sa addr;
 };
 
 

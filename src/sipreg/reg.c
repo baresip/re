@@ -196,10 +196,13 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 		if (reg->regid > 0 && !reg->terminated && !reg->ka)
 			start_outbound(reg, msg);
+		sip_add_regip(reg->sip, &msg->src);
 	}
 	else {
 		if (reg->terminated && !reg->registered)
 			goto out;
+
+		sip_add_regip(reg->sip, &msg->src);
 
 		switch (msg->scode) {
 
@@ -250,12 +253,15 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 			reg->resph(err, msg, reg->arg);
 		}
 		else if (reg->terminated) {
+			sip_rm_regip(reg->sip, &msg->src);
 			mem_deref(reg);
 		}
 	}
 	else if (reg->terminated) {
-		if (!reg->registered || request(reg, true))
+		if (!reg->registered || request(reg, true)) {
+			sip_rm_regip(reg->sip, &msg->src);
 			mem_deref(reg);
+		}
 	}
 	else {
 		tmr_start(&reg->tmr, reg->wait, tmr_handler, reg);
@@ -359,7 +365,7 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 	if (err)
 		goto out;
 
-	err = sip_auth_alloc(&reg->auth, authh, aarg, aref);
+	err = sip_auth_alloc(&reg->auth, sip, authh, aarg, aref);
 	if (err)
 		goto out;
 

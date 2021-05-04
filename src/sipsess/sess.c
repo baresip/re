@@ -169,7 +169,7 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 	if (!sess)
 		return ENOMEM;
 
-	err = sip_auth_alloc(&sess->auth, authh, aarg, aref);
+	err = sip_auth_alloc(&sess->auth, sock->sip, authh, aarg, aref);
 	if (err)
 		goto out;
 
