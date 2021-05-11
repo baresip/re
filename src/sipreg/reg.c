@@ -27,6 +27,7 @@ enum {
 struct sipreg {
 	struct sip_loopstate ls;
 	struct sa laddr;
+	struct sa paddr;
 	struct tmr tmr;
 	struct sip *sip;
 	struct sip_keepalive *ka;
@@ -196,6 +197,8 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 		if (reg->regid > 0 && !reg->terminated && !reg->ka)
 			start_outbound(reg, msg);
+
+		sa_cpy(&reg->paddr, &msg->src);
 	}
 	else {
 		if (reg->terminated && !reg->registered)
@@ -438,6 +441,19 @@ int sipreg_set_rwait(struct sipreg *reg, uint32_t rwait)
 const struct sa *sipreg_laddr(const struct sipreg *reg)
 {
 	return reg ? &reg->laddr : NULL;
+}
+
+
+/**
+ * Get the IP address of the SIP Registration server
+ *
+ * @param reg sipreg object
+ *
+ * @return IP address
+ */
+const struct sa *sipreg_paddr(const struct sipreg *reg)
+{
+	return reg ? &reg->paddr : NULL;
 }
 
 
