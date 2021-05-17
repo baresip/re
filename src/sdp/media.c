@@ -54,7 +54,7 @@ static int media_alloc(struct sdp_media **mp, struct list *list)
 	list_append(list, &m->le, m);
 
 	m->ldir  = SDP_SENDRECV;
-	m->rdir  = SDP_SENDRECV;
+	m->rdir  = SDP_INACTIVE;
 	m->dynpt = RTP_DYNPT_START;
 
 	sa_init(&m->laddr, AF_INET);
@@ -169,7 +169,7 @@ void sdp_media_rreset(struct sdp_media *m)
 	list_flush(&m->rfmtl);
 	list_flush(&m->rattrl);
 
-	m->rdir = SDP_SENDRECV;
+	m->rdir = SDP_INACTIVE;
 
 	for (i=0; i<SDP_BANDWIDTH_MAX; i++)
 		m->rbwv[i] = -1;
