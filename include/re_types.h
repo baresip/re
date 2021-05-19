@@ -291,6 +291,10 @@ typedef bool _Bool;
 #define ENOSR 218
 #endif
 
+/** Key was rejected by service */
+#ifndef EKEYREJECTED
+#define EKEYREJECTED 129
+#endif
 
 /*
  * Any C compiler conforming to C99 or later MUST support __func__
