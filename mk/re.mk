@@ -428,6 +428,17 @@ USE_OPENSSL := $(shell [ -f $(SYSROOT)/include/openssl/ssl.h ] || \
 	[ -f $(SYSROOT)/local/include/openssl/ssl.h ] || \
 	[ -f $(SYSROOT_ALT)/include/openssl/ssl.h ] && echo "yes")
 
+OPENSSL_OPT := $(shell [ -f /usr/local/opt/openssl/include/openssl/ssl.h ] \
+	&& echo "/usr/local/opt/openssl")
+
+ifeq ($(USE_OPENSSL),)
+ifneq ($(OPENSSL_OPT),)
+USE_OPENSSL := yes
+CFLAGS  += -I$(OPENSSL_OPT)/include
+LFLAGS  += -L$(OPENSSL_OPT)/lib
+endif
+endif
+
 ifneq ($(USE_OPENSSL),)
 CFLAGS  += -DUSE_OPENSSL -DUSE_TLS
 LIBS    += -lssl -lcrypto
@@ -435,10 +446,12 @@ USE_TLS := yes
 
 USE_OPENSSL_DTLS := $(shell [ -f $(SYSROOT)/include/openssl/dtls1.h ] || \
 	[ -f $(SYSROOT)/local/include/openssl/dtls1.h ] || \
+	[ -f $(OPENSSL_OPT)/include/openssl/dtls1.h ] || \
 	[ -f $(SYSROOT_ALT)/include/openssl/dtls1.h ] && echo "yes")
 
 USE_OPENSSL_SRTP := $(shell [ -f $(SYSROOT)/include/openssl/srtp.h ] || \
 	[ -f $(SYSROOT)/local/include/openssl/srtp.h ] || \
+	[ -f $(OPENSSL_OPT)/include/openssl/srtp.h ] || \
 	[ -f $(SYSROOT_ALT)/include/openssl/srtp.h ] && echo "yes")
 
 ifneq ($(USE_OPENSSL_DTLS),)
