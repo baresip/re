@@ -119,6 +119,12 @@ int net_default_source_addr_get(int af, struct sa *ip)
 		sa_set_str(&dst, "1.1.1.1", 53);
 
 	err = net_dst_source_addr_get(&dst, ip);
+
+	if (af == AF_INET6 && sa_is_linklocal(ip)) {
+		sa_init(ip, af);
+		return 0;
+	}
+
 	if (!err)
 		return 0;
 
