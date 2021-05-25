@@ -90,6 +90,10 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (err)
 			goto out;
 
+		if (sess->redirecth)
+			sess->redirecth(msg, sip_dialog_uri(sess->dlg),
+				        sess->arg);
+
 		err = invite(sess);
 		if (err)
 			goto out;

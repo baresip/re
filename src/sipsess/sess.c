@@ -203,6 +203,18 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 }
 
 
+int  sipsess_set_redirect_handler(struct sipsess *sess,
+				  sipsess_redirect_h *redirecth)
+{
+	if (!sess || !redirecth)
+		return EINVAL;
+
+	sess->redirecth = redirecth;
+
+	return 0;
+}
+
+
 void sipsess_terminate(struct sipsess *sess, int err,
 		       const struct sip_msg *msg)
 {
