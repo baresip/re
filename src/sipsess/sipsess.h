@@ -30,6 +30,7 @@ struct sipsess {
 	sipsess_info_h *infoh;
 	sipsess_refer_h *referh;
 	sipsess_close_h *closeh;
+	sipsess_redirect_h *redirecth;
 	void *arg;
 	bool owner;
 	bool sent_offer;
