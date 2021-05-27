@@ -23,6 +23,7 @@
 #   SYSROOT        System root of library and include files
 #   SYSROOT_ALT    Alternative system root of library and include files
 #   USE_OPENSSL    If non-empty, link to libssl library
+#   OPENSSL_OPT    If non-empty, link to extra libssl library
 #   USE_ZLIB       If non-empty, link to libz library
 #   VERSION        Version number
 #
@@ -424,25 +425,23 @@ endif
 # External libraries section
 #
 
-USE_OPENSSL := $(shell [ -f $(SYSROOT)/include/openssl/ssl.h ] || \
-	[ -f $(SYSROOT)/local/include/openssl/ssl.h ] || \
-	[ -f $(SYSROOT_ALT)/include/openssl/ssl.h ] && echo "yes")
-
 OPENSSL_OPT := $(shell [ -f /usr/local/opt/openssl/include/openssl/ssl.h ] \
 	&& echo "/usr/local/opt/openssl")
 
-ifeq ($(USE_OPENSSL),)
-ifneq ($(OPENSSL_OPT),)
-USE_OPENSSL := yes
-CFLAGS  += -I$(OPENSSL_OPT)/include
-LFLAGS  += -L$(OPENSSL_OPT)/lib
-endif
-endif
+USE_OPENSSL := $(shell [ -f $(SYSROOT)/include/openssl/ssl.h ] || \
+	[ -f $(SYSROOT)/local/include/openssl/ssl.h ] || \
+	[ -f $(OPENSSL_OPT)/include/openssl/ssl.h ] || \
+	[ -f $(SYSROOT_ALT)/include/openssl/ssl.h ] && echo "yes")
 
 ifneq ($(USE_OPENSSL),)
 CFLAGS  += -DUSE_OPENSSL -DUSE_TLS
 LIBS    += -lssl -lcrypto
 USE_TLS := yes
+
+ifneq ($(OPENSSL_OPT),)
+CFLAGS  += -I$(OPENSSL_OPT)/include
+LFLAGS  += -L$(OPENSSL_OPT)/lib
+endif
 
 USE_OPENSSL_DTLS := $(shell [ -f $(SYSROOT)/include/openssl/dtls1.h ] || \
 	[ -f $(SYSROOT)/local/include/openssl/dtls1.h ] || \
@@ -668,6 +667,7 @@ info::
 	@echo "  LIBRE_PATH:    $(LIBRE_PATH)"
 	@echo "  LIBRE_INC:     $(LIBRE_INC)"
 	@echo "  LIBRE_SO:      $(LIBRE_SO)"
+	@echo "  OPENSSL_OPT:   $(OPENSSL_OPT)"
 	@echo "  USE_OPENSSL:   $(USE_OPENSSL)"
 	@echo "  USE_OPENSSL_AES:   $(USE_OPENSSL_AES)"
 	@echo "  USE_OPENSSL_HMAC:  $(USE_OPENSSL_HMAC)"
