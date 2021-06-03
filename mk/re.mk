@@ -235,9 +235,10 @@ endif
 ifeq ($(CC_NAME),gcc)
 	SH_LFLAGS	+= -dylib
 endif
-ifneq ($(VERSION),)
-	SH_LFLAGS	+= -current_version $(VERSION)
-	SH_LFLAGS	+= -compatibility_version $(VERSION)
+ifneq ($(ABI_CUR),)
+	SH_LFLAGS	+= -current_version \
+		$(shell expr $(ABI_CUR) + 1).$(ABI_REV)
+	SH_LFLAGS	+= -compatibility_version $(shell expr $(ABI_CUR) + 1)
 endif
 	MOD_LFLAGS	+= -undefined dynamic_lookup
 	APP_LFLAGS	+=
