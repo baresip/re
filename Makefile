@@ -97,7 +97,7 @@ ifneq ($(RANLIB),)
 	@$(RANLIB) $@
 endif
 
-libre.pc:
+libre.pc: Makefile
 	@echo 'prefix='$(PREFIX) > libre.pc
 	@echo 'exec_prefix=$${prefix}' >> libre.pc
 	@echo 'libdir=$(LIBDIR)' >> libre.pc
