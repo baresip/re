@@ -23,6 +23,7 @@
 #include <re_http.h>
 #include <re_websock.h>
 #include <re_sip.h>
+#include <re_net.h>
 #include "sip.h"
 
 
@@ -150,19 +151,33 @@ static const struct sip_transport *transp_find(struct sip *sip,
 					       int af, const struct sa *dst)
 {
 	struct le *le;
-	(void)dst;
+	struct sa dsttmp;
 
 	for (le = sip->transpl.head; le; le = le->next) {
 
 		const struct sip_transport *transp = le->data;
+		const struct sa *laddr = &transp->laddr;
+		struct sa src;
 
 		if (transp->tp != tp)
 			continue;
 
-		if (af != AF_UNSPEC && sa_af(&transp->laddr) != af)
+		if (af != AF_UNSPEC && sa_af(laddr) != af)
 			continue;
 
-		if (sa_is_linklocal(&transp->laddr) != sa_is_linklocal(dst))
+		if (!sa_isset(dst, SA_ADDR))
+			return transp;
+
+		if (sa_is_linklocal(laddr) != sa_is_linklocal(dst))
+			continue;
+
+		sa_cpy(&dsttmp, dst);
+		sa_set_scopeid(&dsttmp, sa_scopeid(laddr));
+
+		if (net_dst_source_addr_get(&dsttmp, &src))
+			continue;
+
+		if (!sa_cmp(&src, laddr, SA_ADDR))
 			continue;
 
 		return transp;
