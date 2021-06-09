@@ -104,7 +104,8 @@ libre.pc: Makefile
 	@echo 'includedir=$${prefix}/include/re' >> libre.pc
 	@echo '' >> libre.pc
 	@echo 'Name: libre' >> libre.pc
-	@echo 'Description: ' >> libre.pc
+	@echo 'Description: Generic library for real-time' \
+	      'communications with async IO support' >> libre.pc
 	@echo 'Version: '$(VERSION) >> libre.pc
 	@echo 'URL: https://github.com/baresip/re' >> libre.pc
 	@echo 'Libs: -L$${libdir} -lre' >> libre.pc
