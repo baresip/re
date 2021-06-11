@@ -591,3 +591,32 @@ bool sa_is_any(const struct sa *sa)
 		return false;
 	}
 }
+
+
+void sa_set_scopeid(struct sa *sa, uint32_t scopeid)
+{
+	if (!sa)
+		return;
+
+#ifdef HAVE_INET6
+	if (sa_af(sa) != AF_INET6)
+		return;
+
+	sa->u.in6.sin6_scope_id = scopeid;
+#endif
+}
+
+
+uint32_t sa_scopeid(const struct sa *sa)
+{
+	if (!sa)
+		return 0;
+
+#ifdef HAVE_INET6
+	if (sa_af(sa) != AF_INET6)
+		return 0;
+
+	return sa->u.in6.sin6_scope_id;
+#endif
+	return 0;
+}
