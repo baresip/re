@@ -59,5 +59,8 @@ bool     sa_is_linklocal(const struct sa *sa);
 bool     sa_is_loopback(const struct sa *sa);
 bool     sa_is_any(const struct sa *sa);
 
+void     sa_set_scopeid(struct sa *sa, uint32_t scopeid);
+uint32_t sa_scopeid(const struct sa *sa);
+
 struct re_printf;
 int      sa_print_addr(struct re_printf *pf, const struct sa *sa);
