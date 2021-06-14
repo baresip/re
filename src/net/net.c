@@ -71,6 +71,10 @@ int net_dst_source_addr_get(const struct sa *dst, struct sa *ip)
 	int err;
 	struct udp_sock *us;
 
+	if (!dst || !ip) {
+		return EINVAL;
+	}
+
 	if (sa_af(dst) == AF_INET6)
 		err = sa_set_str(ip, "::", 0);
 	else
