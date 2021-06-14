@@ -66,7 +66,7 @@ int net_hostaddr(int af, struct sa *ip)
  *
  * @return 0 if success, otherwise errorcode
  */
-int net_dst_source_addr_get(struct sa *dst, struct sa *ip)
+int net_dst_source_addr_get(const struct sa *dst, struct sa *ip)
 {
 	int err;
 	struct udp_sock *us;
