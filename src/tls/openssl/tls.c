@@ -143,7 +143,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	if (!tls)
 		return ENOMEM;
 
-	tls->verify_server = true;
+	tls->verify_server = false;
 	switch (method) {
 
 	case TLS_METHOD_SSLV23:
@@ -268,6 +268,8 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 	if (!tls || (!cafile && !capath) || !tls->ctx)
 		return EINVAL;
 
+	tls->verify_server = true;
+
 	if (capath && !fs_isdir(capath)) {
 		DEBUG_WARNING("capath is not a directory\n");
 		return ENOTDIR;
@@ -304,6 +306,8 @@ int tls_add_capem(struct tls *tls, const char *capem)
 
 	if (!tls || !capem || !tls->ctx)
 		return EINVAL;
+
+	tls->verify_server = true;
 
 	store = SSL_CTX_get_cert_store(tls->ctx);
 	if (!store)
