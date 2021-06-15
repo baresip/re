@@ -85,10 +85,11 @@ static inline int get_process_id(void)
 
 int re_trace_init(const char *json_file)
 {
+	int err = 0;
+
 #ifndef RE_TRACE_ENABLED
 	return 0;
 #endif
-	int err = 0;
 
 	if (!json_file)
 		return EINVAL;
@@ -132,10 +133,11 @@ out:
 
 int re_trace_close(void)
 {
+	int err = 0;
+
 #ifndef RE_TRACE_ENABLED
 	return 0;
 #endif
-	int err = 0;
 
 	re_trace_flush();
 
@@ -158,14 +160,15 @@ int re_trace_close(void)
 
 int re_trace_flush(void)
 {
-#ifndef RE_TRACE_ENABLED
-	return 0;
-#endif
 	int i, flush_count;
 	struct trace_event *event_tmp;
 	struct trace_event *e;
 	char json_arg[256];
 	char name[128];
+
+#ifndef RE_TRACE_ENABLED
+	return 0;
+#endif
 
 	if (!trace.lock)
 		return 0;
@@ -226,10 +229,11 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
                     int32_t custom_id, re_trace_arg_type arg_type,
                     const char *arg_name, void *arg_value)
 {
+	struct trace_event *e;
+
 #ifndef RE_TRACE_ENABLED
 	return;
 #endif
-	struct trace_event *e;
 
 	if (!trace.lock)
 		return;
