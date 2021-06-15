@@ -1316,3 +1316,17 @@ void tls_disable_verify_server(struct tls *tls)
 
 	tls->verify_server = false;
 }
+
+
+/**
+ * Enables SIP TLS server verifications for following requests
+ *
+ * @param tls     TLS Object
+ */
+void tls_enable_verify_server(struct tls *tls)
+{
+	if (!tls)
+		return;
+
+	tls->verify_server = true;
+}
