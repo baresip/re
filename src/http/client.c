@@ -882,6 +882,25 @@ int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc)
 
 #ifdef USE_TLS
 /**
+ * Replace HTTP Client TLS Context
+ *
+ * @param cli     HTTP Client
+ * @param tls     TLS Context
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_set_tls(struct http_cli *cli, struct tls *tls)
+{
+	if (!cli || !tls)
+		return EINVAL;
+
+	mem_deref(cli->tls);
+	cli->tls = mem_ref(tls);
+
+	return 0;
+}
+
+/**
  * Add trusted CA certificates
  *
  * @param cli     HTTP Client
