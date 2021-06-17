@@ -242,8 +242,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 
 	resp = mem_zalloc(sizeof(*resp), response_destructor);
 	if (!resp) {
-		err = ENOMEM;
-		goto out;
+		return ENOMEM;
 	}
 
 	mb = mbuf_alloc(256);
