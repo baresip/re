@@ -900,6 +900,7 @@ int http_client_set_tls(struct http_cli *cli, struct tls *tls)
 	return 0;
 }
 
+
 /**
  * Add trusted CA certificates
  *
