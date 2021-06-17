@@ -147,6 +147,7 @@ typedef void (http_conn_h)(struct tcp_conn *tc, struct tls_conn *sc,
 
 int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc);
 int http_client_set_tls(struct http_cli *cli, struct tls *tls);
+int http_client_get_tls(struct http_cli *cli, struct tls **tls);
 int http_client_set_config(struct http_cli *cli, struct http_conf *conf);
 int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		 const char *uri, http_resp_h *resph, http_data_h *datah,

@@ -900,6 +900,24 @@ int http_client_set_tls(struct http_cli *cli, struct tls *tls)
 	return 0;
 }
 
+/**
+ * Get HTTP Client TLS Context
+ *
+ * @param cli     HTTP Client
+ * @param tls     TLS Context
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_get_tls(struct http_cli *cli, struct tls **tls)
+{
+	if (!cli || !tls)
+		return EINVAL;
+
+	*tls = cli->tls;
+
+	return 0;
+}
+
 
 /**
  * Add trusted CA certificates
