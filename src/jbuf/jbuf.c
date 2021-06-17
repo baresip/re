@@ -345,7 +345,7 @@ int jbuf_set_wish(struct jbuf *jb, uint32_t wish)
 static uint32_t calc_bufftime(struct jbuf *jb)
 {
 	struct frame *fh, *ft;
-	uint32_t buftime = jb->ptime;
+	uint32_t buftime;
 	uint32_t diff;
 
 	jb->ptime = calc_ptime(jb);

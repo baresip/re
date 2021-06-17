@@ -632,7 +632,7 @@ static int read_file(char **pbuf, const char *path)
 	fclose(f);
 	buf[s] = 0;
 	if (n < s) {
-		buf = mem_deref(buf);
+		mem_deref(buf);
 		return EIO;
 	}
 
@@ -769,6 +769,8 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		err = tls_set_certificate(cli->tls,
 				cli->cert, strlen(cli->cert));
 	}
+	if (err)
+		goto out;
 #endif
 
 	if (!sa_set_str(&req->srvv[0], req->host, req->port)) {

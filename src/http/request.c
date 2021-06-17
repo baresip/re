@@ -327,7 +327,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 	}
 
 	/* keep internal reference for resp_handler */
-	conn = mem_ref(conn);
+	mem_ref(conn);
 	return 0;
 }
 
