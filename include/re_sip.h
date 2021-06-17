@@ -4,6 +4,8 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+/* forward declarations */
+struct tls;
 
 enum {
 	SIP_PORT     = 5060,
@@ -269,7 +271,7 @@ int  sip_transp_add(struct sip *sip, enum sip_transp tp,
 		    const struct sa *laddr, ...);
 int  sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 			    const struct sa *laddr,
-			    bool server, const char *cert);
+			    bool server, const char *cert, struct tls *tls);
 int  sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
 			  const char *ccertfile);
 void sip_transp_flush(struct sip *sip);

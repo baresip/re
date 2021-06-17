@@ -965,6 +965,9 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 				   " http client (%m)\n", err);
 			goto out;
 		}
+
+		if (transp->tls)
+			http_client_set_tls(transp->http_cli, transp->tls);
 	}
 
 	re_printf("websock: connecting to '%s'\n", ws_uri);
@@ -1158,9 +1161,21 @@ int sip_transp_add(struct sip *sip, enum sip_transp tp,
 }
 
 
+/**
+ * Add a SIP websocket transport
+ *
+ * @param sip    SIP stack instance
+ * @param tp     SIP Transport
+ * @param laddr  Local network address
+ * @param server True if server, otherwise false
+ * @param cert   Server Certificate
+ * @param tls    Optional TLS context
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 			   const struct sa *laddr,
-			   bool server, const char *cert)
+			   bool server, const char *cert, struct tls *tls)
 {
 	struct sip_transport *transp;
 	bool secure = tp == SIP_TRANSP_WSS;
@@ -1176,6 +1191,9 @@ int sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 	list_append(&sip->transpl, &transp->le, transp);
 	transp->sip = sip;
 	transp->tp  = tp;
+
+	if (tls)
+		transp->tls = mem_ref(tls);
 
 	if (server) {
 
