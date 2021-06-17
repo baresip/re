@@ -1,0 +1,15 @@
+name: clang analyze
+
+on: [push, pull_request]
+
+jobs:
+  clang-analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: make
+      run: | 
+        make info EXTRA_CFLAGS="-Werror" CCACHE=
+        make clang EXTRA_CFLAGS="-Werror" CCACHE=
