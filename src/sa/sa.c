@@ -12,6 +12,9 @@
 #include <arpa/inet.h>
 #endif
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
@@ -58,6 +61,33 @@ int sa_set(struct sa *sa, const struct pl *addr, uint16_t port)
 }
 
 
+int sa_addrinfo(const char *addr, struct sa *sa)
+{
+	struct addrinfo *res, *res0 = NULL;
+	struct addrinfo hints;
+	int err = 0;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags  = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res0))
+		return EADDRNOTAVAIL;
+
+	for (res = res0; res; res = res->ai_next) {
+
+		err = sa_set_sa(sa, res->ai_addr);
+		if (err)
+			continue;
+
+		break;
+	}
+
+	freeaddrinfo(res0);
+	return err;
+}
+
+
 /**
  * Convert character string to a network address structure
  *
@@ -68,13 +98,18 @@ int sa_set(struct sa *sa, const struct pl *addr, uint16_t port)
  */
 int sa_pton(const char *addr, struct sa *sa)
 {
-	if (!addr)
+	int err = 0;
+
+	if (!addr || !sa)
 		return EINVAL;
 
 	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
 		sa->u.in.sin_family = AF_INET;
 	}
 #ifdef HAVE_INET6
+	else if (!strncmp(addr, "fe80:", 5)) {
+		err = sa_addrinfo(addr, sa);
+	}
 	else if (inet_pton(AF_INET6, addr, &sa->u.in6.sin6_addr) > 0) {
 
 		if (IN6_IS_ADDR_V4MAPPED(&sa->u.in6.sin6_addr)) {
@@ -91,7 +126,7 @@ int sa_pton(const char *addr, struct sa *sa)
 		return EINVAL;
 	}
 
-	return 0;
+	return err;
 }
 
 
