@@ -47,6 +47,8 @@ int      sa_decode(struct sa *sa, const char *str, size_t len);
 int      sa_af(const struct sa *sa);
 uint32_t sa_in(const struct sa *sa);
 void     sa_in6(const struct sa *sa, uint8_t *addr);
+int      sa_addrinfo(const char *addr, struct sa *sa);
+
 int      sa_ntop(const struct sa *sa, char *buf, int size);
 int      sa_pton(const char *addr, struct sa *sa);
 uint16_t sa_port(const struct sa *sa);
