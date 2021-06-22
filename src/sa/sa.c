@@ -5,12 +5,17 @@
  */
 #define _BSD_SOURCE 1
 #define _DEFAULT_SOURCE 1
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_sa.h>
-#include "sa.h"
 
 
 #define DEBUG_MODULE "sa"
@@ -50,6 +55,43 @@ int sa_set(struct sa *sa, const struct pl *addr, uint16_t port)
 
 	(void)pl_strcpy(addr, buf, sizeof(buf));
 	return sa_set_str(sa, buf, port);
+}
+
+
+/**
+ * Convert character string to a network address structure
+ *
+ * @param addr IP address string
+ * @param sa   Returned socket address
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+static int net_inet_pton(const char *addr, struct sa *sa)
+{
+	if (!addr)
+		return EINVAL;
+
+	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
+		sa->u.in.sin_family = AF_INET;
+	}
+#ifdef HAVE_INET6
+	else if (inet_pton(AF_INET6, addr, &sa->u.in6.sin6_addr) > 0) {
+
+		if (IN6_IS_ADDR_V4MAPPED(&sa->u.in6.sin6_addr)) {
+			const uint8_t *a = &sa->u.in6.sin6_addr.s6_addr[12];
+			sa->u.in.sin_family = AF_INET;
+			memcpy(&sa->u.in.sin_addr.s_addr, a, 4);
+		}
+		else {
+			sa->u.in6.sin6_family = AF_INET6;
+		}
+	}
+#endif
+	else {
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 
@@ -319,7 +361,26 @@ void sa_in6(const struct sa *sa, uint8_t *addr)
  */
 int sa_ntop(const struct sa *sa, char *buf, int size)
 {
-	return net_inet_ntop(sa, buf, size);
+	if (!sa || !buf || !size)
+		return EINVAL;
+
+	switch (sa->u.sa.sa_family) {
+
+	case AF_INET:
+		inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
+		break;
+
+#ifdef HAVE_INET6
+	case AF_INET6:
+		inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
+		break;
+#endif
+
+	default:
+		return EAFNOSUPPORT;
+	}
+
+	return 0;
 }
 
 
