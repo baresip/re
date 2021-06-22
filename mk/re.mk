@@ -300,7 +300,7 @@ ifeq ($(OS),openbsd)
 	HAVE_ARC4RANDOM	:= 1
 endif
 ifeq ($(OS),win32)
-	CFLAGS		+= -DWIN32 -D_WIN32_WINNT=0x0501 -D__ssize_t_defined
+	CFLAGS		+= -DWIN32 -D_WIN32_WINNT=0x0600 -D__ssize_t_defined
 	LIBS		+= -lwsock32 -lws2_32 -liphlpapi
 	LFLAGS		+=
 	SH_LFLAGS	+= -shared
