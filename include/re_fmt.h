@@ -141,6 +141,8 @@ typedef void (fmt_param_h)(const struct pl *name, const struct pl *val,
 			   void *arg);
 
 bool fmt_param_exists(const struct pl *pl, const char *pname);
+bool fmt_param_sep_get(const struct pl *pl, const char *pname, char sep,
+		struct pl *val);
 bool fmt_param_get(const struct pl *pl, const char *pname, struct pl *val);
 void fmt_param_apply(const struct pl *pl, fmt_param_h *ph, void *arg);
 
