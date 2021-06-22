@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#undef  _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
 #include <windows.h>
 #include <re_types.h>
 #include <re_mem.h>
