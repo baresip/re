@@ -303,6 +303,13 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 			    sip->arg);
 	}
 
+	if (msg->req) {
+		if (!have_essential_fields(msg)){
+			(void)sip_reply(sip, msg, 400, "Bad Request");
+			return;
+		}
+	}
+
 	while (le) {
 		struct sip_lsnr *lsnr = le->data;
 
@@ -310,13 +317,6 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 
 		if (msg->req != lsnr->req)
 			continue;
-
-		if (msg->req) {
-			if (!have_essential_fields(msg)){
-				(void)sip_reply(sip, msg, 400, "Bad Request");
-				return;
-			}
-		}
 
 		if (lsnr->msgh(msg, lsnr->arg))
 			return;
