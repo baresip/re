@@ -286,13 +286,10 @@ static bool have_essential_fields(const struct sip_msg *msg)
 		pl_isset(&(msg->cseq.met)) &&
 		pl_isset(&(msg->callid)) &&
 		pl_isset(&(msg->maxfwd)) &&
-		pl_isset(&(msg->via.branch))) {
+		pl_isset(&(msg->via.branch)))
 		return true;
-	}
-	else {
-		return false;
-	}
 
+	return false;
 }
 
 static void sip_recv(struct sip *sip, const struct sip_msg *msg,
