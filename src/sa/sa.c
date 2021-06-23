@@ -66,7 +66,7 @@ int sa_set(struct sa *sa, const struct pl *addr, uint16_t port)
  *
  * @return 0 if success, otherwise errorcode
  */
-static int net_inet_pton(const char *addr, struct sa *sa)
+int sa_pton(const char *addr, struct sa *sa)
 {
 	if (!addr)
 		return EINVAL;
@@ -111,7 +111,7 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
 	if (!sa || !addr)
 		return EINVAL;
 
-	err = net_inet_pton(addr, sa);
+	err = sa_pton(addr, sa);
 	if (err)
 		return err;
 
