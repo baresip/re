@@ -279,6 +279,18 @@ static void conn_keepalive_handler(void *arg)
 		  conn_keepalive_handler, conn);
 }
 
+static bool have_essential_fields(const struct sip_msg *msg)
+{
+	if (pl_isset(&(msg->to.auri)) &&
+		pl_isset(&(msg->from.auri)) &&
+		pl_isset(&(msg->cseq.met)) &&
+		pl_isset(&(msg->callid)) &&
+		pl_isset(&(msg->maxfwd)) &&
+		pl_isset(&(msg->via.branch)))
+		return true;
+
+	return false;
+}
 
 static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 		     size_t start)
@@ -289,6 +301,13 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 		sip->traceh(false, msg->tp, &msg->src, &msg->dst,
 			    msg->mb->buf + start, msg->mb->end - start,
 			    sip->arg);
+	}
+
+	if (msg->req) {
+		if (!have_essential_fields(msg)){
+			(void)sip_reply(sip, msg, 400, "Bad Request");
+			return;
+		}
 	}
 
 	while (le) {
