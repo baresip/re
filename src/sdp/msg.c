@@ -354,7 +354,8 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 	enum sdp_bandwidth i;
 	const char *proto;
 	int err, supc = 0;
-	bool disabled;
+	bool disabled = false;
+	bool rejected = false;
 	struct le *le;
 	uint16_t port;
 
@@ -366,25 +367,29 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 			++supc;
 	}
 
-	if (m->uproto && !offer) {
+	/*disable if: local supported and (m->disabled or raddr port 0)*/
+	if (supc && (m->disabled || (!offer && !sa_port(&m->raddr)))) {
 		disabled = true;
-		port = 0;
-		proto = m->uproto;
-	}
-	else if (m->disabled || supc == 0 || (!offer && !sa_port(&m->raddr))) {
-		disabled = true;
-		port = 0;
+		port = sa_port(&m->laddr);
 		proto = m->proto;
 	}
+	/*reject if: not supported or not supported proto in the offer*/
+	else if (supc == 0 || (!offer && m->uproto)) {
+		rejected = true;
+		port = 0;
+		if (str_isset(m->uproto))
+			proto = m->uproto;
+		else
+			proto = m->proto;
+	}
+	/*everything works*/
 	else {
-		disabled = false;
 		port = sa_port(&m->laddr);
 		proto = m->proto;
 	}
 
 	err = mbuf_printf(mb, "m=%s %u %s", m->name, port, proto);
-
-	if (disabled) {
+	if (rejected) {
 		err |= mbuf_write_str(mb, " 0\r\n");
 		return err;
 	}
@@ -446,8 +451,9 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 		err |= mbuf_printf(mb, "a=rtcp:%u\r\n",
 				   sa_port(&m->laddr_rtcp));
 
-	err |= mbuf_printf(mb, "a=%s\r\n",
-			   sdp_dir_name(offer ? m->ldir : m->ldir & m->rdir));
+	err |= mbuf_printf(mb, "a=%s\r\n", disabled ?
+		sdp_dir_name(SDP_INACTIVE) :
+		sdp_dir_name(offer ? m->ldir : m->ldir & m->rdir));
 
 	for (le = m->lattrl.head; le; le = le->next)
 		err |= mbuf_printf(mb, "%H", sdp_attr_print, le->data);
