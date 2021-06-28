@@ -984,9 +984,10 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 				   " http client (%m)\n", err);
 			goto out;
 		}
-
+#ifdef USE_TLS
 		if (transp->tls)
 			http_client_set_tls(transp->http_cli, transp->tls);
+#endif
 	}
 
 	re_printf("websock: connecting to '%s'\n", ws_uri);
