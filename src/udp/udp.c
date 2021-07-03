@@ -868,6 +868,36 @@ int udp_send_helper(struct udp_sock *us, const struct sa *dst,
 }
 
 
+void udp_recv_helper(struct udp_sock *us, const struct sa *src,
+		     struct mbuf *mb, struct udp_helper *uhx)
+{
+	struct sa hsrc;
+	struct le *le;
+
+	if (!us || !src || !mb || !uhx)
+		return;
+
+	le = uhx->le.next;
+	while (le) {
+		struct udp_helper *uh = le->data;
+		bool hdld;
+
+		le = le->next;
+
+		if (src != &hsrc) {
+			sa_cpy(&hsrc, src);
+			src = &hsrc;
+		}
+
+		hdld = uh->recvh(&hsrc, mb, uh->arg);
+		if (hdld)
+			return;
+	}
+
+	us->rh(src, mb, us->arg);
+}
+
+
 /**
  * Find a UDP-helper on a UDP socket
  *
