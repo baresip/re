@@ -251,6 +251,8 @@ typedef void(sip_keepalive_h)(int err, void *arg);
 typedef void(sip_trace_h)(bool tx, enum sip_transp tp,
 			  const struct sa *src, const struct sa *dst,
 			  const uint8_t *pkt, size_t len, void *arg);
+typedef bool(sip_transp_listh)(enum sip_transp tp, const struct sa *laddr,
+			   void *arg);
 
 
 /* sip */
@@ -277,6 +279,8 @@ int  sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
 void sip_transp_flush(struct sip *sip);
 bool sip_transp_isladdr(const struct sip *sip, enum sip_transp tp,
 			const struct sa *laddr);
+bool sip_transp_list(const struct sip *sip, sip_transp_listh *transph,
+		     void *arg);
 const char *sip_transp_name(enum sip_transp tp);
 const char *sip_transp_param(enum sip_transp tp);
 enum sip_transp sip_transp_decode(const struct pl *pl);
