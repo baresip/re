@@ -164,6 +164,25 @@ static const struct sip_transport *transp_find(struct sip *sip,
 }
 
 
+bool sip_transp_list(const struct sip *sip, sip_transp_listh *transph,
+		     void *arg)
+{
+	struct le *le;
+
+	if (!sip || !transph)
+		return false;
+
+	for (le = sip->transpl.head; le; le = le->next) {
+
+		const struct sip_transport *transp = le->data;
+		if (transph(transp->tp, &transp->laddr, arg))
+			return true;
+	}
+
+	return false;
+}
+
+
 static struct sip_conn *conn_find(struct sip *sip, const struct sa *paddr,
 				  bool secure)
 {
