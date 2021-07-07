@@ -6,18 +6,15 @@
 #define _BSD_SOURCE 1
 #define _DEFAULT_SOURCE 1
 
-#ifdef WIN32
-#include <winsock2.h>
-#else
+#ifndef WIN32
 #include <arpa/inet.h>
 #define __USE_POSIX 1  /**< Use POSIX flag */
 #define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
 #define __USE_MISC 1
 #include <netdb.h>
 #endif
+
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
