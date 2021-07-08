@@ -69,7 +69,7 @@ int sa_addrinfo(const char *addr, struct sa *sa)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags  = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
+	hints.ai_flags  = AI_ADDRCONFIG | AI_NUMERICHOST;
 
 	if (getaddrinfo(addr, NULL, &hints, &res0))
 		return EADDRNOTAVAIL;
