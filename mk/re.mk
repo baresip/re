@@ -637,6 +637,7 @@ distclean:
 	@rm -f `find . -name "*.previous"` `find . -name "*.gcov"`
 	@rm -f `find . -name "*.exe"` `find . -name "*.dll"`
 	@rm -f `find . -name "*.dylib"`
+	@rm -f *.pc
 
 .PHONY: info
 info::
