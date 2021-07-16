@@ -5,13 +5,14 @@
  */
 
 enum odict_type {
+	ODICT_ERR = -1,
 	ODICT_OBJECT,
 	ODICT_ARRAY,
 	ODICT_STRING,
 	ODICT_INT,
 	ODICT_DOUBLE,
 	ODICT_BOOL,
-	ODICT_NULL,
+	ODICT_NULL
 };
 
 struct odict {
@@ -19,18 +20,7 @@ struct odict {
 	struct hash *ht;
 };
 
-struct odict_entry {
-	struct le le, he;
-	char *key;
-	union {
-		struct odict *odict;   /* ODICT_OBJECT / ODICT_ARRAY */
-		char *str;             /* ODICT_STRING */
-		int64_t integer;       /* ODICT_INT    */
-		double dbl;            /* ODICT_DOUBLE */
-		bool boolean;          /* ODICT_BOOL   */
-	} u;
-	enum odict_type type;
-};
+struct odict_entry;
 
 int odict_alloc(struct odict **op, uint32_t hash_size);
 const struct odict_entry *odict_lookup(const struct odict *o, const char *key);
@@ -47,10 +37,24 @@ bool odict_type_isreal(enum odict_type type);
 const char *odict_type_name(enum odict_type type);
 
 
-/* Helpers */
+/* Odict Helpers */
 
 const struct odict_entry *odict_get_type(const struct odict *o,
 					enum odict_type type, const char *key);
 const char *odict_string(const struct odict *o, const char *key);
 bool odict_get_number(const struct odict *o, uint64_t *num, const char *key);
 bool odict_get_boolean(const struct odict *o, bool *value, const char *key);
+struct odict *odict_get_object(const struct odict *o, const char *key);
+struct odict *odict_get_array(const struct odict *o, const char *key);
+
+
+/* Entry Helpers */
+
+enum odict_type odict_entry_type(const struct odict_entry *e);
+const char *odict_entry_key(const struct odict_entry *e);
+struct odict *odict_entry_object(const struct odict_entry *e);
+struct odict *odict_entry_array(const struct odict_entry *e);
+char *odict_entry_str(const struct odict_entry *e);
+int64_t odict_entry_int(const struct odict_entry *e);
+double odict_entry_dbl(const struct odict_entry *e);
+bool odict_entry_boolean(const struct odict_entry *e);
