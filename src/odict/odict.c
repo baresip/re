@@ -9,6 +9,7 @@
 #include "re_list.h"
 #include "re_hash.h"
 #include "re_odict.h"
+#include "odict.h"
 
 
 static void destructor(void *arg)
