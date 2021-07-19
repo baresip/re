@@ -1501,6 +1501,16 @@ bool sip_transp_supported(struct sip *sip, enum sip_transp tp, int af)
 }
 
 
+int  sip_transp_set_default(struct sip *sip, enum sip_transp tp)
+{
+	if (!sip)
+		return EINVAL;
+
+	sip->tp_def = tp;
+	return 0;
+}
+
+
 /**
  * Check if network address is part of SIP transports
  *
