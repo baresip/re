@@ -187,6 +187,7 @@ ifeq ($(MACHINE), mingw32)
 endif
 endif
 
+PKG_CONFIG := $(shell pkg-config --version)
 
 # default
 LIB_SUFFIX	:= .so
@@ -298,6 +299,8 @@ ifeq ($(OS),openbsd)
 	AFLAGS		:= cru
 	HAVE_KQUEUE	:= 1
 	HAVE_ARC4RANDOM	:= 1
+# openbsd has an incompatible pkg-config version
+	PKG_CONFIG	:=
 endif
 ifeq ($(OS),win32)
 	CFLAGS		+= -DWIN32 -D_WIN32_WINNT=0x0600 -D__ssize_t_defined
@@ -593,7 +596,6 @@ CFLAGS  += \
 	-DVER_MAJOR=$(VER_MAJOR) \
 	-DVER_MINOR=$(VER_MINOR) \
 	-DVER_PATCH=$(VER_PATCH)
-PKG_CONFIG := $(shell pkg-config --version)
 
 # Enable gcov Coverage testing
 #
