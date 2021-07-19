@@ -23,6 +23,7 @@ struct sip {
 	void *arg;
 	bool closing;
 	uint8_t tos;
+	enum sip_transp tp_def;
 };
 
 
