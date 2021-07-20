@@ -152,6 +152,7 @@ static const struct sip_transport *transp_find(struct sip *sip,
 {
 	struct le *le;
 	struct sa dsttmp;
+	const struct sip_transport *fb = NULL;
 
 	for (le = sip->transpl.head; le; le = le->next) {
 
@@ -171,6 +172,9 @@ static const struct sip_transport *transp_find(struct sip *sip,
 		if (sa_is_linklocal(laddr) != sa_is_linklocal(dst))
 			continue;
 
+		if (!fb)
+			fb = transp;
+
 		sa_cpy(&dsttmp, dst);
 		sa_set_scopeid(&dsttmp, sa_scopeid(laddr));
 
@@ -183,7 +187,7 @@ static const struct sip_transport *transp_find(struct sip *sip,
 		return transp;
 	}
 
-	return NULL;
+	return fb;
 }
 
 
