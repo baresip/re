@@ -294,6 +294,11 @@ static bool transp_next_srv(struct sip *sip, enum sip_transp *tp)
 	enum sip_transp i;
 
 	for (i=(enum sip_transp)(*tp-1); i>SIP_TRANSP_NONE; i--) {
+		const char *srvid;
+
+		srvid = sip_transp_srvid(i);
+		if (0 == str_cmp(srvid, "???"))
+			continue;
 
 		if (!sip_transp_supported(sip, i, AF_UNSPEC))
 			continue;
