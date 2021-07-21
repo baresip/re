@@ -566,6 +566,13 @@ const char *sip_dialog_callid(const struct sip_dialog *dlg)
 }
 
 
+int sip_dialog_set_callid(struct sip_dialog *dlg, const char *callid)
+{
+	dlg->callid = mem_deref(dlg->callid);
+	return str_dup(&dlg->callid, callid);
+}
+
+
 /**
  * Get the local sequence number from a SIP Dialog
  *
