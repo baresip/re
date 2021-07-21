@@ -12,6 +12,9 @@
 #include <re_mem.h>
 #include <re_fmt.h>
 
+enum {
+	X64_STRSIZE = 17,
+};
 
 /**
  * Convert a ascii hex string to binary format
@@ -81,6 +84,29 @@ int str_dup(char **dst, const char *src)
 
 	*dst = p;
 
+	return 0;
+}
+
+
+/**
+ * Converts an uint64_t to a 0-terminated string
+ *
+ * @param dst Pointer to destination string (set on return)
+ * @param val Value
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int str_x64dup(char **dst, uint64_t val)
+{
+	char *str;
+
+	str = mem_alloc(X64_STRSIZE, NULL);
+	if (!str)
+		return ENOMEM;
+
+	(void)re_snprintf(str, X64_STRSIZE, "%016llx", val);
+
+	*dst = str;
 	return 0;
 }
 

@@ -109,6 +109,7 @@ int  str_bool(bool *val, const char *str);
 int  str_hex(uint8_t *hex, size_t len, const char *str);
 void str_ncpy(char *dst, const char *src, size_t n);
 int  str_dup(char **dst, const char *src);
+int  str_x64dup(char **dst, uint64_t val);
 int  str_cmp(const char *s1, const char *s2);
 int  str_casecmp(const char *s1, const char *s2);
 size_t str_len(const char *s);
