@@ -188,6 +188,7 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		    const char *routev[], uint32_t routec,
 		    const char *ctype, struct mbuf *desc,
 		    sip_auth_h *authh, void *aarg, bool aref,
+		    const char *callid,
 		    sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		    sipsess_progr_h *progrh, sipsess_estab_h *estabh,
 		    sipsess_info_h *infoh, sipsess_refer_h *referh,
@@ -228,6 +229,12 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	err = sip_dialog_alloc(&sess->dlg, to_uri, to_uri, from_name,
 			       from_uri, routev, routec);
+	if (err)
+		goto out;
+
+	if (str_isset(callid))
+		err = sip_dialog_set_callid(sess->dlg, callid);
+
 	if (err)
 		goto out;
 
