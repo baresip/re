@@ -22,7 +22,6 @@
 
 enum {
 	ROUTE_OFFSET = 7,
-	X64_STRSIZE = 17,
 };
 
 struct sip_dialog {
@@ -43,22 +42,6 @@ struct route_enc {
 	struct mbuf *mb;
 	size_t end;
 };
-
-
-static int x64_strdup(char **strp, uint64_t val)
-{
-	char *str;
-
-	str = mem_alloc(X64_STRSIZE, NULL);
-	if (!str)
-		return ENOMEM;
-
-	(void)re_snprintf(str, X64_STRSIZE, "%016llx", val);
-
-	*strp = str;
-
-	return 0;
-}
 
 
 static void destructor(void *arg)
@@ -113,11 +96,11 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 	if (err)
 		goto out;
 
-	err = x64_strdup(&dlg->callid, rand_u64());
+	err = str_x64dup(&dlg->callid, rand_u64());
 	if (err)
 		goto out;
 
-	err = x64_strdup(&dlg->ltag, ltag);
+	err = str_x64dup(&dlg->ltag, ltag);
 	if (err)
 		goto out;
 
@@ -225,7 +208,7 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 	if (err)
 		goto out;
 
-	err = x64_strdup(&dlg->ltag, msg->tag);
+	err = str_x64dup(&dlg->ltag, msg->tag);
 	if (err)
 		goto out;
 
