@@ -1795,3 +1795,21 @@ int  sip_keepalive_tcp(struct sip_keepalive *ka, struct sip_conn *conn,
 
 	return 0;
 }
+
+
+void sip_transp_rmladdr(struct sip *sip, const struct sa *laddr)
+{
+	struct le *le;
+	struct le *len = NULL;
+
+	if (!sip || !laddr)
+		return;
+
+	for (le = sip->transpl.head; le; le = len) {
+		struct sip_transport *transp = le->data;
+
+		len = le->next;
+		if (sa_cmp(&transp->laddr, laddr, SA_ADDR))
+			mem_deref(transp);
+	}
+}
