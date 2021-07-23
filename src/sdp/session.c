@@ -106,6 +106,18 @@ void sdp_session_set_laddr(struct sdp_session *sess, const struct sa *laddr)
 
 
 /**
+ * Get the local network address of an SDP Session
+ *
+ * @param sess  SDP Session
+ * @param laddr Local network address
+ */
+const struct sa *sdp_session_laddr(struct sdp_session *sess)
+{
+	return sess ? &sess->laddr : NULL;
+}
+
+
+/**
  * Set the local bandwidth of an SDP Session
  *
  * @param sess SDP Session
