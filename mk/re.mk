@@ -20,6 +20,7 @@
 #   PROJECT        Project name
 #   RELEASE        Release build
 #   TRACE_ERR      Trace error codes
+#   TRACE_SSL      Log SSL key material = [/path/to/log/file.log]
 #   SYSROOT        System root of library and include files
 #   SYSROOT_ALT    Alternative system root of library and include files
 #   USE_OPENSSL    If non-empty, link to libssl library
@@ -55,6 +56,11 @@ endif
 ifneq ($(TRACE_ERR),)
 CFLAGS  += -DTRACE_ERR
 endif
+
+ifneq ($(TRACE_SSL),)
+CFLAGS  += -DTRACE_SSL="\"${TRACE_SSL}\""
+endif
+
 
 # Default system root
 ifeq ($(SYSROOT),)
