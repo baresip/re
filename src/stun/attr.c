@@ -204,6 +204,10 @@ int stun_attr_decode(struct stun_attr **attrp, struct mbuf *mb,
 
 	switch (attr->type) {
 
+	/* Deprecated STUN attributes */
+	case STUN_ATTR_SRC_ADDR:
+	case STUN_ATTR_CHANGED_ADDR:
+
 	case STUN_ATTR_MAPPED_ADDR:
 	case STUN_ATTR_ALT_SERVER:
 	case STUN_ATTR_RESP_ORIGIN:

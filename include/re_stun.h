@@ -55,6 +55,11 @@ enum stun_attrib {
 	/* Comprehension-required range (0x0000-0x7FFF) */
 	STUN_ATTR_MAPPED_ADDR        = 0x0001,
 	STUN_ATTR_CHANGE_REQ         = 0x0003,
+
+	/* Deprecated STUN attributes */
+	STUN_ATTR_SRC_ADDR           = 0x0004,
+	STUN_ATTR_CHANGED_ADDR       = 0x0005,
+
 	STUN_ATTR_USERNAME           = 0x0006,
 	STUN_ATTR_MSG_INTEGRITY      = 0x0008,
 	STUN_ATTR_ERR_CODE           = 0x0009,
