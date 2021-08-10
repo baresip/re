@@ -923,3 +923,31 @@ struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 
 	return NULL;
 }
+
+
+/**
+ * Flush a given UDP socket
+ *
+ * @param us UDP socket
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int  udp_flush(struct udp_sock *us)
+{
+	char *buf;
+	size_t sz;
+
+	if (!us)
+		return EINVAL;
+
+	sz = us->rxsz;
+	buf = mem_zalloc(sz, NULL);
+	if (!buf)
+		return ENOMEM;
+
+	while (-1 != us->fd  && recvfrom(us->fd,  buf, sz, 0, NULL, 0) > 0);
+	while (-1 != us->fd6 && recvfrom(us->fd6, buf, sz, 0, NULL, 0) > 0);
+
+	mem_deref(buf);
+	return 0;
+}
