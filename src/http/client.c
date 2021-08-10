@@ -8,6 +8,7 @@
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_mbuf.h>
+#include <re_net.h>
 #include <re_sa.h>
 #include <re_list.h>
 #include <re_hash.h>
@@ -62,6 +63,7 @@ struct http_req {
 	struct http_cli *cli;
 	struct http_msg *msg;
 	struct dns_query *dq;
+	struct dns_query *dq6;
 	struct conn *conn;
 	struct mbuf *mbreq;
 	struct mbuf *mb;
@@ -132,6 +134,7 @@ static void req_destructor(void *arg)
 	list_unlink(&req->le);
 	mem_deref(req->msg);
 	mem_deref(req->dq);
+	mem_deref(req->dq6);
 	mem_deref(req->conn);
 	mem_deref(req->mbreq);
 	mem_deref(req->mb);
@@ -178,6 +181,7 @@ static void req_close(struct http_req *req, int err,
 {
 	list_unlink(&req->le);
 	req->dq = mem_deref(req->dq);
+	req->dq6 = mem_deref(req->dq6);
 	req->datah = NULL;
 
 	if (req->conn) {
@@ -584,6 +588,11 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 	dns_rrlist_apply2(ansl, req->host, DNS_TYPE_A, DNS_TYPE_AAAA,
 			  DNS_CLASS_IN, true, rr_handler, req);
+
+	/* wait for other (A/AAAA) query to complete */
+	if (req->dq || req->dq6)
+		return;
+
 	if (req->srvc == 0) {
 		err = err ? err : EDESTADDRREQ;
 		goto fail;
@@ -782,11 +791,25 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			goto out;
 	}
 	else {
+#ifdef HAVE_INET6
+		struct sa tmp;
+#endif
 		err = dnsc_query(&req->dq, cli->dnsc, req->host,
 				 DNS_TYPE_A, DNS_CLASS_IN, true,
 				 query_handler, req);
 		if (err)
 			goto out;
+
+#ifdef HAVE_INET6
+		if (0 == net_default_source_addr_get(AF_INET6, &tmp)) {
+
+			err = dnsc_query(&req->dq6, cli->dnsc, req->host,
+					 DNS_TYPE_AAAA, DNS_CLASS_IN, true,
+					 query_handler, req);
+			if (err)
+				goto out;
+		}
+#endif
 	}
 
  out:
