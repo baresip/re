@@ -216,6 +216,10 @@ int http_reqconn_set_auth(struct http_reqconn *conn, const struct pl *user,
 		const struct pl *pass);
 int http_reqconn_set_bearer(struct http_reqconn *conn,
 		const struct pl *bearer);
+int http_reqconn_set_authtoken(struct http_reqconn *conn,
+		const struct pl *token);
+int http_reqconn_set_tokentype(struct http_reqconn *conn,
+		const struct pl *tokentype);
 int http_reqconn_set_method(struct http_reqconn *conn, const struct pl *met);
 int http_reqconn_set_body(struct http_reqconn *conn, const struct pl *body);
 int http_reqconn_set_ctype(struct http_reqconn *conn, const struct pl *ctype);
