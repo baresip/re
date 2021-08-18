@@ -599,32 +599,13 @@ static int addr_lookup(struct sip_request *req, const char *name)
 }
 
 
-/**
- * Send a SIP request
- *
- * @param reqp     Pointer to allocated SIP request object
- * @param sip      SIP Stack
- * @param stateful Stateful client transaction
- * @param met      SIP Method string
- * @param metl     Length of SIP Method string
- * @param uri      Request URI
- * @param uril     Length of Request URI string
- * @param route    Next hop route URI
- * @param mb       Buffer containing SIP request
- * @param sortkey  Key for DNS record sorting
- * @param sendh    Send handler
- * @param resph    Response handler
- * @param arg      Handler argument
- *
- * @return 0 if success, otherwise errorcode
- */
-int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
-		const char *met, int metl, const char *uri, int uril,
-		const struct uri *route, struct mbuf *mb, size_t sortkey,
+static int sip_request_alloc(struct sip_request **reqp,
+		struct sip *sip, bool stateful, const char *met, int metl,
+		const char *uri, int uril, const struct uri *route,
+		enum sip_transp tp, struct mbuf *mb, size_t sortkey,
 		sip_send_h *sendh, sip_resp_h *resph, void *arg)
 {
 	struct sip_request *req;
-	struct sa dst;
 	struct pl pl;
 	int err;
 
@@ -663,7 +644,10 @@ int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
 	req->resph = resph;
 	req->arg   = arg;
 
-	if (!msg_param_decode(&route->params, "transport", &pl)) {
+	if (tp != SIP_TRANSP_NONE) {
+		req->tp = tp;
+	}
+	else if (!msg_param_decode(&route->params, "transport", &pl)) {
 
 		req->tp = sip_transp_decode(&pl);
 		if (req->tp  == SIP_TRANSP_NONE) {
@@ -686,6 +670,22 @@ int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
 
 		req->tp_selected = false;
 	}
+
+out:
+	if (err)
+		mem_deref(req);
+	else if (reqp)
+		*reqp = req;
+
+	return err;
+}
+
+
+static int sip_request_send(struct sip_request *req, struct sip *sip,
+			    const struct uri *route)
+{
+	struct sa dst;
+	int err;
 
 	if (!sa_set_str(&dst, req->host,
 			sip_transp_port(req->tp, route->port))) {
@@ -711,13 +711,54 @@ int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
 				 naptr_handler, req);
 	}
 
- out:
 	if (err)
-		mem_deref(req);
-	else if (reqp) {
-		req->reqp = reqp;
-		*reqp = req;
-	}
+		req = mem_deref(req);
+	else if (req->reqp)
+		*req->reqp = req;
+
+	return err;
+}
+
+
+/**
+ * Send a SIP request
+ *
+ * @param reqp     Pointer to allocated SIP request object
+ * @param sip      SIP Stack
+ * @param stateful Stateful client transaction
+ * @param met      SIP Method string
+ * @param metl     Length of SIP Method string
+ * @param uri      Request URI
+ * @param uril     Length of Request URI string
+ * @param route    Next hop route URI
+ * @param mb       Buffer containing SIP request
+ * @param sortkey  Key for DNS record sorting
+ * @param sendh    Send handler
+ * @param resph    Response handler
+ * @param arg      Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
+		const char *met, int metl, const char *uri, int uril,
+		const struct uri *route, struct mbuf *mb, size_t sortkey,
+		sip_send_h *sendh, sip_resp_h *resph, void *arg)
+{
+	struct sip_request *req = NULL;
+	int err;
+
+	if (!sip || !met || !uri || !route || !mb)
+		return EINVAL;
+
+	err = sip_request_alloc(&req, sip, stateful, met, metl, uri, uril,
+				route, SIP_TRANSP_NONE, mb, sortkey, sendh,
+				resph, arg);
+	if (err)
+		goto out;
+
+	req->reqp = reqp;
+	err = sip_request_send(req, sip, route);
+ out:
 
 	return err;
 }
@@ -820,6 +861,7 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 		  struct sip_auth *auth, sip_send_h *sendh, sip_resp_h *resph,
 		  void *arg, const char *fmt, ...)
 {
+	struct sip_request *req;
 	struct mbuf *mb;
 	va_list ap;
 	int err;
@@ -853,13 +895,17 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 
 	mb->pos = 0;
 
-	err = sip_request(reqp, sip, stateful, met, -1, sip_dialog_uri(dlg),
-			  -1, sip_dialog_route(dlg), mb, sip_dialog_hash(dlg),
-			  sendh, resph, arg);
+	err = sip_request_alloc(&req, sip, stateful, met, -1,
+				sip_dialog_uri(dlg), -1, sip_dialog_route(dlg),
+				sip_dialog_tp(dlg),
+				mb, sip_dialog_hash(dlg), sendh, resph, arg);
 	if (err)
 		goto out;
 
- out:
+	req->reqp = reqp;
+	err = sip_request_send(req, sip, sip_dialog_route(dlg));
+
+out:
 	mem_deref(mb);
 
 	return err;

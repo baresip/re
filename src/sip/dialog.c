@@ -35,6 +35,7 @@ struct sip_dialog {
 	uint32_t lseq;
 	uint32_t rseq;
 	size_t cpos;
+	enum sip_transp tp;
 };
 
 
@@ -91,6 +92,7 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 
 	dlg->hash = hash_fast_str(from_uri);
 	dlg->lseq = rand_u16();
+	dlg->tp   = SIP_TRANSP_NONE;
 
 	err = str_dup(&dlg->uri, uri);
 	if (err)
@@ -199,6 +201,7 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 	dlg->hash = rand_u32();
 	dlg->lseq = rand_u16();
 	dlg->rseq = msg->cseq.num;
+	dlg->tp   = msg->tp;
 
 	err = pl_strdup(&dlg->uri, &addr.auri);
 	if (err)
@@ -341,6 +344,7 @@ int sip_dialog_create(struct sip_dialog *dlg, const struct sip_msg *msg)
 	dlg->uri  = mem_ref(uri);
 	dlg->rseq = msg->req ? msg->cseq.num : 0;
 	dlg->cpos = 0;
+	dlg->tp   = msg->tp;
 
  out:
 	mem_deref(renc.mb);
@@ -390,6 +394,7 @@ int sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 	dlg->hash   = odlg->hash;
 	dlg->lseq   = odlg->lseq;
 	dlg->rseq   = msg->req ? msg->cseq.num : 0;
+	dlg->tp     = msg->tp;
 
 	err = pl_strdup(&dlg->uri, &addr.auri);
 	if (err)
@@ -596,6 +601,12 @@ uint32_t sip_dialog_lseq(const struct sip_dialog *dlg)
 bool sip_dialog_established(const struct sip_dialog *dlg)
 {
 	return dlg && dlg->rtag;
+}
+
+
+enum sip_transp sip_dialog_tp(const struct sip_dialog *dlg)
+{
+	return dlg ? dlg->tp : SIP_TRANSP_NONE;
 }
 
 
