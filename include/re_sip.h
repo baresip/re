@@ -283,6 +283,7 @@ enum sip_transp sip_transp_decode(const struct pl *pl);
 uint16_t sip_transp_port(enum sip_transp tp, uint16_t port);
 int  sip_transp_laddr(struct sip *sip, struct sa *laddr, enum sip_transp tp,
 		      const struct sa *dst);
+int  sip_transp_set_default(struct sip *sip, enum sip_transp tp);
 int  sip_settos(struct sip *sip, uint8_t tos);
 
 
@@ -349,6 +350,7 @@ int  sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 int  sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg);
 bool sip_dialog_rseq_valid(struct sip_dialog *dlg, const struct sip_msg *msg);
 const char *sip_dialog_callid(const struct sip_dialog *dlg);
+int  sip_dialog_set_callid(struct sip_dialog *dlg, const char *callid);
 const char *sip_dialog_uri(const struct sip_dialog *dlg);
 uint32_t sip_dialog_lseq(const struct sip_dialog *dlg);
 bool sip_dialog_established(const struct sip_dialog *dlg);

@@ -30,6 +30,46 @@
 #include <re_dbg.h>
 
 
+#if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+/**
+ * Global flag if key material must be appended to file
+ */
+static bool fresh_keylog_file = true;
+
+
+/**
+ * SSL Key logger callback function
+ *
+ * @param ssl  OpenSSL SSL object
+ * @param line Key material in NSS format
+ */
+static void tls_keylogger_cb(const SSL *ssl,
+	const char *line)
+{
+	FILE *f = NULL;
+
+	(void) ssl;
+
+	if (fresh_keylog_file) {
+		f = fopen(TRACE_SSL, "w");
+		fresh_keylog_file = false;
+	}
+	else {
+		f = fopen(TRACE_SSL, "a");
+	}
+
+	if (!f)
+		return;
+
+	(void)re_fprintf(f, "%s\n", line);
+
+	if (f)
+		(void)fclose(f);
+
+}
+#endif
+
+
 /* NOTE: shadow struct defined in tls_*.c */
 struct tls_conn {
 	SSL *ssl;
@@ -195,6 +235,10 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 
 #if (OPENSSL_VERSION_NUMBER < 0x00905100L)
 	SSL_CTX_set_verify_depth(tls->ctx, 1);
+#endif
+
+#if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+	SSL_CTX_set_keylog_callback(tls->ctx, tls_keylogger_cb);
 #endif
 
 	/* Load our keys and certificates */

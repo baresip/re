@@ -3,7 +3,7 @@
  *
  * Supports:
  * - GET, POST and PUT requests
- * - basic, digest and bearer authentication
+ * - basic, digest and token authentication (e.g. bearer)
  * - TLS
  *
  * Copyright (C) 2020 Commend.com
@@ -56,7 +56,8 @@ struct http_reqconn {
 	char *user;              /**< Auth user                              */
 	char *pass;              /**< Auth password                          */
 	char *body;              /**< HTTP body for POST/PUT request         */
-	char *bearer;            /**< Auth bearer                            */
+	char *token;             /**< Auth token (e.g. bearer token)         */
+	char *tokentype;         /**< Auth token type                        */
 	struct mbuf *custhdr;    /**< Custom HTTP headers                    */
 
 	int retries;             /**< Auth retry counter                     */
@@ -82,7 +83,8 @@ static void destructor(void *arg)
 	mem_deref(conn->user);
 	mem_deref(conn->pass);
 	mem_deref(conn->body);
-	mem_deref(conn->bearer);
+	mem_deref(conn->token);
+	mem_deref(conn->tokentype);
 	mem_deref(conn->custhdr);
 #ifdef USE_TLS
 	mem_deref(conn->tlshn);
@@ -108,23 +110,32 @@ static int make_digest_mb(struct mbuf *mb,
 }
 
 
-static int make_bearer_mb(struct mbuf *mb, const struct http_reqconn *conn)
+static int make_token_mb(struct mbuf *mb, const struct http_reqconn *conn)
 {
 	int err;
-	const char auth[] = "Authorization: Bearer ";
+	const char auth[] = "Authorization: ";
+	const char defaulttype[] = "Bearer";
 
 	if (!conn || !mb)
 		return EINVAL;
 
-	if (!str_isset(conn->bearer) || !mb)
+	if (!str_isset(conn->token) || !mb)
 		return EINVAL;
 
-	err = mbuf_resize(mb, strlen(conn->bearer) + sizeof(auth));
+	err = mbuf_resize(mb, strlen(conn->token) + sizeof(auth) +
+		strlen(conn->tokentype ? conn->tokentype : defaulttype) + 1);
 	if (err)
 		return err;
 
 	err  = mbuf_write_str(mb, auth);
-	err |= mbuf_write_str(mb, conn->bearer);
+
+	if (conn->tokentype)
+		err |= mbuf_write_str(mb, conn->tokentype);
+	else
+		err |= mbuf_write_str(mb, defaulttype);
+
+	err |= mbuf_write_str(mb, " ");
+	err |= mbuf_write_str(mb, conn->token);
 	mbuf_set_pos(mb, 0);
 	return err;
 }
@@ -332,7 +343,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 }
 
 
-static int send_bearer(struct http_reqconn *conn)
+static int send_auth_token(struct http_reqconn *conn)
 {
 	struct pl auth;
 	int err = 0;
@@ -343,7 +354,7 @@ static int send_bearer(struct http_reqconn *conn)
 		goto out;
 	}
 
-	err = make_bearer_mb(mb, conn);
+	err = make_token_mb(mb, conn);
 	if (err)
 		goto out;
 
@@ -421,14 +432,36 @@ int http_reqconn_set_auth(struct http_reqconn *conn, const struct pl *user,
 
 int http_reqconn_set_bearer(struct http_reqconn *conn, const struct pl *bearer)
 {
+	conn->tokentype = mem_deref(conn->tokentype);
+	return http_reqconn_set_authtoken(conn, bearer);
+}
+
+
+int http_reqconn_set_authtoken(struct http_reqconn *conn,
+	const struct pl *token)
+{
 	if (!conn)
 		return EINVAL;
 
-	conn->bearer = mem_deref(conn->bearer);
-	if (!pl_isset(bearer))
+	conn->token = mem_deref(conn->token);
+	if (!pl_isset(token))
 		return 0;
 
-	return pl_strdup(&conn->bearer, bearer);
+	return pl_strdup(&conn->token, token);
+}
+
+
+int http_reqconn_set_tokentype(struct http_reqconn *conn,
+	const struct pl *tokentype)
+{
+	if (!conn)
+		return EINVAL;
+
+	conn->tokentype = mem_deref(conn->tokentype);
+	if (!pl_isset(tokentype))
+		return 0;
+
+	return pl_strdup(&conn->tokentype, tokentype);
 }
 
 
@@ -562,8 +595,8 @@ int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri)
 		mbuf_set_pos(conn->custhdr, 0);
 
 	conn->retries = 0;
-	if (conn->bearer)
-		err = send_bearer(conn);
+	if (conn->token)
+		err = send_auth_token(conn);
 	else
 		err = send_req(conn, NULL);
 

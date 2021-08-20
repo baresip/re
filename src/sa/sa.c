@@ -5,12 +5,20 @@
  */
 #define _BSD_SOURCE 1
 #define _DEFAULT_SOURCE 1
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#define __USE_POSIX 1  /**< Use POSIX flag */
+#define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
+#define __USE_MISC 1
+#include <netdb.h>
+#endif
+
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_sa.h>
-#include "sa.h"
 
 
 #define DEBUG_MODULE "sa"
@@ -53,6 +61,75 @@ int sa_set(struct sa *sa, const struct pl *addr, uint16_t port)
 }
 
 
+int sa_addrinfo(const char *addr, struct sa *sa)
+{
+	struct addrinfo *res, *res0 = NULL;
+	struct addrinfo hints;
+	int err = 0;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags  = AI_ADDRCONFIG | AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res0))
+		return EADDRNOTAVAIL;
+
+	for (res = res0; res; res = res->ai_next) {
+
+		err = sa_set_sa(sa, res->ai_addr);
+		if (err)
+			continue;
+
+		break;
+	}
+
+	freeaddrinfo(res0);
+	return err;
+}
+
+
+/**
+ * Convert character string to a network address structure
+ *
+ * @param addr IP address string
+ * @param sa   Returned socket address
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sa_pton(const char *addr, struct sa *sa)
+{
+	int err = 0;
+
+	if (!addr || !sa)
+		return EINVAL;
+
+	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
+		sa->u.in.sin_family = AF_INET;
+	}
+#ifdef HAVE_INET6
+	else if (!strncmp(addr, "fe80:", 5)) {
+		err = sa_addrinfo(addr, sa);
+	}
+	else if (inet_pton(AF_INET6, addr, &sa->u.in6.sin6_addr) > 0) {
+
+		if (IN6_IS_ADDR_V4MAPPED(&sa->u.in6.sin6_addr)) {
+			const uint8_t *a = &sa->u.in6.sin6_addr.s6_addr[12];
+			sa->u.in.sin_family = AF_INET;
+			memcpy(&sa->u.in.sin_addr.s_addr, a, 4);
+		}
+		else {
+			sa->u.in6.sin6_family = AF_INET6;
+		}
+	}
+#endif
+	else {
+		return EINVAL;
+	}
+
+	return err;
+}
+
+
 /**
  * Set a Socket Address from a string
  *
@@ -69,7 +146,7 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
 	if (!sa || !addr)
 		return EINVAL;
 
-	err = net_inet_pton(addr, sa);
+	err = sa_pton(addr, sa);
 	if (err)
 		return err;
 
@@ -319,7 +396,26 @@ void sa_in6(const struct sa *sa, uint8_t *addr)
  */
 int sa_ntop(const struct sa *sa, char *buf, int size)
 {
-	return net_inet_ntop(sa, buf, size);
+	if (!sa || !buf || !size)
+		return EINVAL;
+
+	switch (sa->u.sa.sa_family) {
+
+	case AF_INET:
+		inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
+		break;
+
+#ifdef HAVE_INET6
+	case AF_INET6:
+		inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
+		break;
+#endif
+
+	default:
+		return EAFNOSUPPORT;
+	}
+
+	return 0;
 }
 
 

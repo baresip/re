@@ -126,6 +126,7 @@ int sip_alloc(struct sip **sipp, struct dnsc *dnsc, uint32_t ctsz,
 	if (!sip)
 		return ENOMEM;
 
+	sip->tp_def = SIP_TRANSP_NONE;
 	err = sip_transp_init(sip, tcsz);
 	if (err)
 		goto out;

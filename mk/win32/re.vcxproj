@@ -68,7 +68,6 @@
     <ClInclude Include="..\..\src\mod\mod_internal.h" />
     <ClInclude Include="..\..\src\mqueue\mqueue.h" />
     <ClInclude Include="..\..\src\rtp\rtcp.h" />
-    <ClInclude Include="..\..\src\sa\sa.h" />
     <ClInclude Include="..\..\src\sdp\sdp.h" />
     <ClInclude Include="..\..\src\sipevent\sipevent.h" />
     <ClInclude Include="..\..\src\sipsess\sipsess.h" />
@@ -173,9 +172,7 @@
     <ClCompile Include="..\..\src\rtp\sdes.c" />
     <ClCompile Include="..\..\src\rtp\sess.c" />
     <ClCompile Include="..\..\src\rtp\source.c" />
-    <ClCompile Include="..\..\src\sa\ntop.c" />
     <ClCompile Include="..\..\src\sa\printaddr.c" />
-    <ClCompile Include="..\..\src\sa\pton.c" />
     <ClCompile Include="..\..\src\sa\sa.c" />
     <ClCompile Include="..\..\src\sdp\attr.c" />
     <ClCompile Include="..\..\src\sdp\format.c" />

@@ -324,9 +324,6 @@
     <ClInclude Include="..\..\src\sdp\sdp.h">
       <Filter>src\sdp</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\sa\sa.h">
-      <Filter>src\sa</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\rtp\rtcp.h">
       <Filter>src\rtp</Filter>
     </ClInclude>
@@ -566,13 +563,7 @@
     <ClCompile Include="..\..\src\sdp\util.c">
       <Filter>src\sdp</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\sa\ntop.c">
-      <Filter>src\sa</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\sa\printaddr.c">
-      <Filter>src\sa</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\sa\pton.c">
       <Filter>src\sa</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\sa\sa.c">

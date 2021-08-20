@@ -20,6 +20,7 @@
 #   PROJECT        Project name
 #   RELEASE        Release build
 #   TRACE_ERR      Trace error codes
+#   TRACE_SSL      Log SSL key material = [/path/to/log/file.log]
 #   SYSROOT        System root of library and include files
 #   SYSROOT_ALT    Alternative system root of library and include files
 #   USE_OPENSSL    If non-empty, link to libssl library
@@ -55,6 +56,11 @@ endif
 ifneq ($(TRACE_ERR),)
 CFLAGS  += -DTRACE_ERR
 endif
+
+ifneq ($(TRACE_SSL),)
+CFLAGS  += -DTRACE_SSL="\"${TRACE_SSL}\""
+endif
+
 
 # Default system root
 ifeq ($(SYSROOT),)
@@ -187,6 +193,7 @@ ifeq ($(MACHINE), mingw32)
 endif
 endif
 
+PKG_CONFIG := $(shell pkg-config --version)
 
 # default
 LIB_SUFFIX	:= .so
@@ -298,9 +305,11 @@ ifeq ($(OS),openbsd)
 	AFLAGS		:= cru
 	HAVE_KQUEUE	:= 1
 	HAVE_ARC4RANDOM	:= 1
+# openbsd has an incompatible pkg-config version
+	PKG_CONFIG	:=
 endif
 ifeq ($(OS),win32)
-	CFLAGS		+= -DWIN32 -D_WIN32_WINNT=0x0501 -D__ssize_t_defined
+	CFLAGS		+= -DWIN32 -D_WIN32_WINNT=0x0600 -D__ssize_t_defined
 	LIBS		+= -lwsock32 -lws2_32 -liphlpapi
 	LFLAGS		+=
 	SH_LFLAGS	+= -shared
@@ -555,20 +564,11 @@ ifneq ($(HAVE_SYSLOG),)
 CFLAGS  += -DHAVE_SYSLOG
 endif
 
-HAVE_INET_NTOP := 1
-
 CFLAGS  += -DHAVE_FORK
 
-ifneq ($(HAVE_INET_NTOP),)
-CFLAGS  += -DHAVE_INET_NTOP
-endif
 CFLAGS  += -DHAVE_PWD_H
 ifneq ($(OS),darwin)
 CFLAGS  += -DHAVE_POLL	# Darwin: poll() does not support devices
-HAVE_INET_PTON := 1
-endif
-ifneq ($(HAVE_INET_PTON),)
-CFLAGS  += -DHAVE_INET_PTON
 endif
 CFLAGS  += -DHAVE_SELECT -DHAVE_SELECT_H
 CFLAGS  += -DHAVE_SETRLIMIT
@@ -602,7 +602,6 @@ CFLAGS  += \
 	-DVER_MAJOR=$(VER_MAJOR) \
 	-DVER_MINOR=$(VER_MINOR) \
 	-DVER_PATCH=$(VER_PATCH)
-PKG_CONFIG := $(shell pkg-config --version)
 
 # Enable gcov Coverage testing
 #
@@ -646,6 +645,7 @@ distclean:
 	@rm -f `find . -name "*.previous"` `find . -name "*.gcov"`
 	@rm -f `find . -name "*.exe"` `find . -name "*.dll"`
 	@rm -f `find . -name "*.dylib"`
+	@rm -f *.pc
 
 .PHONY: info
 info::

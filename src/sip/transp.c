@@ -23,7 +23,13 @@
 #include <re_http.h>
 #include <re_websock.h>
 #include <re_sip.h>
+#include <re_net.h>
 #include "sip.h"
+
+
+#define DEBUG_MODULE "transp"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 
 enum {
@@ -145,22 +151,43 @@ static const struct sip_transport *transp_find(struct sip *sip,
 					       int af, const struct sa *dst)
 {
 	struct le *le;
-	(void)dst;
+	struct sa dsttmp;
+	const struct sip_transport *fb = NULL;
 
 	for (le = sip->transpl.head; le; le = le->next) {
 
 		const struct sip_transport *transp = le->data;
+		const struct sa *laddr = &transp->laddr;
+		struct sa src;
 
 		if (transp->tp != tp)
 			continue;
 
-		if (af != AF_UNSPEC && sa_af(&transp->laddr) != af)
+		if (af != AF_UNSPEC && sa_af(laddr) != af)
+			continue;
+
+		if (!sa_isset(dst, SA_ADDR))
+			return transp;
+
+		if (sa_is_linklocal(laddr) != sa_is_linklocal(dst))
+			continue;
+
+		if (!fb)
+			fb = transp;
+
+		sa_cpy(&dsttmp, dst);
+		sa_set_scopeid(&dsttmp, sa_scopeid(laddr));
+
+		if (net_dst_source_addr_get(&dsttmp, &src))
+			continue;
+
+		if (!sa_cmp(&src, laddr, SA_ADDR))
 			continue;
 
 		return transp;
 	}
 
-	return NULL;
+	return fb;
 }
 
 
@@ -390,6 +417,7 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 	msg->src = *src;
 	msg->dst = transp->laddr;
 	msg->tp = SIP_TRANSP_UDP;
+	sa_set_scopeid(&msg->src, sa_scopeid(&transp->laddr));
 
 	sip_recv(transp->sip, msg, 0);
 
@@ -984,9 +1012,10 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 				   " http client (%m)\n", err);
 			goto out;
 		}
-
+#ifdef USE_TLS
 		if (transp->tls)
 			http_client_set_tls(transp->http_cli, transp->tls);
+#endif
 	}
 
 	re_printf("websock: connecting to '%s'\n", ws_uri);
@@ -1026,6 +1055,25 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 
 	return err;
 }
+
+
+#if HAVE_INET6
+static int dst_set_scopeid(struct sip *sip, struct sa *dst, enum sip_transp tp)
+{
+	struct sa laddr;
+	int err;
+
+	if (sa_af(dst) != AF_INET6 || !sa_is_linklocal(dst))
+		return 0;
+
+	err = sip_transp_laddr(sip, &laddr, tp, dst);
+	if (err)
+		return err;
+
+	sa_set_scopeid(dst, sa_scopeid(&laddr));
+	return 0;
+}
+#endif
 
 
 int sip_transp_init(struct sip *sip, uint32_t sz)
@@ -1342,25 +1390,33 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 	const struct sip_transport *transp;
 	struct sip_conn *conn;
 	bool secure = false;
+	struct sa dsttmp;
 	int err;
 
 	if (!sip || !dst || !mb)
 		return EINVAL;
 
+	sa_cpy(&dsttmp, dst);
+#if HAVE_INET6
+	err = dst_set_scopeid(sip, &dsttmp, tp);
+	if (err)
+		return err;
+#endif
+
 	switch (tp) {
 
 	case SIP_TRANSP_UDP:
 		if (!sock) {
-			transp = transp_find(sip, tp, sa_af(dst), dst);
+			transp = transp_find(sip, tp, sa_af(&dsttmp), &dsttmp);
 			if (!transp)
 				return EPROTONOSUPPORT;
 
 			sock = transp->sock;
 		}
 
-		trace_send(sip, tp, sock, dst, mb);
+		trace_send(sip, tp, sock, &dsttmp, mb);
 
-		err = udp_send(sock, dst, mb);
+		err = udp_send(sock, &dsttmp, mb);
 		break;
 
 	case SIP_TRANSP_TLS:
@@ -1372,12 +1428,12 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 
 		if (conn && conn->tc) {
 
-			trace_send(sip, tp, conn, dst, mb);
+			trace_send(sip, tp, conn, &dsttmp, mb);
 
 			err = tcp_send(conn->tc, mb);
 		}
 		else
-			err = conn_send(qentp, sip, secure, dst, host, mb,
+			err = conn_send(qentp, sip, secure, &dsttmp, host, mb,
 					transph, arg);
 		break;
 
@@ -1389,7 +1445,7 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		conn = sock;
 		if (conn && conn->websock_conn) {
 
-			trace_send(sip, tp, conn, dst, mb);
+			trace_send(sip, tp, conn, &dsttmp, mb);
 
 			err = websock_send(conn->websock_conn, WEBSOCK_BIN,
 					   "%b",
@@ -1400,7 +1456,7 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 			}
 		}
 		else {
-			err = ws_conn_send(qentp, sip, secure, dst, mb,
+			err = ws_conn_send(qentp, sip, secure, &dsttmp, mb,
 					   transph, arg);
 			if (err) {
 				re_fprintf(stderr, "ws_conn_send failed"
@@ -1442,6 +1498,16 @@ bool sip_transp_supported(struct sip *sip, enum sip_transp tp, int af)
 		return false;
 
 	return transp_find(sip, tp, af, NULL) != NULL;
+}
+
+
+int  sip_transp_set_default(struct sip *sip, enum sip_transp tp)
+{
+	if (!sip)
+		return EINVAL;
+
+	sip->tp_def = tp;
+	return 0;
 }
 
 

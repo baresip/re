@@ -10,6 +10,7 @@
 #include "re_list.h"
 #include "re_hash.h"
 #include "re_odict.h"
+#include "odict.h"
 
 
 static void destructor(void *arg)
@@ -145,6 +146,7 @@ int odict_entry_debug(struct re_printf *pf, const struct odict_entry *e)
 		break;
 
 	case ODICT_NULL:
+	case ODICT_ERR:
 		break;
 	}
 
