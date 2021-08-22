@@ -337,6 +337,12 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 		}
 	}
 
+	/* check consistency between CSeq method and that of request line */
+	if (msg->req && pl_casecmp(&(msg->cseq.met), &(msg->met))){
+		(void)sip_reply(sip, msg, 400, "Bad Request");
+		return;
+	}
+
 	while (le) {
 		struct sip_lsnr *lsnr = le->data;
 
