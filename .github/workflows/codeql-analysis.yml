@@ -27,7 +27,7 @@ jobs:
         sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main"
         sudo apt-get update && sudo apt-get install -y clang-tools-12
 
-    - run: scan-build-12 make
+    - run: scan-build-12 --status-bugs make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
