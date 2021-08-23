@@ -26,3 +26,6 @@ tags
 # clangd
 .cache
 compile_commands.json
+
+# Visual studio config
+mk/win32/*.vcxproj.user
