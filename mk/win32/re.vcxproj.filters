@@ -858,6 +858,9 @@
     <ClCompile Include="..\..\src\http\chunk.c">
       <Filter>src\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\odict\get.c">
+      <Filter>src\odict</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\srtp\README">
