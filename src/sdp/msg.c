@@ -470,7 +470,7 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
  */
 int sdp_encode(struct mbuf **mbp, struct sdp_session *sess, bool offer)
 {
-	const int ipver = sa_af(&sess->laddr) == AF_INET ? 4 : 6;
+	int ipver;
 	enum sdp_bandwidth i;
 	struct mbuf *mb;
 	struct le *le;
@@ -483,6 +483,7 @@ int sdp_encode(struct mbuf **mbp, struct sdp_session *sess, bool offer)
 	if (!mb)
 		return ENOMEM;
 
+	ipver = sa_af(&sess->laddr) == AF_INET ? 4 : 6;
 	err  = mbuf_printf(mb, "v=%u\r\n", SDP_VERSION);
 	err |= mbuf_printf(mb, "o=- %u %u IN IP%d %j\r\n",
 			   sess->id, sess->ver++, ipver, &sess->laddr);
