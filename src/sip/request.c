@@ -712,7 +712,7 @@ static int sip_request_send(struct sip_request *req, struct sip *sip,
 	}
 
 	if (err)
-		req = mem_deref(req);
+		mem_deref(req);
 	else if (req->reqp)
 		*req->reqp = req;
 
