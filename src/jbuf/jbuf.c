@@ -193,7 +193,7 @@ static uint32_t calc_ptime(struct jbuf *jb)
 		if (ftt && ft) {
 			seqd = ft->hdr.seq - ftt->hdr.seq;
 			if (seqd > 0)
-				ptime = (ft->hdr.ts - ftt->hdr.ts) 
+				ptime = (ft->hdr.ts - ftt->hdr.ts)
 					/ (8 * seqd);
 		}
 	}
