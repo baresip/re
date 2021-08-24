@@ -190,10 +190,11 @@ static uint32_t calc_ptime(struct jbuf *jb)
 	if (lt && lt->prev) {
 		ft  = lt->data;
 		ftt = lt->prev->data;
-		if(ftt && ft) {
+		if (ftt && ft) {
 			seqd = ft->hdr.seq - ftt->hdr.seq;
-			if(seqd > 0)
-				ptime = (ft->hdr.ts - ftt->hdr.ts) / (8 * seqd);
+			if (seqd > 0)
+				ptime = (ft->hdr.ts - ftt->hdr.ts) 
+					/ (8 * seqd);
 		}
 	}
 
