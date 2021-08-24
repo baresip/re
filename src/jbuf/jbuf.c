@@ -104,6 +104,7 @@ struct jbuf {
 	uint16_t seq_put;    /**< Sequence number for last jbuf_put()       */
 	uint16_t seq_get;    /**< Sequence number of last played frame      */
 	uint32_t ssrc;       /**< Previous ssrc                             */
+	int pt;              /**< Payload type                              */
 	bool started;        /**< Jitter buffer is in start phase           */
 	bool running;        /**< Jitter buffer is running                  */
 	bool silence;        /**< Silence detected. Set externally.         */
@@ -269,6 +270,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 
 	jb->ptime = 20;
 	jb->silence = true;
+	jb->pt = -1;
 	err = lock_alloc(&jb->lock);
 	if (err)
 		goto out;
@@ -496,6 +498,8 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 		return EINVAL;
 
 	seq = hdr->seq;
+	if (jb->pt == -1)
+		jb->pt = hdr->pt;
 
 	if (jb->ssrc && jb->ssrc != hdr->ssrc) {
 		DEBUG_INFO("ssrc changed %u %u\n", jb->ssrc, hdr->ssrc);
@@ -575,7 +579,7 @@ success:
 	f->hdr = *hdr;
 	f->mem = mem_ref(mem);
 
-	if (jb->jbtype == JBUF_ADAPTIVE && jb->started)
+	if (jb->jbtype == JBUF_ADAPTIVE && jb->started && jb->pt == hdr->pt)
 		jbuf_jitter_calc(jb, hdr->ts);
 
 out:
