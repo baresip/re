@@ -31,6 +31,8 @@ int odict_entry_add(struct odict *o, const char *key,
 		    int type, ...);
 void odict_entry_del(struct odict *o, const char *key);
 int odict_entry_debug(struct re_printf *pf, const struct odict_entry *e);
+bool odict_compare(const struct odict *dict1, const struct odict *dict2,
+	bool ignore_order);
 
 bool odict_type_iscontainer(enum odict_type type);
 bool odict_type_isreal(enum odict_type type);
@@ -58,3 +60,5 @@ char *odict_entry_str(const struct odict_entry *e);
 int64_t odict_entry_int(const struct odict_entry *e);
 double odict_entry_dbl(const struct odict_entry *e);
 bool odict_entry_boolean(const struct odict_entry *e);
+bool odict_value_compare(const struct odict_entry *e1,
+	const struct odict_entry *e2, bool ignore_order);
