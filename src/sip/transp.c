@@ -1797,6 +1797,13 @@ int  sip_keepalive_tcp(struct sip_keepalive *ka, struct sip_conn *conn,
 }
 
 
+/**
+ * Remove all SIP transport instances that are bound to the given local network
+ * address
+ *
+ * @param sip   SIP stack instance
+ * @param laddr Local network address
+ */
 void sip_transp_rmladdr(struct sip *sip, const struct sa *laddr)
 {
 	struct le *le;
