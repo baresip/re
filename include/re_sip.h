@@ -284,6 +284,7 @@ uint16_t sip_transp_port(enum sip_transp tp, uint16_t port);
 int  sip_transp_laddr(struct sip *sip, struct sa *laddr, enum sip_transp tp,
 		      const struct sa *dst);
 int  sip_transp_set_default(struct sip *sip, enum sip_transp tp);
+void sip_transp_rmladdr(struct sip *sip, const struct sa *laddr);
 int  sip_settos(struct sip *sip, uint8_t tos);
 
 
