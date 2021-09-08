@@ -443,10 +443,16 @@ static int _json_decode(const char **str, size_t *len,
 
 			if (**str == '\"')
 				inquot = true;
-
 			val.p = *str;
 			val.l = 0;
 			ws = 0;
+
+			if (!inobj && !inarray) {
+				val.l = *len;
+				if (array_entry(idx, &val, aeh, arg))
+					val.l = 0;
+			}
+
 			break;
 		}
 	}
