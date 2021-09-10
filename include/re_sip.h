@@ -354,6 +354,7 @@ const char *sip_dialog_callid(const struct sip_dialog *dlg);
 int  sip_dialog_set_callid(struct sip_dialog *dlg, const char *callid);
 const char *sip_dialog_uri(const struct sip_dialog *dlg);
 uint32_t sip_dialog_lseq(const struct sip_dialog *dlg);
+enum sip_transp sip_dialog_tp(const struct sip_dialog *dlg);
 bool sip_dialog_established(const struct sip_dialog *dlg);
 bool sip_dialog_cmp(const struct sip_dialog *dlg, const struct sip_msg *msg);
 bool sip_dialog_cmp_half(const struct sip_dialog *dlg,
