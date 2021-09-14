@@ -205,13 +205,26 @@ static void stunc_resp_handler(int err, uint16_t scode, const char *reason,
 
 int icem_conncheck_send(struct ice_candpair *cp, bool use_cand, bool trigged)
 {
-	struct ice_cand *lcand = cp->lcand;
-	struct icem *icem = cp->icem;
+	struct ice_cand *lcand;
+	struct icem *icem;
 	char username_buf[64];
 	size_t presz = 0;
 	uint32_t prio_prflx;
 	uint16_t ctrl_attr;
 	int err = 0;
+
+	if (!cp)
+		return EINVAL;
+
+	lcand = cp->lcand;
+	icem = cp->icem;
+
+	if (!str_isset(icem->rufrag)) {
+		DEBUG_WARNING("send: name='%s' no remote ufrag"
+			      " [use=%d, trig=%d]\n",
+			      icem->name, use_cand, trigged);
+		return EPROTO;
+	}
 
 	icem_candpair_set_state(cp, ICE_CANDPAIR_INPROGRESS);
 
@@ -258,7 +271,7 @@ int icem_conncheck_send(struct ice_candpair *cp, bool use_cand, bool trigged)
 
 	/* The password is equal to the password provided by the peer */
 	if (!icem->rpwd) {
-		DEBUG_WARNING("no remote password!\n");
+		DEBUG_WARNING("send: no remote password!\n");
 	}
 
 	if (cp->ct_conn) {

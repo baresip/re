@@ -33,7 +33,7 @@ static int candpairs_form(struct icem *icem)
 		return ENOENT;
 
 	if (list_isempty(&icem->rcandl)) {
-		DEBUG_WARNING("%s: no remote candidates\n", icem->name);
+		DEBUG_WARNING("form: '%s' no remote candidates\n", icem->name);
 		return ENOENT;
 	}
 
@@ -162,9 +162,6 @@ int icem_checklist_form(struct icem *icem)
 
 	if (!icem)
 		return EINVAL;
-
-	if (!list_isempty(&icem->checkl))
-		return EALREADY;
 
 	/* 1. form candidate pairs */
 	err = candpairs_form(icem);
