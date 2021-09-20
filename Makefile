@@ -125,6 +125,7 @@ $(BUILD): Makefile $(MK) $(MODMKS)
 .PHONY: clean
 clean:
 	@rm -rf $(SHARED) $(STATIC) libre.pc test.d test.o test $(BUILD)
+	@rm -f compile_commands.json
 
 
 install: $(SHARED) $(STATIC) libre.pc
