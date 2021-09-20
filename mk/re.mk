@@ -695,33 +695,13 @@ info::
 TAR_SRC   := $(PROJECT)-$(VERSION)
 
 release:
-	@rm -rf ../$(TAR_SRC)
-	@svn export . ../$(TAR_SRC)
-	@if [ -f ../$(TAR_SRC)/mk/exclude ]; then \
-		cat ../$(TAR_SRC)/mk/exclude \
-			| sed 's|^|../$(TAR_SRC)/|' | xargs -t rm -rf ; \
-		rm -f ../$(TAR_SRC)/mk/exclude ; \
-	fi
-	@cd .. && rm -f $(TAR_SRC).tar.gz \
-		&& tar -zcf $(TAR_SRC).tar.gz $(TAR_SRC) \
-		&& echo "created release tarball `pwd`/$(TAR_SRC).tar.gz"
-
-tar:
-	@rm -rf ../$(TAR_SRC)
-	@svn export . ../$(TAR_SRC)
-	@cd .. && rm -f $(TAR_SRC).tar.gz \
-		&& tar -zcf $(TAR_SRC).tar.gz $(TAR_SRC) \
-		&& echo "created source tarball `pwd`/$(TAR_SRC).tar.gz"
+	git archive --format=tar --prefix=$(TAR_SRC)/ v$(VERSION) \
+		| gzip > ../$(TAR_SRC).tar.gz
 
 
-git_release:
-	git archive --format=tar --prefix=$(PROJECT)-$(VERSION)/ v$(VERSION) \
-		| gzip > ../$(PROJECT)-$(VERSION).tar.gz
-
-
-git_snapshot:
-	git archive --format=tar --prefix=$(PROJECT)-$(VERSION)/ HEAD \
-		| gzip > ../$(PROJECT)-$(VERSION).tar.gz
+snapshot:
+	git archive --format=tar --prefix=$(TAR_SRC)/ HEAD \
+		| gzip > ../$(TAR_SRC).tar.gz
 
 
 # Debian
