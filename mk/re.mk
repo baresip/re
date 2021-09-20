@@ -80,6 +80,8 @@ CFLAGS  += -I$(SYSROOT_ALT)/include
 LFLAGS  += -L$(SYSROOT_ALT)/lib
 endif
 
+# Compiler dependency flags
+DFLAGS	 = -MD -MF $(@:.o=.d) -MT $@
 
 ##############################################################################
 #
@@ -117,6 +119,7 @@ ifneq (,$(findstring clang, $(CC_LONGVER)))
 	CC_VER := $(CC) $(CC_SHORTVER) ($(CC_MAJORVER).x)
 	MKDEP := $(CC) -MM
 ifneq ($(CC_MAJORVER), 4)
+	DFLAGS += -MJ $@.json
 	CC_C11 := 1
 endif
 endif
@@ -167,9 +170,6 @@ ifneq ($(OPTIMIZE),)
 CFLAGS	+= -Wuninitialized
 CFLAGS	+= -Wno-strict-aliasing
 endif
-
-# Compiler dependency flags
-DFLAGS		= -MD -MF $(@:.o=.d) -MT $@
 
 
 ##############################################################################
@@ -646,6 +646,7 @@ distclean:
 	@rm -f `find . -name "*.exe"` `find . -name "*.dll"`
 	@rm -f `find . -name "*.dylib"`
 	@rm -f *.pc
+	@rm -f compile_commands.json
 
 .PHONY: info
 info::
@@ -818,6 +819,9 @@ clang:
 	@clang --analyze $(CLANG_OPTIONS) $(CFLAGS) $(CLANG_SRCS)
 	@rm -f *.plist
 
+compile_commands.json:
+	@rm -f $@
+	@sed -e '1s/^/[/' -e '$$s/,$$/]/' $(BUILD)/**/*.o.json > $@
 
 ###############################################################################
 #
