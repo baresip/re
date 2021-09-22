@@ -295,6 +295,8 @@ int sdp_session_debug(struct re_printf *pf, const struct sdp_session *sess)
 		err |= re_hprintf(pf, "    %H\n", sdp_attr_debug, le->data);
 
 	err |= re_hprintf(pf, "  remote attributes:\n");
+	err |= re_hprintf(pf, "  remote direction: %s\n",
+			sdp_dir_name(sess->rdir));
 
 	for (le=sess->rattrl.head; le; le=le->next)
 		err |= re_hprintf(pf, "    %H\n", sdp_attr_debug, le->data);
