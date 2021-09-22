@@ -970,5 +970,11 @@ int sdp_media_debug(struct re_printf *pf, const struct sdp_media *m)
 	for (le=m->rattrl.head; le; le=le->next)
 		err |= re_hprintf(pf, "    %H\n", sdp_attr_debug, le->data);
 
+	err |= re_hprintf(pf, "  local direction:  %s\n",
+			sdp_dir_name(m->ldir));
+
+	err |= re_hprintf(pf, "  remote direction: %s\n",
+			sdp_dir_name(m->rdir));
+
 	return err;
 }
