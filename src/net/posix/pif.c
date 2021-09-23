@@ -90,14 +90,67 @@ int net_if_getaddr4(const char *ifname, int af, struct sa *ip)
 
 
 /**
+ * Enumerate all IPv6 network interfaces
+ *
+ * @param ifh Interface handler
+ * @param arg Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+static int net_if_list6(net_ifaddr_h *ifh, void *arg)
+{
+	FILE *f;
+	int err = 0;
+
+	f = fopen("/proc/net/if_inet6", "r");
+	if (!f) {
+		DEBUG_WARNING("if_list6: open /proc/net/if_net6 error: %m\n",
+			      errno);
+		return errno;
+	}
+
+	for (;;) {
+		char ifname[128];
+		char addr[8][5];
+		char addr6[32+7+1];
+		uint32_t flags, index, plen, scope;
+		struct sa sa;
+
+		if (-1 == fscanf(f,
+				 "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x "
+				 "%02x %8s\n",
+				 addr[0], addr[1], addr[2], addr[3], addr[4],
+				 addr[5], addr[6], addr[7], &index, &plen,
+				 &scope, &flags, ifname))
+			break;
+
+		re_snprintf(addr6, sizeof(addr6), "%s:%s:%s:%s:%s:%s:%s:%s",
+			    addr[0], addr[1], addr[2], addr[3], addr[4],
+			    addr[5], addr[6], addr[7]);
+
+		err = sa_set_str(&sa, addr6, 0);
+		if (err) {
+			DEBUG_WARNING("if_list6: sa_set_str %m\n", err);
+			break;
+		}
+
+		if (ifh && ifh(ifname, &sa, arg))
+			break;
+	}
+
+	(void)fclose(f);
+
+	return err;
+}
+
+
+/**
  * Enumerate all network interfaces
  *
  * @param ifh Interface handler
  * @param arg Handler argument
  *
  * @return 0 if success, otherwise errorcode
- *
- * @deprecated Works for IPv4 only
  */
 int net_if_list(net_ifaddr_h *ifh, void *arg)
 {
@@ -146,18 +199,21 @@ int net_if_list(net_ifaddr_h *ifh, void *arg)
 
 		if (ioctl(sockfd, SIOCGIFADDR, &ifrr) < 0) {
 			err = errno;
+			DEBUG_WARNING("if_list: ioctl SIOCGIFADDR %m\n", err);
 			continue;
 		}
 
 		err = sa_set_sa(&sa, &ifrr.ifr_ifru.ifru_addr);
 		if (err) {
 			DEBUG_WARNING("if_list: sa_set_sa %m\n", err);
-			break;
+			goto out;
 		}
 
 		if (ifh && ifh(ifr->ifr_name, &sa, arg))
-			break;
+			goto out;
 	}
+
+	err = net_if_list6(ifh, arg);
 
  out:
 	if (sockfd >= 0)
