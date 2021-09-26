@@ -799,9 +799,11 @@ clang:
 	@clang --analyze $(CLANG_OPTIONS) $(CFLAGS) $(CLANG_SRCS)
 	@rm -f *.plist
 
+.PHONY: compile_commands.json
 compile_commands.json:
 	@rm -f $@
-	@sed -e '1s/^/[/' -e '$$s/,$$/]/' $(BUILD)/**/*.o.json > $@
+	@sed -e '1s/^/[/' -e '$$s/,$$/]/' \
+		$(shell find $(BUILD) -name "*.o.json") > $@
 
 ###############################################################################
 #
