@@ -22,7 +22,7 @@ jobs:
     - name: install macOS homebrew packages
       if: ${{ runner.os == 'macOS' }}
       run: |
-        brew install openssl
+        brew install openssl@1.1
 
     - name: make info
       run: |
