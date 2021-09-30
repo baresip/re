@@ -53,21 +53,6 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-/*
-  epoll() has been tested successfully on the following kernels:
-
-  - Linux 2.6.16.29-xen   (Debian 4.0 etch)
-  - Linux 2.6.18-4-amd64  (Debian 4.0 etch)
-
-
-  TODO clean this up
-
-  - The polling method is selectable both in compile-time and run-time
-  - The polling method can be changed in run time. this is cool!
-  - Maximum number of fds can be set from application, but only once!
-  - Look at howto optimise main loop
- */
-
 
 /** Main loop values */
 enum {
