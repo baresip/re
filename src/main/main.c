@@ -894,6 +894,9 @@ static int fd_poll(struct re *re)
 /**
  * Set the maximum number of file descriptors
  *
+ * @note Only first call inits maxfds and fhs, so call before re_main() in
+ * custom applications.
+ *
  * @param maxfds Max FDs. 0 to free.
  *
  * @return 0 if success, otherwise errorcode
