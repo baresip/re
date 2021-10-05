@@ -9,11 +9,13 @@
 #include <re_btrace.h>
 
 
-int btrace_print(struct re_printf *pf, struct btrace *btrace)
+static int print_debug(struct re_printf *pf, struct btrace *btrace,
+		       bool newline)
 {
 #if defined(WIN32) || defined(RELEASE)
 	(void)pf;
 	(void)btrace;
+	(void)newline;
 
 	return 0;
 #else
@@ -30,11 +32,43 @@ int btrace_print(struct re_printf *pf, struct btrace *btrace)
 	if (!symbols)
 		return 0;
 
-	for (int j = 0; j < btrace->len; j++)
-		re_hprintf(pf, "%s ", symbols[j]);
+	for (int j = 0; j < btrace->len; j++) {
+		if (newline)
+			re_hprintf(pf, "%s \n", symbols[j]);
+		else
+			re_hprintf(pf, "%s ", symbols[j]);
+	}
 
 	free(symbols);
 
 	return 0;
 #endif
+}
+
+
+/**
+ * Print debug backtrace with newlines
+ *
+ * @param pf     Print function for debug output
+ * @param btrace Backtrace object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int btrace_println(struct re_printf *pf, struct btrace *btrace)
+{
+	return print_debug(pf, btrace, true);
+}
+
+
+/**
+ * Print debug backtrace without newlines
+ *
+ * @param pf     Print function for debug output
+ * @param btrace Backtrace object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int btrace_print(struct re_printf *pf, struct btrace *btrace)
+{
+	return print_debug(pf, btrace, false);
 }
