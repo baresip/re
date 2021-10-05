@@ -143,7 +143,6 @@ typedef bool _Bool;
 #define BREAKPOINT
 #endif
 
-
 /* Error return/goto debug helpers */
 #ifdef TRACE_ERR
 #define PRINT_TRACE_ERR(err)						\
