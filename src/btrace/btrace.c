@@ -11,12 +11,12 @@
 
 int btrace_print(struct re_printf *pf, struct btrace *btrace)
 {
-#if defined(WIN32) && defined(RELEASE)
+#if defined(WIN32) || defined(RELEASE)
 	(void)pf;
 	(void)btrace;
 
 	return 0;
-#endif
+#else
 	char **symbols;
 
 	if (!pf || !btrace)
@@ -36,4 +36,5 @@ int btrace_print(struct re_printf *pf, struct btrace *btrace)
 	free(symbols);
 
 	return 0;
+#endif
 }
