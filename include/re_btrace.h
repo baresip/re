@@ -11,6 +11,7 @@ struct btrace {
 
 int btrace_print(struct re_printf *pf, struct btrace *btrace);
 int btrace_println(struct re_printf *pf, struct btrace *btrace);
+int btrace_print_json(struct re_printf *pf, struct btrace *btrace);
 
 #if !defined(WIN32) && !defined(RELEASE)
 #include <execinfo.h>
