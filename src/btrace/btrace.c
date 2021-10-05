@@ -31,20 +31,26 @@ static int print_debug(struct re_printf *pf, struct btrace *btrace,
 	if (!symbols)
 		return 0;
 
-	for (int j = 0; j < btrace->len; j++) {
-		switch (type) {
-		case BTRACE_CSV:
+	switch (type) {
+	case BTRACE_CSV:
+		for (int j = 0; j < btrace->len; j++) {
 			re_hprintf(pf, "%s%s", symbols[j],
 				   ((j + 1) < btrace->len) ? ", " : "");
-			break;
-		case BTRACE_NEWLINE:
-			re_hprintf(pf, "%s \n", symbols[j]);
-			break;
-		case BTRACE_JSON:
-			re_hprintf(pf, "[\"%s\"]%s", symbols[j],
-				   ((j + 1) < btrace->len) ? ", " : "");
-			break;
 		}
+		break;
+	case BTRACE_NEWLINE:
+		for (int j = 0; j < btrace->len; j++) {
+			re_hprintf(pf, "%s \n", symbols[j]);
+		}
+		break;
+	case BTRACE_JSON:
+		re_hprintf(pf, "[");
+		for (int j = 0; j < btrace->len; j++) {
+			re_hprintf(pf, "\"%s\"%s", symbols[j],
+				   ((j + 1) < btrace->len) ? ", " : "");
+		}
+		re_hprintf(pf, "]");
+		break;
 	}
 
 	free(symbols);
