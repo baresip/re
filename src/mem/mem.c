@@ -14,6 +14,7 @@
 #include <re_fmt.h>
 #include <re_mbuf.h>
 #include <re_mem.h>
+#include <re_btrace.h>
 
 
 #define DEBUG_MODULE "mem"
@@ -31,9 +32,10 @@ struct mem {
 	uint32_t nrefs;     /**< Number of references  */
 	mem_destroy_h *dh;  /**< Destroy handler       */
 #if MEM_DEBUG
-	struct le le;       /**< Linked list element   */
-	uint32_t magic;     /**< Magic number          */
-	size_t size;        /**< Size of memory object */
+	struct le le;          /**< Linked list element   */
+	uint32_t magic;        /**< Magic number          */
+	size_t size;           /**< Size of memory object */
+	struct btrace btraces; /**< Backtrace array       */
 #endif
 };
 
@@ -141,6 +143,7 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 		return NULL;
 
 #if MEM_DEBUG
+	btrace(&m->btraces);
 	memset(&m->le, 0, sizeof(struct le));
 	mem_lock();
 	list_append(&meml, &m->le, m);
@@ -394,6 +397,8 @@ static bool debug_handler(struct le *le, void *arg)
 	MAGIC_CHECK(m);
 
 	(void)re_fprintf(stderr, "\n");
+
+	re_fprintf(stderr, "%H\n", btrace_println, m->btraces);
 
 	return false;
 }

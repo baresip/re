@@ -23,6 +23,7 @@ extern "C" {
 #include "re_aes.h"
 #include "re_base64.h"
 #include "re_bfcp.h"
+#include "re_btrace.h"
 #include "re_conf.h"
 #include "re_crc32.h"
 #include "re_dns.h"
