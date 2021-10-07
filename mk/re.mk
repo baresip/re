@@ -430,39 +430,34 @@ ifeq ($(ARCH),mipsel)
 CFLAGS += -march=mips32
 endif
 
+##############################################################################
+#
+# CC Check Header
+#
+CC_TEST = echo '\#include <$(1)>' | \
+	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes"
 
 ##############################################################################
 #
 # External libraries section
 #
-
 OPENSSL_OPT := $(shell [ -f /usr/local/opt/openssl/include/openssl/ssl.h ] \
 	&& echo "/usr/local/opt/openssl")
-
-USE_OPENSSL := $(shell [ -f $(SYSROOT)/include/openssl/ssl.h ] || \
-	[ -f $(SYSROOT)/local/include/openssl/ssl.h ] || \
-	[ -f $(OPENSSL_OPT)/include/openssl/ssl.h ] || \
-	[ -f $(SYSROOT_ALT)/include/openssl/ssl.h ] && echo "yes")
-
-ifneq ($(USE_OPENSSL),)
-CFLAGS  += -DUSE_OPENSSL -DUSE_TLS
-LIBS    += -lssl -lcrypto
-USE_TLS := yes
 
 ifneq ($(OPENSSL_OPT),)
 CFLAGS  += -I$(OPENSSL_OPT)/include
 LFLAGS  += -L$(OPENSSL_OPT)/lib
 endif
 
-USE_OPENSSL_DTLS := $(shell [ -f $(SYSROOT)/include/openssl/dtls1.h ] || \
-	[ -f $(SYSROOT)/local/include/openssl/dtls1.h ] || \
-	[ -f $(OPENSSL_OPT)/include/openssl/dtls1.h ] || \
-	[ -f $(SYSROOT_ALT)/include/openssl/dtls1.h ] && echo "yes")
+USE_OPENSSL = $(shell $(call CC_TEST,openssl/ssl.h))
 
-USE_OPENSSL_SRTP := $(shell [ -f $(SYSROOT)/include/openssl/srtp.h ] || \
-	[ -f $(SYSROOT)/local/include/openssl/srtp.h ] || \
-	[ -f $(OPENSSL_OPT)/include/openssl/srtp.h ] || \
-	[ -f $(SYSROOT_ALT)/include/openssl/srtp.h ] && echo "yes")
+ifneq ($(USE_OPENSSL),)
+CFLAGS  += -DUSE_OPENSSL -DUSE_TLS
+LIBS    += -lssl -lcrypto
+USE_TLS := yes
+
+USE_OPENSSL_DTLS := $(shell $(call CC_TEST,openssl/dtls1.h))
+USE_OPENSSL_SRTP := $(shell $(call CC_TEST,openssl/srtp.h))
 
 ifneq ($(USE_OPENSSL_DTLS),)
 CFLAGS  += -DUSE_OPENSSL_DTLS -DUSE_DTLS
@@ -479,10 +474,7 @@ USE_OPENSSL_HMAC	:= yes
 
 endif
 
-
-USE_ZLIB    := $(shell [ -f $(SYSROOT)/include/zlib.h ] || \
-	[ -f $(SYSROOT)/local/include/zlib.h ] || \
-	[ -f $(SYSROOT_ALT)/include/zlib.h ] && echo "yes")
+USE_ZLIB := $(shell $(call CC_TEST,zlib.h))
 
 ifneq ($(USE_ZLIB),)
 CFLAGS  += -DUSE_ZLIB
@@ -492,7 +484,7 @@ endif
 
 ifneq ($(OS),win32)
 
-HAVE_PTHREAD    := $(shell [ -f $(SYSROOT)/include/pthread.h ] && echo "1")
+HAVE_PTHREAD := $(shell $(call CC_TEST,pthread.h))
 ifneq ($(HAVE_PTHREAD),)
 HAVE_PTHREAD_RWLOCK := 1
 CFLAGS  += -DHAVE_PTHREAD
@@ -503,7 +495,7 @@ endif
 endif
 
 ifneq ($(ARCH),mipsel)
-HAVE_GETIFADDRS := $(shell [ -f $(SYSROOT)/include/ifaddrs.h ] && echo "1")
+HAVE_GETIFADDRS := $(shell $(call CC_TEST,ifaddrs.h))
 ifneq ($(HAVE_GETIFADDRS),)
 CFLAGS  += -DHAVE_GETIFADDRS
 endif
@@ -516,22 +508,22 @@ endif
 
 endif
 
-HAVE_GETOPT     := $(shell [ -f $(SYSROOT)/include/getopt.h ] && echo "1")
+HAVE_GETOPT     := $(shell $(call CC_TEST,getopt.h))
 ifneq ($(HAVE_GETOPT),)
 CFLAGS  += -DHAVE_GETOPT
 endif
-HAVE_INTTYPES_H := $(shell [ -f $(SYSROOT)/include/inttypes.h ] && echo "1")
+
+HAVE_INTTYPES_H := $(shell $(call CC_TEST,inttypes.h))
 ifneq ($(HAVE_INTTYPES_H),)
 CFLAGS  += -DHAVE_INTTYPES_H
 endif
-HAVE_NET_ROUTE_H := $(shell [ -f $(SYSROOT)/include/net/route.h ] && echo "1")
+
+HAVE_NET_ROUTE_H := $(shell $(call CC_TEST,net/route.h))
 ifneq ($(HAVE_NET_ROUTE_H),)
 CFLAGS  += -DHAVE_NET_ROUTE_H
 endif
-HAVE_SYS_SYSCTL_H := \
-	$(shell [ -f $(SYSROOT)/include/sys/sysctl.h ] || \
-		[ -f $(SYSROOT)/include/$(MACHINE)/sys/sysctl.h ] \
-		&& echo "1")
+
+HAVE_SYS_SYSCTL_H := $(shell $(call CC_TEST,sys/sysctl.h))
 ifneq ($(HAVE_SYS_SYSCTL_H),)
 CFLAGS  += -DHAVE_SYS_SYSCTL_H
 endif
@@ -547,21 +539,20 @@ ifeq ($(OS),win32)
 CFLAGS  += -DHAVE_SELECT
 CFLAGS  += -DHAVE_IO_H
 else
-HAVE_SYSLOG  := $(shell [ -f $(SYSROOT)/include/syslog.h ] && echo "1")
-HAVE_DLFCN_H := $(shell [ -f $(SYSROOT)/include/dlfcn.h ] && echo "1")
-ifneq ($(OS),darwin)
-HAVE_EPOLL   := $(shell [ -f $(SYSROOT)/include/sys/epoll.h ] || \
-			[ -f $(SYSROOT)/include/$(MACHINE)/sys/epoll.h ] \
-			&& echo "1")
-endif
-
-HAVE_RESOLV := $(shell [ -f $(SYSROOT)/include/resolv.h ] && echo "1")
-
-ifneq ($(HAVE_RESOLV),)
-CFLAGS  += -DHAVE_RESOLV
-endif
+HAVE_SYSLOG  := $(shell $(call CC_TEST,syslog.h))
 ifneq ($(HAVE_SYSLOG),)
 CFLAGS  += -DHAVE_SYSLOG
+endif
+
+HAVE_DLFCN_H := $(shell $(call CC_TEST,dlfcn.h))
+
+ifneq ($(OS),darwin)
+HAVE_EPOLL   := $(shell $(call CC_TEST,sys/epoll.h))
+endif
+
+HAVE_RESOLV := $(shell $(call CC_TEST,resolv.h))
+ifneq ($(HAVE_RESOLV),)
+CFLAGS  += -DHAVE_RESOLV
 endif
 
 CFLAGS  += -DHAVE_FORK
@@ -583,7 +574,7 @@ endif
 CFLAGS  += -DHAVE_UNAME
 CFLAGS  += -DHAVE_UNISTD_H
 CFLAGS  += -DHAVE_STRINGS_H
-endif
+endif # win32
 
 ifneq ($(HAVE_ARC4RANDOM),)
 CFLAGS  += -DHAVE_ARC4RANDOM
