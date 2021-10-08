@@ -11,7 +11,7 @@ VER_PATCH := 1
 
 # Development version, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-VER_PRE   := dev8
+VER_PRE   := dev9
 
 # Libtool similar ABI versioning
 # https://github.com/baresip/re/wiki/ABI-Versioning
