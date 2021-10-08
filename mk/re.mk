@@ -449,7 +449,7 @@ CFLAGS  += -I$(OPENSSL_OPT)/include
 LFLAGS  += -L$(OPENSSL_OPT)/lib
 endif
 
-USE_OPENSSL = $(shell $(call CC_TEST,openssl/ssl.h))
+USE_OPENSSL := $(shell $(call CC_TEST,openssl/ssl.h))
 
 ifneq ($(USE_OPENSSL),)
 CFLAGS  += -DUSE_OPENSSL -DUSE_TLS
