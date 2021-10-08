@@ -430,12 +430,25 @@ ifeq ($(ARCH),mipsel)
 CFLAGS += -march=mips32
 endif
 
+BUILD   := build-$(ARCH)
+
 ##############################################################################
 #
 # CC Check Header
 #
-CC_TEST = echo '\#include <$(1)>' | \
-	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes"
+CC_TEST = [ -d .cache/$(PROJECT)/cc_test-$(ARCH)/$(1) ] && \
+	echo "yes" && exit 0 || \
+	echo '\#include <$(1)>' | \
+	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
+	mkdir -p .cache/$(PROJECT)/cc_test-$(ARCH)/$(1)
+
+CC_TEST_AND = [ -d .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(1) ] && \
+	[ -d .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(2) ] && \
+	echo "yes" && exit 0 || \
+	echo -e '\#include <$(1)>\n\#include <$(2)>' | \
+	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
+	mkdir -p .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(1) && \
+	mkdir -p .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(2)
 
 ##############################################################################
 #
@@ -621,8 +634,6 @@ CC	:= $(CCACHE) $(CC)
 CFLAGS	+= $(EXTRA_CFLAGS)
 LFLAGS	+= $(EXTRA_LFLAGS)
 
-BUILD   := build-$(ARCH)
-
 
 default:	all
 
@@ -637,6 +648,7 @@ distclean:
 	@rm -f `find . -name "*.exe"` `find . -name "*.dll"`
 	@rm -f `find . -name "*.dylib"`
 	@rm -f *.pc
+	@rm -rf .cache/$(PROJECT)
 	@rm -f compile_commands.json
 
 .PHONY: info
