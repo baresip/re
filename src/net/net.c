@@ -71,7 +71,7 @@ int net_dst_source_addr_get(const struct sa *dst, struct sa *ip)
 	int err;
 	struct udp_sock *us;
 
-	if (!dst || !ip) {
+	if (!dst || !ip || !sa_isset(dst, SA_ADDR)) {
 		return EINVAL;
 	}
 
