@@ -688,7 +688,6 @@ static int sip_request_send(struct sip_request *req, struct sip *sip,
 	struct sa dst;
 	int err;
 
-	sa_init(&dst, AF_UNSPEC);
 	if (!sa_set_str(&dst, req->host,
 			sip_transp_port(req->tp, route->port))) {
 
