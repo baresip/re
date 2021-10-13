@@ -103,6 +103,7 @@ int sa_pton(const char *addr, struct sa *sa)
 	if (!addr || !sa)
 		return EINVAL;
 
+	memset(sa, 0, sizeof(*sa));
 	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
 		sa->u.in.sin_family = AF_INET;
 	}
@@ -186,6 +187,7 @@ void sa_set_in(struct sa *sa, uint32_t addr, uint16_t port)
 	if (!sa)
 		return;
 
+	memset(sa, 0, sizeof(*sa));
 	sa->u.in.sin_family = AF_INET;
 	sa->u.in.sin_addr.s_addr = htonl(addr);
 	sa->u.in.sin_port = htons(port);
@@ -208,6 +210,7 @@ void sa_set_in6(struct sa *sa, const uint8_t *addr, uint16_t port)
 		return;
 
 #ifdef HAVE_INET6
+	memset(sa, 0, sizeof(*sa));
 	sa->u.in6.sin6_family = AF_INET6;
 	memcpy(&sa->u.in6.sin6_addr, addr, 16);
 	sa->u.in6.sin6_port = htons(port);
@@ -232,6 +235,7 @@ int sa_set_sa(struct sa *sa, const struct sockaddr *s)
 	if (!sa || !s)
 		return EINVAL;
 
+	memset(sa, 0, sizeof(*sa));
 	switch (s->sa_family) {
 
 	case AF_INET:
