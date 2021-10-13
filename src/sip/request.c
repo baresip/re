@@ -214,7 +214,6 @@ static int request_next(struct sip_request *req)
 	int err;
 
  again:
-	sa_init(&dst, AF_UNSPEC);
 	rr = list_ledata(req->addrl.head);
 	if (!rr) {
 		rr = list_ledata(req->srvl.head);
