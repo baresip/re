@@ -52,6 +52,12 @@ static int candpairs_form(struct icem *icem)
 			if (sa_af(&lcand->addr) != sa_af(&rcand->addr))
 				continue;
 
+			if (icem_candpair_find(&icem->checkl, lcand, rcand))
+				continue;
+
+			if (icem_candpair_find(&icem->validl, lcand, rcand))
+				continue;
+
 			err = icem_candpair_alloc(NULL, icem, lcand, rcand);
 			if (err)
 				return err;
