@@ -32,6 +32,9 @@ jobs:
         echo "--- make info ---"
         make info
 
+    - name: test re.mk
+      run: make -C mk -f test.mk
+
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
