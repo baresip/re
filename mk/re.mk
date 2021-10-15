@@ -136,6 +136,7 @@ $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, clang)
 endif
 
+MUSL := $(findstring musl, $(CC))
 
 # Compiler warning flags
 CFLAGS	+= -Wall
@@ -200,6 +201,10 @@ LIB_SUFFIX	:= .so
 MOD_SUFFIX	:= .so
 BIN_SUFFIX	:=
 
+ifneq ($(MUSL),)
+	CFLAGS		+= -D_GNU_SOURCE -Wno-unused-command-line-argument
+	HAVE_RESOLV	:=
+endif
 ifeq ($(OS),solaris)
 	CFLAGS		+= -fPIC -DSOLARIS
 	LIBS		+= -ldl -lresolv -lsocket -lnsl
@@ -670,6 +675,7 @@ info::
 	@echo "  PKG_CONFIG:    $(PKG_CONFIG)"
 	@echo "  CCACHE:        $(CCACHE)"
 	@echo "  CC:            $(CC_VER)"
+	@echo "  MUSL:          $(MUSL)"
 	@echo "  CFLAGS:        $(CFLAGS)"
 	@echo "  DFLAGS:        $(DFLAGS)"
 	@echo "  LFLAGS:        $(LFLAGS)"
