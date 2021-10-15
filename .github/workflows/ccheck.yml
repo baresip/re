@@ -13,3 +13,6 @@ jobs:
       run: |
         wget "https://raw.githubusercontent.com/baresip/baresip/master/test/ccheck.py"
         python3 ccheck.py
+
+    - name: test re.mk
+      run: make -C mk -f test.mk
