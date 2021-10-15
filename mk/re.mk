@@ -203,7 +203,7 @@ BIN_SUFFIX	:=
 
 ifneq ($(MUSL),)
 	CFLAGS		+= -D_GNU_SOURCE -Wno-unused-command-line-argument
-	HAVE_RESOLV	:=
+	CFLAGS		+= -DMUSL
 endif
 ifeq ($(OS),solaris)
 	CFLAGS		+= -fPIC -DSOLARIS
@@ -570,7 +570,9 @@ ifneq ($(OS),darwin)
 HAVE_EPOLL   := $(shell $(call CC_TEST,sys/epoll.h))
 endif
 
+ifeq ($(MUSL),)
 HAVE_RESOLV := $(shell $(call CC_TEST,resolv.h))
+endif
 ifneq ($(HAVE_RESOLV),)
 CFLAGS  += -DHAVE_RESOLV
 endif
