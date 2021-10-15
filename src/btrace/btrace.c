@@ -11,7 +11,7 @@ enum print_type { BTRACE_CSV, BTRACE_NEWLINE, BTRACE_JSON };
 static int print_debug(struct re_printf *pf, struct btrace *btrace,
 		       enum print_type type)
 {
-#if defined(WIN32) || defined(RELEASE)
+#if !defined(HAVE_EXECINFO) || defined(RELEASE)
 	(void)pf;
 	(void)btrace;
 	(void)type;

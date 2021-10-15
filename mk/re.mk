@@ -570,6 +570,11 @@ ifneq ($(HAVE_RESOLV),)
 CFLAGS  += -DHAVE_RESOLV
 endif
 
+HAVE_EXECINFO := $(shell $(call CC_TEST,execinfo.h))
+ifneq ($(HAVE_EXECINFO),)
+CFLAGS  += -DHAVE_EXECINFO
+endif
+
 CFLAGS  += -DHAVE_FORK
 
 CFLAGS  += -DHAVE_PWD_H
