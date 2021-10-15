@@ -13,7 +13,7 @@ int btrace_print(struct re_printf *pf, struct btrace *btrace);
 int btrace_println(struct re_printf *pf, struct btrace *btrace);
 int btrace_print_json(struct re_printf *pf, struct btrace *btrace);
 
-#if !defined(WIN32) && !defined(RELEASE)
+#if defined(HAVE_EXECINFO) && !defined(RELEASE)
 #include <execinfo.h>
 static inline int btrace(struct btrace *btrace)
 {
