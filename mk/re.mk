@@ -36,6 +36,7 @@
 #   CCACHE         Compiler ccache tool
 #   CFLAGS         Compiler flags
 #   DFLAGS         Dependency generator flags
+#   CXXDFLAGS      Dependency generator flags (C++)
 #   LFLAGS         Common linker flags
 #   LIBS           Libraries to link against
 #   LIB_SUFFIX     Suffix for shared libraries
@@ -81,7 +82,8 @@ LFLAGS  += -L$(SYSROOT_ALT)/lib
 endif
 
 # Compiler dependency flags
-DFLAGS	 = -MD -MF $(@:.o=.d) -MT $@
+DFLAGS	  = -MD -MF $(@:.o=.d) -MT $@
+CXXDFLAGS = -MD -MF $(@:.o=.d) -MT $@
 
 ##############################################################################
 #
