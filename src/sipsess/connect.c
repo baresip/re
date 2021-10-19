@@ -139,18 +139,12 @@ static int invite(struct sipsess *sess)
 			     sess->dlg, 0, sess->auth,
 			     send_handler, invite_resp_handler, sess,
 			     "%b"
-			     "%s%s%s"
-			     "Content-Length: %zu\r\n"
-			     "\r\n"
-			     "%b",
+			     "%s%s%s",
 			     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
 			     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
 			     sess->desc ? "Content-Type: " : "",
 			     sess->desc ? sess->ctype : "",
-			     sess->desc ? "\r\n" : "",
-			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
-			     sess->desc ? mbuf_buf(sess->desc) : NULL,
-			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+			     sess->desc ? "\r\n" : "");
 }
 
 
@@ -167,6 +161,7 @@ static int invite(struct sipsess *sess)
  * @param routec    Outbound route vector count
  * @param ctype     Session content-type
  * @param desc      Content description (e.g. SDP)
+ * @param sdp       SDP session
  * @param authh     SIP Authentication handler
  * @param aarg      Authentication handler argument
  * @param aref      True to mem_ref() aarg
@@ -187,6 +182,7 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		    const char *from_uri, const char *cuser,
 		    const char *routev[], uint32_t routec,
 		    const char *ctype, struct mbuf *desc,
+		    struct sdp_session *sdp,
 		    sip_auth_h *authh, void *aarg, bool aref,
 		    const char *callid,
 		    sipsess_offer_h *offerh, sipsess_answer_h *answerh,
@@ -200,9 +196,9 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 	if (!sessp || !sock || !to_uri || !from_uri || !cuser || !ctype)
 		return EINVAL;
 
-	err = sipsess_alloc(&sess, sock, cuser, ctype, desc, authh, aarg, aref,
-			    offerh, answerh, progrh, estabh, infoh, referh,
-			    closeh, arg);
+	err = sipsess_alloc(&sess, sock, cuser, ctype, desc, sdp, authh, aarg,
+			    aref, offerh, answerh, progrh, estabh, infoh,
+			    referh, closeh, arg);
 	if (err)
 		return err;
 

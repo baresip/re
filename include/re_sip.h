@@ -7,6 +7,8 @@
 /* forward declarations */
 struct tls;
 
+struct sdp_session;
+
 enum {
 	SIP_PORT     = 5060,
 	SIP_PORT_TLS = 5061,

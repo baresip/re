@@ -148,6 +148,7 @@ static void destructor(void *arg)
 	mem_deref(sess->close_hdrs);
 	mem_deref(sess->hdrs);
 	mem_deref(sess->desc);
+	mem_deref(sess->sdp);
 	mem_deref(sess->sock);
 	mem_deref(sess->sip);
 	mem_deref(sess->st);
@@ -156,6 +157,7 @@ static void destructor(void *arg)
 
 int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 		  const char *cuser, const char *ctype, struct mbuf *desc,
+		  struct sdp_session *sdp,
 		  sip_auth_h *authh, void *aarg, bool aref,
 		  sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		  sipsess_progr_h *progrh, sipsess_estab_h *estabh,
@@ -183,6 +185,7 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	sess->sock    = mem_ref(sock);
 	sess->desc    = mem_ref(desc);
+	sess->sdp     = mem_ref(sdp);
 	sess->sip     = mem_ref(sock->sip);
 	sess->offerh  = offerh  ? offerh  : internal_offer_handler;
 	sess->answerh = answerh ? answerh : internal_answer_handler;
@@ -244,6 +247,19 @@ void sipsess_terminate(struct sipsess *sess, int err,
 struct sip_dialog *sipsess_dialog(const struct sipsess *sess)
 {
 	return sess ? sess->dlg : NULL;
+}
+
+
+/**
+ * Get the SDP session a SIP Session
+ *
+ * @param sess      SIP Session
+ *
+ * @return SIP Dialog object
+ */
+struct sdp_session *sipsess_sdp(const struct sipsess *sess)
+{
+	return sess ? sess->sdp : NULL;
 }
 
 

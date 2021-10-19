@@ -31,6 +31,7 @@ int  sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		     const char *from_uri, const char *cuser,
 		     const char *routev[], uint32_t routec,
 		     const char *ctype, struct mbuf *desc,
+		     struct sdp_session *sdp,
 		     sip_auth_h *authh, void *aarg, bool aref,
 		     const char *callid,
 		     sipsess_offer_h *offerh, sipsess_answer_h *answerh,
@@ -64,3 +65,4 @@ int  sipsess_info(struct sipsess *sess, const char *ctype, struct mbuf *body,
 int  sipsess_set_close_headers(struct sipsess *sess, const char *hdrs, ...);
 void sipsess_close_all(struct sipsess_sock *sock);
 struct sip_dialog *sipsess_dialog(const struct sipsess *sess);
+struct sdp_session *sipsess_sdp(const struct sipsess *sess);

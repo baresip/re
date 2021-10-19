@@ -15,8 +15,12 @@
 #include <re_udp.h>
 #include <re_msg.h>
 #include <re_sip.h>
+#include <re_sipsess.h>
+#include <re_sdp.h>
 #include "sip.h"
+#include <string.h>
 
+struct sdp_session;
 
 struct sip_request {
 	struct le le;
@@ -34,6 +38,7 @@ struct sip_request {
 	struct mbuf *mb;
 	sip_send_h *sendh;
 	sip_resp_h *resph;
+	struct sdp_session *sdp;
 	void *arg;
 	size_t sortkey;
 	enum sip_transp tp;
@@ -89,6 +94,7 @@ static void destructor(void *arg)
 	mem_deref(req->uri);
 	mem_deref(req->host);
 	mem_deref(req->mb);
+	mem_deref(req->sdp);
 }
 
 
@@ -162,9 +168,11 @@ static int request(struct sip_request *req, enum sip_transp tp,
 		   const struct sa *dst)
 {
 	struct mbuf *mb = NULL;
+	struct mbuf *bb = NULL;
 	char *branch = NULL;
 	int err = ENOMEM;
 	struct sa laddr;
+	struct sdp_session *sess;
 
 	req->provrecv = false;
 
@@ -176,15 +184,38 @@ static int request(struct sip_request *req, enum sip_transp tp,
 
 	(void)re_snprintf(branch, 24, "z9hG4bK%016llx", rand_u64());
 
+	/* get laddr corresponding to destination */
 	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
 	if (err)
 		goto out;
 
+	/* add request line and Via header */
 	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
 			   sip_transp_name(tp), &laddr, branch);
+
+        /* add Contact header */
 	err |= req->sendh ? req->sendh(tp, &laddr, dst, mb, req->arg) : 0;
 	err |= mbuf_write_mem(mb, mbuf_buf(req->mb), mbuf_get_left(req->mb));
+
+	/* add Content-Length and SDP message body (if present) */
+	sess = req->sdp;
+	if (sess) {
+		sdp_session_set_laddr(sess, &laddr);
+		bb = mbuf_alloc(1024);
+		if (!bb)
+			goto out;
+		sdp_encode(&bb, sess, true);
+		bb->pos = 0;
+		err |= mbuf_printf(mb, "Content-Length: %zu\r\n",
+				   mbuf_get_left(bb));
+		if (mbuf_get_left(bb) > 0) {
+			err |= mbuf_write_str(mb, "\r\n");
+			err |= mbuf_write_mem(mb, mbuf_buf(bb), mbuf_get_left(bb));
+		}
+		mem_deref(bb);
+	}
+
 	if (err)
 		goto out;
 
@@ -603,7 +634,8 @@ static int sip_request_alloc(struct sip_request **reqp,
 		struct sip *sip, bool stateful, const char *met, int metl,
 		const char *uri, int uril, const struct uri *route,
 		enum sip_transp tp, struct mbuf *mb, size_t sortkey,
-		sip_send_h *sendh, sip_resp_h *resph, void *arg)
+		sip_send_h *sendh, sip_resp_h *resph, struct sdp_session *sdp,
+		void *arg)
 {
 	struct sip_request *req;
 	struct pl pl;
@@ -642,6 +674,7 @@ static int sip_request_alloc(struct sip_request **reqp,
 	req->sip   = sip;
 	req->sendh = sendh;
 	req->resph = resph;
+	req->sdp   = mem_ref(sdp);
 	req->arg   = arg;
 
 	if (tp != SIP_TRANSP_NONE) {
@@ -752,7 +785,7 @@ int sip_request(struct sip_request **reqp, struct sip *sip, bool stateful,
 
 	err = sip_request_alloc(&req, sip, stateful, met, metl, uri, uril,
 				route, SIP_TRANSP_NONE, mb, sortkey, sendh,
-				resph, arg);
+				resph, NULL, arg);
 	if (err)
 		goto out;
 
@@ -864,6 +897,7 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 	struct sip_request *req;
 	struct mbuf *mb;
 	va_list ap;
+	struct sdp_session *sdp = NULL;
 	int err;
 
 	if (!sip || !met || !dlg || !fmt)
@@ -895,10 +929,13 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 
 	mb->pos = 0;
 
+	if (strcmp(met, "INVITE") == 0)
+		sdp = sipsess_sdp((struct sipsess *)arg);
+
 	err = sip_request_alloc(&req, sip, stateful, met, -1,
 				sip_dialog_uri(dlg), -1, sip_dialog_route(dlg),
 				sip_dialog_tp(dlg),
-				mb, sip_dialog_hash(dlg), sendh, resph, arg);
+				mb, sip_dialog_hash(dlg), sendh, resph, sdp, arg);
 	if (err)
 		goto out;
 
