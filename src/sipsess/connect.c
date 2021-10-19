@@ -135,16 +135,34 @@ static int invite(struct sipsess *sess)
 	sess->sent_offer = sess->desc ? true : false;
 	sess->modify_pending = false;
 
-	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
-			     sess->dlg, 0, sess->auth,
-			     send_handler, invite_resp_handler, sess,
-			     "%b"
-			     "%s%s%s",
-			     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
-			     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
-			     sess->desc ? "Content-Type: " : "",
-			     sess->desc ? sess->ctype : "",
-			     sess->desc ? "\r\n" : "");
+	if (sess->sdp)
+		return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+				     sess->dlg, 0, sess->auth,
+				     send_handler, invite_resp_handler, sess,
+				     "%b"
+				     "%s%s%s",
+				     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
+				     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
+				     sess->desc ? "Content-Type: " : "",
+				     sess->desc ? sess->ctype : "",
+				     sess->desc ? "\r\n" : "");
+	else
+		return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+				     sess->dlg, 0, sess->auth,
+				     send_handler, invite_resp_handler, sess,
+				     "%b"
+				     "%s%s%s"
+				     "Content-Length: %zu\r\n"
+				     "\r\n"
+				     "%b",
+				     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
+				     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
+				     sess->desc ? "Content-Type: " : "",
+				     sess->desc ? sess->ctype : "",
+				     sess->desc ? "\r\n" : "",
+				     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+				     sess->desc ? mbuf_buf(sess->desc) : NULL,
+				     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
 }
 
 
