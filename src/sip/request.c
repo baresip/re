@@ -935,7 +935,8 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 	err = sip_request_alloc(&req, sip, stateful, met, -1,
 				sip_dialog_uri(dlg), -1, sip_dialog_route(dlg),
 				sip_dialog_tp(dlg),
-				mb, sip_dialog_hash(dlg), sendh, resph, sdp, arg);
+				mb, sip_dialog_hash(dlg), sendh, resph, sdp,
+				arg);
 	if (err)
 		goto out;
 

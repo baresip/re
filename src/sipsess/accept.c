@@ -77,8 +77,8 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 	    !cuser || !ctype)
 		return EINVAL;
 
-	err = sipsess_alloc(&sess, sock, cuser, ctype, NULL, NULL, authh, aarg, aref,
-			    offerh, answerh, NULL, estabh, infoh, referh,
+	err = sipsess_alloc(&sess, sock, cuser, ctype, NULL, NULL, authh, aarg,
+			    aref, offerh, answerh, NULL, estabh, infoh, referh,
 			    closeh, arg);
 	if (err)
 		return err;
