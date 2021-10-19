@@ -23,7 +23,6 @@ struct sipsess {
 	char *close_hdrs;
 	struct mbuf *hdrs;
 	struct mbuf *desc;
-	/* Now when *sdp is added (below), is *desc (above) needed anymore? */
 	struct sdp_session *sdp;
 	sipsess_offer_h *offerh;
 	sipsess_answer_h *answerh;
