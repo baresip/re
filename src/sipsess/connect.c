@@ -142,7 +142,8 @@ static int invite(struct sipsess *sess)
 				     "%b"
 				     "%s%s%s",
 				     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
-				     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
+				     sess->hdrs ? mbuf_get_left(sess->hdrs) :
+				     (size_t)0,
 				     sess->desc ? "Content-Type: " : "",
 				     sess->desc ? sess->ctype : "",
 				     sess->desc ? "\r\n" : "");
@@ -156,11 +157,13 @@ static int invite(struct sipsess *sess)
 				     "\r\n"
 				     "%b",
 				     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
-				     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
+				     sess->hdrs ? mbuf_get_left(sess->hdrs) :
+				     (size_t)0,
 				     sess->desc ? "Content-Type: " : "",
 				     sess->desc ? sess->ctype : "",
 				     sess->desc ? "\r\n" : "",
-				     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+				     sess->desc ? mbuf_get_left(sess->desc) :
+				     (size_t)0,
 				     sess->desc ? mbuf_buf(sess->desc) : NULL,
 				     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
 }

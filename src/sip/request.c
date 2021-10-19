@@ -194,7 +194,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
 			   sip_transp_name(tp), &laddr, branch);
 
-        /* add Contact header */
+	/* add Contact header */
 	err |= req->sendh ? req->sendh(tp, &laddr, dst, mb, req->arg) : 0;
 	err |= mbuf_write_mem(mb, mbuf_buf(req->mb), mbuf_get_left(req->mb));
 
@@ -211,7 +211,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 				   mbuf_get_left(bb));
 		if (mbuf_get_left(bb) > 0) {
 			err |= mbuf_write_str(mb, "\r\n");
-			err |= mbuf_write_mem(mb, mbuf_buf(bb), mbuf_get_left(bb));
+			err |= mbuf_write_mem(mb, mbuf_buf(bb),
+					      mbuf_get_left(bb));
 		}
 		mem_deref(bb);
 	}
