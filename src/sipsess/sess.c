@@ -251,11 +251,11 @@ struct sip_dialog *sipsess_dialog(const struct sipsess *sess)
 
 
 /**
- * Get the SDP session a SIP Session
+ * Get the SDP session from a SIP Session
  *
  * @param sess      SIP Session
  *
- * @return SIP Dialog object
+ * @return SDP Session object
  */
 struct sdp_session *sipsess_sdp(const struct sipsess *sess)
 {
