@@ -165,7 +165,8 @@ static int invite(struct sipsess *sess)
 				     sess->desc ? mbuf_get_left(sess->desc) :
 				     (size_t)0,
 				     sess->desc ? mbuf_buf(sess->desc) : NULL,
-				     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+				     sess->desc ? mbuf_get_left(sess->desc) :
+				     (size_t)0);
 }
 
 
