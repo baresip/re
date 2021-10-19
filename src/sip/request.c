@@ -202,10 +202,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	sess = req->sdp;
 	if (sess) {
 		sdp_session_set_laddr(sess, &laddr);
-		bb = mbuf_alloc(1024);
-		if (!bb)
-			goto out;
-		sdp_encode(&bb, sess, true);
+		err |= sdp_encode(&bb, sess, true);
 		bb->pos = 0;
 		err |= mbuf_printf(mb, "Content-Length: %zu\r\n",
 				   mbuf_get_left(bb));
