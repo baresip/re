@@ -183,7 +183,7 @@ static int invite(struct sipsess *sess)
  * @param routec    Outbound route vector count
  * @param ctype     Session content-type
  * @param desc      Content description (e.g. SDP)
- * @param sdp       SDP session
+ * @param sdp       SDP session (alternative to desc)
  * @param authh     SIP Authentication handler
  * @param aarg      Authentication handler argument
  * @param aref      True to mem_ref() aarg
