@@ -16,3 +16,4 @@ jobs:
         project: 'baresip%2Fre'
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
         command: make libre.a
+        email: 'hallo@studio-link.de'
