@@ -441,17 +441,17 @@ BUILD   := build-$(ARCH)
 CC_TEST = [ -d .cache/$(PROJECT)/cc_test-$(ARCH)/$(1) ] && \
 	echo "yes" && exit 0 || \
 	echo '\#include <$(1)>' | \
-	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
 	mkdir -p .cache/$(PROJECT)/cc_test-$(ARCH)/$(1)
 
 CC_TEST_AND = [ -d .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(1) ] && \
 	[ -d .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(2) ] && \
 	echo "yes" && exit 0 || \
 	echo '\#include <$(1)>' | \
-	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && \
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -E - >/dev/null 2>&1 && \
 	mkdir -p .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(1) && \
 	echo '\#include <$(2)>' | \
-	$(CC) $(CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -E - >/dev/null 2>&1 && echo "yes" && \
 	mkdir -p .cache/$(PROJECT)/cc_test_and-$(ARCH)/$(2)
 
 ##############################################################################
