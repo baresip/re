@@ -3,7 +3,6 @@ name: Daily Coverity Check
 on:
   schedule:
     - cron:  '30 6 * * *'
-  push:
 
 jobs:
   coverity:
