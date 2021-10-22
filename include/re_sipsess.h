@@ -9,6 +9,8 @@ struct sipsess;
 
 
 typedef void (sipsess_conn_h)(const struct sip_msg *msg, void *arg);
+typedef int  (sipsess_desc_h)(struct mbuf **descp, const struct sa *src,
+			      const struct sa *dst, void *arg);
 typedef int  (sipsess_offer_h)(struct mbuf **descp, const struct sip_msg *msg,
 			       void *arg);
 typedef int  (sipsess_answer_h)(const struct sip_msg *msg, void *arg);
@@ -30,9 +32,10 @@ int  sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		     const char *to_uri, const char *from_name,
 		     const char *from_uri, const char *cuser,
 		     const char *routev[], uint32_t routec,
-		     const char *ctype, struct mbuf *desc,
+		     const char *ctype,
 		     sip_auth_h *authh, void *aarg, bool aref,
 		     const char *callid,
+		     sipsess_desc_h *desch,
 		     sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		     sipsess_progr_h *progrh, sipsess_estab_h *estabh,
 		     sipsess_info_h *infoh, sipsess_refer_h *referh,

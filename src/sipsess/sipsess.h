@@ -23,6 +23,7 @@ struct sipsess {
 	char *close_hdrs;
 	struct mbuf *hdrs;
 	struct mbuf *desc;
+	sipsess_desc_h *desch;
 	sipsess_offer_h *offerh;
 	sipsess_answer_h *answerh;
 	sipsess_progr_h *progrh;
@@ -68,6 +69,7 @@ struct sipsess_request {
 int  sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 		   const char *cuser, const char *ctype, struct mbuf *desc,
 		   sip_auth_h *authh, void *aarg, bool aref,
+		   sipsess_desc_h *desch,
 		   sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		   sipsess_progr_h *progrh, sipsess_estab_h *estabh,
 		   sipsess_info_h *infoh, sipsess_refer_h *referh,
