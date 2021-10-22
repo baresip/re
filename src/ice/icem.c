@@ -120,13 +120,9 @@ int  icem_alloc(struct icem **icemp,
 	icem->state = ICE_CHECKLIST_NULL;
 	icem->chkh  = chkh;
 	icem->arg   = arg;
-
-	if (err)
-		goto out;
-
 	icem->tiebrk = tiebrk;
 
-	err |= str_dup(&icem->lufrag, lufrag);
+	err = str_dup(&icem->lufrag, lufrag);
 	err |= str_dup(&icem->lpwd, lpwd);
 	if (err)
 		goto out;
