@@ -37,7 +37,7 @@ uint64_t srtp_get_index(uint32_t roc, uint16_t s_l, uint16_t seq)
 			v = roc;
 	}
 
-	return seq + v*65536;
+	return seq + v*(uint64_t)65536;
 }
 
 
