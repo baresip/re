@@ -1,4 +1,4 @@
-name: Daily Coverity Check
+name: Coverity Check
 
 on:
   push:
