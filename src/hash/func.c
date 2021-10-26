@@ -175,6 +175,9 @@ uint32_t hash_fast_str(const char *str)
 {
 	uint32_t h = FNV1_32A_INIT;
 
+	if (!str)
+		return 0;
+
 	while (*str) {
 		h ^= (uint32_t)*str++;
 		h *= FNV_32_PRIME;
