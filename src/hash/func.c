@@ -152,6 +152,9 @@ uint32_t hash_fast(const char *k, size_t len)
 {
 	uint32_t h = FNV1_32A_INIT;
 
+	if (!k)
+		return 0;
+
 	while (len--) {
 		h ^= (uint32_t)*k++;
 		h *= FNV_32_PRIME;
