@@ -68,6 +68,7 @@ static int send_handler(enum sip_transp tp, const struct sa *src,
 		*contp = cont;
 
 out:
+	sess->sent_offer = desc != NULL;
 	mem_deref(desc);
 	return err;
 }
@@ -170,7 +171,6 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 static int invite(struct sipsess *sess)
 {
-	sess->sent_offer = sess->desc ? true : false;
 	sess->modify_pending = false;
 
 	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
