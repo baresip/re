@@ -880,7 +880,7 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 
 #ifdef HAVE_INET6
 	sa_set_str(&laddr6, "::", 0);
-	err |= udp_listen(&dnsc->us6, &laddr6, udp_recv_handler, dnsc);
+	err &= udp_listen(&dnsc->us6, &laddr6, udp_recv_handler, dnsc);
 #endif
 	if (err)
 		goto out;
