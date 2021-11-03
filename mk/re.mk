@@ -550,6 +550,13 @@ CFLAGS  += -DHAVE_STDBOOL_H
 HAVE_INET6      := 1
 ifneq ($(HAVE_INET6),)
 CFLAGS  += -DHAVE_INET6
+else
+ifeq ($(HAVE_INET6_IGNORE_DEPRECATED),)
+$(warning HAVE_INET6= is deprecated, add HAVE_INET6_IGNORE_DEPRECATED=1 to \
+	ignore this warning.)
+$(error This will be removed in the next release, please report any problems \
+	with HAVE_INET6 enabled here: https://github.com/baresip/re/issues)
+endif
 endif
 
 ifeq ($(OS),win32)
