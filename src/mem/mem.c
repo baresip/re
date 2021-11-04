@@ -398,7 +398,7 @@ static bool debug_handler(struct le *le, void *arg)
 
 	(void)re_fprintf(stderr, "\n");
 
-	re_fprintf(stderr, "%H\n", btrace_println, m->btraces);
+	re_fprintf(stderr, "%H\n", btrace_println, &m->btraces);
 
 	return false;
 }
