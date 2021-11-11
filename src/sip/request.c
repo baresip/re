@@ -162,6 +162,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 		   const struct sa *dst)
 {
 	struct mbuf *mb = NULL;
+	struct mbuf *cont = NULL;
 	char *branch = NULL;
 	int err = ENOMEM;
 	struct sa laddr;
@@ -183,8 +184,12 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
 			   sip_transp_name(tp), &laddr, branch);
-	err |= req->sendh ? req->sendh(tp, &laddr, dst, mb, req->arg) : 0;
+	err |= req->sendh ? req->sendh(tp, &laddr, dst, mb, &cont, req->arg) :
+			    0;
 	err |= mbuf_write_mem(mb, mbuf_buf(req->mb), mbuf_get_left(req->mb));
+	err |= cont ? mbuf_write_mem(mb, mbuf_buf(cont), mbuf_get_left(cont)) :
+		      0;
+	mem_deref(cont);
 	if (err)
 		goto out;
 

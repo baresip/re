@@ -51,10 +51,12 @@ static void tmr_handler(void *arg)
 
 
 static int send_handler(enum sip_transp tp, const struct sa *src,
-			const struct sa *dst, struct mbuf *mb, void *arg)
+			const struct sa *dst, struct mbuf *mb,
+			struct mbuf **contp, void *arg)
 {
 	struct sipsess_ack *ack = arg;
 	(void)src;
+	(void)contp;
 
 	mem_deref(ack->mb);
 	ack->mb = mem_ref(mb);

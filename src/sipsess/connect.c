@@ -23,15 +23,54 @@ static int invite(struct sipsess *sess);
 
 
 static int send_handler(enum sip_transp tp, const struct sa *src,
-			const struct sa *dst, struct mbuf *mb, void *arg)
+			const struct sa *dst, struct mbuf *mb,
+			struct mbuf **contp, void *arg)
 {
 	struct sip_contact contact;
 	struct sipsess *sess = arg;
-	(void)dst;
+	struct mbuf *desc = NULL;
+	struct mbuf *cont = NULL;
+	int err;
+
+	if (sess->desch) {
+		err = sess->desch(&desc, src, dst, sess->arg);
+		if (err)
+			return err;
+	}
 
 	sip_contact_set(&contact, sess->cuser, src, tp);
+	err = mbuf_printf(mb, "%H", sip_contact_print, &contact);
+	if (err)
+		goto out;
 
-	return mbuf_printf(mb, "%H", sip_contact_print, &contact);
+	cont = mbuf_alloc(1024);
+	if (!cont) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	err |= mbuf_printf(cont,
+			"%s%s%s"
+			"Content-Length: %zu\r\n"
+			"\r\n"
+			"%b",
+			desc ? "Content-Type: " : "",
+			desc ? sess->ctype : "",
+			desc ? "\r\n" : "",
+			mbuf_get_left(desc),
+			mbuf_buf(desc),
+			mbuf_get_left(desc));
+	cont->pos = 0;
+
+	if (err)
+		mem_deref(cont);
+	else
+		*contp = cont;
+
+out:
+	sess->sent_offer = desc != NULL;
+	mem_deref(desc);
+	return err;
 }
 
 
@@ -132,25 +171,15 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 static int invite(struct sipsess *sess)
 {
-	sess->sent_offer = sess->desc ? true : false;
 	sess->modify_pending = false;
 
 	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
 			     sess->dlg, 0, sess->auth,
 			     send_handler, invite_resp_handler, sess,
-			     "%b"
-			     "%s%s%s"
-			     "Content-Length: %zu\r\n"
-			     "\r\n"
 			     "%b",
 			     sess->hdrs ? mbuf_buf(sess->hdrs) : NULL,
-			     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0,
-			     sess->desc ? "Content-Type: " : "",
-			     sess->desc ? sess->ctype : "",
-			     sess->desc ? "\r\n" : "",
-			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
-			     sess->desc ? mbuf_buf(sess->desc) : NULL,
-			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+			     sess->hdrs ? mbuf_get_left(sess->hdrs) :(size_t)0
+			     );
 }
 
 
@@ -186,9 +215,10 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		    const char *to_uri, const char *from_name,
 		    const char *from_uri, const char *cuser,
 		    const char *routev[], uint32_t routec,
-		    const char *ctype, struct mbuf *desc,
+		    const char *ctype,
 		    sip_auth_h *authh, void *aarg, bool aref,
 		    const char *callid,
+		    sipsess_desc_h *desch,
 		    sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		    sipsess_progr_h *progrh, sipsess_estab_h *estabh,
 		    sipsess_info_h *infoh, sipsess_refer_h *referh,
@@ -200,7 +230,8 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 	if (!sessp || !sock || !to_uri || !from_uri || !cuser || !ctype)
 		return EINVAL;
 
-	err = sipsess_alloc(&sess, sock, cuser, ctype, desc, authh, aarg, aref,
+	err = sipsess_alloc(&sess, sock, cuser, ctype, NULL, authh, aarg, aref,
+			    desch,
 			    offerh, answerh, progrh, estabh, infoh, referh,
 			    closeh, arg);
 	if (err)

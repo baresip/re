@@ -237,7 +237,8 @@ struct dnsc;
 
 typedef bool(sip_msg_h)(const struct sip_msg *msg, void *arg);
 typedef int(sip_send_h)(enum sip_transp tp, const struct sa *src,
-			const struct sa *dst, struct mbuf *mb, void *arg);
+			const struct sa *dst, struct mbuf *mb,
+			struct mbuf **contp, void *arg);
 typedef void(sip_resp_h)(int err, const struct sip_msg *msg, void *arg);
 typedef void(sip_cancel_h)(void *arg);
 typedef void(sip_exit_h)(void *arg);

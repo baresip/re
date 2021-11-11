@@ -175,11 +175,13 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 
 static int send_handler(enum sip_transp tp, const struct sa *src,
-			const struct sa *dst, struct mbuf *mb, void *arg)
+			const struct sa *dst, struct mbuf *mb,
+			struct mbuf **contp, void *arg)
 {
 	struct sip_contact contact;
 	struct sipnot *not = arg;
 	(void)dst;
+	(void)contp;
 
 	sip_contact_set(&contact, not->cuser, src, tp);
 
