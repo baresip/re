@@ -20,9 +20,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: install devel tools
       run: |
-        yum -y install epel-release
-        yum -y install git hub
-        yum -y install gcc make clang
+        yum -y install gcc clang make clang
 
     - name: make info
       run: |
@@ -34,25 +32,3 @@ jobs:
 
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
-
-    - uses: sreimers/pr-dependency-action@v0.3
-      with:
-        name: rem
-        repo: https://github.com/baresip/rem
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: '../.'
-
-    - uses: sreimers/pr-dependency-action@v0.3
-      with:
-        name: retest
-        repo: https://github.com/baresip/retest.git
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: '../.'
-
-    - name: retest
-      run: |
-        cd ..
-        rm re/libre.so || true
-        rm re/libre.dylib || true
-        make -C rem librem.a
-        cd retest && make && ./retest -r
