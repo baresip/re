@@ -1,0 +1,52 @@
+name: Build Centos 7
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    container: centos:7
+
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        os: [ubuntu-20.04]
+
+    env:
+      CC: ${{ matrix.compiler }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: make info
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
+        ${{ matrix.compiler }} - --version
+        echo "--- make info ---"
+        make info
+
+    - name: make
+      run: make EXTRA_CFLAGS=-Werror CCACHE=
+
+    - uses: sreimers/pr-dependency-action@v0.3
+      with:
+        name: rem
+        repo: https://github.com/baresip/rem
+        secret: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: '../.'
+
+    - uses: sreimers/pr-dependency-action@v0.3
+      with:
+        name: retest
+        repo: https://github.com/baresip/retest.git
+        secret: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: '../.'
+
+    - name: retest
+      run: |
+        cd ..
+        rm re/libre.so || true
+        rm re/libre.dylib || true
+        make -C rem librem.a
+        cd retest && make && ./retest -r
