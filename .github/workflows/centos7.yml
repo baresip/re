@@ -1,4 +1,4 @@
-name: Build Centos 7
+name: Centos 7
 
 on: [push, pull_request]
 
@@ -17,6 +17,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: install devel tools
+      run: yum -y install gcc cmake clang
 
     - name: make info
       run: |
