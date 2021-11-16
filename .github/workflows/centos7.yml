@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install devel tools
-      run: yum -y install gcc cmake clang
+      run: yum -y install gcc make clang
 
     - name: make info
       run: |
