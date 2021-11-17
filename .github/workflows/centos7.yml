@@ -1,0 +1,33 @@
+name: Centos 7
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    container: centos:7
+
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        os: [ubuntu-20.04]
+
+    env:
+      CC: ${{ matrix.compiler }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install devel tools
+      run: |
+        yum -y install gcc clang make
+
+    - name: make info
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
+        ${{ matrix.compiler }} - --version
+        echo "--- make info ---"
+        make info
+
+    - name: make
+      run: make EXTRA_CFLAGS=-Werror CCACHE=
