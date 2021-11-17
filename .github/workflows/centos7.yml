@@ -14,13 +14,12 @@ jobs:
 
     env:
       CC: ${{ matrix.compiler }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
     - uses: actions/checkout@v2
     - name: install devel tools
       run: |
-        yum -y install gcc clang make clang
+        yum -y install gcc clang make
 
     - name: make info
       run: |
