@@ -112,25 +112,29 @@ static int mkdigest(uint8_t *digest, const struct realm *realm,
 			 realm->user, realm->realm, realm->pass);
 
 	if (err)
-		return err;
+		goto out;
 
 	err = digest_printf(ha2, "%s:%s", met, uri);
 	if (err)
-		return err;
+		goto out;
 
 	DEBUG_INFO("mkdigest algorithm: %s\n", realm->algorithm);
 	if (realm->qop)
-		return digest_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
+		err = digest_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
 				  ha1, h_size,
 				  realm->nonce,
 				  realm->nc,
 				  cnonce,
 				  ha2, h_size);
 	else
-		return digest_printf(digest, "%w:%s:%w",
+		err = digest_printf(digest, "%w:%s:%w",
 				  ha1, h_size,
 				  realm->nonce,
 				  ha2, h_size);
+out:
+	mem_deref(ha1);
+	mem_deref(ha2);
+	return err;
 }
 
 
@@ -285,8 +289,10 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		digest = mem_zalloc(d_size, NULL);
 
 		err = mkdigest(digest, realm, met, uri, cnonce);
-		if (err)
+		if (err) {
+			mem_deref(digest);
 			break;
+		}
 
 		switch (realm->hdr) {
 
@@ -323,6 +329,7 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		err |= mbuf_printf(mb, ", algorithm=%s", realm->algorithm);
 		err |= mbuf_write_str(mb, "\r\n");
+		mem_deref(digest);
 		if (err)
 			break;
 	}
