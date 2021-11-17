@@ -95,7 +95,8 @@ static int mkdigest(uint8_t *digest, const struct realm *realm,
 
 #ifndef USE_OPENSSL
 	if (use_sha256) {
-		DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+		DEBUG_WARNING("SHA2 digest only supported "
+				"when compiled with OpenSSL\n");
 		return 1;
 	}
 #endif
@@ -103,11 +104,10 @@ static int mkdigest(uint8_t *digest, const struct realm *realm,
 	ha1 = mem_zalloc(h_size, NULL);
 	ha2 = mem_zalloc(h_size, NULL);
 
-	if (use_sha256) {
+	if (use_sha256)
 		digest_printf = &sha256_printf;
-	} else {
+	else
 		digest_printf = &md5_printf;
-	}
 	err = digest_printf(ha1, "%s:%s:%s",
 			 realm->user, realm->realm, realm->pass);
 
@@ -119,19 +119,18 @@ static int mkdigest(uint8_t *digest, const struct realm *realm,
 		return err;
 
 	DEBUG_INFO("mkdigest algorithm: %s\n", realm->algorithm);
-	if (realm->qop) {
+	if (realm->qop)
 		return digest_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
 				  ha1, h_size,
 				  realm->nonce,
 				  realm->nc,
 				  cnonce,
 				  ha2, h_size);
-	} else {
+	else
 		return digest_printf(digest, "%w:%s:%w",
 				  ha1, h_size,
 				  realm->nonce,
 				  ha2, h_size);
-	}
 }
 
 
@@ -162,13 +161,15 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		goto out;
 	}
 
-	if (pl_isset(&ch.algorithm) && pl_strcasecmp(&ch.algorithm, "md5") && pl_strcasecmp(&ch.algorithm, "sha-256")) {
+	if (pl_isset(&ch.algorithm) && pl_strcasecmp(&ch.algorithm, "md5") &&
+			pl_strcasecmp(&ch.algorithm, "sha-256")) {
 		err = ENOSYS;
 		goto out;
 	}
 #ifndef USE_OPENSSL
 	if (pl_strcasecmp(&ch.algorithm, "sha-256") == 0) {
-		DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+		DEBUG_WARNING("SHA2 digest only supported "
+				"when compiled with OpenSSL\n");
 		err = ENOSYS;
 		goto out;
 	}
@@ -275,7 +276,8 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		use_sha256 = str_casecmp(realm->algorithm, "sha-256") == 0;
 #ifndef USE_OPENSSL
 		if (use_sha256) {
-			DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+			DEBUG_WARNING("SHA2 digest only supported "
+					"when compiled with OpenSSL\n");
 			break;
 		}
 #endif

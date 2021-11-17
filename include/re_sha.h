@@ -35,8 +35,8 @@ void SHA1_Final(uint8_t digest[SHA1_DIGEST_SIZE], SHA1_CTX* context);
 
 /** SHA256 values */
 enum {
-	SHA256_SIZE     = 32,                /**< Number of bytes in SHA256 hash   */
-	SHA256_STR_SIZE = 2*SHA256_SIZE + 1  /**< Number of bytes in SHA256 string */
+	SHA256_SIZE     = 32,                /**< Bytes in SHA256 hash   */
+	SHA256_STR_SIZE = 2*SHA256_SIZE + 1  /**< Bytes in SHA256 string */
 };
 
 void sha256(const uint8_t *d, size_t n, uint8_t *md);
