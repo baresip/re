@@ -13,12 +13,16 @@
 #include <re_sa.h>
 #include <re_sys.h>
 #include <re_md5.h>
+#include <re_sha.h>
 #include <re_httpauth.h>
 #include <re_udp.h>
 #include <re_msg.h>
 #include <re_sip.h>
 #include "sip.h"
 
+#define DEBUG_MODULE "sip_auth"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 struct sip_auth {
 	struct list realml;
@@ -37,6 +41,7 @@ struct realm {
 	char *opaque;
 	char *user;
 	char *pass;
+	char *algorithm;
 	uint32_t nc;
 	enum sip_hdrid hdr;
 };
@@ -64,6 +69,7 @@ static void realm_destructor(void *arg)
 	mem_deref(realm->opaque);
 	mem_deref(realm->user);
 	mem_deref(realm->pass);
+	mem_deref(realm->algorithm);
 }
 
 
@@ -81,30 +87,51 @@ static void auth_destructor(void *arg)
 static int mkdigest(uint8_t *digest, const struct realm *realm,
 		    const char *met, const char *uri, uint64_t cnonce)
 {
-	uint8_t ha1[MD5_SIZE], ha2[MD5_SIZE];
+	uint8_t *ha1, *ha2;
+	int h_size;
 	int err;
+	digest_printf_h *digest_printf;
+	bool use_sha256 = str_casecmp(realm->algorithm, "sha-256") == 0;
 
-	err = md5_printf(ha1, "%s:%s:%s",
+#ifndef USE_OPENSSL
+	if (use_sha256) {
+		DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+		return 1;
+	}
+#endif
+	h_size = use_sha256 ? SHA256_SIZE : MD5_SIZE;
+	ha1 = mem_zalloc(h_size, NULL);
+	ha2 = mem_zalloc(h_size, NULL);
+
+	if (use_sha256) {
+		digest_printf = &sha256_printf;
+	} else {
+		digest_printf = &md5_printf;
+	}
+	err = digest_printf(ha1, "%s:%s:%s",
 			 realm->user, realm->realm, realm->pass);
+
 	if (err)
 		return err;
 
-	err = md5_printf(ha2, "%s:%s", met, uri);
+	err = digest_printf(ha2, "%s:%s", met, uri);
 	if (err)
 		return err;
 
-	if (realm->qop)
-		return md5_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
-				  ha1, sizeof(ha1),
+	DEBUG_INFO("mkdigest algorithm: %s\n", realm->algorithm);
+	if (realm->qop) {
+		return digest_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
+				  ha1, h_size,
 				  realm->nonce,
 				  realm->nc,
 				  cnonce,
-				  ha2, sizeof(ha2));
-	else
-		return md5_printf(digest, "%w:%s:%w",
-				  ha1, sizeof(ha1),
+				  ha2, h_size);
+	} else {
+		return digest_printf(digest, "%w:%s:%w",
+				  ha1, h_size,
 				  realm->nonce,
-				  ha2, sizeof(ha2));
+				  ha2, h_size);
+	}
 }
 
 
@@ -135,11 +162,17 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		goto out;
 	}
 
-	if (pl_isset(&ch.algorithm) && pl_strcasecmp(&ch.algorithm, "md5")) {
+	if (pl_isset(&ch.algorithm) && pl_strcasecmp(&ch.algorithm, "md5") && pl_strcasecmp(&ch.algorithm, "sha-256")) {
 		err = ENOSYS;
 		goto out;
 	}
-
+#ifndef USE_OPENSSL
+	if (pl_strcasecmp(&ch.algorithm, "sha-256") == 0) {
+		DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+		err = ENOSYS;
+		goto out;
+	}
+#endif
 	realm = list_ledata(list_apply(&auth->realml, true, cmp_handler,
 				       &ch.realm));
 	if (!realm) {
@@ -152,6 +185,10 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		list_append(&auth->realml, &realm->le, realm);
 
 		err = pl_strdup(&realm->realm, &ch.realm);
+		if (err)
+			goto out;
+
+		err = pl_strdup(&realm->algorithm, &ch.algorithm);
 		if (err)
 			goto out;
 
@@ -169,6 +206,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		realm->nonce  = mem_deref(realm->nonce);
 		realm->qop    = mem_deref(realm->qop);
 		realm->opaque = mem_deref(realm->opaque);
+		realm->algorithm = mem_deref(realm->algorithm);
 	}
 
 	realm->hdr = hdr->id;
@@ -231,7 +269,18 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		const uint64_t cnonce = rand_u64();
 		struct realm *realm = le->data;
-		uint8_t digest[MD5_SIZE];
+		bool use_sha256;
+		uint8_t *digest;
+		int d_size;
+		use_sha256 = str_casecmp(realm->algorithm, "sha-256") == 0;
+#ifndef USE_OPENSSL
+		if (use_sha256) {
+			DEBUG_WARNING("SHA2 digest only supported when compiled with OpenSSL\n");
+			break;
+		}
+#endif
+		d_size = use_sha256 ? SHA256_SIZE : MD5_SIZE;
+		digest = mem_zalloc(d_size, NULL);
 
 		err = mkdigest(digest, realm, met, uri, cnonce);
 		if (err)
@@ -256,7 +305,7 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		err |= mbuf_printf(mb, ", nonce=\"%s\"", realm->nonce);
 		err |= mbuf_printf(mb, ", uri=\"%s\"", uri);
 		err |= mbuf_printf(mb, ", response=\"%w\"",
-				   digest, sizeof(digest));
+				   digest, d_size);
 
 		if (realm->opaque)
 			err |= mbuf_printf(mb, ", opaque=\"%s\"",
@@ -270,7 +319,7 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		++realm->nc;
 
-		err |= mbuf_write_str(mb, ", algorithm=MD5");
+		err |= mbuf_printf(mb, ", algorithm=%s", realm->algorithm);
 		err |= mbuf_write_str(mb, "\r\n");
 		if (err)
 			break;
