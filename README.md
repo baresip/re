@@ -44,6 +44,16 @@ $ sudo make install
 $ sudo ldconfig
 ```
 
+On some distributions, /usr/local/lib may not be included in ld.so.conf. 
+You can check with `grep "/usr/local/lib" /etc/ld.so.conf.d/*.conf` 
+and add if necessary:
+
+```
+$ echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/libc.conf
+$ sudo ldconfig
+```
+
+
 ### Build with release
 
 ```
