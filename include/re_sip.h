@@ -330,7 +330,10 @@ void sip_reply_addr(struct sa *addr, const struct sip_msg *msg, bool rport);
 int  sip_auth_authenticate(struct sip_auth *auth, const struct sip_msg *msg);
 int  sip_auth_alloc(struct sip_auth **authp, sip_auth_h *authh,
 		    void *arg, bool ref);
+
 void sip_auth_reset(struct sip_auth *auth);
+int  sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
+		     const char *uri);
 
 
 /* contact */

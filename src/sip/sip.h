@@ -80,11 +80,6 @@ bool sip_transp_reliable(enum sip_transp tp);
 int  sip_transp_debug(struct re_printf *pf, const struct sip *sip);
 
 
-/* auth */
-int  sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
-		     const char *uri);
-
-
 /* dialog */
 int  sip_dialog_encode(struct mbuf *mb, struct sip_dialog *dlg, uint32_t cseq,
 		       const char *met);
