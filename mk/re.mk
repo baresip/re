@@ -821,6 +821,7 @@ clang:
 .PHONY: compile_commands.json
 compile_commands.json:
 	@rm -f $@
+	@find $(BUILD) -name "*.o.json" > /dev/null
 	@sed -e '1s/^/[/' -e '$$s/,$$/]/' \
 		$(shell find $(BUILD) -name "*.o.json") > $@
 
