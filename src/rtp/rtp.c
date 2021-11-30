@@ -608,7 +608,7 @@ int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
 
 
 /**
- * Clear buffers of in/out buffers of RTP/RTCP Socket
+ * Clear receive buffer of RTP Socket
  *
  * @param rs RTP Socket
  *
@@ -622,7 +622,6 @@ int rtp_clear(struct rtp_sock *rs)
 		return EINVAL;
 
 	err  = udp_flush(rs->sock_rtp);
-	err |= udp_flush(rs->sock_rtcp);
 	return err;
 }
 
