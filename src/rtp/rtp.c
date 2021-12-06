@@ -608,6 +608,25 @@ int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
 
 
 /**
+ * Clear receive buffer of RTP Socket
+ *
+ * @param rs RTP Socket
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtp_clear(struct rtp_sock *rs)
+{
+	int err;
+
+	if (!rs)
+		return EINVAL;
+
+	err  = udp_flush(rs->sock_rtp);
+	return err;
+}
+
+
+/**
  * RTP Debug handler, use with fmt %H
  *
  * @param pf Print function

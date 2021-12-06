@@ -214,6 +214,7 @@ int   rtp_debug(struct re_printf *pf, const struct rtp_sock *rs);
 void *rtp_sock(const struct rtp_sock *rs);
 uint32_t rtp_sess_ssrc(const struct rtp_sock *rs);
 const struct sa *rtp_local(const struct rtp_sock *rs);
+int rtp_clear(struct rtp_sock *rs);
 
 /* RTCP session api */
 void  rtcp_start(struct rtp_sock *rs, const char *cname,

@@ -41,6 +41,7 @@ int  udp_sock_fd(const struct udp_sock *us, int af);
 int  udp_multicast_join(struct udp_sock *us, const struct sa *group);
 int  udp_multicast_leave(struct udp_sock *us, const struct sa *group);
 int  udp_settos(struct udp_sock *us, uint8_t tos);
+int  udp_flush(struct udp_sock *us);
 
 
 /* Helper API */
