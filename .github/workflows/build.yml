@@ -23,6 +23,8 @@ jobs:
       if: ${{ runner.os == 'macOS' }}
       run: |
         brew install openssl@1.1
+        rm -f /usr/local/opt/openssl
+        ln -s /usr/local/Cellar/openssl@1.1/1.1.1m /usr/local/opt/openssl
 
     - name: make info
       run: |
