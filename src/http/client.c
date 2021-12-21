@@ -701,6 +701,8 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 	struct pl pl;
 	struct http_req *req;
 	uint16_t defport;
+	struct sa sa;
+	bool ipv6;
 	bool secure;
 	va_list ap;
 	int err;
@@ -751,10 +753,12 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		goto out;
 	}
 
+	ipv6 = sa_set(&sa, &http_uri.host, 0) == 0 && sa_af(&sa) == AF_INET6;
 	err = mbuf_printf(req->mbreq,
 			  "%s %r HTTP/1.1\r\n"
-			  "Host: %r\r\n",
-			  met, &http_uri.path, &http_uri.host);
+			  "Host: %s%r%s\r\n",
+			  met, &http_uri.path,
+			  ipv6 ? "[" : "", &http_uri.host, ipv6 ? "]" : "");
 	if (fmt) {
 		va_start(ap, fmt);
 		err |= mbuf_vprintf(req->mbreq, fmt, ap);
