@@ -22,6 +22,4 @@ endif
 
 ifeq ($(OS),darwin)
 SRCS	+= dns/darwin/srv.c
-# add libraries for darwin dns servers
-LFLAGS	+= -framework SystemConfiguration -framework CoreFoundation
 endif

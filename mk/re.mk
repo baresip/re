@@ -240,6 +240,9 @@ endif
 	DFLAGS		:= -MD
 	LIBS		+= -lresolv
 	LFLAGS		+= -fPIC
+	# add libraries for darwin dns servers
+	LFLAGS		+= -framework SystemConfiguration \
+			   -framework CoreFoundation
 	SH_LFLAGS	+= -dynamiclib
 ifeq ($(CC_NAME),gcc)
 	SH_LFLAGS	+= -dylib
