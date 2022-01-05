@@ -21,6 +21,11 @@ ABI_AGE   := 0
 
 ABI_MAJOR := $(shell expr $(ABI_CUR) - $(ABI_AGE))
 
+# Verbose and silent build modes
+ifeq ($(V),)
+HIDE=@
+endif
+
 PROJECT   := re
 ifeq ($(VER_PRE),)
 VERSION   := $(VER_MAJOR).$(VER_MINOR).$(VER_PATCH)
@@ -87,14 +92,14 @@ all: $(SHARED) $(STATIC)
 
 $(SHARED): $(OBJS) libre.pc
 	@echo "  LD      $@"
-	@$(LD) $(LFLAGS) $(SH_LFLAGS) $(OBJS) $(LIBS) -o $@
+	$(HIDE)$(LD) $(LFLAGS) $(SH_LFLAGS) $(OBJS) $(LIBS) -o $@
 
 
 $(STATIC): $(OBJS) libre.pc
 	@echo "  AR      $@"
-	@$(AR) $(AFLAGS) $@ $(OBJS)
+	$(HIDE)$(AR) $(AFLAGS) $@ $(OBJS)
 ifneq ($(RANLIB),)
-	@$(RANLIB) $@
+	$(HIDE)$(RANLIB) $@
 endif
 
 libre.pc: Makefile
@@ -114,23 +119,23 @@ libre.pc: Makefile
 
 $(BUILD)/%.o: src/%.c $(BUILD) Makefile $(MK) $(MODMKS)
 	@echo "  CC      $@"
-	@$(CC) $(CFLAGS) -c $< -o $@ $(DFLAGS)
+	$(HIDE)$(CC) $(CFLAGS) -c $< -o $@ $(DFLAGS)
 
 
 $(BUILD): Makefile $(MK) $(MODMKS)
-	@mkdir -p $(patsubst %,$(BUILD)/%,$(sort $(dir $(SRCS))))
-	@touch $@
+	$(HIDE)mkdir -p $(patsubst %,$(BUILD)/%,$(sort $(dir $(SRCS))))
+	$(HIDE)touch $@
 
 
 .PHONY: clean
 clean:
-	@rm -rf $(SHARED) $(STATIC) libre.pc test.d test.o test $(BUILD) \
-		.cache/re
-	@rm -f compile_commands.json
+	$(HIDE)rm -rf $(SHARED) $(STATIC) libre.pc test.d test.o test \
+		$(BUILD) .cache/re
+	$(HIDE)rm -f compile_commands.json
 
 
 install: $(SHARED) $(STATIC) libre.pc
-	@mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(LIBDIR)/pkgconfig \
+	$(HIDE)mkdir -p $(DESTDIR)$(LIBDIR) $(DESTDIR)$(LIBDIR)/pkgconfig \
 		$(DESTDIR)$(INCDIR) $(DESTDIR)$(MKDIR)
 	$(INSTALL) -m 0644 $(shell find include -name "*.h") \
 		$(DESTDIR)$(INCDIR)
@@ -146,24 +151,25 @@ endif
 	$(INSTALL) -m 0644 $(MK) $(DESTDIR)$(MKDIR)
 
 uninstall:
-	@rm -rf $(DESTDIR)$(INCDIR)
-	@rm -rf $(DESTDIR)$(MKDIR)
-	@rm -f $(DESTDIR)$(LIBDIR)/$(SHARED)
-	@rm -f $(DESTDIR)$(LIBDIR)/$(SHARED_SONAME)
-	@rm -f $(DESTDIR)$(LIBDIR)/$(STATIC)
-	@rm -f $(DESTDIR)$(LIBDIR)/pkgconfig/libre.pc
+	$(HIDE)rm -rf $(DESTDIR)$(INCDIR)
+	$(HIDE)rm -rf $(DESTDIR)$(MKDIR)
+	$(HIDE)rm -f $(DESTDIR)$(LIBDIR)/$(SHARED)
+	$(HIDE)rm -f $(DESTDIR)$(LIBDIR)/$(SHARED_SONAME)
+	$(HIDE)rm -f $(DESTDIR)$(LIBDIR)/$(STATIC)
+	$(HIDE)rm -f $(DESTDIR)$(LIBDIR)/pkgconfig/libre.pc
 
 -include test.d
 
 test.o:	test.c Makefile $(MK)
 	@echo "  CC      $@"
-	@$(CC) $(CFLAGS) -c $< -o $@ $(DFLAGS)
+	$(HIDE)$(CC) $(CFLAGS) -c $< -o $@ $(DFLAGS)
 
 test$(BIN_SUFFIX): test.o $(SHARED) $(STATIC)
 	@echo "  LD      $@"
-	@$(LD) $(LFLAGS) $< -L. -lre $(LIBS) -o $@
+	$(HIDE)$(LD) $(LFLAGS) $< -L. -lre $(LIBS) -o $@
 
 sym:	$(SHARED)
-	@nm $(SHARED) | grep " U " | perl -pe 's/\s*U\s+(.*)/$${1}/' \
+	$(HIDE)nm $(SHARED) | grep " U " | perl -pe 's/\s*U\s+(.*)/$${1}/' \
 		> docs/symbols.txt
-	@echo "$(SHARED) is using `cat docs/symbols.txt | wc -l ` symbols"
+	$(HIDE)echo \
+		"$(SHARED) is using `cat docs/symbols.txt | wc -l ` symbols"
