@@ -44,7 +44,7 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 		if (1 != fscanf(f, "%127[^\n]\n", line))
 			break;
 
-		if ('#' == line[0])
+		if ('#' == line[0] || ';' == line[0])
 			continue;
 
 		len = str_len(line);
@@ -61,8 +61,8 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 		}
 
 		/* Use the first entry */
-		if (i < *n && 0 == re_regex(line, len, "nameserver [^\n]+",
-					    &srv)) {
+		if (i < *n && 0 == re_regex(line, len,
+					    "nameserver [0-9a-f.:]+", &srv)) {
 			err = sa_set(&srvv[i], &srv, DNS_PORT);
 			if (err) {
 				DEBUG_WARNING("sa_set: %r (%m)\n", &srv, err);
