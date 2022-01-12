@@ -61,7 +61,7 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
 #define RE_TRACE_INSTANT(c, n)
 #define RE_TRACE_INSTANT_C(c, n, str)
 #define RE_TRACE_INSTANT_I(c, n, i)
-#define RE_TRACE_META_PROCESS_NAME(n)
+#define RE_TRACE_PROCESS_NAME(n)
 #define RE_TRACE_THREAD_NAME(n)
 
 #endif
