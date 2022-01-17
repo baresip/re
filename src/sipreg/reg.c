@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_mbuf.h>
@@ -291,6 +292,7 @@ static int send_handler(enum sip_transp tp, const struct sa *src,
 
 	if (reg->srcport) {
 		struct sip_conncfg cfg;
+		memset(&cfg, 0, sizeof(cfg));
 		cfg.srcport = reg->srcport;
 		err = sip_conncfg_set(reg->sip, dst, cfg);
 	}
