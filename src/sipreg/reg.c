@@ -48,6 +48,7 @@ struct sipreg {
 	bool terminated;
 	char *params;
 	int regid;
+	uint16_t srcport;
 };
 
 
@@ -288,6 +289,12 @@ static int send_handler(enum sip_transp tp, const struct sa *src,
 
 	err |= mbuf_printf(mb, "\r\n");
 
+	if (reg->srcport) {
+		struct sip_conncfg cfg;
+		cfg.srcport = reg->srcport;
+		err = sip_conncfg_set(reg->sip, dst, cfg);
+	}
+
 	return err;
 }
 
@@ -314,37 +321,14 @@ static int request(struct sipreg *reg, bool reset_ls)
 }
 
 
-/**
- * Allocate a SIP Registration client
- *
- * @param regp     Pointer to allocated SIP Registration client
- * @param sip      SIP Stack instance
- * @param reg_uri  SIP Request URI
- * @param to_uri   SIP To-header URI
- * @param from_name  SIP From-header display name (optional)
- * @param from_uri SIP From-header URI
- * @param expires  Registration expiry time in [seconds]
- * @param cuser    Contact username
- * @param routev   Optional route vector
- * @param routec   Number of routes
- * @param regid    Register identification
- * @param authh    Authentication handler
- * @param aarg     Authentication handler argument
- * @param aref     True to ref argument
- * @param resph    Response handler
- * @param arg      Response handler argument
- * @param params   Optional Contact-header parameters
- * @param fmt      Formatted strings with extra SIP Headers
- *
- * @return 0 if success, otherwise errorcode
- */
-int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
+static int vsipreg_alloc(struct sipreg **regp, struct sip *sip,
+		    const char *reg_uri,
 		    const char *to_uri, const char *from_name,
 		    const char *from_uri, uint32_t expires,
 		    const char *cuser, const char *routev[], uint32_t routec,
 		    int regid, sip_auth_h *authh, void *aarg, bool aref,
 		    sip_resp_h *resph, void *arg,
-		    const char *params, const char *fmt, ...)
+		    const char *params, const char *fmt, va_list ap)
 {
 	struct sipreg *reg;
 	int err;
@@ -373,19 +357,14 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 
 	/* Custom SIP headers */
 	if (fmt) {
-		va_list ap;
-
 		reg->hdrs = mbuf_alloc(256);
 		if (!reg->hdrs) {
 			err = ENOMEM;
 			goto out;
 		}
 
-		va_start(ap, fmt);
 		err = mbuf_vprintf(reg->hdrs, fmt, ap);
 		reg->hdrs->pos = 0;
-		va_end(ap);
-
 		if (err)
 			goto out;
 	}
@@ -397,15 +376,117 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 	reg->arg     = arg;
 	reg->regid   = regid;
 
-	err = request(reg, true);
-	if (err)
-		goto out;
-
  out:
 	if (err)
 		mem_deref(reg);
 	else
 		*regp = reg;
+
+	return err;
+}
+
+
+int sipreg_send(struct sipreg *reg)
+{
+	if (!reg)
+		return EINVAL;
+
+	return request(reg, true);
+}
+
+
+/**
+ * Allocate a SIP Registration client
+ *
+ * @param regp     Pointer to allocated SIP Registration client
+ * @param sip      SIP Stack instance
+ * @param reg_uri  SIP Request URI
+ * @param to_uri   SIP To-header URI
+ * @param from_name  SIP From-header display name (optional)
+ * @param from_uri SIP From-header URI
+ * @param expires  Registration expiry time in [seconds]
+ * @param cuser    Contact username
+ * @param routev   Optional route vector
+ * @param routec   Number of routes
+ * @param regid    Register identification
+ * @param authh    Authentication handler
+ * @param aarg     Authentication handler argument
+ * @param aref     True to ref argument
+ * @param resph    Response handler
+ * @param arg      Response handler argument
+ * @param params   Optional Contact-header parameters
+ * @param fmt      Formatted strings with extra SIP Headers
+ *
+ * @return 0 if success, otherwise errorcode
+ *
+ * @deprecated  Use sipreg_alloc() and sipreg_send()!
+ */
+int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
+		    const char *to_uri, const char *from_name,
+		    const char *from_uri, uint32_t expires,
+		    const char *cuser, const char *routev[], uint32_t routec,
+		    int regid, sip_auth_h *authh, void *aarg, bool aref,
+		    sip_resp_h *resph, void *arg,
+		    const char *params, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = vsipreg_alloc(regp, sip, reg_uri, to_uri, from_name,
+			    from_uri, expires, cuser, routev, routec,
+			    regid, authh, aarg, aref, resph, arg,
+			    params, fmt, ap);
+	va_end(ap);
+
+	if (err)
+		return err;
+
+	return sipreg_send(*regp);
+}
+
+
+/**
+ * Allocate a SIP Registration client
+ *
+ * @param regp     Pointer to allocated SIP Registration client
+ * @param sip      SIP Stack instance
+ * @param reg_uri  SIP Request URI
+ * @param to_uri   SIP To-header URI
+ * @param from_name  SIP From-header display name (optional)
+ * @param from_uri SIP From-header URI
+ * @param expires  Registration expiry time in [seconds]
+ * @param cuser    Contact username
+ * @param routev   Optional route vector
+ * @param routec   Number of routes
+ * @param regid    Register identification
+ * @param authh    Authentication handler
+ * @param aarg     Authentication handler argument
+ * @param aref     True to ref argument
+ * @param resph    Response handler
+ * @param arg      Response handler argument
+ * @param params   Optional Contact-header parameters
+ * @param fmt      Formatted strings with extra SIP Headers
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sipreg_alloc(struct sipreg **regp, struct sip *sip, const char *reg_uri,
+		    const char *to_uri, const char *from_name,
+		    const char *from_uri, uint32_t expires,
+		    const char *cuser, const char *routev[], uint32_t routec,
+		    int regid, sip_auth_h *authh, void *aarg, bool aref,
+		    sip_resp_h *resph, void *arg,
+		    const char *params, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = vsipreg_alloc(regp, sip, reg_uri, to_uri, from_name,
+			    from_uri, expires, cuser, routev, routec,
+			    regid, authh, aarg, aref, resph, arg,
+			    params, fmt, ap);
+	va_end(ap);
 
 	return err;
 }
@@ -483,5 +564,23 @@ int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint)
 		return EINVAL;
 
 	reg->fbregint = fbregint;
+	return 0;
+}
+
+
+/**
+ * Set TCP source port number for the SIP registration client
+ *
+ * @param reg      SIP registration client
+ * @param srcport  TCP source port number
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
+{
+	if (!reg)
+		return EINVAL;
+
+	reg->srcport = srcport;
 	return 0;
 }
