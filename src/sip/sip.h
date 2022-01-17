@@ -14,6 +14,7 @@ struct sip {
 	struct hash *ht_strans_mrg;
 	struct hash *ht_conn;
 	struct hash *ht_udpconn;
+	struct hash *ht_conncfg;
 	struct dnsc *dnsc;
 	struct stun *stun;
 	struct websock *websock;

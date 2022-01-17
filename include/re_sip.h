@@ -226,6 +226,14 @@ struct sip_contact {
 	enum sip_transp tp;
 };
 
+/** SIP connection config */
+struct sip_conncfg {
+	struct le he;
+	struct sa paddr;
+
+	uint16_t srcport;
+};
+
 struct sip;
 struct sip_lsnr;
 struct sip_request;
@@ -395,3 +403,7 @@ int sip_cseq_decode(struct sip_cseq *cseq, const struct pl *pl);
 int sip_keepalive_start(struct sip_keepalive **kap, struct sip *sip,
 			const struct sip_msg *msg, uint32_t interval,
 			sip_keepalive_h *kah, void *arg);
+
+/* sip_conncfg */
+int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
+		    const struct sip_conncfg conncfg);

@@ -72,6 +72,8 @@ static void destructor(void *arg)
 
 	hash_flush(sip->ht_conn);
 	mem_deref(sip->ht_conn);
+	hash_flush(sip->ht_conncfg);
+	mem_deref(sip->ht_conncfg);
 
 	hash_flush(sip->ht_udpconn);
 	mem_deref(sip->ht_udpconn);
