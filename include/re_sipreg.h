@@ -33,4 +33,4 @@ bool sipreg_failed(const struct sipreg *reg);
 void sipreg_incfailc(struct sipreg *reg);
 
 int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint);
-int sipreg_set_srcport(struct sipreg *reg, uint16_t srcport);
+void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport);

@@ -575,14 +575,11 @@ int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint)
  *
  * @param reg      SIP registration client
  * @param srcport  TCP source port number
- *
- * @return 0 if success, otherwise errorcode
  */
-int sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
+void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
 {
 	if (!reg)
-		return EINVAL;
+		return;
 
 	reg->srcport = srcport;
-	return 0;
 }
