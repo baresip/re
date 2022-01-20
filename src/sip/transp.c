@@ -191,6 +191,26 @@ static const struct sip_transport *transp_find(struct sip *sip,
 }
 
 
+static struct sip_conncfg *conncfg_find(struct sip *sip,
+					const struct sa *paddr)
+{
+	struct le *le;
+
+	le = list_head(hash_list(sip->ht_conncfg, sa_hash(paddr, SA_ALL)));
+	for (; le; le = le->next) {
+
+		struct sip_conncfg *cfg = le->data;
+
+		if (!sa_cmp(&cfg->paddr, paddr, SA_ALL))
+			continue;
+
+		return cfg;
+	}
+
+	return NULL;
+}
+
+
 static struct sip_conn *conn_find(struct sip *sip, const struct sa *paddr,
 				  bool secure)
 {
@@ -734,6 +754,7 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		     sip_transp_h *transph, void *arg)
 {
 	struct sip_conn *conn, *new_conn = NULL;
+	struct sip_conncfg *conncfg;
 	struct sip_connqent *qent;
 	int err = 0;
 
@@ -763,8 +784,21 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	conn->sip   = sip;
 	conn->tp    = secure ? SIP_TRANSP_TLS : SIP_TRANSP_TCP;
 
-	err = tcp_connect(&conn->tc, dst, tcp_estab_handler, tcp_recv_handler,
-			  tcp_close_handler, conn);
+	conncfg = conncfg_find(sip, dst);
+	if (conncfg && conncfg->srcport) {
+		struct sa src;
+		sa_init(&src, sa_af(dst));
+		sa_set_port(&src, conncfg->srcport);
+		err = tcp_connect_bind(&conn->tc, dst,
+				       tcp_estab_handler, tcp_recv_handler,
+				       tcp_close_handler, &src, conn);
+	}
+	else {
+		err = tcp_connect(&conn->tc, dst,
+				  tcp_estab_handler, tcp_recv_handler,
+				  tcp_close_handler, conn);
+	}
+
 	if (err)
 		goto out;
 
@@ -1084,7 +1118,11 @@ static int dst_set_scopeid(struct sip *sip, struct sa *dst, enum sip_transp tp)
 
 int sip_transp_init(struct sip *sip, uint32_t sz)
 {
-	return hash_alloc(&sip->ht_conn, sz);
+	int err;
+
+	err  = hash_alloc(&sip->ht_conn, sz);
+	err |= hash_alloc(&sip->ht_conncfg, sz);
+	return err;
 }
 
 
@@ -1385,6 +1423,7 @@ void sip_transp_flush(struct sip *sip)
 		return;
 
 	hash_flush(sip->ht_conn);
+	hash_flush(sip->ht_conncfg);
 	list_flush(&sip->transpl);
 }
 
@@ -1727,6 +1766,17 @@ static bool conn_debug_handler(struct le *le, void *arg)
 }
 
 
+static bool conncfg_debug_handler(struct le *le, void *arg)
+{
+	struct sip_conncfg *conncfg = le->data;
+	struct re_printf *pf = arg;
+
+	(void)re_hprintf(pf, "  TCP source port  %u\n", conncfg->srcport);
+
+	return false;
+}
+
+
 int sip_transp_debug(struct re_printf *pf, const struct sip *sip)
 {
 	int err;
@@ -1736,6 +1786,9 @@ int sip_transp_debug(struct re_printf *pf, const struct sip *sip)
 
 	err |= re_hprintf(pf, "connections:\n");
 	hash_apply(sip->ht_conn, conn_debug_handler, pf);
+
+	err |= re_hprintf(pf, "connection configurations:\n");
+	hash_apply(sip->ht_conncfg, conncfg_debug_handler, pf);
 
 	return err;
 }
@@ -1819,4 +1872,41 @@ void sip_transp_rmladdr(struct sip *sip, const struct sa *laddr)
 		if (sa_cmp(&transp->laddr, laddr, SA_ADDR))
 			mem_deref(transp);
 	}
+}
+
+
+/**
+ * Set a SIP connection configuration for a given peer address
+ *
+ * @param sip      SIP stack instance
+ * @param paddr    Peer address
+ * @param conncfg  A SIP connection configuration
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
+		    const struct sip_conncfg conncfg)
+{
+	struct sip_conncfg *cfg;
+
+	if (!sip || !sa_isset(paddr, SA_ALL))
+		return EINVAL;
+
+	cfg = conncfg_find(sip, paddr);
+	if (cfg) {
+		cfg->srcport = conncfg.srcport;
+		return 0;
+	}
+	else {
+		cfg = mem_zalloc(sizeof(*cfg), NULL);
+	}
+
+	if (!cfg)
+		return ENOMEM;
+
+	memcpy(cfg, &conncfg, sizeof(*cfg));
+	memset(&cfg->he, 0, sizeof(cfg->he));
+	sa_cpy(&cfg->paddr, paddr);
+	hash_append(sip->ht_conncfg, sa_hash(paddr, SA_ALL), &cfg->he, cfg);
+	return 0;
 }
