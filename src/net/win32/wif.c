@@ -5,6 +5,8 @@
  */
 #include <winsock2.h>
 #include <iphlpapi.h>
+#include <ifdef.h>
+
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_net.h>
@@ -55,6 +57,9 @@ static int if_list_gaa(net_ifaddr_h *ifh, void *arg)
 
 	for (cur = addrv; cur && !stop; cur = cur->Next) {
 		PIP_ADAPTER_UNICAST_ADDRESS ip;
+
+		if (cur->OperStatus != IfOperStatusUp)
+			continue;
 
 		/* an interface can have many IP-addresses */
 		for (ip = cur->FirstUnicastAddress; ip; ip = ip->Next) {
