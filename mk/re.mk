@@ -502,8 +502,6 @@ LIBS    += -lz
 endif
 
 
-ifneq ($(OS),win32)
-
 HAVE_PTHREAD := $(shell $(call CC_TEST,pthread.h))
 ifneq ($(HAVE_PTHREAD),)
 HAVE_PTHREAD_RWLOCK := 1
@@ -513,6 +511,8 @@ ifneq ($(HAVE_LIBPTHREAD),)
 LIBS	+= -lpthread
 endif
 endif
+
+ifneq ($(OS),win32)
 
 ifneq ($(ARCH),mipsel)
 HAVE_GETIFADDRS := $(shell $(call CC_TEST,ifaddrs.h))
@@ -526,7 +526,7 @@ ifneq ($(HAVE_STRERROR_R),)
 CFLAGS += -DHAVE_STRERROR_R
 endif
 
-endif
+endif #!win32
 
 HAVE_GETOPT     := $(shell $(call CC_TEST,getopt.h))
 ifneq ($(HAVE_GETOPT),)
