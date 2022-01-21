@@ -509,6 +509,9 @@ static int poll_init(struct re *re)
 /** Free all resources */
 static void poll_close(struct re *re)
 {
+	if (!re)
+		return;
+
 	DEBUG_INFO("poll close\n");
 
 	re->fhs = mem_deref(re->fhs);
