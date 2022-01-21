@@ -36,7 +36,7 @@ const char *str_error(int errnum, char *buf, size_t sz)
 	s = buf;
 #endif
 
-#elif defined (WIN32) & !defined (__MINGW32__)
+#elif defined (WIN32)
 	(void)strerror_s(buf, sz, errnum);
 	s = buf;
 #else
