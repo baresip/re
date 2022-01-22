@@ -326,7 +326,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			ptr = va_arg(ap, void *);
 
 			if (ptr) {
-				len = local_itoa(num, (unsigned long int)ptr,
+				len = local_itoa(num, (uint64_t)ptr,
 						 16, false);
 				err |= write_padded(num, len, pad,
 						    plr ? ' ' : pch, plr,
