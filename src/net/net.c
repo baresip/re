@@ -27,38 +27,6 @@
 
 
 /**
- * Get the IP address of the host
- *
- * @param af  Address Family
- * @param ip  Returned IP address
- *
- * @return 0 if success, otherwise errorcode
- */
-int net_hostaddr(int af, struct sa *ip)
-{
-	char hostname[256];
-	struct in_addr in;
-	struct hostent *he;
-
-	if (-1 == gethostname(hostname, sizeof(hostname)))
-		return errno;
-
-	he = gethostbyname(hostname);
-	if (!he)
-		return ENOENT;
-
-	if (af != he->h_addrtype)
-		return EAFNOSUPPORT;
-
-	/* Get the first entry */
-	memcpy(&in, he->h_addr_list[0], sizeof(in));
-	sa_set_in(ip, ntohl(in.s_addr), 0);
-
-	return 0;
-}
-
-
-/**
  * Get the source IP address for a specified destination
  *
  * @param dst Destination IP address
@@ -132,10 +100,7 @@ int net_default_source_addr_get(int af, struct sa *ip)
 	if (!err)
 		return 0;
 
-#if defined(WIN32)
-	return net_hostaddr(af, ip);
-#else
-
+#ifndef WIN32
 #ifdef HAVE_ROUTE_LIST
 	/* Get interface with default route */
 	(void)net_rt_default_get(af, ifname, sizeof(ifname));
