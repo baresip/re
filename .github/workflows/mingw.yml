@@ -26,7 +26,6 @@ jobs:
     - name: "clone baresip-win32 repo"
       run: |
         git clone https://github.com/baresip/baresip-win32.git -b mingw-w64
-        mv re baresip-win32/
         mv rem baresip-win32/
         mv retest baresip-win32/
     
