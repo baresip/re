@@ -100,7 +100,9 @@ int net_default_source_addr_get(int af, struct sa *ip)
 	if (!err)
 		return 0;
 
-#ifndef WIN32
+#ifdef WIN32
+	return err;
+#else
 #ifdef HAVE_ROUTE_LIST
 	/* Get interface with default route */
 	(void)net_rt_default_get(af, ifname, sizeof(ifname));
