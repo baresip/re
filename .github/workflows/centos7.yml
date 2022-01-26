@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest]
 
     env:
       CC: ${{ matrix.compiler }}
@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: install devel tools
       run: |
-        yum -y install gcc clang make
+        yum -y install gcc clang make openssl-devel
 
     - name: make info
       run: |
