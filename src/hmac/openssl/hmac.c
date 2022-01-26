@@ -2,17 +2,21 @@
  * @file openssl/hmac.c  HMAC using OpenSSL
  *
  * Copyright (C) 2010 Creytiv.com
+ * Copyright (C) 2022 Sebastian Reimers
  */
 
 #include <openssl/hmac.h>
 #include <openssl/err.h>
+#include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_hmac.h>
 
 
 struct hmac {
-	HMAC_CTX *ctx;
+	const EVP_MD *evp;
+	uint8_t *key;
+	int key_len;
 };
 
 
@@ -20,81 +24,53 @@ static void destructor(void *arg)
 {
 	struct hmac *hmac = arg;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
-
-	if (hmac->ctx)
-		HMAC_CTX_free(hmac->ctx);
-#else
-	if (hmac->ctx)
-		HMAC_CTX_cleanup(hmac->ctx);
-	mem_deref(hmac->ctx);
-#endif
+	mem_deref(hmac->key);
 }
 
 
-int hmac_create(struct hmac **hmacp, enum hmac_hash hash,
-		const uint8_t *key, size_t key_len)
+int hmac_create(struct hmac **hmacp, enum hmac_hash hash, const uint8_t *key,
+		size_t key_len)
 {
 	struct hmac *hmac;
-	const EVP_MD *evp;
 	int err = 0;
 
 	if (!hmacp || !key || !key_len)
 		return EINVAL;
 
-	switch (hash) {
-
-	case HMAC_HASH_SHA1:
-		evp = EVP_sha1();
-		break;
-
-	case HMAC_HASH_SHA256:
-		evp = EVP_sha256();
-		break;
-
-	default:
-		return ENOTSUP;
-	}
-
 	hmac = mem_zalloc(sizeof(*hmac), destructor);
 	if (!hmac)
 		return ENOMEM;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
-
-	hmac->ctx = HMAC_CTX_new();
-	if (!hmac->ctx) {
-		ERR_clear_error();
+	hmac->key = mem_zalloc(key_len, NULL);
+	if (!hmac->key) {
 		err = ENOMEM;
-		goto out;
-	}
-#else
-	hmac->ctx = mem_zalloc(sizeof(*hmac->ctx), NULL);
-	if (!hmac->ctx) {
-		err = ENOMEM;
-		goto out;
+		goto error;
 	}
 
-	HMAC_CTX_init(hmac->ctx);
-#endif
+	memcpy(hmac->key, key, key_len);
+	hmac->key_len = (int)key_len;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	if (!HMAC_Init_ex(hmac->ctx, key, (int)key_len, evp, NULL)) {
-		ERR_clear_error();
-		err = EPROTO;
+	switch (hash) {
+
+	case HMAC_HASH_SHA1:
+		hmac->evp = EVP_sha1();
+		break;
+
+	case HMAC_HASH_SHA256:
+		hmac->evp = EVP_sha256();
+		break;
+
+	default:
+		err = ENOTSUP;
+		goto error;
 	}
-#else
-	HMAC_Init_ex(hmac->ctx, key, (int)key_len, evp, NULL);
-#endif
 
- out:
-	if (err)
-		mem_deref(hmac);
-	else
-		*hmacp = hmac;
+	*hmacp = hmac;
 
+	return 0;
+
+error:
+	mem_deref(hmac);
 	return err;
 }
 
@@ -103,33 +79,17 @@ int hmac_digest(struct hmac *hmac, uint8_t *md, size_t md_len,
 		const uint8_t *data, size_t data_len)
 {
 	unsigned int len = (unsigned int)md_len;
+	unsigned char *rval;
 
 	if (!hmac || !md || !md_len || !data || !data_len)
 		return EINVAL;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	/* the HMAC context must be reset here */
-	if (!HMAC_Init_ex(hmac->ctx, 0, 0, 0, NULL))
-		goto error;
-
-	if (!HMAC_Update(hmac->ctx, data, (int)data_len))
-		goto error;
-	if (!HMAC_Final(hmac->ctx, md, &len))
-		goto error;
+	rval = HMAC(hmac->evp, hmac->key, hmac->key_len, data, data_len, md,
+		    &len);
+	if (!rval) {
+		ERR_clear_error();
+		return EPROTO;
+	}
 
 	return 0;
-
- error:
-	ERR_clear_error();
-	return EPROTO;
-
-#else
-	/* the HMAC context must be reset here */
-	HMAC_Init_ex(hmac->ctx, 0, 0, 0, NULL);
-
-	HMAC_Update(hmac->ctx, data, (int)data_len);
-	HMAC_Final(hmac->ctx, md, &len);
-
-	return 0;
-#endif
 }
