@@ -10,7 +10,7 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 #else
-#include <re_sha.h>
+#include "../sha/sha.h"
 #endif
 #include <re_hmac.h>
 
