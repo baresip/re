@@ -6,6 +6,7 @@
 #ifdef USE_OPENSSL
 #include <stddef.h>
 #include <openssl/evp.h>
+#include <openssl/md5.h>
 #else
 #include "md5.h"
 #endif
@@ -25,7 +26,7 @@
  */
 void md5(const uint8_t *d, size_t n, uint8_t *md)
 {
-#if defined USE_OPENSSL
+#ifdef USE_OPENSSL
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
