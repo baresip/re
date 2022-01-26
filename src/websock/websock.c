@@ -371,7 +371,7 @@ static int accept_print(struct re_printf *pf, const struct pl *key)
 {
 	uint8_t digest[SHA_DIGEST_LENGTH];
 	uint8_t *data;
-	size_t len = key->l + sizeof(magic)-1; 
+	size_t len = key->l + sizeof(magic)-1;
 
 	data = mem_zalloc(len, NULL);
 	if (!data)
