@@ -7,3 +7,4 @@
 ifeq ($(USE_OPENSSL),)
 SRCS	+= sha/sha1.c
 endif
+SRCS	+= sha/wrap.c

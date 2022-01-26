@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
@@ -369,12 +370,18 @@ static void close_handler(int err, void *arg)
 static int accept_print(struct re_printf *pf, const struct pl *key)
 {
 	uint8_t digest[SHA_DIGEST_LENGTH];
-	SHA_CTX ctx;
+	uint8_t *data;
+	size_t len = key->l + sizeof(magic)-1;
 
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, key->p, key->l);
-	SHA1_Update(&ctx, magic, sizeof(magic)-1);
-	SHA1_Final(digest, &ctx);
+	data = mem_zalloc(len, NULL);
+	if (!data)
+		return ENOMEM;
+
+	memcpy(data, key->p, key->l);
+	memcpy(data + key->l, magic, sizeof(magic)-1);
+
+	sha1(data, len, digest);
+	mem_deref(data);
 
 	return base64_print(pf, digest, sizeof(digest));
 }

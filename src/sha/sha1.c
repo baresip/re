@@ -88,7 +88,7 @@ A million repetitions of "a"
 #include <stdio.h>
 #include <string.h>
 #include <re_types.h>
-#include <re_sha.h>
+#include "sha.h"
 
 void SHA1_Transform(uint32_t state[5], const uint8_t buffer[64]);
 
