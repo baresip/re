@@ -19,13 +19,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install macOS homebrew packages
-      if: ${{ runner.os == 'macOS' }}
-      run: |
-        brew install openssl@1.1
-        rm -f /usr/local/opt/openssl
-        cp -a /usr/local/opt/openssl@1.1 /usr/local/opt/openssl
-
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
