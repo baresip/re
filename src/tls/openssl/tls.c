@@ -9,6 +9,7 @@
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
+#include <openssl/ec.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <re_types.h>
@@ -497,17 +498,28 @@ static int tls_generate_cert(X509 **pcert, const char *cn)
  */
 int tls_set_selfsigned_ec(struct tls *tls, const char *cn, const char *curve_n)
 {
+#ifndef OPENSSL_VERSION_MAJOR
 	EC_KEY *eckey = NULL;
+	int eccgrp;
+#endif
 	EVP_PKEY *key = NULL;
 	X509 *cert = NULL;
-	int r, eccgrp, err = ENOMEM;
+	int r, err = ENOMEM;
 
 	if (!tls || !cn)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	key = EVP_EC_gen(curve_n);
+	if (!key) {
+		err = ENOTSUP;
+		goto out;
+	}
+#else
 	eccgrp = OBJ_txt2nid(curve_n);
 	if (eccgrp == NID_undef)
 		return ENOTSUP;
+
 
 	eckey = EC_KEY_new_by_curve_name(eccgrp);
 	if (!eckey)
@@ -528,6 +540,7 @@ int tls_set_selfsigned_ec(struct tls *tls, const char *cn, const char *curve_n)
 
 	if (!EVP_PKEY_set1_EC_KEY(key, eckey))
 		goto out;
+#endif /* OPENSSL_VERSION_MAJOR */
 
 	if (tls_generate_cert(&cert, cn))
 		goto out;
@@ -555,12 +568,12 @@ int tls_set_selfsigned_ec(struct tls *tls, const char *cn, const char *curve_n)
 	err = 0;
 
  out:
+#ifndef OPENSSL_VERSION_MAJOR
 	if (eckey)
 		EC_KEY_free(eckey);
-
+#endif
 	if (key)
 		EVP_PKEY_free(key);
-
 	if (cert)
 		X509_free(cert);
 
@@ -574,12 +587,19 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	EVP_PKEY *key = NULL;
 	X509 *cert = NULL;
 	BIGNUM *bn = NULL;
+#ifndef OPENSSL_VERSION_MAJOR
 	RSA *rsa = NULL;
+#endif
 	int r, err = ENOMEM;
 
 	if (!tls || !cn)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	key = EVP_RSA_gen(bits);
+	if (!key)
+		goto out;
+#else
 	rsa = RSA_new();
 	if (!rsa)
 		goto out;
@@ -598,7 +618,7 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 
 	if (!EVP_PKEY_set1_RSA(key, rsa))
 		goto out;
-
+#endif
 	if (tls_generate_cert(&cert, cn))
 		goto out;
 
@@ -631,8 +651,10 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	if (key)
 		EVP_PKEY_free(key);
 
+#ifndef OPENSSL_VERSION_MAJOR
 	if (rsa)
 		RSA_free(rsa);
+#endif
 
 	if (bn)
 		BN_free(bn);
