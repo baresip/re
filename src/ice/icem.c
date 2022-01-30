@@ -68,7 +68,6 @@ static void icem_destructor(void *data)
  * Add a new ICE Media object to the ICE Session
  *
  * @param icemp   Pointer to allocated ICE Media object
- * @param mode    ICE mode
  * @param role    Local ICE role
  * @param proto   Transport protocol
  * @param layer   Protocol stack layer
@@ -80,15 +79,12 @@ static void icem_destructor(void *data)
  *
  * @return 0 if success, otherwise errorcode
  */
-int  icem_alloc(struct icem **icemp,
-		int mode, enum ice_role role,
-		int proto, int layer,
+int  icem_alloc(struct icem **icemp, enum ice_role role, int proto, int layer,
 		uint64_t tiebrk, const char *lufrag, const char *lpwd,
 		ice_connchk_h *chkh, void *arg)
 {
 	struct icem *icem;
 	int err = 0;
-	(void)mode;
 
 	if (!icemp || !tiebrk || !lufrag || !lpwd)
 		return EINVAL;
