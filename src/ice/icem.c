@@ -39,7 +39,7 @@ static void ice_determine_role(struct icem *icem, enum ice_role role)
 	if (!icem)
 		return;
 
-	if (icem->rmode == ICE_MODE_LITE)
+	if (icem->rmode_lite)
 		icem->lrole = ICE_ROLE_CONTROLLING;
 	else
 		icem->lrole = role;
@@ -68,7 +68,6 @@ static void icem_destructor(void *data)
  * Add a new ICE Media object to the ICE Session
  *
  * @param icemp   Pointer to allocated ICE Media object
- * @param mode    ICE mode
  * @param role    Local ICE role
  * @param proto   Transport protocol
  * @param layer   Protocol stack layer
@@ -80,9 +79,7 @@ static void icem_destructor(void *data)
  *
  * @return 0 if success, otherwise errorcode
  */
-int  icem_alloc(struct icem **icemp,
-		enum ice_mode mode, enum ice_role role,
-		int proto, int layer,
+int  icem_alloc(struct icem **icemp, enum ice_role role, int proto, int layer,
 		uint64_t tiebrk, const char *lufrag, const char *lpwd,
 		ice_connchk_h *chkh, void *arg)
 {
@@ -90,9 +87,6 @@ int  icem_alloc(struct icem **icemp,
 	int err = 0;
 
 	if (!icemp || !tiebrk || !lufrag || !lpwd)
-		return EINVAL;
-
-	if (mode != ICE_MODE_FULL)
 		return EINVAL;
 
 	if (str_len(lufrag) < 4 || str_len(lpwd) < 22) {
@@ -451,7 +445,7 @@ int icem_debug(struct re_printf *pf, const struct icem *icem)
 	err |= re_hprintf(pf, "----- ICE Media <%s> -----\n", icem->name);
 
 	err |= re_hprintf(pf, " local_mode=Full, remote_mode=%s",
-			  ice_mode2name(icem->rmode));
+			  icem->rmode_lite ? "Lite" : "Full");
 	err |= re_hprintf(pf, ", local_role=%s\n", ice_role2name(icem->lrole));
 	err |= re_hprintf(pf, " local_ufrag=\"%s\" local_pwd=\"%s\"\n",
 			  icem->lufrag, icem->lpwd);

@@ -5,12 +5,6 @@
  */
 
 
-/** ICE mode */
-enum ice_mode {
-	ICE_MODE_FULL,
-	ICE_MODE_LITE
-};
-
 /** ICE Role */
 enum ice_role {
 	ICE_ROLE_UNKNOWN = 0,
@@ -64,8 +58,7 @@ typedef void (ice_connchk_h)(int err, bool update, void *arg);
 
 
 /* ICE Media */
-int  icem_alloc(struct icem **icemp, enum ice_mode mode,
-		enum ice_role role, int proto, int layer,
+int  icem_alloc(struct icem **icemp, enum ice_role role, int proto, int layer,
 		uint64_t tiebrk, const char *lufrag, const char *lpwd,
 		ice_connchk_h *chkh, void *arg);
 struct ice_conf *icem_conf(struct icem *icem);

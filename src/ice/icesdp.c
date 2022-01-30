@@ -265,7 +265,7 @@ int ice_sdp_decode(struct icem *icem, const char *name, const char *value)
 		return EINVAL;
 
 	if (0 == str_casecmp(name, ice_attr_lite)) {
-		icem->rmode = ICE_MODE_LITE;
+		icem->rmode_lite = true;
 		icem->lrole = ICE_ROLE_CONTROLLING;
 	}
 	else if (0 == str_casecmp(name, ice_attr_ufrag))

@@ -38,17 +38,6 @@ enum ice_cand_type ice_cand_name2type(const char *name)
 }
 
 
-const char *ice_mode2name(enum ice_mode mode)
-{
-	switch (mode) {
-
-	case ICE_MODE_FULL: return "Full";
-	case ICE_MODE_LITE: return "Lite";
-	default:            return "???";
-	}
-}
-
-
 const char *ice_role2name(enum ice_role role)
 {
 	switch (role) {

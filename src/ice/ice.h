@@ -60,7 +60,7 @@ struct icem {
 	struct list validl;          /**< Valid List of cand pairs (sorted)  */
 	uint64_t tiebrk;             /**< Tie-break value for roleconflict   */
 	bool mismatch;               /**< ICE mismatch flag                  */
-	enum ice_mode rmode;         /**< Remote mode                        */
+	bool rmode_lite;             /**< Remote mode is Lite                */
 	enum ice_role lrole;         /**< Local role                         */
 	struct tmr tmr_pace;         /**< Timer for pacing STUN requests     */
 	int proto;                   /**< Transport protocol                 */
@@ -192,7 +192,6 @@ int  icem_conncheck_send(struct ice_candpair *cp, bool use_cand, bool trigged);
 
 
 /* icestr */
-const char    *ice_mode2name(enum ice_mode mode);
 const char    *ice_checkl_state2name(enum ice_checkl_state cst);
 
 
