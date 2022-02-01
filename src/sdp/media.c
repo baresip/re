@@ -284,7 +284,7 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 				break;
 		}
 
-		if (!lle) {
+		if (!lle || !lfmt) {
 			rfmt->sup = false;
 			continue;
 		}
