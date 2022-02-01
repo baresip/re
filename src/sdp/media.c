@@ -258,7 +258,7 @@ struct sdp_media *sdp_media_find(const struct sdp_session *sess,
  */
 void sdp_media_align_formats(struct sdp_media *m, bool offer)
 {
-	struct sdp_format *rfmt, *lfmt;
+	struct sdp_format *rfmt, *lfmt = NULL;
 	struct le *rle, *lle;
 
 	if (!m || m->disabled || !sa_port(&m->raddr) || m->fmt_ignore)
