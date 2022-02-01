@@ -9,7 +9,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install clang-tools
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-13 main"
+        sudo apt-get update && sudo apt-get install -y clang-tools-13
+
     - name: make
       run: | 
         make info EXTRA_CFLAGS="-Werror" CCACHE=
-        make clang EXTRA_CFLAGS="-Werror" CCACHE=
+        scan-build-13 --status-bugs make EXTRA_CFLAGS="-Werror" CCACHE=
