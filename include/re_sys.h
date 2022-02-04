@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-
+#include <stdio.h>
 
 #ifndef VERSION
 #define VERSION "?"
@@ -73,3 +73,4 @@ int  fs_mkdir(const char *path, uint16_t mode);
 int  fs_gethome(char *path, size_t sz);
 bool fs_isdir(const char *path);
 bool fs_isfile(const char *file);
+int  fs_fopen(FILE **fp, const char *file, const char *mode);
