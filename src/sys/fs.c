@@ -155,3 +155,42 @@ bool fs_isfile(const char *file)
 
 	return true;
 }
+
+
+/**
+ * Open file with security enhancements (like fopen_s).
+ * The file is created with mode 0600 if it does not exist
+ *
+ * @param fp   FILE pointer for allocation
+ * @param file Pathname
+ * @param mode fopen mode
+ *
+ * @return 0 if success, otherwise errorcode
+ *
+ */
+int fs_fopen(FILE **fp, const char *file, const char *mode)
+{
+	FILE *pfile;
+	int fd;
+
+	if (!fp || !file || !mode)
+		return EINVAL;
+
+	if (fs_isfile(file))
+		goto fopen;
+
+	fd = open(file, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
+	if (!fd)
+		return errno;
+	else
+		(void)close(fd);
+
+fopen:
+	pfile = fopen(file, mode);
+	if (!pfile)
+		return errno;
+
+	*fp = pfile;
+
+	return 0;
+}
