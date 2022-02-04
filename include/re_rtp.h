@@ -61,7 +61,8 @@ enum rtcp_sdes_type {
 
 /** Transport Layer Feedback Messages */
 enum rtcp_rtpfb {
-	RTCP_RTPFB_GNACK = 1  /**< Generic NACK */
+	RTCP_RTPFB_GNACK = 1,  /**< Generic NACK */
+	RTCP_RTPFB_TWCC  = 15  /**< draft-holmer-rmcat-transport-wide-cc-extensions-01 */
 };
 
 /** Payload-Specific Feedback Messages */
@@ -166,6 +167,14 @@ struct rtcp_msg {
 					uint16_t number;
 					uint8_t picid;
 				} *sliv;
+				struct twcc {
+					uint16_t seq;
+					uint16_t count;
+					uint32_t reftime;
+					uint8_t fbcount;
+					struct mbuf *chunks;
+					struct mbuf *deltas;
+				} *twccv;
 				struct mbuf *afb;
 				void *p;
 			} fci;
