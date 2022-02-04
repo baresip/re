@@ -16,6 +16,7 @@
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_tmr.h>
+#include <re_sys.h>
 
 
 #define DEBUG_MODULE "dbg"
@@ -99,14 +100,16 @@ void dbg_close(void)
  */
 int dbg_logfile_set(const char *name)
 {
+	int err;
+
 	dbg_close();
 
 	if (!name)
 		return 0;
 
-	dbg.f = fopen(name, "a+");
-	if (!dbg.f)
-		return errno;
+	err = fs_fopen(&dbg.f, name, "a+");
+	if (err)
+		return err;
 
 	(void)re_fprintf(dbg.f, "\n===== Log Started: %H", fmt_gmtime, NULL);
 	(void)fflush(dbg.f);
