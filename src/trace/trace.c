@@ -9,6 +9,7 @@
 #include <re_list.h>
 #include <re_tmr.h>
 #include <re_lock.h>
+#include <re_sys.h>
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
@@ -108,11 +109,9 @@ int re_trace_init(const char *json_file)
 
 	lock_alloc(&trace.lock);
 
-	trace.f = fopen(json_file, "w+");
-	if (!trace.f) {
-		err = errno;
+	err = fs_fopen(&trace.f, json_file, "w+");
+	if (err)
 		goto out;
-	}
 
 	(void)re_fprintf(trace.f, "{\t\n\t\"traceEvents\": [\n");
 	(void)fflush(trace.f);
