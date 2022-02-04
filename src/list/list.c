@@ -211,6 +211,42 @@ void list_insert_after(struct list *list, struct le *le, struct le *ile,
 
 
 /**
+ * Sorted insert into linked list with order defined by the sort handler
+ *
+ * @param list  Linked list
+ * @param sh    Sort handler
+ * @param arg   Handler argument
+ * @param ile   List element to insert
+ * @param data  Element data
+ */
+void list_insert_sorted(struct list *list, list_sort_h *sh, void *arg,
+			struct le *ile, void *data)
+{
+	struct le *le;
+
+	if (!list || !sh)
+		return;
+
+	le = list->head;
+	ile->data = data;
+
+	while (le) {
+
+		if (sh(le, ile, arg)) {
+
+			le = le->next;
+		}
+		else {
+			list_insert_before(list, le, ile, ile->data);
+			return;
+		}
+	}
+
+	list_append(list, ile, ile->data);
+}
+
+
+/**
  * Remove a list element from a linked list
  *
  * @param le    List element to remove

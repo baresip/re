@@ -58,6 +58,8 @@ void list_insert_before(struct list *list, struct le *le, struct le *ile,
 			void *data);
 void list_insert_after(struct list *list, struct le *le, struct le *ile,
 		       void *data);
+void list_insert_sorted(struct list *list, list_sort_h *sh, void *arg,
+			struct le *ile, void *data);
 void list_unlink(struct le *le);
 void list_sort(struct list *list, list_sort_h *sh, void *arg);
 struct le *list_apply(const struct list *list, bool fwd, list_apply_h *ah,
