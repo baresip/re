@@ -65,11 +65,15 @@ static inline unsigned long get_thread_id(void)
 {
 #if defined(WIN32)
 	return (unsigned long)GetCurrentThreadId();
-#elif defined(DARWIN) || defined(FREEBSD) || defined(OPENBSD) || \
-      defined(NETBSD) || defined(DRAGONFLY)
+#elif defined(HAVE_PTHREAD)
+#if defined(DARWIN) || defined(FREEBSD) || defined(OPENBSD) || \
+	defined(NETBSD) || defined(DRAGONFLY)
 	return (unsigned long)(void *)pthread_self();
 #else
 	return (unsigned long)pthread_self();
+#endif
+#else
+	return 0;
 #endif
 }
 
