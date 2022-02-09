@@ -18,6 +18,7 @@
 #if defined(WIN32)
 #include <windows.h>
 #else
+#define _GNU_SOURCE
 #define __USE_GNU 1
 #include <unistd.h>
 #endif
