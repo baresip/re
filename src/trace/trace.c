@@ -18,6 +18,7 @@
 #if defined(WIN32)
 #include <windows.h>
 #else
+#define __USE_GNU 1
 #include <unistd.h>
 #endif
 
@@ -65,6 +66,8 @@ static inline unsigned long get_thread_id(void)
 {
 #if defined(WIN32)
 	return (unsigned long)GetCurrentThreadId();
+#elif defined(LINUX)
+	return (unsigned long)gettid();
 #elif defined(HAVE_PTHREAD)
 #if defined(DARWIN) || defined(FREEBSD) || defined(OPENBSD) || \
 	defined(NETBSD) || defined(DRAGONFLY)
