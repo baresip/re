@@ -256,7 +256,7 @@ legend:
 * OpenSSL version 1.0.2
 * OpenSSL version 1.1.0
 * OpenSSL version 1.1.1
-* OpenSSL version 3.0.0
+* OpenSSL version 3.0.x
 * LibreSSL version 2.x
 * LibreSSL version 3.x
 
