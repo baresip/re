@@ -342,6 +342,7 @@ endif()
 target_link_libraries(re -L/opt/local/lib -lssl -lcrypto -lpthread)
 
 set_target_properties(re PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(re PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 set_target_properties(re PROPERTIES PUBLIC_HEADER include/re.h)
 
