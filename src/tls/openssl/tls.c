@@ -234,10 +234,6 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 		goto out;
 	}
 
-#if (OPENSSL_VERSION_NUMBER < 0x00905100L)
-	SSL_CTX_set_verify_depth(tls->ctx, 1);
-#endif
-
 #if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 	SSL_CTX_set_keylog_callback(tls->ctx, tls_keylogger_cb);
 #endif
