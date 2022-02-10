@@ -1113,5 +1113,8 @@ void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr)
 #ifdef HAVE_INET6
 	if (cli && addr)
 		sa_cpy(&cli->laddr6, addr);
+#else
+	(void)cli;
+	(void)addr;
 #endif
 }

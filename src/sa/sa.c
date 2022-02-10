@@ -703,6 +703,8 @@ void sa_set_scopeid(struct sa *sa, uint32_t scopeid)
 		return;
 
 	sa->u.in6.sin6_scope_id = scopeid;
+#else
+	(void)scopeid;
 #endif
 }
 

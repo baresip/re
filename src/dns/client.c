@@ -856,7 +856,10 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 	       const struct sa *srvv, uint32_t srvc)
 {
 	struct dnsc *dnsc;
-	struct sa laddr, laddr6;
+	struct sa laddr;
+#ifdef HAVE_INET6
+	struct sa laddr6;
+#endif
 	int err;
 
 	if (!dcpp)
