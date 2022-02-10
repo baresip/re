@@ -35,14 +35,6 @@ bool epoll_check(void)
 		return false;
 	}
 
-#ifdef OPENWRT
-	/* epoll is working again with 2.6.25.7 */
-	if (osrel < 0x020619) {
-		DEBUG_NOTICE("epoll is broken in osrel=0x%08x\n", osrel);
-		return false;
-	}
-#endif
-
 	epfd = epoll_create(64);
 	if (-1 == epfd) {
 		DEBUG_NOTICE("epoll_create: %m\n", errno);
