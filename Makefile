@@ -13,13 +13,7 @@ VER_PATCH := 1
 # Increment for breaking changes (dev2, dev3...)
 VER_PRE   := dev13
 
-# Libtool similar ABI versioning
-# https://github.com/baresip/re/wiki/ABI-Versioning
-ABI_CUR   := 1
-ABI_REV   := 1
-ABI_AGE   := 0
-
-ABI_MAJOR := $(shell expr $(ABI_CUR) - $(ABI_AGE))
+ABI_MAJOR := $(VER_MAJOR)
 
 # Verbose and silent build modes
 ifeq ($(V),)
