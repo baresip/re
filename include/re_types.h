@@ -304,3 +304,10 @@ typedef bool _Bool;
 #else
 #define __REFUNC__ __FUNCTION__
 #endif
+
+/*
+ * Give the compiler a hint which branch is "likely" or "unlikely" (inspired
+ * by linux kernel and C++20/C2X)
+ */
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
