@@ -10,7 +10,7 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 #else
-#include "../sha/sha.h"
+#include <assert.h>
 #endif
 #include <re_hmac.h>
 
@@ -44,56 +44,13 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	if (!HMAC(EVP_sha1(), k, (int)lk, d, ld, out, NULL))
 		ERR_clear_error();
 #else
-	SHA_CTX ictx, octx;
-	uint8_t isha[SHA_DIGEST_LENGTH], osha[SHA_DIGEST_LENGTH];
-	uint8_t key[SHA_DIGEST_LENGTH];
-	uint8_t buf[SHA_BLOCKSIZE];
-	size_t  i;
+	(void)k;
+	(void)lk;
+	(void)d;
+	(void)ld;
+	(void)out;
+	(void)t;
 
-	if (lk > SHA_BLOCKSIZE) {
-		SHA_CTX tctx;
-
-		SHA1_Init(&tctx);
-		SHA1_Update(&tctx, k, lk);
-		SHA1_Final(key, &tctx);
-
-		k = key;
-		lk = SHA_DIGEST_LENGTH;
-	}
-
-	/**** Inner Digest ****/
-
-	SHA1_Init(&ictx);
-
-	/* Pad the key for inner digest */
-	for (i = 0 ; i < lk ; ++i)
-		buf[i] = k[i] ^ 0x36;
-	for (i = lk ; i < SHA_BLOCKSIZE ; ++i)
-		buf[i] = 0x36;
-
-	SHA1_Update(&ictx, buf, SHA_BLOCKSIZE);
-	SHA1_Update(&ictx, d, ld);
-
-	SHA1_Final(isha, &ictx);
-
-	/**** Outer Digest ****/
-
-	SHA1_Init(&octx);
-
-	/* Pad the key for outter digest */
-
-	for (i = 0 ; i < lk ; ++i)
-		buf[i] = k[i] ^ 0x5c;
-	for (i = lk ; i < SHA_BLOCKSIZE ; ++i)
-		buf[i] = 0x5c;
-
-	SHA1_Update(&octx, buf, SHA_BLOCKSIZE);
-	SHA1_Update(&octx, isha, SHA_DIGEST_LENGTH);
-
-	SHA1_Final(osha, &octx);
-
-	/* truncate and print the results */
-	t = t > SHA_DIGEST_LENGTH ? SHA_DIGEST_LENGTH : t;
-	memcpy(out, osha, t);
+	assert(!"missing HMAC-SHA1 backend\n");
 #endif
 }
