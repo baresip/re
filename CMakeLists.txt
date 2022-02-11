@@ -414,7 +414,7 @@ add_library(re OBJECT ${SRCS})
 set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(re PRIVATE .)
-target_include_directories(re PRIVATE include)
+target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 
 ##############################################################################
@@ -430,7 +430,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 target_link_libraries(re-shared
-  PRIVATE -L/opt/local/lib -lssl -lcrypto -lpthread)
+  PRIVATE -L/opt/local/lib ${OPENSSL_LIBRARIES} -lpthread)
 
 
 if(WIN32)
@@ -463,7 +463,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 target_link_libraries(re-static
-  PUBLIC -lssl -lcrypto -lpthread
+  PUBLIC ${OPENSSL_LIBRARIES} -lpthread
   PRIVATE -L/opt/local/lib
 )
 

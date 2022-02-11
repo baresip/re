@@ -33,6 +33,15 @@ jobs:
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
+    - name: cmake
+      if: ${{ runner.os == 'Linux' }}
+      run: make cmake
+    
+    - name: cmake
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake -B build && cmake --build build -j
+
     - uses: sreimers/pr-dependency-action@v0.3
       with:
         name: rem
