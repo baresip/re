@@ -7,8 +7,6 @@
 #include <re_types.h>
 #ifdef USE_OPENSSL
 #include <openssl/sha.h>
-#else
-#include "sha.h"
 #endif
 #include <re_sha.h>
 
@@ -25,9 +23,9 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 #ifdef USE_OPENSSL
 	(void)SHA1(d, n, md);
 #else
-	SHA_CTX ctx;
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, d, n);
-	SHA1_Final(md, &ctx);
+	(void)d;
+	(void)n;
+	(void)md;
+#error missing SHA-1 backend
 #endif
 }
