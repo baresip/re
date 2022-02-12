@@ -2,11 +2,17 @@
 # CMakeLists.txt
 #
 # Copyright (C) 2010 - 2022 Alfred E. Heggestad
+# Copyright (C) 2022 Sebastian Reimers
 #
 
 cmake_minimum_required(VERSION 3.12)
 
 project(re VERSION 2.0.1 LANGUAGES C)
+
+##############################################################################
+#
+# Compile options
+#
 
 find_package(OpenSSL)
 
@@ -70,6 +76,10 @@ add_compile_definitions(
   VER_PATCH=${PROJECT_VERSION_PATCH}
 )
 
+##############################################################################
+#
+# Source section
+#
 
 set(SRCS
 
@@ -331,25 +341,57 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   )
 endif()
 
+
+##############################################################################
+#
+# Main target object
+#
+
 add_library(re OBJECT ${SRCS})
 
+set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_include_directories(re PRIVATE .)
+target_include_directories(re PRIVATE include)
+
+
+##############################################################################
+#
+# Shared target libre.[so|dll|dylib]
+#
+
 add_library(re-shared SHARED $<TARGET_OBJECTS:re>)
-add_library(re-static STATIC $<TARGET_OBJECTS:re>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re-shared "-framework SystemConfiguration" "-framework CoreFoundation" )
+  target_link_libraries(re-shared
+    PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation"
+  )
 endif()
+target_link_libraries(re-shared
+  PRIVATE -L/opt/local/lib -lssl -lcrypto -lpthread)
 
-
-set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE 1)
-set_target_properties(re PROPERTIES PUBLIC_HEADER include/re.h)
-
-target_link_libraries(re-shared -L/opt/local/lib -lssl -lcrypto -lpthread)
+set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
-set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
 
-target_include_directories(re PRIVATE .)
-target_include_directories(re PRIVATE include)
+##############################################################################
+#
+# Static target libre.a
+#
+
+add_library(re-static STATIC $<TARGET_OBJECTS:re>)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(re-static
+    PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
+  )
+endif()
+target_link_libraries(re-static 
+  PUBLIC -lssl -lcrypto -lpthread
+  PRIVATE -L/opt/local/lib 
+)
+
+set_target_properties(re-static PROPERTIES PUBLIC_HEADER include/re.h)
+set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
