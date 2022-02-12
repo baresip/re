@@ -124,7 +124,6 @@ Patches can sent via Github
 | mod      | stable   | Run-time module loading                        |
 | mqueue   | stable   | Thread-safe message queue                      |
 | msg      | stable   | Generic message component library              |
-| natbd    | stable   | NAT Behavior Discovery using STUN              |
 | net      | stable   | Networking routines                            |
 | odict    | stable   | Ordered Dictionary                             |
 | rtmp     | stable   | Real Time Messaging Protocol                   |

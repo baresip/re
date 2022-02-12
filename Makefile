@@ -35,7 +35,6 @@ include $(MK)
 MODULES += sip sipevent sipreg sipsess
 MODULES += uri http httpauth msg websock
 MODULES += stun turn ice
-MODULES += natbd
 MODULES += rtp sdp jbuf telev
 MODULES += dns
 MODULES += md5 crc32 sha hmac base64
