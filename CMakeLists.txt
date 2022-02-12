@@ -147,7 +147,6 @@ set(SRCS
   src/main/init.c
   src/main/main.c
   src/main/method.c
-  src/main/openssl.c
 
   src/mbuf/mbuf.c
 
@@ -299,6 +298,7 @@ set(SRCS
 
 if(USE_OPENSSL)
   list(APPEND SRCS
+    src/main/openssl.c
     src/aes/openssl/aes.c
     src/tls/openssl/tls_tcp.c
     src/tls/openssl/tls_udp.c
@@ -337,7 +337,7 @@ add_library(re-shared SHARED $<TARGET_OBJECTS:re>)
 add_library(re-static STATIC $<TARGET_OBJECTS:re>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re "-framework SystemConfiguration" "-framework CoreFoundation" )
+  target_link_libraries(re-shared "-framework SystemConfiguration" "-framework CoreFoundation" )
 endif()
 
 
