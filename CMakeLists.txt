@@ -8,8 +8,9 @@ cmake_minimum_required(VERSION 3.12)
 
 project(re VERSION 2.0.1 LANGUAGES C)
 
+find_package(OpenSSL)
 
-option(USE_OPENSSL "Enable OpenSSL" ON)
+option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 
 
 if (MSVC)
