@@ -37,7 +37,6 @@ int stun_indication(int proto, void *sock, const struct sa *dst, size_t presz,
 	uint8_t tid[STUN_TID_SIZE];
 	struct mbuf *mb;
 	va_list ap;
-	uint32_t i;
 	int err;
 
 	if (!sock)
@@ -47,8 +46,7 @@ int stun_indication(int proto, void *sock, const struct sa *dst, size_t presz,
 	if (!mb)
 		return ENOMEM;
 
-	for (i=0; i<STUN_TID_SIZE; i++)
-		tid[i] = rand_u32();
+	stun_generate_tid(tid);
 
 	va_start(ap, attrc);
 	mb->pos = presz;

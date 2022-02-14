@@ -7,6 +7,7 @@
 #include <re_mbuf.h>
 #include <re_sa.h>
 #include <re_list.h>
+#include <re_sys.h>
 #include <re_stun.h>
 #include "stun.h"
 
@@ -79,4 +80,10 @@ const char *stun_method_name(uint16_t method)
 	case STUN_METHOD_CHANBIND:   return "ChannelBind";
 	default:                     return "???";
 	}
+}
+
+
+void stun_generate_tid(uint8_t tid[STUN_TID_SIZE])
+{
+	rand_bytes(tid, STUN_TID_SIZE);
 }

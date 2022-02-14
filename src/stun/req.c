@@ -41,7 +41,6 @@ int stun_request(struct stun_ctrans **ctp, struct stun *stun, int proto,
 {
 	uint8_t tid[STUN_TID_SIZE];
 	struct mbuf *mb;
-	uint32_t i;
 	va_list ap;
 	int err;
 
@@ -52,8 +51,7 @@ int stun_request(struct stun_ctrans **ctp, struct stun *stun, int proto,
 	if (!mb)
 		return ENOMEM;
 
-	for (i=0; i<STUN_TID_SIZE; i++)
-		tid[i] = rand_u32();
+	stun_generate_tid(tid);
 
 	va_start(ap, attrc);
 	mb->pos = presz;
