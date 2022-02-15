@@ -5,9 +5,25 @@
 # Copyright (C) 2022 Sebastian Reimers
 #
 
+##############################################################################
+#
+# Versioning
+#
+
 cmake_minimum_required(VERSION 3.12)
 
 project(re VERSION 2.0.1 LANGUAGES C)
+
+# Pre-release identifier, comment out on a release
+# Increment for breaking changes (dev.2, dev.3...)
+set(PROJECT_VERSION_PRE dev13)
+
+if (PROJECT_VERSION_PRE)
+set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
+else()
+set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
+endif()
+
 
 ##############################################################################
 #
