@@ -18,7 +18,7 @@ project(re VERSION 2.0.1 LANGUAGES C)
 # Increment for breaking changes (dev.2, dev.3...)
 set(PROJECT_VERSION_PRE dev13)
 
-if (PROJECT_VERSION_PRE)
+if(PROJECT_VERSION_PRE)
 set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
 else()
 set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
@@ -35,7 +35,7 @@ find_package(OpenSSL)
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 
 
-if (MSVC)
+if(MSVC)
   add_compile_options(/W4)
 else()
   add_compile_options(-Wall)
@@ -404,9 +404,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
-target_link_libraries(re-static 
+target_link_libraries(re-static
   PUBLIC -lssl -lcrypto -lpthread
-  PRIVATE -L/opt/local/lib 
+  PRIVATE -L/opt/local/lib
 )
 
 set_target_properties(re-static PROPERTIES PUBLIC_HEADER include/re.h)
