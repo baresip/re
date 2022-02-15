@@ -73,9 +73,11 @@ static inline void dbg_unlock(void)
  */
 void dbg_init(int level, enum dbg_flags flags)
 {
+	dbg_lock();
 	dbg.tick  = tmr_jiffies();
 	dbg.level = level;
 	dbg.flags = flags;
+	dbg_unlock();
 }
 
 
@@ -134,14 +136,14 @@ void dbg_handler_set(dbg_print_h *ph, void *arg)
 /* NOTE: This function should not allocate memory */
 static void dbg_vprintf(int level, const char *fmt, va_list ap)
 {
+	dbg_lock();
+
 	if (level > dbg.level)
-		return;
+		goto out;
 
 	/* Print handler? */
 	if (dbg.ph)
-		return;
-
-	dbg_lock();
+		goto out;
 
 	if (dbg.flags & DBG_ANSI) {
 
@@ -177,7 +179,7 @@ static void dbg_vprintf(int level, const char *fmt, va_list ap)
 
 	if (dbg.flags & DBG_ANSI && level < DBG_DEBUG)
 		(void)re_fprintf(stderr, "\x1b[;m");
-
+out:
 	dbg_unlock();
 }
 
@@ -188,13 +190,14 @@ static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 	char buf[256];
 	int len;
 
+	dbg_lock();
+
 	if (level > dbg.level)
-		return;
+		goto out;
 
 	if (!dbg.ph && !dbg.f)
-		return;
+		goto out;
 
-	dbg_lock();
 
 	len = re_vsnprintf(buf, sizeof(buf), fmt, ap);
 	if (len <= 0)
