@@ -338,8 +338,8 @@ if(WIN32)
   list(APPEND SRCS
     src/dns/win32/srv.c
     src/lock/win32/lock.c
-    src/mod/win32/mod.c
-    src/mqueue/win32/mqueue.c
+    src/mod/win32/dll.c
+    src/mqueue/win32/pipe.c
     src/net/win32/wif.c
   )
 endif()
