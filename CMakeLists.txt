@@ -10,7 +10,7 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 
 project(re VERSION 2.0.1 LANGUAGES C)
 
@@ -42,54 +42,54 @@ else()
 endif()
 
 
-add_compile_definitions(
-  HAVE_GETIFADDRS
-  HAVE_INET6
-  HAVE_INTTYPES_H
-  HAVE_NET_ROUTE_H
-  HAVE_POLL
-  HAVE_PTHREAD
-  HAVE_PWD_H
-  HAVE_ROUTE_LIST
-  HAVE_SELECT
-  HAVE_SETRLIMIT
-  HAVE_STRERROR_R
-  HAVE_STRINGS_H
-  HAVE_SYS_SYSCTL_H
-  HAVE_SYS_TIME_H
-  HAVE_UNAME
-  HAVE_UNISTD_H
+add_definitions(
+  -DHAVE_GETIFADDRS
+  -DHAVE_INET6
+  -DHAVE_INTTYPES_H
+  -DHAVE_NET_ROUTE_H
+  -DHAVE_POLL
+  -DHAVE_PTHREAD
+  -DHAVE_PWD_H
+  -DHAVE_ROUTE_LIST
+  -DHAVE_SELECT
+  -DHAVE_SETRLIMIT
+  -DHAVE_STRERROR_R
+  -DHAVE_STRINGS_H
+  -DHAVE_SYS_SYSCTL_H
+  -DHAVE_SYS_TIME_H
+  -DHAVE_UNAME
+  -DHAVE_UNISTD_H
   )
 
 
 if(USE_OPENSSL)
-  add_compile_definitions(
-    USE_DTLS
-    USE_OPENSSL
-    USE_OPENSSL_AES
-    USE_OPENSSL_DTLS
-    USE_OPENSSL_HMAC
-    USE_OPENSSL_SRTP
-    USE_TLS
+  add_definitions(
+    -DUSE_DTLS
+    -DUSE_OPENSSL
+    -DUSE_OPENSSL_AES
+    -DUSE_OPENSSL_DTLS
+    -DUSE_OPENSSL_HMAC
+    -DUSE_OPENSSL_SRTP
+    -DUSE_TLS
   )
 endif()
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_compile_definitions(DARWIN HAVE_KQUEUE)
+  add_definitions(-DDARWIN -DHAVE_KQUEUE)
   include_directories(/opt/local/include)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_compile_definitions(HAVE_EPOLL)
+  add_definitions(-DHAVE_EPOLL)
 endif()
 
 
-add_compile_definitions(
-  ARCH="${CMAKE_SYSTEM_PROCESSOR}"
-  OS="${CMAKE_SYSTEM_NAME}"
-  VERSION="${CMAKE_PROJECT_VERSION}"
-  VER_MAJOR=${PROJECT_VERSION_MAJOR}
-  VER_MINOR=${PROJECT_VERSION_MINOR}
-  VER_PATCH=${PROJECT_VERSION_PATCH}
+add_definitions(
+  -DARCH="${CMAKE_SYSTEM_PROCESSOR}"
+  -DOS="${CMAKE_SYSTEM_NAME}"
+  -DVERSION="${CMAKE_PROJECT_VERSION}"
+  -DVER_MAJOR=${PROJECT_VERSION_MAJOR}
+  -DVER_MINOR=${PROJECT_VERSION_MINOR}
+  -DVER_PATCH=${PROJECT_VERSION_PATCH}
 )
 
 ##############################################################################
