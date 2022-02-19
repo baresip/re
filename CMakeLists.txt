@@ -33,6 +33,7 @@ endif()
 find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+option(USE_RTMP "Enable RTMP" ON)
 
 
 if(MSVC)
@@ -204,17 +205,6 @@ set(SRCS
   src/odict/odict.c
   src/odict/type.c
 
-  src/rtmp/amf.c
-  src/rtmp/amf_dec.c
-  src/rtmp/amf_enc.c
-  src/rtmp/chunk.c
-  src/rtmp/conn.c
-  src/rtmp/control.c
-  src/rtmp/ctrans.c
-  src/rtmp/dechunk.c
-  src/rtmp/hdr.c
-  src/rtmp/stream.c
-
   src/rtp/fb.c
   src/rtp/member.c
   src/rtp/ntp.c
@@ -320,6 +310,22 @@ set(SRCS
 
   src/websock/websock.c
 )
+
+
+if(USE_RTMP)
+  list(APPEND SRCS
+    src/rtmp/amf.c
+    src/rtmp/amf_dec.c
+    src/rtmp/amf_enc.c
+    src/rtmp/chunk.c
+    src/rtmp/conn.c
+    src/rtmp/control.c
+    src/rtmp/ctrans.c
+    src/rtmp/dechunk.c
+    src/rtmp/hdr.c
+    src/rtmp/stream.c
+  )
+endif()
 
 
 if(USE_OPENSSL)
