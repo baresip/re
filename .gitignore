@@ -8,7 +8,7 @@ test.o
 libre.a
 libre.dylib
 libre.pc
-libre.so
+libre.so*
 *.gcov
 
 # Windows build folder
