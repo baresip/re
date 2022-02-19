@@ -4,8 +4,10 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#define __USE_GNU 1
 #include <sys/types.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 
 /*
