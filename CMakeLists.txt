@@ -36,31 +36,35 @@ option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_RTMP "Enable RTMP" ON)
 
 
-if(MSVC)
-  add_compile_options(/W4)
-else()
+if(NOT MSVC)
   add_compile_options(-Wall)
 endif()
 
 
 add_definitions(
-  -DHAVE_GETIFADDRS
   -DHAVE_INET6
   -DHAVE_INTTYPES_H
   -DHAVE_NET_ROUTE_H
-  -DHAVE_POLL
-  -DHAVE_PTHREAD
-  -DHAVE_PWD_H
   -DHAVE_ROUTE_LIST
   -DHAVE_SELECT
-  -DHAVE_SETRLIMIT
   -DHAVE_STRERROR_R
-  -DHAVE_STRINGS_H
   -DHAVE_SYS_SYSCTL_H
-  -DHAVE_SYS_TIME_H
-  -DHAVE_UNAME
-  -DHAVE_UNISTD_H
   )
+
+
+if(UNIX)
+  add_definitions(
+    -DHAVE_GETIFADDRS
+    -DHAVE_POLL
+    -DHAVE_PTHREAD
+    -DHAVE_PWD_H
+    -DHAVE_SETRLIMIT
+    -DHAVE_STRINGS_H
+    -DHAVE_SYS_TIME_H
+    -DHAVE_UNAME
+    -DHAVE_UNISTD_H
+  )
+endif()
 
 
 if(USE_OPENSSL)
@@ -169,8 +173,6 @@ set(SRCS
 
   src/list/list.c
 
-  src/lock/lock.c
-
   src/main/init.c
   src/main/main.c
   src/main/method.c
@@ -183,7 +185,6 @@ set(SRCS
   src/mem/mem.c
   src/mem/secure.c
 
-  src/mod/dl.c
   src/mod/mod.c
 
   src/mqueue/mqueue.c
@@ -192,10 +193,8 @@ set(SRCS
   src/msg/param.c
 
   src/net/if.c
-  src/net/ifaddrs.c
   src/net/net.c
   src/net/netstr.c
-  src/net/posix/pif.c
   src/net/rt.c
   src/net/sock.c
   src/net/sockopt.c
@@ -347,6 +346,13 @@ if(WIN32)
     src/mod/win32/dll.c
     src/mqueue/win32/pipe.c
     src/net/win32/wif.c
+  )
+elseif(UNIX)
+  list(APPEND SRCS
+    src/lock/lock.c
+    src/mod/dl.c
+    src/net/ifaddrs.c
+    src/net/posix/pif.c
   )
 endif()
 
