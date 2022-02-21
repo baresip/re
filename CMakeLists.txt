@@ -34,6 +34,7 @@ find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_RTMP "Enable RTMP" ON)
+option(USE_SIP "Enable SIP" ON)
 
 
 if(NOT MSVC)
@@ -228,40 +229,6 @@ set(SRCS
 
   src/sha/wrap.c
 
-  src/sip/addr.c
-  src/sip/auth.c
-  src/sip/contact.c
-  src/sip/cseq.c
-  src/sip/ctrans.c
-  src/sip/dialog.c
-  src/sip/keepalive.c
-  src/sip/keepalive_udp.c
-  src/sip/msg.c
-  src/sip/reply.c
-  src/sip/request.c
-  src/sip/sip.c
-  src/sip/strans.c
-  src/sip/transp.c
-  src/sip/via.c
-
-  src/sipevent/listen.c
-  src/sipevent/msg.c
-  src/sipevent/notify.c
-  src/sipevent/subscribe.c
-
-  src/sipreg/reg.c
-
-  src/sipsess/accept.c
-  src/sipsess/ack.c
-  src/sipsess/close.c
-  src/sipsess/connect.c
-  src/sipsess/info.c
-  src/sipsess/listen.c
-  src/sipsess/modify.c
-  src/sipsess/reply.c
-  src/sipsess/request.c
-  src/sipsess/sess.c
-
   src/srtp/misc.c
   src/srtp/replay.c
   src/srtp/srtcp.c
@@ -323,6 +290,45 @@ if(USE_RTMP)
     src/rtmp/dechunk.c
     src/rtmp/hdr.c
     src/rtmp/stream.c
+  )
+endif()
+
+
+if(USE_SIP)
+  list(APPEND SRCS
+    src/sip/addr.c
+    src/sip/auth.c
+    src/sip/contact.c
+    src/sip/cseq.c
+    src/sip/ctrans.c
+    src/sip/dialog.c
+    src/sip/keepalive.c
+    src/sip/keepalive_udp.c
+    src/sip/msg.c
+    src/sip/reply.c
+    src/sip/request.c
+    src/sip/sip.c
+    src/sip/strans.c
+    src/sip/transp.c
+    src/sip/via.c
+
+    src/sipevent/listen.c
+    src/sipevent/msg.c
+    src/sipevent/notify.c
+    src/sipevent/subscribe.c
+
+    src/sipreg/reg.c
+
+    src/sipsess/accept.c
+    src/sipsess/ack.c
+    src/sipsess/close.c
+    src/sipsess/connect.c
+    src/sipsess/info.c
+    src/sipsess/listen.c
+    src/sipsess/modify.c
+    src/sipsess/reply.c
+    src/sipsess/request.c
+    src/sipsess/sess.c
   )
 endif()
 
