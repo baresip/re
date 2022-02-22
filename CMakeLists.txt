@@ -37,8 +37,20 @@ option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_STANDARD 11)
+
 if(NOT MSVC)
-  add_compile_options(-Wall)
+  add_compile_options(
+    -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
+    -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
+    -Wshadow -Waggregate-return -Wcast-align -Wold-style-definition
+    -Wdeclaration-after-statement -Wvla
+  )
+endif()
+
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wshorten-64-to-32)
 endif()
 
 
