@@ -1,5 +1,5 @@
 /**
- * @file rwlock.c  Pthread read/write locking
+ * @file lock.c  Pthread read/write locking
  *
  * Copyright (C) 2010 Creytiv.com
  */
@@ -10,7 +10,7 @@
 #include <re_lock.h>
 
 
-#define DEBUG_MODULE "rwlock"
+#define DEBUG_MODULE "lock"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
