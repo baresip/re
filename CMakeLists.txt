@@ -10,7 +10,7 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.7)
 
 project(re VERSION 2.0.1 LANGUAGES C)
 
@@ -33,6 +33,7 @@ endif()
 find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+option(USE_BFCP "Enable BFCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
@@ -49,6 +50,8 @@ if(NOT MSVC)
   )
 endif()
 
+
+
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wshorten-64-to-32)
 endif()
@@ -60,7 +63,6 @@ add_definitions(
   -DHAVE_NET_ROUTE_H
   -DHAVE_ROUTE_LIST
   -DHAVE_SELECT
-  -DHAVE_STRERROR_R
   -DHAVE_SYS_SYSCTL_H
   )
 
@@ -76,6 +78,15 @@ if(UNIX)
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
     -DHAVE_UNISTD_H
+    -DHAVE_STRERROR_R
+    )
+endif()
+
+
+if(MSVC)
+  add_definitions(
+    -DHAVE_IO_H
+    -D_CRT_SECURE_NO_WARNINGS
   )
 endif()
 
@@ -118,12 +129,6 @@ add_definitions(
 set(SRCS
 
   src/base64/b64.c
-
-  src/bfcp/attr.c
-  src/bfcp/conn.c
-  src/bfcp/msg.c
-  src/bfcp/reply.c
-  src/bfcp/request.c
 
   src/btrace/btrace.c
 
@@ -288,6 +293,17 @@ set(SRCS
 
   src/websock/websock.c
 )
+
+
+if(USE_BFCP)
+  list(APPEND SRCS
+    src/bfcp/attr.c
+    src/bfcp/conn.c
+    src/bfcp/msg.c
+    src/bfcp/reply.c
+    src/bfcp/request.c
+  )
+endif()
 
 
 if(USE_RTMP)
