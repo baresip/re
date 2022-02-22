@@ -8,6 +8,10 @@
 
 #ifdef _MSC_VER
 #include <stdlib.h>
+
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+
 #endif
 
 /*
