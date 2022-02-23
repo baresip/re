@@ -429,19 +429,18 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
-target_link_libraries(re-shared
-  PRIVATE -L/opt/local/lib ${OPENSSL_LIBRARIES} -lpthread)
-
 
 if(WIN32)
-  target_link_libraries(re-shared
-    libssl
-    libcrypto
+  target_link_libraries(re-shared PRIVATE
+    ${OPENSSL_LIBRARIES}
     qwave
     iphlpapi
     wsock32
     ws2_32
   )
+else()
+  target_link_libraries(re-shared
+    PRIVATE -L/opt/local/lib ${OPENSSL_LIBRARIES} -lpthread)
 endif()
 
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
