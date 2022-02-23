@@ -274,7 +274,7 @@ int stun_msg_vencode(struct mbuf *mb, uint16_t method, uint8_t class,
 		     uint8_t padding, uint32_t attrc, va_list ap)
 {
 	struct stun_hdr hdr;
-	size_t start;
+	size_t start, len;
 	int err = 0;
 	uint32_t i;
 
@@ -304,7 +304,8 @@ int stun_msg_vencode(struct mbuf *mb, uint16_t method, uint8_t class,
 	}
 
 	/* header */
-	hdr.len = mb->pos - start - STUN_HEADER_SIZE + (key ? MI_SIZE : 0);
+	len = mb->pos - start - STUN_HEADER_SIZE + (key ? MI_SIZE : 0);
+	hdr.len = (uint16_t)len;
 	mb->pos = start;
 	err |= stun_hdr_encode(mb, &hdr);
 	mb->pos += hdr.len - (key ? MI_SIZE : 0);
@@ -325,7 +326,8 @@ int stun_msg_vencode(struct mbuf *mb, uint16_t method, uint8_t class,
 		uint32_t fprnt;
 
 		/* header */
-		hdr.len = mb->pos - start - STUN_HEADER_SIZE + FP_SIZE;
+		len = mb->pos - start - STUN_HEADER_SIZE + FP_SIZE;
+		hdr.len = (uint16_t)len;
 		mb->pos = start;
 		err |= stun_hdr_encode(mb, &hdr);
 
