@@ -47,8 +47,8 @@ int pipe(int fds[2])
 		goto error;
 	}
 
-	fds[0] = rd;
-	fds[1] = wr;
+	fds[0] = (int)rd;
+	fds[1] = (int)wr;
 
 	closesocket(s);
 	return 0;
@@ -61,7 +61,7 @@ error:
 
 ssize_t pipe_read(int s, void *buf, size_t len)
 {
-	int ret = recv(s, buf, len, 0);
+	int ret = recv(s, buf, (int)len, 0);
 
 	if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
 		ret = 0;
@@ -72,6 +72,6 @@ ssize_t pipe_read(int s, void *buf, size_t len)
 
 ssize_t pipe_write(int s, const void *buf, size_t len)
 {
-	return send(s, buf, len, 0);
+	return send(s, buf, (int)len, 0);
 }
 
