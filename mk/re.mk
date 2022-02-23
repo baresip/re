@@ -533,11 +533,6 @@ ifneq ($(HAVE_GETOPT),)
 CFLAGS  += -DHAVE_GETOPT
 endif
 
-HAVE_INTTYPES_H := $(shell $(call CC_TEST,inttypes.h))
-ifneq ($(HAVE_INTTYPES_H),)
-CFLAGS  += -DHAVE_INTTYPES_H
-endif
-
 HAVE_NET_ROUTE_H := $(shell $(call CC_TEST,net/route.h))
 ifneq ($(HAVE_NET_ROUTE_H),)
 CFLAGS  += -DHAVE_NET_ROUTE_H
