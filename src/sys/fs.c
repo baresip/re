@@ -180,6 +180,9 @@ bool fs_isfile(const char *file)
  */
 int fs_fopen(FILE **fp, const char *file, const char *mode)
 {
+#ifdef WIN32
+	return fopen_s(fp, file, mode);
+#else
 	FILE *pfile;
 	int fd;
 
@@ -203,4 +206,5 @@ fopen:
 	*fp = pfile;
 
 	return 0;
+#endif
 }
