@@ -587,10 +587,10 @@ static int websock_encode(struct mbuf *mb, bool fin,
 	}
 	else if (len > 125) {
 		err |= mbuf_write_u8(mb, (mask<<7) | 126);
-		err |= mbuf_write_u16(mb, htons(len));
+		err |= mbuf_write_u16(mb, htons((uint16_t)len));
 	}
 	else {
-		err |= mbuf_write_u8(mb, (mask<<7) | len);
+		err |= mbuf_write_u8(mb, (mask<<7) | (uint8_t)len);
 	}
 
 	if (mask) {
