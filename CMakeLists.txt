@@ -432,6 +432,18 @@ endif()
 target_link_libraries(re-shared
   PRIVATE -L/opt/local/lib -lssl -lcrypto -lpthread)
 
+
+if(WIN32)
+  target_link_libraries(re-shared
+    libssl
+    libcrypto
+    qwave
+    iphlpapi
+    wsock32
+    ws2_32
+  )
+endif()
+
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
