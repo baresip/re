@@ -11,7 +11,7 @@ jobs:
 
     - name: make
       run: | 
-        make EXTRA_CFLAGS="-coverage" CCACHE=
+        make EXTRA_CFLAGS="--coverage" CCACHE=
 
     - uses: sreimers/pr-dependency-action@v0.3
       with:
