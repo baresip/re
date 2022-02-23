@@ -231,7 +231,7 @@ static int dequeue(struct tcp_conn *tc)
 	}
 
 	n = send(tc->fdc, BUF_CAST mbuf_buf(&qe->mb),
-		 qe->mb.end - qe->mb.pos, flags);
+		 SIZ_CAST qe->mb.end - qe->mb.pos, flags);
 	if (n < 0) {
 		if (EAGAIN == errno)
 			return 0;
@@ -372,7 +372,7 @@ static void tcp_recv_handler(int flags, void *arg)
 	if (!mb)
 		return;
 
-	n = recv(tc->fdc, BUF_CAST mb->buf, mb->size, 0);
+	n = recv(tc->fdc, BUF_CAST mb->buf, SIZ_CAST mb->size, 0);
 	if (0 == n) {
 		mem_deref(mb);
 		conn_close(tc, 0);
@@ -1144,7 +1144,8 @@ static int tcp_send_internal(struct tcp_conn *tc, struct mbuf *mb,
 	if (tc->sendq.head)
 		return enqueue(tc, mb);
 
-	n = send(tc->fdc, BUF_CAST mbuf_buf(mb), mb->end - mb->pos, flags);
+	n = send(tc->fdc, BUF_CAST mbuf_buf(mb),
+		 SIZ_CAST mb->end - mb->pos, flags);
 	if (n < 0) {
 
 		if (EAGAIN == errno)
