@@ -22,9 +22,19 @@
 #include <direct.h>
 #include <lmaccess.h>
 #endif
+#ifdef HAVE_IO_H
+#include <io.h>
+#endif
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_sys.h>
+
+
+#ifdef WIN32
+#define open _open
+#define read _read
+#define close _close
+#endif
 
 
 /**

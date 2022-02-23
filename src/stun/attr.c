@@ -165,7 +165,7 @@ int stun_attr_encode(struct mbuf *mb, uint16_t type, const void *v,
 
 	mb->pos = start - 4;
 	err |= mbuf_write_u16(mb, htons(type));
-	err |= mbuf_write_u16(mb, htons(len));
+	err |= mbuf_write_u16(mb, htons((uint16_t)len));
 	mb->pos += len;
 
 	/* padding */

@@ -66,7 +66,7 @@ static bool is_number(long double *d, bool *isfloat, const struct pl *pl)
 				return false;
 
 			exp = true;
-			e   = neg ? -v : v;
+			e   = (int64_t)(neg ? -v : v);
 			v   = 0;
 			mul = 1;
 			neg = false;
@@ -154,7 +154,7 @@ static int decode_value(struct json_value *val, const struct pl *pl)
 		}
 		else {
 			val->type      = JSON_INT;
-			val->v.integer = dbl;
+			val->v.integer = (int64_t)dbl;
 		}
 	}
 	else if (!pl_strcasecmp(pl, "false")) {

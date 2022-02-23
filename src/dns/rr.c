@@ -148,7 +148,7 @@ int dns_rr_encode(struct mbuf *mb, const struct dnsrr *rr, int64_t ttl_offs,
 		dlen = str_len(rr->rdata.txt.data);
 
 		do {
-			uint8_t slen = min(dlen, 0xff);
+			uint8_t slen = min((uint8_t)dlen, 0xff);
 
 			err |= mbuf_write_u8(mb, slen);
 			err |= mbuf_write_mem(mb, (uint8_t *)ptr, slen);
@@ -191,7 +191,7 @@ int dns_rr_encode(struct mbuf *mb, const struct dnsrr *rr, int64_t ttl_offs,
 		return EOVERFLOW;
 
 	mb->pos = start_rdata - 2;
-	err |= mbuf_write_u16(mb, htons(len));
+	err |= mbuf_write_u16(mb, htons((uint16_t)len));
 	mb->pos += len;
 
 	return err;

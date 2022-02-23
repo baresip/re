@@ -710,7 +710,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 	case IPPROTO_TCP:
 		q->mb.pos = 0;
-		(void)mbuf_write_u16(&q->mb, htons(q->mb.end - 2));
+		(void)mbuf_write_u16(&q->mb, htons((uint16_t)q->mb.end - 2));
 
 		err = send_tcp(q);
 		if (err)

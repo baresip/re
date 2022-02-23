@@ -5,7 +5,19 @@
  */
 
 #include <sys/types.h>
-/*#include <stdlib.h>*/
+
+#ifdef _MSC_VER
+#include <stdlib.h>
+
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+
+#endif
+
+/*
+ * Basic integral types from C99
+ */
+
 #include <inttypes.h>
 
 

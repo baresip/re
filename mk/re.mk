@@ -711,6 +711,15 @@ info::
 	@echo "  BIN_SUFFIX:    $(BIN_SUFFIX)"
 
 
+.PHONY: cmake
+cmake:
+	cmake -B build && cmake --build build --parallel
+
+
+.PHONY: ninja
+ninja:
+	cmake -B build -G Ninja && cmake --build build
+
 ##############################################################################
 #
 # Packaging section

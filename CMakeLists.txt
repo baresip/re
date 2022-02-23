@@ -10,7 +10,7 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.7)
 
 project(re VERSION 2.0.1 LANGUAGES C)
 
@@ -33,34 +33,62 @@ endif()
 find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+option(USE_BFCP "Enable BFCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
+option(USE_SIP "Enable SIP" ON)
 
 
-if(MSVC)
-  add_compile_options(/W4)
-else()
-  add_compile_options(-Wall)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_STANDARD 11)
+
+if(NOT MSVC)
+  add_compile_options(
+    -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
+    -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
+    -Wshadow -Waggregate-return -Wcast-align -Wold-style-definition
+    -Wdeclaration-after-statement -Wvla
+  )
+endif()
+
+
+
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wshorten-64-to-32)
 endif()
 
 
 add_definitions(
-  -DHAVE_GETIFADDRS
   -DHAVE_INET6
   -DHAVE_INTTYPES_H
   -DHAVE_NET_ROUTE_H
-  -DHAVE_POLL
-  -DHAVE_PTHREAD
-  -DHAVE_PWD_H
-  -DHAVE_ROUTE_LIST
   -DHAVE_SELECT
-  -DHAVE_SETRLIMIT
-  -DHAVE_STRERROR_R
-  -DHAVE_STRINGS_H
   -DHAVE_SYS_SYSCTL_H
-  -DHAVE_SYS_TIME_H
-  -DHAVE_UNAME
-  -DHAVE_UNISTD_H
   )
+
+
+if(UNIX)
+  add_definitions(
+    -DHAVE_GETIFADDRS
+    -DHAVE_POLL
+    -DHAVE_PTHREAD
+    -DHAVE_PWD_H
+    -DHAVE_ROUTE_LIST
+    -DHAVE_SETRLIMIT
+    -DHAVE_STRERROR_R
+    -DHAVE_STRINGS_H
+    -DHAVE_SYS_TIME_H
+    -DHAVE_UNAME
+    -DHAVE_UNISTD_H
+    )
+endif()
+
+
+if(MSVC)
+  add_definitions(
+    -DHAVE_IO_H
+    -D_CRT_SECURE_NO_WARNINGS
+  )
+endif()
 
 
 if(USE_OPENSSL)
@@ -101,12 +129,6 @@ add_definitions(
 set(SRCS
 
   src/base64/b64.c
-
-  src/bfcp/attr.c
-  src/bfcp/conn.c
-  src/bfcp/msg.c
-  src/bfcp/reply.c
-  src/bfcp/request.c
 
   src/btrace/btrace.c
 
@@ -169,8 +191,6 @@ set(SRCS
 
   src/list/list.c
 
-  src/lock/lock.c
-
   src/main/init.c
   src/main/main.c
   src/main/method.c
@@ -183,7 +203,6 @@ set(SRCS
   src/mem/mem.c
   src/mem/secure.c
 
-  src/mod/dl.c
   src/mod/mod.c
 
   src/mqueue/mqueue.c
@@ -192,10 +211,8 @@ set(SRCS
   src/msg/param.c
 
   src/net/if.c
-  src/net/ifaddrs.c
   src/net/net.c
   src/net/netstr.c
-  src/net/posix/pif.c
   src/net/rt.c
   src/net/sock.c
   src/net/sockopt.c
@@ -228,40 +245,6 @@ set(SRCS
   src/sdp/util.c
 
   src/sha/wrap.c
-
-  src/sip/addr.c
-  src/sip/auth.c
-  src/sip/contact.c
-  src/sip/cseq.c
-  src/sip/ctrans.c
-  src/sip/dialog.c
-  src/sip/keepalive.c
-  src/sip/keepalive_udp.c
-  src/sip/msg.c
-  src/sip/reply.c
-  src/sip/request.c
-  src/sip/sip.c
-  src/sip/strans.c
-  src/sip/transp.c
-  src/sip/via.c
-
-  src/sipevent/listen.c
-  src/sipevent/msg.c
-  src/sipevent/notify.c
-  src/sipevent/subscribe.c
-
-  src/sipreg/reg.c
-
-  src/sipsess/accept.c
-  src/sipsess/ack.c
-  src/sipsess/close.c
-  src/sipsess/connect.c
-  src/sipsess/info.c
-  src/sipsess/listen.c
-  src/sipsess/modify.c
-  src/sipsess/reply.c
-  src/sipsess/request.c
-  src/sipsess/sess.c
 
   src/srtp/misc.c
   src/srtp/replay.c
@@ -312,6 +295,17 @@ set(SRCS
 )
 
 
+if(USE_BFCP)
+  list(APPEND SRCS
+    src/bfcp/attr.c
+    src/bfcp/conn.c
+    src/bfcp/msg.c
+    src/bfcp/reply.c
+    src/bfcp/request.c
+  )
+endif()
+
+
 if(USE_RTMP)
   list(APPEND SRCS
     src/rtmp/amf.c
@@ -324,6 +318,45 @@ if(USE_RTMP)
     src/rtmp/dechunk.c
     src/rtmp/hdr.c
     src/rtmp/stream.c
+  )
+endif()
+
+
+if(USE_SIP)
+  list(APPEND SRCS
+    src/sip/addr.c
+    src/sip/auth.c
+    src/sip/contact.c
+    src/sip/cseq.c
+    src/sip/ctrans.c
+    src/sip/dialog.c
+    src/sip/keepalive.c
+    src/sip/keepalive_udp.c
+    src/sip/msg.c
+    src/sip/reply.c
+    src/sip/request.c
+    src/sip/sip.c
+    src/sip/strans.c
+    src/sip/transp.c
+    src/sip/via.c
+
+    src/sipevent/listen.c
+    src/sipevent/msg.c
+    src/sipevent/notify.c
+    src/sipevent/subscribe.c
+
+    src/sipreg/reg.c
+
+    src/sipsess/accept.c
+    src/sipsess/ack.c
+    src/sipsess/close.c
+    src/sipsess/connect.c
+    src/sipsess/info.c
+    src/sipsess/listen.c
+    src/sipsess/modify.c
+    src/sipsess/reply.c
+    src/sipsess/request.c
+    src/sipsess/sess.c
   )
 endif()
 
@@ -347,6 +380,13 @@ if(WIN32)
     src/mod/win32/dll.c
     src/mqueue/win32/pipe.c
     src/net/win32/wif.c
+  )
+elseif(UNIX)
+  list(APPEND SRCS
+    src/lock/lock.c
+    src/mod/dl.c
+    src/net/ifaddrs.c
+    src/net/posix/pif.c
   )
 endif()
 
@@ -374,7 +414,7 @@ add_library(re OBJECT ${SRCS})
 set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(re PRIVATE .)
-target_include_directories(re PRIVATE include)
+target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 
 ##############################################################################
@@ -390,7 +430,19 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 target_link_libraries(re-shared
-  PRIVATE -L/opt/local/lib -lssl -lcrypto -lpthread)
+  PRIVATE -L/opt/local/lib ${OPENSSL_LIBRARIES} -lpthread)
+
+
+if(WIN32)
+  target_link_libraries(re-shared
+    libssl
+    libcrypto
+    qwave
+    iphlpapi
+    wsock32
+    ws2_32
+  )
+endif()
 
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
@@ -411,7 +463,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 target_link_libraries(re-static
-  PUBLIC -lssl -lcrypto -lpthread
+  PUBLIC ${OPENSSL_LIBRARIES} -lpthread
   PRIVATE -L/opt/local/lib
 )
 

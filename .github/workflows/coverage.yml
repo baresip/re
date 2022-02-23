@@ -11,7 +11,7 @@ jobs:
 
     - name: make
       run: | 
-        make EXTRA_CFLAGS="-coverage" CCACHE=
+        make EXTRA_CFLAGS="--coverage" CCACHE=
 
     - uses: sreimers/pr-dependency-action@v0.3
       with:
@@ -46,7 +46,7 @@ jobs:
 
     - name: coverage check
       run: |
-        min_cov="56.3"
+        min_cov="57.8"
         cov=$(~/.local/bin/gcovr -r . -s | grep lines | awk '{ print $2 }' | sed 's/%//')
         echo "Coverage: ${cov}% (min $min_cov%)"
         exit $(echo "$cov < $min_cov" | bc -l)

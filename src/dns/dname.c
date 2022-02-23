@@ -73,7 +73,7 @@ static inline struct dname *dname_lookup(struct hash *ht_dname,
 
 static inline int dname_encode_pointer(struct mbuf *mb, size_t pos)
 {
-	return mbuf_write_u16(mb, htons(pos | (COMP_MASK<<8)));
+	return mbuf_write_u16(mb, htons((uint16_t)pos | (COMP_MASK<<8)));
 }
 
 
@@ -118,7 +118,7 @@ int dns_dname_encode(struct mbuf *mb, const char *name,
 			if (!lablen)
 				break;
 
-			mb->buf[pos] = lablen;
+			mb->buf[pos] = (uint8_t)lablen;
 			err |= mbuf_write_u8(mb, 0);
 			break;
 		}
@@ -126,7 +126,7 @@ int dns_dname_encode(struct mbuf *mb, const char *name,
 			if (!lablen)
 				return EINVAL;
 
-			mb->buf[pos] = lablen;
+			mb->buf[pos] = (uint8_t)lablen;
 
 			dn = dname_lookup(ht_dname, name + 1);
 			if (dn && comp) {

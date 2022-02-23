@@ -123,7 +123,7 @@ $(BUILD): Makefile $(MK) $(MODMKS)
 .PHONY: clean
 clean:
 	$(HIDE)rm -rf $(SHARED) $(STATIC) libre.pc test.d test.o test \
-		$(BUILD) .cache/re
+		build $(BUILD) .cache/re
 	$(HIDE)rm -f compile_commands.json
 
 

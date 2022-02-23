@@ -278,7 +278,7 @@ static bool udp_send_handler(int *err, struct sa *dst, struct mbuf *mb,
 		struct chan_hdr hdr;
 
 		hdr.nr  = turnc_chan_numb(chan);
-		hdr.len = mbuf_get_left(mb);
+		hdr.len = (uint16_t)mbuf_get_left(mb);
 
 		mb->pos -= CHAN_HDR_SIZE;
 		*err = turnc_chan_hdr_encode(&hdr, mb);
@@ -485,7 +485,7 @@ int turnc_send(struct turnc *turnc, const struct sa *dst, struct mbuf *mb)
 			return EINVAL;
 
 		hdr.nr  = turnc_chan_numb(chan);
-		hdr.len = mbuf_get_left(mb);
+		hdr.len = (uint16_t)mbuf_get_left(mb);
 
 		mb->pos -= CHAN_HDR_SIZE;
 		pos = mb->pos;
