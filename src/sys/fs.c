@@ -189,11 +189,7 @@ int fs_fopen(FILE **fp, const char *file, const char *mode)
 	if (fs_isfile(file))
 		goto fopen;
 
-#ifdef WIN32
-	fd = open(file, O_WRONLY | O_CREAT);
-#else
 	fd = open(file, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
-#endif
 	if (!fd)
 		return errno;
 	else
