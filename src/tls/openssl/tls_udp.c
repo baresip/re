@@ -4,7 +4,9 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <re_types.h>
