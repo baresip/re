@@ -149,7 +149,7 @@ static long bio_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 #if defined (BIO_CTRL_DGRAM_QUERY_MTU)
 	case BIO_CTRL_DGRAM_QUERY_MTU:
-		return tc ? tc->sock->mtu : MTU_DEFAULT;
+		return tc ? (long)tc->sock->mtu : MTU_DEFAULT;
 #endif
 
 #if defined (BIO_CTRL_DGRAM_GET_FALLBACK_MTU)

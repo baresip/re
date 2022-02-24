@@ -763,7 +763,7 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 
 	buf_cert = cert;
 
-	x509 = d2i_X509(NULL, &buf_cert, len_cert);
+	x509 = d2i_X509(NULL, &buf_cert, (long)len_cert);
 	if (!x509)
 		goto out;
 
@@ -772,7 +772,7 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 		len_key = len_cert - (buf_cert - cert);
 	}
 
-	pkey = d2i_PrivateKey(type, NULL, &key, len_key);
+	pkey = d2i_PrivateKey(type, NULL, &key, (long)len_key);
 	if (!pkey)
 		goto out;
 
