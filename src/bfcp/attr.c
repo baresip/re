@@ -64,7 +64,8 @@ static int attr_encode(struct mbuf *mb, bool mand, enum bfcp_attrib type,
 	const struct bfcp_supprim *supprim = v;
 	const enum bfcp_priority *priority = v;
 	const uint16_t *u16 = v;
-	size_t start, len, i;
+	size_t start, i;
+	uint8_t len;
 	int err;
 
 	start = mb->pos;
@@ -128,7 +129,7 @@ static int attr_encode(struct mbuf *mb, bool mand, enum bfcp_attrib type,
 
 	mb->pos = start;
 	err |= mbuf_write_u8(mb, (type<<1) | (mand ? 1 : 0));
-	err |= mbuf_write_u8(mb, (uint8_t)len);
+	err |= mbuf_write_u8(mb, len);
 	mb->pos += (len - BFCP_ATTR_HDR_SIZE);
 
 	/* padding */
