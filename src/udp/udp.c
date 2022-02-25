@@ -161,7 +161,7 @@ static void udp_read(struct udp_sock *us, int fd)
 
 	src.len = sizeof(src.u);
 	n = recvfrom(fd, BUF_CAST mb->buf + us->rx_presz,
-		     SIZ_CAST mb->size - us->rx_presz, 0,
+		     SIZ_CAST (mb->size - us->rx_presz), 0,
 		     &src.u.sa, &src.len);
 	if (n < 0) {
 		err = errno;
@@ -518,13 +518,13 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 	/* Connected socket? */
 	if (us->conn) {
 		if (send(fd, BUF_CAST mb->buf + mb->pos,
-			 SIZ_CAST mb->end - mb->pos,
+			 SIZ_CAST (mb->end - mb->pos),
 			 0) < 0)
 			return errno;
 	}
 	else {
 		if (sendto(fd, BUF_CAST mb->buf + mb->pos,
-			   SIZ_CAST mb->end - mb->pos,
+			   SIZ_CAST (mb->end - mb->pos),
 			   0, &dst->u.sa, dst->len) < 0)
 			return errno;
 	}
@@ -1006,8 +1006,11 @@ int  udp_flush(struct udp_sock *us)
 	if (!buf)
 		return ENOMEM;
 
-	while (-1 != us->fd  && recvfrom(us->fd,  buf, sz, 0, NULL, 0) > 0);
-	while (-1 != us->fd6 && recvfrom(us->fd6, buf, sz, 0, NULL, 0) > 0);
+	while (-1 != us->fd  &&
+	       recvfrom(us->fd,  buf, SIZ_CAST sz, 0, NULL, 0) > 0);
+
+	while (-1 != us->fd6 &&
+	       recvfrom(us->fd6, buf, SIZ_CAST sz, 0, NULL, 0) > 0);
 
 	mem_deref(buf);
 	return 0;
