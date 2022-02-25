@@ -59,7 +59,6 @@ endif()
 
 add_definitions(
   -DHAVE_INET6
-  -DHAVE_INTTYPES_H
   -DHAVE_NET_ROUTE_H
   -DHAVE_SELECT
   -DHAVE_SYS_SYSCTL_H
