@@ -26,7 +26,7 @@ int rtmp_command_header_encode(struct mbuf *mb, const char *name, uint64_t tid)
 		return EINVAL;
 
 	err  = rtmp_amf_encode_string(mb, name);
-	err |= rtmp_amf_encode_number(mb, tid);
+	err |= rtmp_amf_encode_number(mb, (double)tid);
 
 	return err;
 }
