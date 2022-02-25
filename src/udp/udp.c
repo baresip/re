@@ -32,9 +32,11 @@
 #include <re_net.h>
 #include <re_udp.h>
 #ifdef WIN32
+#if !defined(_MSC_VER)
 typedef UINT32 QOS_FLOWID, *PQOS_FLOWID;
 #ifndef QOS_NON_ADAPTIVE_FLOW
 #define QOS_NON_ADAPTIVE_FLOW 0x00000002
+#endif
 #endif
 #include <winsock2.h>
 #include <qos2.h>
