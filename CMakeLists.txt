@@ -466,4 +466,6 @@ target_link_libraries(re-static
 )
 
 set_target_properties(re-static PROPERTIES PUBLIC_HEADER include/re.h)
+if(NOT MSVC)
 set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
+endif()
