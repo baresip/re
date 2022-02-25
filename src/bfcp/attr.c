@@ -125,7 +125,7 @@ static int attr_encode(struct mbuf *mb, bool mand, enum bfcp_attrib type,
 	}
 
 	/* header */
-	len = mb->pos - start;
+	len = (uint8_t)(mb->pos - start);
 
 	mb->pos = start;
 	err |= mbuf_write_u8(mb, (type<<1) | (mand ? 1 : 0));
