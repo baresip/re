@@ -108,7 +108,7 @@ int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb)
 		return err;
 
 	if (rtcp->hmac) {
-		uint8_t tag[SHA_DIGEST_LENGTH];
+		uint8_t tag[SHA_DIGEST_LENGTH] = {0};
 
 		mb->pos = start;
 
@@ -168,7 +168,8 @@ int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb)
 	ix = v & 0x7fffffff;
 
 	if (rtcp->hmac) {
-		uint8_t tag[SHA_DIGEST_LENGTH], tag_pkt[SHA_DIGEST_LENGTH];
+		uint8_t tag[SHA_DIGEST_LENGTH] = {0};
+		uint8_t tag_pkt[SHA_DIGEST_LENGTH] = {0};
 		const size_t tag_start = mb->pos;
 
 		err = mbuf_read_mem(mb, tag_pkt, rtcp->tag_len);

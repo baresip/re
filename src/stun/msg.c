@@ -390,7 +390,7 @@ int stun_msg_encode(struct mbuf *mb, uint16_t method, uint8_t class,
 int stun_msg_chk_mi(const struct stun_msg *msg, const uint8_t *key,
 		    size_t keylen)
 {
-	uint8_t hmac[SHA_DIGEST_LENGTH];
+	uint8_t hmac[SHA_DIGEST_LENGTH] = {0};
 	struct stun_attr *mi, *fp;
 
 	if (!msg)
