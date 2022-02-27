@@ -27,10 +27,17 @@ endif()
 
 ##############################################################################
 #
+# Module/Package Includes
+#
+include(CheckIncludeFile)
+find_package(Threads)
+find_package(OpenSSL)
+
+
+##############################################################################
+#
 # Compile options
 #
-
-find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_BFCP "Enable BFCP" ON)
@@ -56,6 +63,16 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 
+check_include_file(unistd.h HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+  add_definitions(-DHAVE_UNISTD_H)
+endif()
+
+if(CMAKE_USE_PTHREADS_INIT)
+  add_definitions(-DHAVE_PTHREAD)
+  set(HAVE_PTHREAD ON)
+endif()
+
 add_definitions(
   -DHAVE_INET6
   -DHAVE_SELECT
@@ -66,7 +83,6 @@ if(UNIX)
   add_definitions(
     -DHAVE_GETIFADDRS
     -DHAVE_POLL
-    -DHAVE_PTHREAD
     -DHAVE_PWD_H
     -DHAVE_ROUTE_LIST
     -DHAVE_SETRLIMIT
@@ -74,7 +90,6 @@ if(UNIX)
     -DHAVE_STRINGS_H
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
-    -DHAVE_UNISTD_H
     )
 endif()
 
@@ -379,10 +394,16 @@ if(WIN32)
   )
 elseif(UNIX)
   list(APPEND SRCS
-    src/lock/lock.c
     src/mod/dl.c
     src/net/ifaddrs.c
     src/net/posix/pif.c
+  )
+endif()
+
+
+if(HAVE_PTHREAD)
+  list(APPEND SRCS
+    src/lock/lock.c
   )
 endif()
 
