@@ -17,7 +17,7 @@
 #define TLS_BIO_OPAQUE 1
 #endif
 
-#if defined (LIBRESSL_VERSION_NUMBER)
+#if LIBRESSL_VERSION_NUMBER < 0x3050000fL
 #undef  TLS_BIO_OPAQUE
 #endif
 
