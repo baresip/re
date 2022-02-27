@@ -387,7 +387,6 @@ endif()
 if(WIN32)
   list(APPEND SRCS
     src/dns/win32/srv.c
-    src/lock/win32/lock.c
     src/mod/win32/dll.c
     src/mqueue/win32/pipe.c
     src/net/win32/wif.c
@@ -401,7 +400,11 @@ elseif(UNIX)
 endif()
 
 
-if(HAVE_PTHREAD)
+if(CMAKE_USE_WIN32_THREADS_INIT)
+  list(APPEND SRCS
+    src/lock/win32/lock.c
+  )
+elseif(HAVE_PTHREAD)
   list(APPEND SRCS
     src/lock/lock.c
   )
