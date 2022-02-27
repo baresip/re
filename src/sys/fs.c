@@ -193,10 +193,10 @@ int fs_fopen(FILE **fp, const char *file, const char *mode)
 		goto fopen;
 
 	fd = open(file, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
-	if (!fd)
+	if (fd == -1)
 		return errno;
-	else
-		(void)close(fd);
+
+	(void)close(fd);
 
 fopen:
 	pfile = fopen(file, mode);
