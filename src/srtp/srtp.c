@@ -252,7 +252,7 @@ int srtp_encrypt(struct srtp *srtp, struct mbuf *mb)
 
 	if (comp->hmac) {
 		const size_t tag_start = mb->end;
-		uint8_t tag[SHA_DIGEST_LENGTH];
+		uint8_t tag[SHA_DIGEST_LENGTH] = {0};
 
 		mb->pos = tag_start;
 
@@ -321,8 +321,8 @@ int srtp_decrypt(struct srtp *srtp, struct mbuf *mb)
 	ix = srtp_get_index(strm->roc, strm->s_l, hdr.seq);
 
 	if (comp->hmac) {
-		uint8_t tag_calc[SHA_DIGEST_LENGTH];
-		uint8_t tag_pkt[SHA_DIGEST_LENGTH];
+		uint8_t tag_calc[SHA_DIGEST_LENGTH] = {0};
+		uint8_t tag_pkt[SHA_DIGEST_LENGTH] = {0};
 		size_t pld_start, tag_start;
 
 		if (mbuf_get_left(mb) < comp->tag_len)
