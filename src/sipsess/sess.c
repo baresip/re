@@ -277,3 +277,17 @@ int sipsess_set_close_headers(struct sipsess *sess, const char *hdrs, ...)
 
 	return err;
 }
+
+
+/**
+ * Send BYE and terminate session (useful when ACK has not been received)
+ *
+ */
+void sipsess_abort(struct sipsess *sess)
+{
+	if (!sess)
+		return;
+
+	sipsess_bye(sess, true);
+	sess->terminated = 2;
+}
