@@ -16,7 +16,7 @@ project(re VERSION 2.0.1 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-set(PROJECT_VERSION_PRE dev15)
+set(PROJECT_VERSION_PRE dev16)
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -71,6 +71,8 @@ endif()
 
 if(Backtrace_FOUND)
   add_definitions(-DHAVE_EXECINFO)
+else()
+  set(Backtrace_LIBRARIES)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
