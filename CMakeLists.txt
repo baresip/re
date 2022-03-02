@@ -30,6 +30,7 @@ endif()
 # Module/Package Includes
 #
 include(CheckIncludeFile)
+find_package(Backtrace)
 find_package(Threads)
 find_package(OpenSSL)
 
@@ -66,6 +67,10 @@ endif()
 check_include_file(unistd.h HAVE_UNISTD_H)
 if(HAVE_UNISTD_H)
   add_definitions(-DHAVE_UNISTD_H)
+endif()
+
+if(Backtrace_FOUND)
+  add_definitions(-DHAVE_EXECINFO)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
@@ -457,10 +462,15 @@ if(WIN32)
     iphlpapi
     wsock32
     ws2_32
+    ${CMAKE_THREAD_LIBS_INIT}
   )
 else()
-  target_link_libraries(re-shared
-    PRIVATE -L/opt/local/lib ${OPENSSL_LIBRARIES} -lpthread)
+  target_link_libraries(re-shared PRIVATE
+    -L/opt/local/lib
+    ${OPENSSL_LIBRARIES}
+    ${Backtrace_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+  )
 endif()
 
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
@@ -482,7 +492,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 target_link_libraries(re-static
-  PUBLIC ${OPENSSL_LIBRARIES} -lpthread
+  PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
 
