@@ -1,0 +1,36 @@
+name: CMake and Windows
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Windows (VS17 2022)",
+            os: windows-latest,
+            cc: "cl",
+            cxx: "cl",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            generators: "Visual Studio 17 2022"
+          }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install deps
+        run: |
+          choco install ninja cmake openssl
+          ninja --version
+          cmake --version
+          openssl version
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake -S . -B . -G "${{ matrix.config.generators }}"
+          cmake --build .
