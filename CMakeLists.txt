@@ -71,6 +71,8 @@ endif()
 
 if(Backtrace_FOUND)
   add_definitions(-DHAVE_EXECINFO)
+else()
+  set(Backtrace_LIBRARIES)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
