@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: 
+        config:
         - {
             name: "Windows (VS17 2022)",
             os: windows-latest,
