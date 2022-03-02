@@ -20,7 +20,7 @@ static inline int btrace(struct btrace *btrace)
 	if (!btrace)
 		return EINVAL;
 
-	btrace->len = backtrace(btrace->stack, BTRACE_SZ);
+	btrace->len = (int)backtrace(btrace->stack, BTRACE_SZ);
 
 	return 0;
 }
