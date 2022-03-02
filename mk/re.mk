@@ -580,6 +580,9 @@ endif
 HAVE_EXECINFO := $(shell $(call CC_TEST,execinfo.h))
 ifneq ($(HAVE_EXECINFO),)
 CFLAGS  += -DHAVE_EXECINFO
+ifeq ($(OS),openbsd)
+LFLAGS  += -lexecinfo
+endif
 endif
 
 CFLAGS  += -DHAVE_FORK
