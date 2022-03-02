@@ -11,7 +11,7 @@ VER_PATCH := 1
 
 # Development version, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-VER_PRE   := dev15
+VER_PRE   := dev16
 
 ABI_MAJOR := $(VER_MAJOR)
 
