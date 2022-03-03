@@ -12,10 +12,10 @@ jobs:
         config:
         - {
             name: "Windows (VS17 2022)",
-            os: windows-latest,
+            os: windows-2022,
             cc: "cl",
             cxx: "cl",
-            environment_script: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja"
           }
 
