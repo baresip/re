@@ -15,7 +15,7 @@ jobs:
             os: windows-latest,
             cc: "cl",
             cxx: "cl",
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            environment_script: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja"
           }
 
@@ -25,12 +25,12 @@ jobs:
       - name: Install deps
         run: |
           choco install openssl
-          cmake --version
           openssl version
 
       - name: Build
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
+          cmake --version
           cmake -S . -B build -G "${{ matrix.config.generators }}"
           cmake --build build
