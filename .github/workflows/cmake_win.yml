@@ -29,7 +29,8 @@ jobs:
           openssl version
 
       - name: Build
+        shell: cmd
         run: |
-          ${{ matrix.config.environment_script }}
+          call "${{ matrix.config.environment_script }}"
           cmake -S . -B build -G "${{ matrix.config.generators }}"
           cmake --build build
