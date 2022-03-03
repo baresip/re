@@ -24,7 +24,7 @@ jobs:
 
       - name: Install deps
         run: |
-          choco install ninja cmake openssl
+          choco install openssl
           ninja --version
           cmake --version
           openssl version
