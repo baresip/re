@@ -20,12 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install deps
+        run: |
+          choco install openssl
+
       - name: Build
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
-          dir "C:\Program Files"
-          set OPENSSL_ROOT_DIR="C:\Program Files\OpenSSL"
           cmake --version
+          ninja --version
           cmake -S . -B build -G "${{ matrix.config.generators }}"
           cmake --build build
