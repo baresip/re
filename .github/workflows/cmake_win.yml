@@ -31,5 +31,6 @@ jobs:
       - name: Build
         shell: bash
         run: |
+          ${{ matrix.config.environment_script }}
           cmake -S . -B build -G "${{ matrix.config.generators }}"
           cmake --build build
