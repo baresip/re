@@ -2,6 +2,8 @@
  * @file trace.c RE_TRACE helpers
  * JSON traces (chrome://tracing)
  */
+#define _DEFAULT_SOURCE 1
+
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_trace.h>
@@ -17,9 +19,13 @@
 
 #if defined(WIN32)
 #include <windows.h>
-#else
-#define _GNU_SOURCE
-#define __USE_GNU 1
+#endif
+
+#ifdef LINUX
+#include <sys/syscall.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -68,7 +74,7 @@ static inline unsigned long get_thread_id(void)
 #if defined(WIN32)
 	return (unsigned long)GetCurrentThreadId();
 #elif defined(LINUX)
-	return (unsigned long)gettid();
+	return (unsigned long)syscall(SYS_gettid);
 #elif defined(HAVE_PTHREAD)
 #if defined(DARWIN) || defined(FREEBSD) || defined(OPENBSD) || \
 	defined(NETBSD) || defined(DRAGONFLY)
