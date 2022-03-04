@@ -166,28 +166,7 @@ uint64_t tmr_jiffies_usec(void)
  */
 uint64_t tmr_jiffies(void)
 {
-	uint64_t jfs;
-
-#if defined(WIN32)
-	FILETIME ft;
-	ULARGE_INTEGER li;
-	GetSystemTimeAsFileTime(&ft);
-	li.LowPart = ft.dwLowDateTime;
-	li.HighPart = ft.dwHighDateTime;
-	jfs = li.QuadPart/10/1000;
-#else
-	struct timeval now;
-
-	if (0 != gettimeofday(&now, NULL)) {
-		DEBUG_WARNING("jiffies: gettimeofday() failed (%m)\n", errno);
-		return 0;
-	}
-
-	jfs  = (long)now.tv_sec * (uint64_t)1000;
-	jfs += now.tv_usec / 1000;
-#endif
-
-	return jfs;
+	return tmr_jiffies_usec() / 1000;
 }
 
 
