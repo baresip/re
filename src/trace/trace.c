@@ -3,6 +3,7 @@
  * JSON traces (chrome://tracing)
  */
 #define _DEFAULT_SOURCE 1
+#define _GNU_SOURCE 1
 
 #include <re_types.h>
 #include <re_mem.h>
