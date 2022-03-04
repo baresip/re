@@ -428,6 +428,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     src/net/linux/rt.c
     src/main/epoll.c
   )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
+  list(APPEND SRCS
+    src/net/linux/rt.c
+  )
 endif()
 
 
