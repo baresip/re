@@ -141,12 +141,17 @@ uint64_t tmr_jiffies_usec(void)
 	jfs = li.QuadPart;
 #else
 	struct timespec now;
+	clockid_t clock_id;
 
-#if defined(FREEBSD) || defined(OPENBSD)
-	if (0 != clock_gettime(CLOCK_MONOTONIC, &now)) {
+	/* Use CLOCK_MONOTONIC_RAW, if available,
+	   which is not subject to adjustment by NTP */
+#ifdef CLOCK_MONOTONIC_RAW
+	clock_id = CLOCK_MONOTONIC_RAW;
 #else
-	if (0 != clock_gettime(CLOCK_MONOTONIC_RAW, &now)) {
+	clock_id = CLOCK_MONOTONIC;
 #endif
+
+	if (0 != clock_gettime(clock_id, &now)) {
 		DEBUG_WARNING("jiffies: clock_gettime() failed (%m)\n", errno);
 		return 0;
 	}
