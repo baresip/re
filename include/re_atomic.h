@@ -4,14 +4,8 @@ extern "C" {
 
 #ifdef HAVE_ATOMIC
 #include <stdatomic.h>
-#elif defined(__has_extension)
-#if __has_extension(c_atomic)
+#elif defined(__clang__)
 #define	__CLANG_ATOMICS
-#endif
-#elif defined(__GNUC_PREREQ__)
-#if __GNUC_PREREQ__(4, 7)
-#define	__GNUC_ATOMICS
-#endif
 #elif defined(__GNUC__)
 #define	__SYNC_ATOMICS
 #else
