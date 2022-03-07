@@ -191,26 +191,6 @@ static const struct sip_transport *transp_find(struct sip *sip,
 }
 
 
-static struct sip_conncfg *conncfg_find(struct sip *sip,
-					const struct sa *paddr)
-{
-	struct le *le;
-
-	le = list_head(hash_list(sip->ht_conncfg, sa_hash(paddr, SA_ALL)));
-	for (; le; le = le->next) {
-
-		struct sip_conncfg *cfg = le->data;
-
-		if (!sa_cmp(&cfg->paddr, paddr, SA_ALL))
-			continue;
-
-		return cfg;
-	}
-
-	return NULL;
-}
-
-
 static struct sip_conn *conn_find(struct sip *sip, const struct sa *paddr,
 				  bool secure)
 {
@@ -787,7 +767,7 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	conn->sip   = sip;
 	conn->tp    = secure ? SIP_TRANSP_TLS : SIP_TRANSP_TCP;
 
-	conncfg = conncfg_find(sip, dst);
+	conncfg = sip_conncfg_find(sip, dst);
 	if (conncfg && conncfg->srcport) {
 		struct sa src;
 		sa_init(&src, sa_af(dst));
@@ -1894,7 +1874,7 @@ int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
 	if (!sip || !sa_isset(paddr, SA_ALL))
 		return EINVAL;
 
-	cfg = conncfg_find(sip, paddr);
+	cfg = sip_conncfg_find(sip, paddr);
 	if (cfg) {
 		cfg->srcport = conncfg.srcport;
 		return 0;

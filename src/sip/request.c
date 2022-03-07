@@ -166,6 +166,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	char *branch = NULL;
 	int err = ENOMEM;
 	struct sa laddr;
+	struct sip_conncfg *conncfg;
 
 	req->provrecv = false;
 
@@ -180,6 +181,11 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
 	if (err)
 		goto out;
+
+	conncfg = sip_conncfg_find(req->sip, dst);
+	if (conncfg && conncfg->srcport && (tp==SIP_TRANSP_TCP ||
+					    tp==SIP_TRANSP_TLS))
+		sa_set_port(&laddr, conncfg->srcport);
 
 	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
