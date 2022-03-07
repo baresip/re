@@ -81,7 +81,7 @@ if(CMAKE_USE_PTHREADS_INIT)
 endif()
 
 add_definitions(
-  -HAVE_ATOMIC
+  -DHAVE_ATOMIC
   -DHAVE_INET6
   -DHAVE_SELECT
   )
