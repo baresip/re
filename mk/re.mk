@@ -339,10 +339,9 @@ CFLAGS  += -std=c11
 HAVE_ATOMIC := 1
 endif
 
-CFLAGS  += -pedantic
-
 ifneq ($(HAVE_ATOMIC),)
 CFLAGS  += -DHAVE_ATOMIC
+CFLAGS  += -pedantic
 endif
 
 
