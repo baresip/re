@@ -4,6 +4,9 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#ifndef RE_H_ATOMIC__
+#define RE_H_ATOMIC__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,3 +24,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* RE_H_ATOMIC__ */
