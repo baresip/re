@@ -11,9 +11,11 @@
 extern "C" {
 #endif
 
+/* C11 */
 #ifdef HAVE_ATOMIC
 #include <stdatomic.h>
 
+/* C99 */
 #elif defined(__clang__)
 #define __CLANG_ATOMICS
 
@@ -26,7 +28,7 @@ extern "C" {
 
 #else
 #error "Your compiler does not support atomics"
-#endif
+#endif /* HAVE_ATOMIC */
 
 #ifdef __cplusplus
 }
