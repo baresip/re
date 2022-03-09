@@ -1727,7 +1727,6 @@ int  sip_settos(struct sip *sip, uint8_t tos)
 		case SIP_TRANSP_TLS:
 			err = tcp_settos(transp->sock, tos);
 			break;
-			break;
 		default:
 			break;
 		}
