@@ -65,7 +65,7 @@ static void rtcp_destructor(void *data)
 			mem_deref(msg->r.fb.fci.twccv->chunks);
 			mem_deref(msg->r.fb.fci.twccv->deltas);
 		}
-		/* Fall-through */
+		/*@fallthrough@*/
 
 	case RTCP_PSFB:
 		mem_deref(msg->r.fb.fci.p);
