@@ -61,6 +61,12 @@ static void rtcp_destructor(void *data)
 		break;
 
 	case RTCP_RTPFB:
+		if (msg->hdr.count == RTCP_RTPFB_TWCC && msg->r.fb.fci.twccv) {
+			mem_deref(msg->r.fb.fci.twccv->chunks);
+			mem_deref(msg->r.fb.fci.twccv->deltas);
+		}
+		/* Fall-through */
+
 	case RTCP_PSFB:
 		mem_deref(msg->r.fb.fci.p);
 		break;

@@ -69,6 +69,81 @@ int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
 
 
 /**
+ * Decode an RTCP Transport-wide congestion control Feedback Message
+ *
+ * @param mb  Buffer to decode
+ * @param msg transport-cc struct to decode into
+ * @param n   length of the RTCP packet in 32bit words minus one
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
+{
+	size_t i, j, sz;
+
+	if (!msg)
+		return EINVAL;
+
+	msg->seq = ntohs(mbuf_read_u16(mb));
+	msg->count = ntohs(mbuf_read_u16(mb));
+	if (msg->count == 0)
+		return EBADMSG;
+
+	msg->reftime = ntohl(mbuf_read_u32(mb));
+	msg->fbcount = msg->reftime & 0xff;
+	msg->reftime >>= 8;
+
+	msg->chunks = mbuf_alloc_ref(mb);
+	if (!msg->chunks)
+		return ENOMEM;
+
+	msg->chunks->end = msg->chunks->pos;
+	sz = 0;
+	for (i = msg->count; i > 0;) {
+		uint16_t chunk;
+
+		if (mbuf_get_left(mb) < 2)
+			return EBADMSG;
+		chunk  = ntohs(mbuf_read_u16(mb));
+		msg->chunks->end += 2;
+		if (chunk & 0x8000) {
+			/* status vector chunk */
+			if (chunk & 0x4000) {
+				for (j = 0; j < i && j < 7; j++)
+					sz += chunk >> (2 * (7 - 1 - j))
+						& 0x03;
+			}
+			else {
+				for (j = 0; j < i && j < 14; j++)
+					sz += (chunk >> (14 - 1 - j)) & 0x01;
+			}
+		}
+		else {
+			/* run length chunk */
+			for (j = 0; j < i && j < (chunk & 0x1fff); j++)
+				sz += (chunk >> 13) & 0x03;
+		}
+		i -= j;
+	}
+	if (mbuf_get_left(mb) < sz)
+		return EBADMSG;
+
+	msg->deltas = mbuf_alloc_ref(mb);
+	if (!msg->deltas)
+		return ENOMEM;
+
+	msg->deltas->end = msg->deltas->pos + sz;
+
+	sz = n * sizeof(uint32_t) - 8 - mbuf_get_left(msg->chunks);
+	if (mbuf_get_left(mb) < sz)
+		return EBADMSG;
+
+	mbuf_advance(mb, sz);
+
+	return 0;
+}
+
+/**
  * Decode an RTCP Transport Layer Feedback Message
  *
  * @param mb  Buffer to decode
@@ -79,6 +154,7 @@ int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
 int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 {
 	size_t i, sz;
+	int err;
 
 	if (!msg)
 		return EINVAL;
@@ -97,6 +173,20 @@ int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 			msg->r.fb.fci.gnackv[i].pid = ntohs(mbuf_read_u16(mb));
 			msg->r.fb.fci.gnackv[i].blp = ntohs(mbuf_read_u16(mb));
 		}
+		break;
+
+	case RTCP_RTPFB_TWCC:
+		if (mbuf_get_left(mb) < 8)
+			return EBADMSG;
+		msg->r.fb.fci.twccv = mem_zalloc(sizeof(*msg->r.fb.fci.twccv),
+			NULL);
+		if (!msg->r.fb.fci.twccv)
+			return ENOMEM;
+		err = rtcp_rtpfb_twcc_decode(mb, msg->r.fb.fci.twccv,
+			msg->r.fb.n);
+		if (err)
+			return err;
+
 		break;
 
 	default:
