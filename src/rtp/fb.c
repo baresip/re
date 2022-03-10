@@ -79,7 +79,7 @@ int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
  */
 int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 {
-	size_t i, j, sz;
+	size_t j, sz;
 
 	if (!msg)
 		return EINVAL;
@@ -99,7 +99,7 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 
 	msg->chunks->end = msg->chunks->pos;
 	sz = 0;
-	for (i = msg->count; i > 0;) {
+	for (size_t i = msg->count; i > 0;) {
 		uint16_t chunk;
 
 		if (mbuf_get_left(mb) < 2)
