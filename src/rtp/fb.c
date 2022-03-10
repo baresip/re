@@ -106,13 +106,15 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 			/* status vector chunk */
 			if (chunk & 0x4000) {
 				for (j = 0; j < i && j < 7; j++)
-					sz += chunk >> (2 * (7 - 1 - j)) & 0x03;
+					sz += chunk >> (2 * (7 - 1 - j))
+						& 0x03;
 			}
 			else {
 				for (j = 0; j < i && j < 14; j++)
 					sz += (chunk >> (14 - 1 - j)) & 0x01;
 			}
-		} else {
+		}
+		else {
 			/* run length chunk */
 			for (j = 0; j < i && j < (chunk & 0x1fff); j++)
 				sz += (chunk >> 13) & 0x03;
@@ -166,10 +168,12 @@ int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 	case RTCP_RTPFB_TWCC:
 		if (mbuf_get_left(mb) < 8)
 			return EBADMSG;
-		msg->r.fb.fci.twccv = mem_alloc(sizeof(*msg->r.fb.fci.twccv), NULL);
+		msg->r.fb.fci.twccv = mem_alloc(sizeof(*msg->r.fb.fci.twccv),
+			NULL);
 		if (!msg->r.fb.fci.twccv)
 			return ENOMEM;
-		if (0 != rtcp_rtpfb_twcc_decode(mb, msg->r.fb.fci.twccv, msg->r.fb.n))
+		if (0 != rtcp_rtpfb_twcc_decode(mb, msg->r.fb.fci.twccv,
+			msg->r.fb.n))
 			return EBADMSG;
 
 		break;

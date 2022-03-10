@@ -62,7 +62,7 @@ enum rtcp_sdes_type {
 /** Transport Layer Feedback Messages */
 enum rtcp_rtpfb {
 	RTCP_RTPFB_GNACK = 1,  /**< Generic NACK */
-	RTCP_RTPFB_TWCC  = 15  /**< draft-holmer-rmcat-transport-wide-cc-extensions-01 */
+	RTCP_RTPFB_TWCC  = 15  /**< transport-wide-cc-extensions-01 */
 };
 
 /** Payload-Specific Feedback Messages */
