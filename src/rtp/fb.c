@@ -88,11 +88,15 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 	msg->count = ntohs(mbuf_read_u16(mb));
 	if (msg->count == 0)
 		return EBADMSG;
+
 	msg->reftime = ntohl(mbuf_read_u32(mb));
 	msg->fbcount = msg->reftime & 0xff;
 	msg->reftime >>= 8;
 
 	msg->chunks = mbuf_alloc_ref(mb);
+	if (!msg->chunks)
+		return ENOMEM;
+
 	msg->chunks->end = msg->chunks->pos;
 	sz = 0;
 	for (i = msg->count; i > 0;) {
@@ -123,12 +127,17 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 	}
 	if (mbuf_get_left(mb) < sz)
 		return EBADMSG;
+
 	msg->deltas = mbuf_alloc_ref(mb);
+	if (!msg->deltas)
+		return ENOMEM;
+
 	msg->deltas->end = msg->deltas->pos + sz;
 
 	sz = n * sizeof(uint32_t) - 8 - mbuf_get_left(msg->chunks);
 	if (mbuf_get_left(mb) < sz)
 		return EBADMSG;
+
 	mbuf_advance(mb, sz);
 
 	return 0;
