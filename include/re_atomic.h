@@ -12,10 +12,14 @@ extern "C" {
 #endif
 
 /* C11 */
-#ifdef HAVE_ATOMIC
+#if defined(HAVE_ATOMIC) && !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 
-/* C99 */
+/* With MSVC volatile is atomic */
+#elif defined(_MSC_VER)
+#define _Atomic volatile
+
+/* C99 compiler builtin fallbacks */
 #elif defined(__clang__)
 #define __CLANG_ATOMICS
 
