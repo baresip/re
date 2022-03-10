@@ -161,7 +161,8 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 static int request(struct sip_request *req, enum sip_transp tp,
 		   const struct sa *dst)
 {
-	struct mbuf *mb = NULL;
+	struct mbuf *mbs  = NULL;
+	struct mbuf *mb   = NULL;
 	struct mbuf *cont = NULL;
 	char *branch = NULL;
 	int err = ENOMEM;
@@ -171,7 +172,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	req->provrecv = false;
 
 	branch = mem_alloc(24, NULL);
-	mb = mbuf_alloc(1024);
+	mbs = mbuf_alloc(256);
+	mb  = mbuf_alloc(1024);
 
 	if (!branch || !mb)
 		goto out;
@@ -182,16 +184,22 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	if (err)
 		goto out;
 
-	conncfg = sip_conncfg_find(req->sip, dst);
-	if (conncfg && conncfg->srcport && (tp==SIP_TRANSP_TCP ||
-					    tp==SIP_TRANSP_TLS))
-		sa_set_port(&laddr, conncfg->srcport);
+	err |= req->sendh ? req->sendh(tp, &laddr, dst, mbs, &cont, req->arg) :
+			    0;
+	if (err)
+		goto out;
+
+	mbuf_set_pos(mbs, 0);
+	if (tp==SIP_TRANSP_TCP || tp==SIP_TRANSP_TLS) {
+		conncfg = sip_conncfg_find(req->sip, dst);
+		if (conncfg && conncfg->srcport)
+			sa_set_port(&laddr, conncfg->srcport);
+	}
 
 	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
 			   sip_transp_name(tp), &laddr, branch);
-	err |= req->sendh ? req->sendh(tp, &laddr, dst, mb, &cont, req->arg) :
-			    0;
+	err |= mbuf_write_mem(mb, mbuf_buf(mbs), mbuf_get_left(mbs));
 	err |= mbuf_write_mem(mb, mbuf_buf(req->mb), mbuf_get_left(req->mb));
 	err |= cont ? mbuf_write_mem(mb, mbuf_buf(cont), mbuf_get_left(cont)) :
 		      0;
@@ -212,6 +220,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 
  out:
 	mem_deref(branch);
+	mem_deref(mbs);
 	mem_deref(mb);
 
 	return err;
