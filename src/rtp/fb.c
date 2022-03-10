@@ -154,6 +154,7 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 {
 	size_t i, sz;
+	int err;
 
 	if (!msg)
 		return EINVAL;
@@ -177,13 +178,14 @@ int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 	case RTCP_RTPFB_TWCC:
 		if (mbuf_get_left(mb) < 8)
 			return EBADMSG;
-		msg->r.fb.fci.twccv = mem_alloc(sizeof(*msg->r.fb.fci.twccv),
+		msg->r.fb.fci.twccv = mem_zalloc(sizeof(*msg->r.fb.fci.twccv),
 			NULL);
 		if (!msg->r.fb.fci.twccv)
 			return ENOMEM;
-		if (0 != rtcp_rtpfb_twcc_decode(mb, msg->r.fb.fci.twccv,
-			msg->r.fb.n))
-			return EBADMSG;
+		err = rtcp_rtpfb_twcc_decode(mb, msg->r.fb.fci.twccv,
+			msg->r.fb.n);
+		if (err)
+			return err;
 
 		break;
 
