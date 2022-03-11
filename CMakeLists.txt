@@ -12,11 +12,11 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.0.1 LANGUAGES C)
+project(re VERSION 2.1.0 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-set(PROJECT_VERSION_PRE dev17)
+# set(PROJECT_VERSION_PRE dev)
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
