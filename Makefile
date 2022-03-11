@@ -6,12 +6,12 @@
 
 # Main version number
 VER_MAJOR := 2
-VER_MINOR := 0
-VER_PATCH := 1
+VER_MINOR := 1
+VER_PATCH := 0
 
 # Development version, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-VER_PRE   := dev17
+# VER_PRE   := dev
 
 ABI_MAJOR := $(VER_MAJOR)
 

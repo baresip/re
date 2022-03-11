@@ -7,6 +7,150 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.0] - 2022-03-11
+
+## What's Changed
+* Tls sipcert per acc by @cHuberCoffee in https://github.com/baresip/re/pull/96
+* ToS for video and sip by @cspiel1 in https://github.com/baresip/re/pull/98
+* sdp: in media_decode() reset rdir if port is zero by @cspiel1 in https://github.com/baresip/re/pull/99
+* mk/re: add variable length array (-Wvla) compiler warning by @sreimers in https://github.com/baresip/re/pull/100
+* Macos openssl by @sreimers in https://github.com/baresip/re/pull/105
+* pkg-config version check by @sreimers in https://github.com/baresip/re/pull/107
+* sa: add setter and getter for scope id by @cspiel1 in https://github.com/baresip/re/pull/108
+* net: in net_dst_source_addr_get() make parameter dst const by @cspiel1 in https://github.com/baresip/re/pull/109
+* Avoid 'ISO C90 forbids mixed declarations and code' warnings by @juha-h in https://github.com/baresip/re/pull/112
+* SIP redirect callbackfunction by @cHuberCoffee in https://github.com/baresip/re/pull/111
+* add secure websocket tls context by @sreimers in https://github.com/baresip/re/pull/113
+* fmt: add string to bool function by @cspiel1 in https://github.com/baresip/re/pull/115
+* fix clang analyze warnings by @sreimers in https://github.com/baresip/re/pull/114
+* fmt: support different separators for parameter parsing by @cspiel1 in https://github.com/baresip/re/pull/117
+* Refactor inet_ntop and inet_pton by @sreimers in https://github.com/baresip/re/pull/118
+* add essential fields check by @I-mpossible in https://github.com/baresip/re/pull/119
+* sa: add support for interface suffix for IPv6ll by @cspiel1 in https://github.com/baresip/re/pull/116
+* net: fix net_if_getname IPv6 support by @sreimers in https://github.com/baresip/re/pull/120
+* udp: add udp_recv_helper by @alfredh in https://github.com/baresip/re/pull/122
+* sa: fix build for old systems by @cspiel1 in https://github.com/baresip/re/pull/121
+* sa/addrinfo: fix openbsd (drop AI_V4MAPPED flag) by @sreimers in https://github.com/baresip/re/pull/125
+* ci/codeql: add scan-build by @sreimers in https://github.com/baresip/re/pull/128
+* Fixed debian changelog version by @juha-h in https://github.com/baresip/re/pull/129
+* IPv6 link local support by @cspiel1 in https://github.com/baresip/re/pull/106
+* sip: add fallback transport for transp_find() by @cspiel1 in https://github.com/baresip/re/pull/132
+* SIP default protocol by @cspiel1 in https://github.com/baresip/re/pull/131
+* remove orphaned files by @viordash in https://github.com/baresip/re/pull/136
+* outgoing calls early callid by @cspiel1 in https://github.com/baresip/re/pull/135
+* sip: fix possible "???" dns srv queries by skipping lines without srvid by @cHuberCoffee in https://github.com/baresip/re/pull/133
+* odict: hide struct odict_entry by @sreimers in https://github.com/baresip/re/pull/130
+* tls: add keylogger callback function by @cHuberCoffee in https://github.com/baresip/re/pull/140
+* http/client: support other auth token types besides bearer by @fAuernigg in https://github.com/baresip/re/pull/142
+* tls: fix client certificate replacement by @cHuberCoffee in https://github.com/baresip/re/pull/145
+* http/client: support dns ipv6 by @fAuernigg in https://github.com/baresip/re/pull/141
+* rtp: add payload-type helper by @alfredh in https://github.com/baresip/re/pull/148
+* sip: check consistency between CSeq method and that of request line by @I-mpossible in https://github.com/baresip/re/pull/146
+* Fix win32 by @viordash in https://github.com/baresip/re/pull/149
+* fix warnings from PVS-Studio C++ static analyzer by @viordash in https://github.com/baresip/re/pull/150
+* RTP inbound telephone events should not lead to packet loss by @cspiel1 in https://github.com/baresip/re/pull/151
+* support inet6 by default in Win32 project by @viordash in https://github.com/baresip/re/pull/154
+* sdp: differentiate between media line disabled or rejected by @cHuberCoffee in https://github.com/baresip/re/pull/134
+* move network check to module by @cspiel1 in https://github.com/baresip/re/pull/152
+* odict: move odict_compare from retest to re by @fAuernigg in https://github.com/baresip/re/pull/153
+* sip: reuse transport protocol of first request in dialog (#143) by @cspiel1 in https://github.com/baresip/re/pull/144
+* json: fix parsing json containing only single value by @fAuernigg in https://github.com/baresip/re/pull/155
+* ice: fix checklist by @alfredh in https://github.com/baresip/re/pull/156
+* mk: add compile_commands.json (clang only) by @sreimers in https://github.com/baresip/re/pull/157
+* sdp: debug print session and media direction by @cspiel1 in https://github.com/baresip/re/pull/158
+* add btrace module (linux/unix only) by @sreimers in https://github.com/baresip/re/pull/160
+* mk: add CC_TEST header check by @sreimers in https://github.com/baresip/re/pull/162
+* init dst address by @cspiel1 in https://github.com/baresip/re/pull/164
+* ice: check if candpair exist before adding by @alfredh in https://github.com/baresip/re/pull/165
+* mk: add CC_TEST cache by @sreimers in https://github.com/baresip/re/pull/163
+* btrace: use HAVE_EXECINFO by @sreimers in https://github.com/baresip/re/pull/166
+* Coverity by @sreimers in https://github.com/baresip/re/pull/170
+* icem: remove dead code (found by coverity 240639) by @sreimers in https://github.com/baresip/re/pull/171
+* hash: switch to simpler "fast algorithm" by @ydroneaud in https://github.com/baresip/re/pull/173
+* dns: fix dnsc_alloc with IPv6 disabled by @sreimers in https://github.com/baresip/re/pull/174
+* mk: deprecate HAVE_INET6 by @sreimers in https://github.com/baresip/re/pull/175
+* Fix for btrace print for memory leaks by @cspiel1 in https://github.com/baresip/re/pull/177
+* set sdp laddr to SIP src address by @cspiel1 in https://github.com/baresip/re/pull/172
+* sdp: include all media formats in SDP offer by @cHuberCoffee in https://github.com/baresip/re/pull/176
+* ci: add centos 7 build test by @sreimers in https://github.com/baresip/re/pull/179
+* sip: move sip_auth_encode to public api for easier testing by @sreimers in https://github.com/baresip/re/pull/181
+* sipsess: do not call desc handler on shutdown by @cspiel1 in https://github.com/baresip/re/pull/182
+* stream flush rtp socket by @cspiel1 in https://github.com/baresip/re/pull/185
+* ci: fix macos openssl build by @sreimers in https://github.com/baresip/re/pull/188
+* http: HTTP Host header conform to RFC for IPv6 addresses by @cspiel1 in https://github.com/baresip/re/pull/189
+* Increased debian compatibility level from 9 to 10 by @juha-h in https://github.com/baresip/re/pull/192
+* mk: move darwin dns LFLAGS to re.mk (fixes static builds) by @sreimers in https://github.com/baresip/re/pull/193
+* build infrastructure: silent and verbose modes by @abrodkin in https://github.com/baresip/re/pull/194
+* mk: use posix regex for sed CC major version detection by @sreimers in https://github.com/baresip/re/pull/195
+* dns: fix parse_resolv_conf for OpenBSD by @sreimers in https://github.com/baresip/re/pull/196
+* sip: add optional TCP source port by @cspiel1 in https://github.com/baresip/re/pull/198
+* ci: add mingw build and test by @sreimers in https://github.com/baresip/re/pull/199
+* net: remove net_hostaddr by @sreimers in https://github.com/baresip/re/pull/200
+* ci/centos7: add openssl by @sreimers in https://github.com/baresip/re/pull/203
+* hmac: use HMAC() api (fixes OpenSSL 3.0 deprecations) by @sreimers in https://github.com/baresip/re/pull/202
+* md5: use EVP_Digest for newer openssl versions by @sreimers in https://github.com/baresip/re/pull/204
+* sha: add new sha1() api by @sreimers in https://github.com/baresip/re/pull/205
+* OpenSSL 3.0 by @sreimers in https://github.com/baresip/re/pull/206
+* udp: add win32 qos support by @sreimers in https://github.com/baresip/re/pull/186
+* ci/mingw: fix dependency checkout by @sreimers in https://github.com/baresip/re/pull/207
+* ice: remove ice_mode by @alfredh in https://github.com/baresip/re/pull/147
+* Codeql security by @sreimers in https://github.com/baresip/re/pull/208
+* aubuf insert auframes sorted by @cspiel1 in https://github.com/baresip/re/pull/209
+* ci: add valgrind by @sreimers in https://github.com/baresip/re/pull/214
+* tls: remove code for openssl 0.9.5 by @alfredh in https://github.com/baresip/re/pull/215
+* ice: remove unused file by @alfredh in https://github.com/baresip/re/pull/217
+* main: remove obsolete OPENWRT epoll check by @alfredh in https://github.com/baresip/re/pull/218
+* dns,http,sa: fix HAVE_INET6 off warnings by @sreimers in https://github.com/baresip/re/pull/219
+* preliminary support for cmake by @alfredh in https://github.com/baresip/re/pull/220
+* make,cmake: set SOVERSION to major version by @sreimers in https://github.com/baresip/re/pull/221
+* mk: remove MSVC project files, use cmake instead by @alfredh in https://github.com/baresip/re/pull/223
+* natbd: remove module (deprecated) by @alfredh in https://github.com/baresip/re/pull/225
+* sha: remove backup implementation by @alfredh in https://github.com/baresip/re/pull/224
+* sha,hmac: use Apple CommonCrypto if defined by @alfredh in https://github.com/baresip/re/pull/226
+* stun: add stun_generate_tid by @alfredh in https://github.com/baresip/re/pull/227
+* add cmakelint by @sreimers in https://github.com/baresip/re/pull/228
+* Cmake version by @alfredh in https://github.com/baresip/re/pull/229
+* cmake: add option to enable/disable rtmp module by @alfredh in https://github.com/baresip/re/pull/230
+* lock: use rwlock by default by @sreimers in https://github.com/baresip/re/pull/232
+* cmake: fixes for MSVC 16 by @alfredh in https://github.com/baresip/re/pull/233
+* json: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/234
+* ci: add cmake build by @sreimers in https://github.com/baresip/re/pull/222
+* mqueue: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/235
+* tcp: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/236
+* cmake: fix target_link_libraries for win32 by @alfredh in https://github.com/baresip/re/pull/238
+* stun: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/237
+* udp: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/239
+* tls: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/241
+* remove HAVE_INTTYPES_H by @alfredh in https://github.com/baresip/re/pull/231
+* udp: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/242
+* cmake: minor fixes by @alfredh in https://github.com/baresip/re/pull/244
+* cmake: fix MSVC ninja by @sreimers in https://github.com/baresip/re/pull/243
+* tcp: fix win32 warnings by @alfredh in https://github.com/baresip/re/pull/245
+* udp: fix win32 msvc warnings by @sreimers in https://github.com/baresip/re/pull/246
+* rtmp: fix win32 warning by @sreimers in https://github.com/baresip/re/pull/247
+* bfcp: fix win32 warning by @sreimers in https://github.com/baresip/re/pull/248
+* tls: fix libressl 3.5 by @sreimers in https://github.com/baresip/re/pull/250
+* fix coverity scan warnings by @sreimers in https://github.com/baresip/re/pull/251
+* Allow hanging up call that has not been ACKed yet by @juha-h in https://github.com/baresip/re/pull/252
+* mk,cmake: add backtrace support and fix linking on OpenBSD by @sreimers in https://github.com/baresip/re/pull/254
+* github: add CMake and Windows workflow by @alfredh in https://github.com/baresip/re/pull/255
+* Windows (VS 2022/Ninja) by @sreimers in https://github.com/baresip/re/pull/257
+* cmake: fixes for Android by @alfredh in https://github.com/baresip/re/pull/258
+* tmr: reuse tmr_jiffies_usec by @alfredh in https://github.com/baresip/re/pull/259
+* trace: use gettid as thread_id on linux by @sreimers in https://github.com/baresip/re/pull/213
+* tmr: use CLOCK_MONOTONIC_RAW if defined by @alfredh in https://github.com/baresip/re/pull/260
+* add atomic support by @sreimers in https://github.com/baresip/re/pull/261
+* Sonarcloud by @sreimers in https://github.com/baresip/re/pull/262
+* sip: fix gcc 6.3.0 warning for logical expression (#256) by @cspiel1 in https://github.com/baresip/re/pull/263
+* add transport-cc rtcp feedback support by @fippo in https://github.com/baresip/re/pull/264
+
+## New Contributors
+* @I-mpossible made their first contribution in https://github.com/baresip/re/pull/119
+* @viordash made their first contribution in https://github.com/baresip/re/pull/136
+* @ydroneaud made their first contribution in https://github.com/baresip/re/pull/173
+* @abrodkin made their first contribution in https://github.com/baresip/re/pull/194
+
+
 ## [v2.0.1] - 2021-04-22
 
 ### Fixed
@@ -242,7 +386,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.1.0...HEAD
+[v2.1.0]: https://github.com/baresip/re/compare/v2.0.1...v2.1.0
 [v2.0.1]: https://github.com/baresip/re/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/baresip/re/compare/v1.1.0...v2.0.0
 [v1.1.0]: https://github.com/baresip/re/compare/v1.0.0...v1.1.0
