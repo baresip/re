@@ -29,8 +29,3 @@ jobs:
     - name: abidiff compare
       id: abidiff
       run: abidiff old/libre.so current/libre.so
-      continue-on-error: true
-
-    - name: display warning
-      if: steps.abidiff.outcome != 'success'
-      run: echo "::warning::ABI Check failed - bump ABI version"

@@ -18,6 +18,8 @@ project(re VERSION 2.1.0 LANGUAGES C)
 # Increment for breaking changes (dev2, dev3...)
 # set(PROJECT_VERSION_PRE dev)
 
+set(ABI_MAJOR 3)
+
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
 else()
@@ -482,7 +484,7 @@ endif()
 
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(re-shared PROPERTIES SOVERSION ${ABI_MAJOR})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
 

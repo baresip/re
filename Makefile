@@ -13,7 +13,7 @@ VER_PATCH := 0
 # Increment for breaking changes (dev2, dev3...)
 # VER_PRE   := dev
 
-ABI_MAJOR := $(VER_MAJOR)
+ABI_MAJOR := 3
 
 # Verbose and silent build modes
 ifeq ($(V),)
