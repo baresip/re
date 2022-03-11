@@ -14,6 +14,8 @@ VER_PATCH := 0
 # VER_PRE   := dev
 
 ABI_MAJOR := $(VER_MAJOR)
+ABI_AGE   := $(VER_MINOR)
+ABI_REV   := $(VER_PATCH)
 
 # Verbose and silent build modes
 ifeq ($(V),)
