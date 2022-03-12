@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [v2.1.1] - 2022-03-12
+
+### Fixes
+
+* mk: fix ABI versioning [#268](https://github.com/baresip/re/issues/268)
+
+---
+
 ## [v2.1.0] - 2022-03-11
 
-## What's Changed
+### What's Changed
 * Tls sipcert per acc by @cHuberCoffee in https://github.com/baresip/re/pull/96
 * ToS for video and sip by @cspiel1 in https://github.com/baresip/re/pull/98
 * sdp: in media_decode() reset rdir if port is zero by @cspiel1 in https://github.com/baresip/re/pull/99
@@ -144,12 +154,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * sip: fix gcc 6.3.0 warning for logical expression (#256) by @cspiel1 in https://github.com/baresip/re/pull/263
 * add transport-cc rtcp feedback support by @fippo in https://github.com/baresip/re/pull/264
 
-## New Contributors
+### New Contributors
 * @I-mpossible made their first contribution in https://github.com/baresip/re/pull/119
 * @viordash made their first contribution in https://github.com/baresip/re/pull/136
 * @ydroneaud made their first contribution in https://github.com/baresip/re/pull/173
 * @abrodkin made their first contribution in https://github.com/baresip/re/pull/194
 
+---
 
 ## [v2.0.1] - 2021-04-22
 
@@ -162,6 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - tls: different return values for tls_get_ca_chain_field() [#94]
 
+---
 
 ## [v2.0.0] - 2021-04-10
 
@@ -386,7 +398,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.1.1...HEAD
+[v2.1.1]: https://github.com/baresip/re/compare/v2.1.0...v2.1.1
 [v2.1.0]: https://github.com/baresip/re/compare/v2.0.1...v2.1.0
 [v2.0.1]: https://github.com/baresip/re/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/baresip/re/compare/v1.1.0...v2.0.0
