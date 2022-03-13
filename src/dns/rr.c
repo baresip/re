@@ -313,7 +313,9 @@ int dns_rr_decode(struct mbuf *mb, struct dnsrr **rr, size_t start)
 			if (len > --rdlen)
 				goto fmerr;
 
-			mbuf_read_mem(mb, (uint8_t *)ptr, len);
+			err = mbuf_read_mem(mb, (uint8_t *)ptr, len);
+			if (err)
+				goto error;
 
 			ptr   += len;
 			rdlen -= len;
