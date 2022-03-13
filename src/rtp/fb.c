@@ -84,6 +84,9 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 	if (!msg)
 		return EINVAL;
 
+	if (mbuf_get_left(mb) < 8)
+		return EBADMSG;
+
 	msg->seq = ntohs(mbuf_read_u16(mb));
 	msg->count = ntohs(mbuf_read_u16(mb));
 	if (msg->count == 0)
