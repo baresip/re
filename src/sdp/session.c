@@ -37,7 +37,7 @@ static void destructor(void *arg)
 int sdp_session_alloc(struct sdp_session **sessp, const struct sa *laddr)
 {
 	struct sdp_session *sess;
-	int err = 0, i;
+	int i;
 
 	if (!sessp || !laddr)
 		return EINVAL;
@@ -58,12 +58,9 @@ int sdp_session_alloc(struct sdp_session **sessp, const struct sa *laddr)
 		sess->rbwv[i] = -1;
 	}
 
-	if (err)
-		mem_deref(sess);
-	else
-		*sessp = sess;
+	*sessp = sess;
 
-	return err;
+	return 0;
 }
 
 
