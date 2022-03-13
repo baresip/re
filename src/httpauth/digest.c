@@ -388,8 +388,11 @@ int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 	if (pl_isset(&resp->qop))
 		s += resp->qop.l + resp->nc.l + resp->cnonce.l;
 
-	if (s > mb->size)
-		mbuf_resize(mb, s);
+	if (s > mb->size) {
+		err = mbuf_resize(mb, s);
+		if (err)
+			return err;
+	}
 
 	err = mbuf_write_str(mb, "Authorization: ");
 	err |= mbuf_printf(mb, "Digest username=\"%r\"", &resp->username);
