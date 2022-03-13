@@ -582,8 +582,8 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 {
 	EVP_PKEY *key = NULL;
 	X509 *cert = NULL;
-	BIGNUM *bn = NULL;
 #ifndef OPENSSL_VERSION_MAJOR
+	BIGNUM *bn = NULL;
 	RSA *rsa = NULL;
 #endif
 	int r, err = ENOMEM;
@@ -615,6 +615,7 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	if (!EVP_PKEY_set1_RSA(key, rsa))
 		goto out;
 #endif
+
 	if (tls_generate_cert(&cert, cn))
 		goto out;
 
@@ -650,10 +651,10 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 #ifndef OPENSSL_VERSION_MAJOR
 	if (rsa)
 		RSA_free(rsa);
-#endif
 
 	if (bn)
 		BN_free(bn);
+#endif
 
 	if (err)
 		ERR_clear_error();
