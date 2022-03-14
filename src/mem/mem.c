@@ -303,6 +303,7 @@ void *mem_ref(void *data)
  *
  * @return Always NULL
  */
+/* coverity[-tainted_data_sink: arg-0] */
 void *mem_deref(void *data)
 {
 	struct mem *m;
