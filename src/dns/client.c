@@ -30,6 +30,7 @@ enum {
 	CONN_TIMEOUT = 10 * 1000,
 	IDLE_TIMEOUT = 30 * 1000,
 	SRVC_MAX = 32,
+	RR_MAX = 32,
 };
 
 
@@ -196,7 +197,7 @@ static bool query_cmp_handler(struct le *le, void *arg)
 static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 {
 	struct dns_query *q = NULL;
-	uint32_t i, j, nv[3];
+	uint32_t nv[3];
 	struct dnsquery dq;
 	int err = 0;
 
@@ -243,9 +244,15 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	nv[1] = dq.hdr.nauth;
 	nv[2] = dq.hdr.nadd;
 
-	for (i=0; i<ARRAY_SIZE(nv); i++) {
+	for (uint32_t i = 0; i < ARRAY_SIZE(nv); i++) {
+		uint32_t l = nv[i];
 
-		for (j=0; j<nv[i]; j++) {
+		if (l > RR_MAX) {
+			l = RR_MAX;
+			DEBUG_WARNING("limit rr records %d\n", l);
+		}
+
+		for (uint32_t j = 0; j < l; j++) {
 
 			struct dnsrr *rr = NULL;
 
