@@ -993,7 +993,7 @@ struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
  *
  * @param us UDP socket
  */
-void udp_flush(struct udp_sock *us)
+void udp_flush(const struct udp_sock *us)
 {
 	if (!us)
 		return;
