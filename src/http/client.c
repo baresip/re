@@ -613,7 +613,7 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 static int read_file(char **pbuf, const char *path)
 {
 	FILE *f = NULL;
-	size_t s = 0;
+	long s = 0;
 	size_t n = 0;
 	char *buf;
 
@@ -628,6 +628,8 @@ static int read_file(char **pbuf, const char *path)
 
 	fseek(f, 0L, SEEK_END);
 	s = ftell(f);
+	if (s < 0)
+		return errno;
 	fseek(f, 0L, SEEK_SET);
 
 	buf = mem_alloc(s + 1, NULL);
@@ -640,7 +642,7 @@ static int read_file(char **pbuf, const char *path)
 	n = fread(buf, 1, s, f);
 	fclose(f);
 	buf[s] = 0;
-	if (n < s) {
+	if (n < (size_t)s) {
 		mem_deref(buf);
 		return EIO;
 	}
