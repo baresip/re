@@ -628,8 +628,10 @@ static int read_file(char **pbuf, const char *path)
 
 	fseek(f, 0L, SEEK_END);
 	s = ftell(f);
-	if (s < 0)
+	if (s < 0) {
+		fclose(f);
 		return errno;
+	}
 	fseek(f, 0L, SEEK_SET);
 
 	buf = mem_alloc(s + 1, NULL);
