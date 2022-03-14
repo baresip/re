@@ -616,13 +616,12 @@ int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
  */
 int rtp_clear(struct rtp_sock *rs)
 {
-	int err;
-
 	if (!rs)
 		return EINVAL;
 
-	err  = udp_flush(rs->sock_rtp);
-	return err;
+	udp_flush(rs->sock_rtp);
+
+	return 0;
 }
 
 
