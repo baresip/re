@@ -988,6 +988,23 @@ int http_client_add_capem(struct http_cli *cli, const char *capem)
 
 
 /**
+ * Add trusted CRL certificates given as string
+ *
+ * @param cli    HTTP Client
+ * @param pem    The trusted CRL as 0-terminated string given in PEM format
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_add_crlpem(struct http_cli *cli, const char *pem)
+{
+	if (!cli)
+		return EINVAL;
+
+	return tls_add_crlpem(cli->tls, pem);
+}
+
+
+/**
  * Set client certificate
  * @param cli   HTTP Client
  * @param path  File path to client certificate
