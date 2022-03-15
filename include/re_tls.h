@@ -36,6 +36,7 @@ int tls_add_ca(struct tls *tls, const char *cafile);
 int tls_add_cafile_path(struct tls *tls, const char *cafile,
 	const char *capath);
 int tls_add_capem(struct tls *tls, const char *capem);
+int tls_add_crlpem(struct tls *tls, const char *pem);
 int tls_set_selfsigned(struct tls *tls, const char *cn);
 int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits);
 int tls_set_selfsigned_ec(struct tls *tls, const char *cn,

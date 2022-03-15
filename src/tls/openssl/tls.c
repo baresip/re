@@ -328,10 +328,10 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 
 
 /**
- * Add trusted CA certificates given as string.
+ * Add trusted CA certificates given as string
  *
  * @param tls    TLS Context
- * @param capem  The trusted CA as null-terminated string given in PEM format.
+ * @param capem  Trusted CA as null-terminated string given in PEM format
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -369,6 +369,54 @@ int tls_add_capem(struct tls *tls, const char *capem)
 
 out:
 	X509_free(x509);
+	BIO_free(bio);
+
+	return err;
+}
+
+
+/**
+ * Add trusted CRL certificates given as string
+ *
+ * @param tls  TLS Context
+ * @param pem  Trusted CRL as null-terminated string given in PEM format
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_add_crlpem(struct tls *tls, const char *pem)
+{
+	X509_STORE *store;
+	X509_CRL *crl;
+	BIO *bio;
+	int ok;
+	int err = 0;
+
+	if (!tls || !pem || !tls->ctx)
+		return EINVAL;
+
+	store = SSL_CTX_get_cert_store(tls->ctx);
+	if (!store)
+		return EINVAL;
+
+	bio  = BIO_new_mem_buf((char *)pem, (int)strlen(pem));
+	if (!bio)
+		return EINVAL;
+
+	crl = PEM_read_bio_X509_CRL(bio, NULL, 0, NULL);
+	if (!crl) {
+		err = EINVAL;
+		DEBUG_WARNING("Could not read certificate crlpem\n");
+		goto out;
+	}
+
+	ok = X509_STORE_add_crl(store, crl);
+	if (!ok) {
+		err = EINVAL;
+		DEBUG_WARNING("Could not add certificate crlpem\n");
+	}
+
+out:
+	X509_CRL_free(crl);
 	BIO_free(bio);
 
 	return err;

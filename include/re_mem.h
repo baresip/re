@@ -40,6 +40,4 @@ int      mem_get_stat(struct memstat *mstat);
 
 
 /* Secure memory functions */
-int  mem_seccmp(const volatile uint8_t *volatile s1,
-		const volatile uint8_t *volatile s2,
-		size_t n);
+int mem_seccmp(const uint8_t *s1, const uint8_t *s2, size_t n);

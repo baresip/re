@@ -980,10 +980,27 @@ int http_client_add_ca(struct http_cli *cli, const char *tls_ca)
  */
 int http_client_add_capem(struct http_cli *cli, const char *capem)
 {
-	if (!cli || !capem)
+	if (!cli)
 		return EINVAL;
 
 	return tls_add_capem(cli->tls, capem);
+}
+
+
+/**
+ * Add trusted CRL certificates given as string
+ *
+ * @param cli    HTTP Client
+ * @param pem    The trusted CRL as 0-terminated string given in PEM format
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_add_crlpem(struct http_cli *cli, const char *pem)
+{
+	if (!cli)
+		return EINVAL;
+
+	return tls_add_crlpem(cli->tls, pem);
 }
 
 
