@@ -328,10 +328,10 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 
 
 /**
- * Add trusted CA certificates given as string.
+ * Add trusted CA certificates given as string
  *
  * @param tls    TLS Context
- * @param capem  The trusted CA as null-terminated string given in PEM format.
+ * @param capem  Trusted CA as null-terminated string given in PEM format
  *
  * @return 0 if success, otherwise errorcode
  */

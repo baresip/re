@@ -980,7 +980,7 @@ int http_client_add_ca(struct http_cli *cli, const char *tls_ca)
  */
 int http_client_add_capem(struct http_cli *cli, const char *capem)
 {
-	if (!cli || !capem)
+	if (!cli)
 		return EINVAL;
 
 	return tls_add_capem(cli->tls, capem);
