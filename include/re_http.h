@@ -159,6 +159,7 @@ int http_client_set_tls(struct http_cli *cli, struct tls *tls);
 int http_client_get_tls(struct http_cli *cli, struct tls **tls);
 int http_client_add_ca(struct http_cli *cli, const char *tls_ca);
 int http_client_add_capem(struct http_cli *cli, const char *capem);
+int http_client_add_crlpem(struct http_cli *cli, const char *pem);
 int http_client_set_tls_hostname(struct http_cli *cli,
 				 const struct pl *hostname);
 int http_client_set_cert(struct http_cli *cli, const char *path);
