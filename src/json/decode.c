@@ -54,11 +54,11 @@ static bool is_number(long double *d, bool *isfloat, const struct pl *pl)
 	if (!pl->l)
 		return false;
 
-	p = &pl->p[pl->l];
+	p = &pl->p[pl->l - 1];
 
-	while (p > pl->p) {
-
-		const char ch = *--p;
+	while (p >= pl->p) {
+		const char ch = *p;
+		--p;
 
 		if (ch == 'e' || ch == 'E') {
 
