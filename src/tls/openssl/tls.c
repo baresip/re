@@ -383,7 +383,7 @@ out:
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_add_crlpem(struct tls *tls, const char *pem)
+int tls_add_crlpem(const struct tls *tls, const char *pem)
 {
 	X509_STORE *store;
 	X509_CRL *crl;
@@ -398,7 +398,7 @@ int tls_add_crlpem(struct tls *tls, const char *pem)
 	if (!store)
 		return EINVAL;
 
-	bio  = BIO_new_mem_buf((char *)pem, (int)strlen(pem));
+	bio  = BIO_new_mem_buf(pem, (int)strlen(pem));
 	if (!bio)
 		return EINVAL;
 
