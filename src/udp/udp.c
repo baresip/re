@@ -171,7 +171,7 @@ static void udp_read(struct udp_sock *us, int fd)
 		if (EAGAIN == err)
 			goto out;
 
-#ifdef EWOULDBLOCK
+#if defined (EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
 		if (EWOULDBLOCK == err)
 			goto out;
 #endif
