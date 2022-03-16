@@ -335,7 +335,7 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_add_capem(struct tls *tls, const char *capem)
+int tls_add_capem(const struct tls *tls, const char *capem)
 {
 	X509_STORE *store;
 	X509 *x509;
