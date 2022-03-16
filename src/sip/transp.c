@@ -1506,6 +1506,7 @@ int sip_transp_laddr(struct sip *sip, struct sa *laddr, enum sip_transp tp,
 		      const struct sa *dst)
 {
 	const struct sip_transport *transp;
+	struct sip_conncfg *conncfg;
 
 	if (!sip || !laddr)
 		return EINVAL;
@@ -1515,6 +1516,11 @@ int sip_transp_laddr(struct sip *sip, struct sa *laddr, enum sip_transp tp,
 		return EPROTONOSUPPORT;
 
 	*laddr = transp->laddr;
+	if (tp != SIP_TRANSP_UDP) {
+		conncfg = sip_conncfg_find(sip, dst);
+		if (conncfg && conncfg->srcport)
+			sa_set_port(laddr, conncfg->srcport);
+	}
 
 	return 0;
 }
