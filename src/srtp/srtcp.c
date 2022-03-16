@@ -172,6 +172,9 @@ int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb)
 		uint8_t tag_pkt[SHA_DIGEST_LENGTH] = {0};
 		const size_t tag_start = mb->pos;
 
+		if (rtcp->tag_len > SHA_DIGEST_LENGTH)
+			return ERANGE;
+
 		err = mbuf_read_mem(mb, tag_pkt, rtcp->tag_len);
 		if (err)
 			return err;
