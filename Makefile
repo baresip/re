@@ -49,6 +49,7 @@ MODULES += aes srtp
 MODULES += odict
 MODULES += json
 MODULES += rtmp
+MODULES += shim
 
 INSTALL := install
 ifeq ($(DESTDIR),)
