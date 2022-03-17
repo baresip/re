@@ -269,6 +269,8 @@ set(SRCS
 
   src/sha/wrap.c
 
+  src/shim/shim.c
+
   src/srtp/misc.c
   src/srtp/replay.c
   src/srtp/srtcp.c
