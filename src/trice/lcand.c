@@ -598,7 +598,6 @@ void *trice_lcand_sock(struct trice *icem, const struct ice_lcand *lcand)
 				     ice_cand_type2name(lcand->attr.type));
 			return NULL;
 		}
-		break;
 
 	case ICE_CAND_TYPE_RELAY:
 		return lcand->us;

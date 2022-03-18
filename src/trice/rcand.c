@@ -40,7 +40,6 @@ static int trice_add_rcandidate(struct ice_rcand **candp,
 			       enum ice_tcptype tcptype)
 {
 	struct ice_rcand *cand;
-	int err = 0;
 
 	if (!lst || !compid || !foundation || !proto || !addr)
 		return EINVAL;
@@ -49,27 +48,21 @@ static int trice_add_rcandidate(struct ice_rcand **candp,
 	if (!cand)
 		return ENOMEM;
 
-	cand->attr.compid = compid;
-	str_ncpy(cand->attr.foundation, foundation,
-		 sizeof(cand->attr.foundation));
-	cand->attr.proto  = proto;
-	cand->attr.prio   = prio;
-	cand->attr.addr   = *addr;
-	cand->attr.type   = type;
+	cand->attr.compid  = compid;
+	cand->attr.proto   = proto;
+	cand->attr.prio	   = prio;
+	cand->attr.addr	   = *addr;
+	cand->attr.type	   = type;
 	cand->attr.tcptype = tcptype;
 
-	if (err)
-		goto out;
+	str_ncpy(cand->attr.foundation, foundation,
+		 sizeof(cand->attr.foundation));
 
 	list_append(lst, &cand->le, cand);
 
- out:
-	if (err)
-		mem_deref(cand);
-	else if (candp)
-		*candp = cand;
+	*candp = cand;
 
-	return err;
+	return 0;
 }
 
 
