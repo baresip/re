@@ -306,6 +306,16 @@ set(SRCS
 
   src/trace/trace.c
 
+  src/trice/cand.c
+  src/trice/candpair.c
+  src/trice/chklist.c
+  src/trice/connchk.c
+  src/trice/lcand.c
+  src/trice/rcand.c
+  src/trice/stunsrv.c
+  src/trice/tcpconn.c
+  src/trice/trice.c
+
   src/turn/chan.c
   src/turn/perm.c
   src/turn/turnc.c

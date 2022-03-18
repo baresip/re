@@ -50,6 +50,7 @@ MODULES += odict
 MODULES += json
 MODULES += rtmp
 MODULES += shim
+MODULES += trice
 
 INSTALL := install
 ifeq ($(DESTDIR),)
