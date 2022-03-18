@@ -306,6 +306,8 @@ set(SRCS
 
   src/trace/trace.c
 
+  src/trice/trice.c
+
   src/turn/chan.c
   src/turn/perm.c
   src/turn/turnc.c
