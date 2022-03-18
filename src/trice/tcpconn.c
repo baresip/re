@@ -204,7 +204,6 @@ int trice_conn_alloc(struct list *connl, struct trice *icem, unsigned compid,
 			 */
 			if (err == EADDRINUSE) {
 				re_printf("EADDRINUSE\n");
-				err = 0;
 			}
 			else {
 				DEBUG_NOTICE("tcp_conn_connect [peer=%J]"

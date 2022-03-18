@@ -107,7 +107,7 @@ static void handle_success(struct trice *icem, struct ice_candpair *pair,
 		DEBUG_WARNING("handle_success: invalid params\n");
 	}
 
-	if (icem->conf.enable_prflx &&
+	if (icem && icem->conf.enable_prflx &&
 	    !trice_lcand_find(icem, -1, compid,
 			      pair->lcand->attr.proto, mapped_addr)) {
 
@@ -241,7 +241,10 @@ static void stunc_resp_handler(int err, uint16_t scode, const char *reason,
 
  out:
 	if (err || scode) {
-		icem->checklist->failh(err, scode, pair, icem->checklist->arg);
+		if (icem && icem->checklist) {
+			icem->checklist->failh(err, scode,
+					       pair, icem->checklist->arg);
+		}
 	}
 
 	mem_deref(cc);
