@@ -163,7 +163,7 @@ static void handle_success(struct trice *icem, struct ice_candpair *pair,
 	trice_candpair_make_valid(icem, pair);
 
 	/* Updating the Nominated Flag */
-	if (ICE_ROLE_CONTROLLING == icem->lrole) {
+	if (icem && ICE_ROLE_CONTROLLING == icem->lrole) {
 
 		if (cc->use_cand)
 			pair->nominated = true;
