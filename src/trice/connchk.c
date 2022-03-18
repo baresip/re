@@ -103,8 +103,9 @@ static void handle_success(struct trice *icem, struct ice_candpair *pair,
 	unsigned compid;
 	int err;
 
-	if (!icem || !pair) {
+	if (!icem || !pair || !pair->lcand) {
 		DEBUG_WARNING("handle_success: invalid params\n");
+		return;
 	}
 
 	compid = pair->lcand->attr.compid;
