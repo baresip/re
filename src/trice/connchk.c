@@ -100,12 +100,14 @@ static void handle_success(struct trice *icem, struct ice_candpair *pair,
 			   const struct stun_msg *msg,
 			   struct ice_conncheck *cc)
 {
-	unsigned compid = pair->lcand->attr.compid;
+	unsigned compid;
 	int err;
 
 	if (!icem || !pair) {
 		DEBUG_WARNING("handle_success: invalid params\n");
 	}
+
+	compid = pair->lcand->attr.compid;
 
 	if (icem && icem->conf.enable_prflx &&
 	    !trice_lcand_find(icem, -1, compid,
@@ -257,8 +259,8 @@ int trice_conncheck_stun_request(struct ice_checklist *ic,
 			       struct ice_candpair *cp, void *sock,
 			       bool cc_use_cand)
 {
-	struct ice_lcand *lcand = cp->lcand;
-	struct trice *icem = ic->icem;
+	struct ice_lcand *lcand;
+	struct trice *icem;
 	char username_buf[256];
 	uint32_t prio_prflx;
 	uint16_t ctrl_attr;
@@ -271,6 +273,9 @@ int trice_conncheck_stun_request(struct ice_checklist *ic,
 
 	if (!ic)
 		return ENOSYS;
+
+	lcand = cp->lcand;
+	icem = ic->icem;
 
 	if (!sock) {
 		DEBUG_NOTICE("conncheck: no SOCK\n");
