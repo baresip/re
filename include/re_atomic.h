@@ -15,10 +15,6 @@ extern "C" {
 #if defined(HAVE_ATOMIC) && !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 
-/* With MSVC volatile is atomic */
-#elif defined(_MSC_VER)
-#define _Atomic volatile
-
 /* C99 compiler builtin fallbacks */
 #elif defined(__clang__)
 #define __CLANG_ATOMICS
@@ -31,8 +27,15 @@ extern "C" {
 #endif /* __GNUC_PREREQ */
 
 #else
-#error "Your compiler does not support atomics"
+#error "Compiler does not support atomics"
 #endif /* HAVE_ATOMIC */
+
+#ifdef _MSC_VER
+/* With MSVC volatile is atomic */
+#define RE_ATOMIC volatile
+#else
+#define RE_ATOMIC _Atomic
+#endif
 
 #ifdef __cplusplus
 }
