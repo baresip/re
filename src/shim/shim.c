@@ -11,6 +11,7 @@
 #include <re_tcp.h>
 #include <re_net.h>
 #include <re_shim.h>
+#include <re_convert.h>
 
 
 #define DEBUG_MODULE "shim"
@@ -36,7 +37,8 @@ struct shim {
 static bool shim_send_handler(int *err, struct mbuf *mb, void *arg)
 {
 	struct shim *shim = arg;
-	size_t len;
+	int err_len;
+	uint16_t len;
 	(void)shim;
 
 	if (mb->pos < SHIM_HDR_SIZE) {
@@ -45,7 +47,12 @@ static bool shim_send_handler(int *err, struct mbuf *mb, void *arg)
 		return true;
 	}
 
-	len = mbuf_get_left(mb);
+	err_len = try_into(len, mbuf_get_left(mb));
+	if (err_len) {
+		DEBUG_WARNING("send: mbuf to big\n");
+		*err = err_len;
+		return true;
+	}
 
 	mb->pos -= SHIM_HDR_SIZE;
 	*err = mbuf_write_u16(mb, htons(len));
