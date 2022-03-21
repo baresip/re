@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        compiler: [gcc, clang]
+        compiler: [clang]
         os: [ubuntu-latest]
 
     env:

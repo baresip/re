@@ -17,7 +17,7 @@ extern "C" {
 
 /* With MSVC volatile is atomic */
 #elif defined(_MSC_VER)
-#define _Atomic volatile
+#define RE_ATOMIC volatile
 
 /* C99 compiler builtin fallbacks */
 #elif defined(__clang__)
@@ -31,8 +31,12 @@ extern "C" {
 #endif /* __GNUC_PREREQ */
 
 #else
-#error "Your compiler does not support atomics"
+#error "Compiler does not support atomics"
 #endif /* HAVE_ATOMIC */
+
+#ifndef RE_ATOMIC
+#define RE_ATOMIC _Atomic
+#endif
 
 #ifdef __cplusplus
 }

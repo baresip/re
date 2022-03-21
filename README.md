@@ -245,8 +245,8 @@ legend:
 
 ### Supported compilers:
 
-* gcc 4.x or later
-* ms vc2003 compiler
+* gcc 4.9 or later
+* MSVC 2019
 * clang 3.x or later
 
 
