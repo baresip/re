@@ -123,7 +123,7 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 		}
 		else {
 			/* run length chunk */
-			for (j = 0; j < i && j < (chunk & 0x1fff); j++)
+			for (j = 0; j < i && j < (chunk & 0x1fffu); j++)
 				sz += (chunk >> 13) & 0x03;
 		}
 		i -= j;
