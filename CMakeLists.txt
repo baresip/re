@@ -102,6 +102,7 @@ if(UNIX)
     -DHAVE_STRINGS_H
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
+    -DHAVE_SELECT_H
     )
 endif()
 

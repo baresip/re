@@ -94,12 +94,9 @@ CXXDFLAGS = -MD -MF $(@:.o=.d) -MT $@
 ifeq ($(CC),)
 	CC := gcc
 endif
-ifeq ($(CC),cc)
-	CC := gcc
-endif
 LD := $(CC)
 
-CC_LONGVER  := $(shell $(CC) - --version|head -n 1)
+CC_LONGVER  := $(shell $(CC) --version|head -n 1)
 CC_SHORTVER := $(shell $(CC) -dumpversion)
 CC_MAJORVER := $(shell echo $(CC_SHORTVER) |\
 			sed -E 's/([0-9]+).[0-9]+.[0-9]+/\1/g')
@@ -392,7 +389,7 @@ endif
 
 endif
 
-ifneq ($(strip $(filter __arm64__ ,$(PREDEF))),)
+ifneq ($(strip $(filter __arm64__  __aarch64__,$(PREDEF))),)
 ARCH   := arm64
 endif
 
