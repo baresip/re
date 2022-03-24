@@ -94,6 +94,9 @@ CXXDFLAGS = -MD -MF $(@:.o=.d) -MT $@
 ifeq ($(CC),)
 	CC := gcc
 endif
+ifeq ($(CC),cc)
+	CC := gcc
+endif
 LD := $(CC)
 
 CC_LONGVER  := $(shell $(CC) --version|head -n 1)
