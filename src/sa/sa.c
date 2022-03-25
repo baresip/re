@@ -400,24 +400,29 @@ void sa_in6(const struct sa *sa, uint8_t *addr)
  */
 int sa_ntop(const struct sa *sa, char *buf, int size)
 {
+	const char *ret;
+
 	if (!sa || !buf || !size)
 		return EINVAL;
 
 	switch (sa->u.sa.sa_family) {
 
 	case AF_INET:
-		inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
+		ret = inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
 		break;
 
 #ifdef HAVE_INET6
 	case AF_INET6:
-		inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
+		ret = inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
 		break;
 #endif
 
 	default:
 		return EAFNOSUPPORT;
 	}
+
+	if (!ret)
+		return errno;
 
 	return 0;
 }
