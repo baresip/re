@@ -175,6 +175,8 @@ extern const char sdp_proto_rtpsavp[];
 
 /* utility functions */
 
+enum sdp_dir sdp_dir_decode(const struct pl *pl);
+
 /** RTP Header Extensions, as defined in RFC 5285 */
 struct sdp_extmap {
 	struct pl name;
