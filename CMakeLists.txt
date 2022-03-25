@@ -29,6 +29,7 @@ endif()
 #
 # Module/Package Includes
 #
+include(GNUInstallDirs)
 include(CheckIncludeFile)
 find_package(Backtrace)
 find_package(Threads)
@@ -148,8 +149,10 @@ add_definitions(
 
 ##############################################################################
 #
-# Source section
+# Source/Header section
 #
+
+file(GLOB RE_INCLUDE_FILES "include/*.h")
 
 set(SRCS
 
@@ -498,7 +501,7 @@ else()
   )
 endif()
 
-set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
+set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
@@ -521,7 +524,19 @@ target_link_libraries(re-static
   PRIVATE -L/opt/local/lib
 )
 
-set_target_properties(re-static PROPERTIES PUBLIC_HEADER include/re.h)
+set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 if(NOT MSVC)
 set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
 endif()
+
+
+##############################################################################
+#
+# Install section
+#
+
+install(TARGETS re-shared re-static
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+)
