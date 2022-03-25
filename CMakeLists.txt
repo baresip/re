@@ -524,7 +524,7 @@ target_link_libraries(re-static
   PRIVATE -L/opt/local/lib
 )
 
-set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
+set_target_properties(re-static PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 if(NOT MSVC)
 set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
 endif()
