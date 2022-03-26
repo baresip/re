@@ -422,7 +422,7 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 	}
 
 	if (!ret)
-		return errno;
+		return ERRNO_SOCKET;
 
 	return 0;
 }
