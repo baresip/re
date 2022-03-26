@@ -17,6 +17,7 @@
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_net.h>
 #include <re_list.h>
 #include <re_sa.h>
 
@@ -422,7 +423,7 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 	}
 
 	if (!ret)
-		return ERRNO_SOCKET;
+		return ERRNO_SOCK;
 
 	return 0;
 }
