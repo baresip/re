@@ -262,3 +262,10 @@ typedef bool _Bool;
  */
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
+
+
+#ifdef WIN32
+#define ERRNO_SOCKET WSAGetLastError()
+#else
+#define ERRNO_SOCKET errno
+#endif
