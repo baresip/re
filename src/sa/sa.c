@@ -108,7 +108,7 @@ int sa_pton(const char *addr, struct sa *sa)
 		sa->u.in.sin_family = AF_INET;
 	}
 #ifdef HAVE_INET6
-	else if (!strncmp(addr, "fe80:", 5)) {
+	else if (!strncmp(addr, "fe80:", 5) && strrchr(addr, '%')) {
 		err = sa_addrinfo(addr, sa);
 	}
 	else if (inet_pton(AF_INET6, addr, &sa->u.in6.sin6_addr) > 0) {
