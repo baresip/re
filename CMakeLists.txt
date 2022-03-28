@@ -12,11 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.1.1 LANGUAGES C)
+project(re VERSION 2.2.0 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
 # set(PROJECT_VERSION_PRE dev)
+
+set(PROJECT_SOVERSION 3) # bump if ABI breaks
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -503,7 +505,7 @@ endif()
 
 set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
 
