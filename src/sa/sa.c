@@ -643,7 +643,7 @@ bool sa_is_linklocal(const struct sa *sa)
 
 
 /**
- * Check if socket address is a loopback address
+ * Check if socket address is a loopback address (127.0.0.0/8 or ::1/128)
  *
  * @param sa Socket address
  *
@@ -657,7 +657,8 @@ bool sa_is_loopback(const struct sa *sa)
 	switch (sa_af(sa)) {
 
 	case AF_INET:
-		return INADDR_LOOPBACK == ntohl(sa->u.in.sin_addr.s_addr);
+		return (ntohl(sa->u.in.sin_addr.s_addr) & 0xff000000) ==
+		       0x7f000000;
 
 #ifdef HAVE_INET6
 	case AF_INET6:
