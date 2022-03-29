@@ -24,7 +24,8 @@ struct jbuf_stat {
 enum jbuf_type {
 	JBUF_OFF,
 	JBUF_FIXED,
-	JBUF_ADAPTIVE
+	JBUF_ADAPTIVE,
+	JBUF_MINIMIZE
 };
 
 

@@ -44,6 +44,8 @@ enum {
 	JBUF_BUFTIME_PERIOD  = 128,
 	JBUF_LO_BOUND        = 125,  /* 125% of jitter */
 	JBUF_HI_BOUND        = 200,  /* 200% of jitter */
+	JBUF_FAULT_INC       = 200,
+	JBUF_FAULT_HI        = 3 * JBUF_FAULT_INC,
 };
 
 
@@ -84,6 +86,7 @@ struct jitter_stat {
 	int32_t avbuftime;   /**< average buffered time           */
 	int32_t jtime;       /**< JBUF_JITTER_PERIOD * ptime      */
 	int32_t mintime;     /**< minimum buffer time             */
+	uint32_t faults;     /**< Reorder faults                  */
 };
 
 
@@ -321,6 +324,9 @@ int  jbuf_set_type(struct jbuf *jb, enum jbuf_type jbtype)
 		DEBUG_INFO("alloc: delay min=%u max=%u wish=%u frames\n",
 				jb->min, jb->max, jb->wish);
 	}
+	else if (jbtype == JBUF_MINIMIZE) {
+		jb->min = 0;
+	}
 
 	return 0;
 }
@@ -478,6 +484,28 @@ static enum jb_state jbuf_state(const struct jbuf *jb)
 }
 
 
+static void seq_failure(struct jbuf *jb)
+{
+	if (jb->jbtype != JBUF_MINIMIZE)
+		return;
+
+	if (jb->jitst.faults >= JBUF_FAULT_HI)
+		jb->jitst.st = JS_LOW;
+	else
+		jb->jitst.faults += JBUF_FAULT_INC;
+}
+
+
+static void seq_ok(struct jbuf *jb)
+{
+	if (jb->jbtype != JBUF_MINIMIZE)
+		return;
+
+	if (jb->jitst.faults)
+		--jb->jitst.faults;
+}
+
+
 /**
  * Put one frame into the jitter buffer
  *
@@ -518,7 +546,11 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 				   "(seq_put=%u seq_get=%u)\n",
 				   seq, jb->seq_put, jb->seq_get);
 			err = ETIMEDOUT;
+			seq_failure(jb);
 			goto out;
+		}
+		else {
+			seq_ok(jb);
 		}
 
 	}
@@ -664,6 +696,19 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 		}
 
 		break;
+	case JBUF_MINIMIZE:
+		if (jb->n < jb->max-1 && jbuf_state(jb) == JS_LOW) {
+			DEBUG_INFO("inc buffer due to reordered "
+				      "packets n=%u max=%u\n",
+				      jb->n, jb->max);
+			err = ENOENT;
+			jb->jitst.st = JS_GOOD;
+			jb->min = jb->n + 1;
+			goto out;
+		}
+
+		/*@fallthrough@*/
+
 	default:
 		if (jb->n <= jb->min || !jb->framel.head) {
 			DEBUG_INFO("not enough buffer frames - wait.. "
@@ -704,18 +749,35 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	frame_deref(jb, f);
 
-	if (jb->jbtype == JBUF_ADAPTIVE &&
-		((jb->n > jb->min && jbuf_state(jb) == JS_HIGH) ||
-	        (jb->n == jb->max ))) {
-		DEBUG_INFO("reducing jitter buffer "
-				"(jitter=%ums n=%u min=%u max=%u)\n",
-				jb->jitst.jitter / JBUF_JITTER_PERIOD,
-				jb->n, jb->min, jb->max);
+	switch (jb->jbtype) {
+	case JBUF_ADAPTIVE:
+		if ((jb->n > jb->min && jbuf_state(jb) == JS_HIGH) ||
+		    (jb->n == jb->max )) {
+			DEBUG_INFO("reducing jitter buffer "
+				   "(jitter=%ums n=%u min=%u max=%u)\n",
+				   jb->jitst.jitter / JBUF_JITTER_PERIOD,
+				   jb->n, jb->min, jb->max);
 
-		/* early adjustment */
-		jb->jitst.avbuftime -= jb->jitst.jtime;
-		jb->jitst.st = JS_GOOD;
-		err = EAGAIN;
+			/* early adjustment */
+			jb->jitst.avbuftime -= jb->jitst.jtime;
+			jb->jitst.st = JS_GOOD;
+			err = EAGAIN;
+		}
+		break;
+	case JBUF_MINIMIZE:
+		if (jb->min > (jb->jitst.faults + JBUF_FAULT_INC - 1) /
+		    JBUF_FAULT_INC)
+			--jb->min;
+
+		if (jb->n > jb->min) {
+			DEBUG_INFO("reducing jitter buffer "
+				   "(n=%u min=%u max=%u)\n",
+				   jb->n, jb->min, jb->max);
+			err = EAGAIN;
+		}
+		break;
+	default:
+		break;
 	}
 
 out:
