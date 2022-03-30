@@ -324,9 +324,6 @@ int  jbuf_set_type(struct jbuf *jb, enum jbuf_type jbtype)
 		DEBUG_INFO("alloc: delay min=%u max=%u wish=%u frames\n",
 				jb->min, jb->max, jb->wish);
 	}
-	else if (jbtype == JBUF_MINIMIZE) {
-		jb->min = 0;
-	}
 
 	return 0;
 }
