@@ -107,7 +107,7 @@ if(UNIX)
     -DHAVE_UNAME
     -DHAVE_SELECT_H
     )
-  if (NOT ANDROID)
+  if(NOT ANDROID)
     add_definitions(-DHAVE_GETIFADDRS)
   endif()
 endif()
@@ -429,7 +429,7 @@ elseif(UNIX)
     src/mod/dl.c
     src/net/posix/pif.c
   )
-  if (NOT ANDROID)
+  if(NOT ANDROID)
     list(APPEND SRCS
       src/net/ifaddrs.c
     )
