@@ -97,7 +97,6 @@ add_definitions(
 
 if(UNIX)
   add_definitions(
-    -DHAVE_GETIFADDRS
     -DHAVE_POLL
     -DHAVE_PWD_H
     -DHAVE_ROUTE_LIST
@@ -108,6 +107,9 @@ if(UNIX)
     -DHAVE_UNAME
     -DHAVE_SELECT_H
     )
+  if (NOT ANDROID)
+    add_definitions(-DHAVE_GETIFADDRS)
+  endif()
 endif()
 
 
@@ -425,9 +427,13 @@ if(WIN32)
 elseif(UNIX)
   list(APPEND SRCS
     src/mod/dl.c
-    src/net/ifaddrs.c
     src/net/posix/pif.c
   )
+  if (NOT ANDROID)
+    list(APPEND SRCS
+      src/net/ifaddrs.c
+    )
+  endif()
 endif()
 
 
