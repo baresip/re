@@ -409,7 +409,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 				      jb->n, jb->max);
 			err = ENOENT;
 			jb->st = JS_GOOD;
-			jb->min = jb->n + 1; /* TODO: ++jb->min */
+			++jb->min;
 			goto out;
 		}
 		break;
