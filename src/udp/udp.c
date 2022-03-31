@@ -1001,7 +1001,7 @@ void udp_flush(const struct udp_sock *us)
 	if (-1 != us->fd) {
 		uint8_t buf[4096];
 
-		while (recvfrom(us->fd, buf, sizeof(buf),
+		while (recvfrom(us->fd, BUF_CAST buf, sizeof(buf),
 				0, NULL, 0) > 0)
 			;
 	}
@@ -1009,7 +1009,7 @@ void udp_flush(const struct udp_sock *us)
 	if (-1 != us->fd6) {
 		uint8_t buf[4096];
 
-		while (recvfrom(us->fd6, buf, sizeof(buf),
+		while (recvfrom(us->fd6, BUF_CAST buf, sizeof(buf),
 				0, NULL, 0) > 0)
 			;
 	}
