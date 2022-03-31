@@ -184,6 +184,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	jb->jbtype = JBUF_FIXED;
 	jb->min  = min;
 	jb->max  = max;
+	jb->faults = JBUF_FAULT_HI / 2;
 
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
