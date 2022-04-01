@@ -7,7 +7,7 @@
 # Main version number
 VER_MAJOR := 2
 VER_MINOR := 2
-VER_PATCH := 0
+VER_PATCH := 1
 
 # Development version, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
