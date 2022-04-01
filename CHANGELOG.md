@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.1] - 2022-04-01
+
+* cmake: add packaging by @sreimers in https://github.com/baresip/re/pull/299
+* sha: add sha 256 and 512 digest length OpenSSL compats by @sreimers in https://github.com/baresip/re/pull/300
+* main: use Winsock2.h by @sreimers in https://github.com/baresip/re/pull/302
+* cmake: for Android platform dont enable ifaddrs/getifaddrs by @alfredh in https://github.com/baresip/re/pull/304
+* sa/sa_is_loopback: check full IPv4 loopback range (127.0.0.0/8) by @sreimers in https://github.com/baresip/re/pull/301
+
+---
+
 ## [v2.2.0] - 2022-03-28
 
 * tls: fix coverity defect by @alfredh in https://github.com/baresip/re/pull/270
@@ -429,7 +439,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.2.1...HEAD
+[v2.2.1]: https://github.com/baresip/re/compare/v2.2.0...v2.2.1
 [v2.2.0]: https://github.com/baresip/re/compare/v2.1.1...v2.2.0
 [v2.1.1]: https://github.com/baresip/re/compare/v2.1.0...v2.1.1
 [v2.1.0]: https://github.com/baresip/re/compare/v2.0.1...v2.1.0
