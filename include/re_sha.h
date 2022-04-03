@@ -25,3 +25,4 @@
 #endif
 
 void sha1(const uint8_t *d, size_t n, uint8_t *md);
+void sha256(const uint8_t *d, size_t n, uint8_t *md);
