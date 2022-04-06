@@ -4,11 +4,13 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
-
 struct tls;
 struct tls_conn;
 struct tcp_conn;
 struct udp_sock;
+struct ssl_ctx_st;
+
+typedef struct ssl_ctx_st SSL_CTX;
 
 
 /** Defines the TLS method */
@@ -68,11 +70,21 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 
+SSL_CTX *tls_ssl_ctx(const struct tls *tls);
+
+int tls_set_session_reuse(struct tls *tls, int enabled);
+bool tls_get_session_reuse(const struct tls_conn *tc);
+int tls_reuse_session(const struct tls_conn *tc);
+bool tls_session_reused(const struct tls_conn *tc);
+int tls_update_sessions(const struct tls_conn *tc);
+
 /* TCP */
 
 int tls_conn_change_cert(struct tls_conn *tc, const char *file);
 int tls_start_tcp(struct tls_conn **ptc, struct tls *tls,
 		  struct tcp_conn *tcp, int layer);
+
+const struct tcp_conn *tls_get_tcp_conn(const struct tls_conn *tc);
 
 
 /* UDP (DTLS) */

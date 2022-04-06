@@ -493,7 +493,7 @@ static int conn_alloc(struct tls_conn **ptc, struct tls *tls,
 #endif
 
 	/* Connect the SSL socket */
-	tc->ssl = SSL_new(tls->ctx);
+	tc->ssl = SSL_new(tls_ssl_ctx(tls));
 	if (!tc->ssl) {
 		DEBUG_WARNING("ssl new failed: %i\n",
 			      ERR_GET_REASON(ERR_get_error()));
