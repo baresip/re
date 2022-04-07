@@ -781,28 +781,6 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
 
 
 /**
- * Get the File Descriptor from a UDP Socket
- *
- * @param us  UDP Socket
- * @param af  Address Family
- *
- * @return File Descriptor, or BAD_SOCK for errors
- */
-re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
-{
-	if (!us)
-		return BAD_SOCK;
-
-	switch (af) {
-
-	default:
-	case AF_INET:  return us->fd;
-	case AF_INET6: return (us->fd6 != BAD_SOCK) ? us->fd6 : us->fd;
-	}
-}
-
-
-/**
  * Attach the current thread to the UDP Socket
  *
  * @param us UDP Socket

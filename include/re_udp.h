@@ -36,7 +36,6 @@ void udp_handler_set(struct udp_sock *us, udp_recv_h *rh, void *arg);
 void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh);
 int  udp_thread_attach(struct udp_sock *us);
 void udp_thread_detach(struct udp_sock *us);
-re_sock_t udp_sock_fd(const struct udp_sock *us, int af);
 
 int  udp_multicast_join(struct udp_sock *us, const struct sa *group);
 int  udp_multicast_leave(struct udp_sock *us, const struct sa *group);
