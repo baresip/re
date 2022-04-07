@@ -166,6 +166,10 @@ int http_client_set_cert(struct http_cli *cli, const char *path);
 int http_client_set_certpem(struct http_cli *cli, const char *pem);
 int http_client_set_key(struct http_cli *cli, const char *path);
 int http_client_set_keypem(struct http_cli *cli, const char *pem);
+
+int http_client_set_session_reuse(struct http_cli *cli, bool enabled);
+int http_client_set_tls_min_version(struct http_cli *cli, int version);
+int http_client_set_tls_max_version(struct http_cli *cli, int version);
 #endif
 
 /* Server */
