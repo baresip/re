@@ -216,6 +216,7 @@ static int dequeue(struct tcp_conn *tc)
 {
 	struct tcp_qent *qe = list_ledata(tc->sendq.head);
 	ssize_t n;
+	int err;
 #ifdef MSG_NOSIGNAL
 	const int flags = MSG_NOSIGNAL; /* disable SIGPIPE signal */
 #else
@@ -231,13 +232,14 @@ static int dequeue(struct tcp_conn *tc)
 	n = send(tc->fdc, BUF_CAST mbuf_buf(&qe->mb),
 		 SIZ_CAST (qe->mb.end - qe->mb.pos), flags);
 	if (n < 0) {
-		if (EAGAIN == errno)
+		err = ERRNO_SOCK;
+		if (err == EAGAIN)
 			return 0;
 #ifdef WIN32
-		if (WSAEWOULDBLOCK == WSAGetLastError())
+		if (err == WSAEWOULDBLOCK)
 			return 0;
 #endif
-		return errno;
+		return err;
 	}
 
 	tc->txqsz  -= n;
@@ -284,7 +286,7 @@ static void tcp_recv_handler(int flags, void *arg)
 	/* check for any errors */
 	if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
 			     BUF_CAST &err, &err_len)) {
-		DEBUG_WARNING("recv handler: getsockopt: (%m)\n", errno);
+		DEBUG_WARNING("recv handler: getsockopt: (%m)\n", ERRNO_SOCK);
 		return;
 	}
 
@@ -377,16 +379,14 @@ static void tcp_recv_handler(int flags, void *arg)
 		return;
 	}
 	else if (n < 0) {
+		err = ERRNO_SOCK;
+		DEBUG_WARNING("recv handler: recv(): %m\n", err);
 #ifdef WIN32
-		err = WSAGetLastError();
-		DEBUG_WARNING("recv handler: recv(): %d\n", err);
 		if (err == WSAECONNRESET || err == WSAECONNABORTED) {
 			mem_deref(mb);
 			conn_close(tc, err);
 			return;
 		}
-#else
-		DEBUG_WARNING("recv handler: recv(): %m\n", errno);
 #endif
 		goto out;
 	}
@@ -1146,21 +1146,17 @@ static int tcp_send_internal(struct tcp_conn *tc, struct mbuf *mb,
 	n = send(tc->fdc, BUF_CAST mbuf_buf(mb),
 		 SIZ_CAST (mb->end - mb->pos), flags);
 	if (n < 0) {
+		err = ERRNO_SOCK;
 
-		if (EAGAIN == errno)
+		if (err == EAGAIN)
 			return enqueue(tc, mb);
 
 #ifdef WIN32
-		if (WSAEWOULDBLOCK == WSAGetLastError())
+		if (err == WSAEWOULDBLOCK)
 			return enqueue(tc, mb);
 #endif
-		err = errno;
 
 		DEBUG_WARNING("send: write(): %m (fdc=%d)\n", err, tc->fdc);
-
-#ifdef WIN32
-		DEBUG_WARNING("WIN32 error: %d\n", WSAGetLastError());
-#endif
 
 		return err;
 	}
