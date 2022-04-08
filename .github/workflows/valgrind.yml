@@ -1,4 +1,4 @@
-name: valgrind leak check
+name: valgrind/helgrind check
 
 on: [push, pull_request]
 
@@ -11,7 +11,8 @@ jobs:
 
     - name: install packages
       run: |
-        sudo apt-get update && sudo apt-get install -y libssl-dev valgrind
+        sudo apt-get update && sudo apt-get install -y libssl-dev libc6-dbg
+        sudo snap install --classic valgrind
 
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
@@ -39,3 +40,4 @@ jobs:
         cd retest
         make
         valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./retest -r
+        valgrind --tool=helgrind --error-exitcode=42 ./retest -t
