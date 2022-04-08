@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 #ifdef WIN32
-#include <winsock.h>
+#include <winsock2.h>
 #endif
 #ifdef HAVE_SIGNAL
 #include <signal.h>

@@ -12,6 +12,31 @@
 
 
 /**
+ * Decode an SDP direction
+ *
+ * @param pl  SDP direction as string
+ *
+ * @return sdp_dir SDP direction, SDP_SENDRECV as fallback
+ */
+enum sdp_dir sdp_dir_decode(const struct pl *pl)
+{
+       if (!pl_strcmp(pl, "off")) {
+               return SDP_INACTIVE;
+       }
+       else if (!pl_strcmp(pl, "inactive")) {
+               return SDP_INACTIVE;
+       }
+       else if (!pl_strcmp(pl, "sendonly")) {
+               return  SDP_SENDONLY;
+       }
+       else if (!pl_strcmp(pl, "recvonly")) {
+               return SDP_RECVONLY;
+       }
+
+       return SDP_SENDRECV;
+}
+
+/**
  * Decode RTP Header Extension SDP attribute value
  *
  * @param ext Extension-map object

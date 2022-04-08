@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.1] - 2022-04-01
+
+* cmake: add packaging by @sreimers in https://github.com/baresip/re/pull/299
+* sha: add sha 256 and 512 digest length OpenSSL compats by @sreimers in https://github.com/baresip/re/pull/300
+* main: use Winsock2.h by @sreimers in https://github.com/baresip/re/pull/302
+* cmake: for Android platform dont enable ifaddrs/getifaddrs by @alfredh in https://github.com/baresip/re/pull/304
+* sa/sa_is_loopback: check full IPv4 loopback range (127.0.0.0/8) by @sreimers in https://github.com/baresip/re/pull/301
+
+---
+
+## [v2.2.0] - 2022-03-28
+
+* tls: fix coverity defect by @alfredh in https://github.com/baresip/re/pull/270
+* http/client: read_file check ftell return value by @sreimers in https://github.com/baresip/re/pull/272
+* udp: fix coverity defect by @alfredh in https://github.com/baresip/re/pull/271
+* cmake: add detection of HAVE_ARC4RANDOM by @alfredh in https://github.com/baresip/re/pull/269
+* Fix coverity issues by @sreimers in https://github.com/baresip/re/pull/273
+* Support adding CRLs by @fAuernigg in https://github.com/baresip/re/pull/274
+* json/decode: fix possible out of bound access, if code changes by @sreimers in https://github.com/baresip/re/pull/275
+* tls/tls_add_crlpem: use const by @sreimers in https://github.com/baresip/re/pull/276
+* udp: fix coverity defect by @alfredh in https://github.com/baresip/re/pull/279
+* dns: fix Coverity Defect by @alfredh in https://github.com/baresip/re/pull/278
+* tls: use const pointer for tls_add_capem() by @cspiel1 in https://github.com/baresip/re/pull/277
+* srtp/srtcp: add sanity check for rtcp->tag_len by @sreimers in https://github.com/baresip/re/pull/280
+* shim: new module from rew by @alfredh in https://github.com/baresip/re/pull/282
+* Trice module by @alfredh in https://github.com/baresip/re/pull/283
+* retest trice by @alfredh in https://github.com/baresip/re/pull/284
+* Add try_into conversion helper and drop gcc 4.8 support by @sreimers in https://github.com/baresip/re/pull/286
+* rtp: fix signed/unsigned warning on WIN32 by @alfredh in https://github.com/baresip/re/pull/287
+* fix build error on openbsd arm64 (raspberry pi) by @jimying in https://github.com/baresip/re/pull/290
+* cmake: disable C extensions (like make) by @sreimers in https://github.com/baresip/re/pull/292
+* fmt: add bool decode from struct pl by @cspiel1 in https://github.com/baresip/re/pull/293
+* sdp: a utility function for decoding SDP direction by @cspiel1 in https://github.com/baresip/re/pull/294
+* sa/sa_ntop: check inet_ntop() return value by @sreimers in https://github.com/baresip/re/pull/295
+* sa_pton: use sa_addrinfo for interface suffix by @alfredh in https://github.com/baresip/re/pull/297
+
+### New Contributors
+* @jimying made their first contribution in https://github.com/baresip/re/pull/290
+
+---
+
 ## [v2.1.1] - 2022-03-12
 
 ### Fixes
@@ -398,7 +439,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.2.1...HEAD
+[v2.2.1]: https://github.com/baresip/re/compare/v2.2.0...v2.2.1
+[v2.2.0]: https://github.com/baresip/re/compare/v2.1.1...v2.2.0
 [v2.1.1]: https://github.com/baresip/re/compare/v2.1.0...v2.1.1
 [v2.1.0]: https://github.com/baresip/re/compare/v2.0.1...v2.1.0
 [v2.0.1]: https://github.com/baresip/re/compare/v2.0.0...v2.0.1

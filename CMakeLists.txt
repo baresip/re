@@ -12,11 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.1.1 LANGUAGES C)
+project(re VERSION 2.2.1 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
 # set(PROJECT_VERSION_PRE dev)
+
+set(PROJECT_SOVERSION 3) # bump if ABI breaks
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -29,6 +31,7 @@ endif()
 #
 # Module/Package Includes
 #
+include(GNUInstallDirs)
 include(CheckIncludeFile)
 find_package(Backtrace)
 find_package(Threads)
@@ -52,6 +55,7 @@ option(USE_SIP "Enable SIP" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
 
 if(NOT MSVC)
   add_compile_options(
@@ -93,7 +97,6 @@ add_definitions(
 
 if(UNIX)
   add_definitions(
-    -DHAVE_GETIFADDRS
     -DHAVE_POLL
     -DHAVE_PWD_H
     -DHAVE_ROUTE_LIST
@@ -102,7 +105,11 @@ if(UNIX)
     -DHAVE_STRINGS_H
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
+    -DHAVE_SELECT_H
     )
+  if(NOT ANDROID)
+    add_definitions(-DHAVE_GETIFADDRS)
+  endif()
 endif()
 
 
@@ -146,8 +153,10 @@ add_definitions(
 
 ##############################################################################
 #
-# Source section
+# Source/Header section
 #
+
+file(GLOB RE_INCLUDE_FILES "include/*.h")
 
 set(SRCS
 
@@ -418,9 +427,13 @@ if(WIN32)
 elseif(UNIX)
   list(APPEND SRCS
     src/mod/dl.c
-    src/net/ifaddrs.c
     src/net/posix/pif.c
   )
+  if(NOT ANDROID)
+    list(APPEND SRCS
+      src/net/ifaddrs.c
+    )
+  endif()
 endif()
 
 
@@ -496,9 +509,9 @@ else()
   )
 endif()
 
-set_target_properties(re-shared PROPERTIES PUBLIC_HEADER include/re.h)
+set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
 
@@ -519,7 +532,29 @@ target_link_libraries(re-static
   PRIVATE -L/opt/local/lib
 )
 
-set_target_properties(re-static PROPERTIES PUBLIC_HEADER include/re.h)
+set_target_properties(re-static PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 if(NOT MSVC)
 set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
+endif()
+
+
+##############################################################################
+#
+# Install section
+#
+
+install(TARGETS re-shared re-static
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+)
+
+
+##############################################################################
+#
+# Packaging section
+#
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  add_subdirectory(packaging)
 endif()

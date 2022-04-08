@@ -313,6 +313,43 @@ double pl_float(const struct pl *pl)
 
 
 /**
+ * Decode a bool from a pointer-length object
+ *
+ * @param val Pointer to bool for returned value
+ * @param pl  Pointer-length object
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+
+int pl_bool(bool *val, const struct pl *pl)
+{
+	const char *tval[] = {"1", "true",  "enable",  "yes", "on"};
+	const char *fval[] = {"0", "false", "disable", "no",  "off"};
+	int err = EINVAL;
+	size_t i;
+
+	if (!val || !pl)
+		return EINVAL;
+
+	for (i = 0; i < ARRAY_SIZE(tval); ++i) {
+		if (!pl_strcasecmp(pl, tval[i])) {
+			*val = true;
+			err = 0;
+		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(fval); ++i) {
+		if (!pl_strcasecmp(pl, fval[i])) {
+			*val = false;
+			err = 0;
+		}
+	}
+
+	return err;
+}
+
+
+/**
  * Check if pointer-length object is set
  *
  * @param pl Pointer-length object

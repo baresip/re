@@ -17,6 +17,7 @@
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_net.h>
 #include <re_list.h>
 #include <re_sa.h>
 
@@ -108,7 +109,7 @@ int sa_pton(const char *addr, struct sa *sa)
 		sa->u.in.sin_family = AF_INET;
 	}
 #ifdef HAVE_INET6
-	else if (!strncmp(addr, "fe80:", 5)) {
+	else if (!strncmp(addr, "fe80:", 5) && strrchr(addr, '%')) {
 		err = sa_addrinfo(addr, sa);
 	}
 	else if (inet_pton(AF_INET6, addr, &sa->u.in6.sin6_addr) > 0) {
@@ -400,24 +401,29 @@ void sa_in6(const struct sa *sa, uint8_t *addr)
  */
 int sa_ntop(const struct sa *sa, char *buf, int size)
 {
+	const char *ret;
+
 	if (!sa || !buf || !size)
 		return EINVAL;
 
 	switch (sa->u.sa.sa_family) {
 
 	case AF_INET:
-		inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
+		ret = inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
 		break;
 
 #ifdef HAVE_INET6
 	case AF_INET6:
-		inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
+		ret = inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
 		break;
 #endif
 
 	default:
 		return EAFNOSUPPORT;
 	}
+
+	if (!ret)
+		return ERRNO_SOCK;
 
 	return 0;
 }
@@ -638,7 +644,7 @@ bool sa_is_linklocal(const struct sa *sa)
 
 
 /**
- * Check if socket address is a loopback address
+ * Check if socket address is a loopback address (127.0.0.0/8 or ::1/128)
  *
  * @param sa Socket address
  *
@@ -652,7 +658,8 @@ bool sa_is_loopback(const struct sa *sa)
 	switch (sa_af(sa)) {
 
 	case AF_INET:
-		return INADDR_LOOPBACK == ntohl(sa->u.in.sin_addr.s_addr);
+		return (ntohl(sa->u.in.sin_addr.s_addr) & 0xff000000) ==
+		       0x7f000000;
 
 #ifdef HAVE_INET6
 	case AF_INET6:
