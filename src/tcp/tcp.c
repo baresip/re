@@ -496,13 +496,13 @@ static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
 	if (!ts)
 		return EINVAL;
 
-	if (BAD_SOCK != ts->fdc) {
+	if (ts->fdc != BAD_SOCK) {
 		if (0 != setsockopt(ts->fdc, level, optname,
 				    BUF_CAST optval, optlen))
 			err |= ERRNO_SOCK;
 	}
 
-	if (BAD_SOCK != ts->fd) {
+	if (ts->fd != BAD_SOCK) {
 		if (0 != setsockopt(ts->fd, level, optname,
 				    BUF_CAST optval, optlen))
 			err |= ERRNO_SOCK;
@@ -917,7 +917,7 @@ int tcp_conn_alloc(struct tcp_conn **tcp,
 
 		tc->fdc = socket(r->ai_family, SOCK_STREAM,
 					  IPPROTO_TCP);
-		if (BAD_SOCK == tc->fdc) {
+		if (tc->fdc == BAD_SOCK) {
 			err = ERRNO_SOCK;
 			continue;
 		}
@@ -1042,7 +1042,7 @@ int tcp_conn_connect(struct tcp_conn *tc, const struct sa *peer)
 
 	tc->active = true;
 
-	if (BAD_SOCK == tc->fdc) {
+	if (tc->fdc == BAD_SOCK) {
 		DEBUG_WARNING("invalid fd\n");
 		return EBADF;
 	}
