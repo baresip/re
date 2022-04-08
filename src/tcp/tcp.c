@@ -135,11 +135,11 @@ static void sock_destructor(void *data)
 {
 	struct tcp_sock *ts = data;
 
-	if (ts->fd >= 0) {
+	if (ts->fd != BAD_SOCK) {
 		fd_close(ts->fd);
 		(void)close(ts->fd);
 	}
-	if (ts->fdc >= 0)
+	if (ts->fdc != BAD_SOCK)
 		(void)close(ts->fdc);
 }
 
@@ -151,7 +151,7 @@ static void conn_destructor(void *data)
 	list_flush(&tc->helpers);
 	list_flush(&tc->sendq);
 
-	if (tc->fdc >= 0) {
+	if (tc->fdc != BAD_SOCK) {
 		fd_close(tc->fdc);
 		(void)close(tc->fdc);
 	}
@@ -256,7 +256,7 @@ static void conn_close(struct tcp_conn *tc, int err)
 	tc->txqsz = 0;
 
 	/* Stop polling */
-	if (tc->fdc >= 0) {
+	if (tc->fdc != BAD_SOCK) {
 		fd_close(tc->fdc);
 		(void)close(tc->fdc);
 		tc->fdc = BAD_SOCK;
