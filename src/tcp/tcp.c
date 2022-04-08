@@ -1364,19 +1364,6 @@ void tcp_conn_txqsz_set(struct tcp_conn *tc, size_t txqsz)
 
 
 /**
- * Get the file descriptor of a TCP Connection
- *
- * @param tc TCP-Connection
- *
- * @return File destriptor, or -1 if errors
- */
-int tcp_conn_fd(const struct tcp_conn *tc)
-{
-	return tc ? tc->fdc : -1;
-}
-
-
-/**
  * Get the current length of the transmit queue on a TCP Connection
  *
  * @param tc TCP-Connection
