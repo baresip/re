@@ -523,7 +523,7 @@ set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re-static
+  target_link_libraries(re
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
@@ -533,6 +533,7 @@ target_link_libraries(re
 )
 
 set_target_properties(re PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
+
 if(MSVC)
 set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
 endif()
