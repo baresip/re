@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.2] - 2022-04-09
+
+* sha256: add wrapper by @alfredh in https://github.com/baresip/re/pull/306
+* workflow: upgrade to openssl 3.0.2 by @alfredh in https://github.com/baresip/re/pull/305
+* aubuf adaptive jitter buffer by @cspiel1 in https://github.com/baresip/re/pull/303
+* Improve WIN32 UDP socket handling by @sreimers in https://github.com/baresip/re/pull/296
+* tcp: remove tcp_conn_fd by @alfredh in https://github.com/baresip/re/pull/308
+* tcp: improve win32 socket and error handling by @sreimers in https://github.com/baresip/re/pull/309
+
+---
+
 ## [v2.2.1] - 2022-04-01
 
 * cmake: add packaging by @sreimers in https://github.com/baresip/re/pull/299
@@ -439,7 +450,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.2.2...HEAD
+[v2.2.2]: https://github.com/baresip/re/compare/v2.2.1...v2.2.2
 [v2.2.1]: https://github.com/baresip/re/compare/v2.2.0...v2.2.1
 [v2.2.0]: https://github.com/baresip/re/compare/v2.1.1...v2.2.0
 [v2.1.1]: https://github.com/baresip/re/compare/v2.1.0...v2.1.1
