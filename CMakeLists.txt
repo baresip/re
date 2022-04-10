@@ -509,7 +509,6 @@ else()
   )
 endif()
 
-set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
