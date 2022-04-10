@@ -470,12 +470,12 @@ endif()
 # Main target object
 #
 
-add_library(re OBJECT ${SRCS})
+add_library(re-objs OBJECT ${SRCS})
 
-set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories(re PRIVATE .)
-target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
+target_include_directories(re-objs PRIVATE .)
+target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 
 ##############################################################################
@@ -483,7 +483,7 @@ target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
 # Shared target libre.[so|dll|dylib]
 #
 
-add_library(re-shared SHARED $<TARGET_OBJECTS:re>)
+add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_link_libraries(re-shared
@@ -520,21 +520,22 @@ set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 # Static target libre.a
 #
 
-add_library(re-static STATIC $<TARGET_OBJECTS:re>)
+add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re-static
+  target_link_libraries(re
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
-target_link_libraries(re-static
+target_link_libraries(re
   PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
 
-set_target_properties(re-static PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
-if(NOT MSVC)
-set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
+set_target_properties(re PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
+
+if(MSVC)
+set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
 endif()
 
 
@@ -543,7 +544,7 @@ endif()
 # Install section
 #
 
-install(TARGETS re-shared re-static
+install(TARGETS re-shared re
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
