@@ -91,7 +91,7 @@ int32_t pl_i32(const struct pl *pl)
 		}
 	}
 
-	return neg ? -(uint32_t)v : v;
+	return neg ? -v : v;
 }
 
 
@@ -132,7 +132,7 @@ int64_t pl_i64(const struct pl *pl)
 		}
 	}
 
-	return neg ? -(uint64_t)v : v;
+	return neg ? -v : v;
 }
 
 
