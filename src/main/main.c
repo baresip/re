@@ -584,7 +584,7 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 {
 	struct re *re = re_get();
 	int err = 0;
-	re_sock_t i = fd;
+	int i = fd;
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
