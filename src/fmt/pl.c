@@ -63,7 +63,7 @@ void pl_set_mbuf(struct pl *pl, const struct mbuf *mb)
  */
 int32_t pl_i32(const struct pl *pl)
 {
-	int32_t v = 0;
+	uint32_t v = 0;
 	uint32_t mul = 1;
 	const char *p;
 	bool neg = false;
@@ -104,7 +104,7 @@ int32_t pl_i32(const struct pl *pl)
  */
 int64_t pl_i64(const struct pl *pl)
 {
-	int64_t v = 0;
+	uint64_t v = 0;
 	uint64_t mul = 1;
 	const char *p;
 	bool neg = false;
