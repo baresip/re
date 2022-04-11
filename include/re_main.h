@@ -32,8 +32,8 @@ typedef void (fd_h)(int flags, void *arg);
 typedef void (re_signal_h)(int sig);
 
 
-int   fd_listen(int fd, int flags, fd_h *fh, void *arg);
-void  fd_close(int fd);
+int   fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg);
+void  fd_close(re_sock_t fd);
 int   fd_setsize(int maxfds);
 void  fd_debug(void);
 

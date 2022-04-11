@@ -36,6 +36,7 @@
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_net.h>
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_list.h>
@@ -66,7 +67,7 @@ enum {
 
 /** File descriptor handler struct */
 struct fhs {
-	int fd;              /**< File Descriptor                   */
+	re_sock_t fd;        /**< File Descriptor                   */
 	int flags;           /**< Polling flags (Read, Write, etc.) */
 	fd_h* fh;            /**< Event handler                     */
 	void* arg;           /**< Handler argument                  */
@@ -214,7 +215,7 @@ static struct re *re_get(void)
  *
  * @return fhs index if success, otherwise -1
  */
-static int lookup_fd_index(struct re* re, int fd) {
+static int lookup_fd_index(struct re* re, re_sock_t fd) {
 	int i;
 
 	for (i = 0; i < re->nfds; i++) {
@@ -266,7 +267,7 @@ static void fd_handler(struct re *re, int i, int flags)
 
 
 #ifdef HAVE_POLL
-static int set_poll_fds(struct re *re, int fd, int flags)
+static int set_poll_fds(struct re *re, re_sock_t fd, int flags)
 {
 	if (!re->fds)
 		return 0;
@@ -290,7 +291,7 @@ static int set_poll_fds(struct re *re, int fd, int flags)
 
 
 #ifdef HAVE_EPOLL
-static int set_epoll_fds(struct re *re, int fd, int flags)
+static int set_epoll_fds(struct re *re, re_sock_t fd, int flags)
 {
 	struct epoll_event event;
 	int err = 0;
@@ -349,7 +350,7 @@ static int set_epoll_fds(struct re *re, int fd, int flags)
 
 
 #ifdef HAVE_KQUEUE
-static int set_kqueue_fds(struct re *re, int fd, int flags)
+static int set_kqueue_fds(struct re *re, re_sock_t fd, int flags)
 {
 	struct kevent kev[2];
 	int r, n = 0;
@@ -579,15 +580,15 @@ static int poll_setup(struct re *re)
  *
  * @return 0 if success, otherwise errorcode
  */
-int fd_listen(int fd, int flags, fd_h *fh, void *arg)
+int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 {
 	struct re *re = re_get();
 	int err = 0;
-	int i = fd;
+	re_sock_t i = fd;
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
-	if (fd < 0) {
+	if (fd == BAD_SOCK) {
 		DEBUG_WARNING("fd_listen: corrupt fd %d\n", fd);
 		return EBADF;
 	}
@@ -669,7 +670,7 @@ int fd_listen(int fd, int flags, fd_h *fh, void *arg)
  *
  * @param fd     File descriptor
  */
-void fd_close(int fd)
+void fd_close(re_sock_t fd)
 {
 	(void)fd_listen(fd, 0, NULL, NULL);
 }
@@ -712,7 +713,7 @@ static int fd_poll(struct re *re)
 		FD_ZERO(&efds);
 
 		for (i=0; i<re->nfds; i++) {
-			int fd = re->fhs[i].fd;
+			re_sock_t fd = re->fhs[i].fd;
 			if (!re->fhs[i].fh)
 				continue;
 
@@ -766,17 +767,12 @@ static int fd_poll(struct re *re)
 		return EINVAL;
 	}
 
-#ifdef WIN32
-	if (n == SOCKET_ERROR) {
-		return WSAGetLastError();
-	}
-#else
 	if (n < 0)
-		return errno;
-#endif
+		return ERRNO_SOCK;
+
 	/* Check for events */
 	for (i=0; (n > 0) && (i < re->nfds); i++) {
-		int fd, flags = 0;
+		re_sock_t fd, flags = 0;
 
 		switch (re->method) {
 

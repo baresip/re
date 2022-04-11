@@ -6,6 +6,7 @@
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mbuf.h>
+#include <re_net.h>
 #include <re_main.h>
 #include "main.h"
 

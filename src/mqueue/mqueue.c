@@ -9,8 +9,8 @@
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
-#include <re_main.h>
 #include <re_net.h>
+#include <re_main.h>
 #include <re_mqueue.h>
 #include "mqueue.h"
 
@@ -33,7 +33,7 @@
  * incoming messages from other threads. The sender thread can be any thread.
  */
 struct mqueue {
-	int pfd[2];
+	re_sock_t pfd[2];
 	mqueue_h *h;
 	void *arg;
 };
