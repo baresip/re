@@ -584,7 +584,7 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 {
 	struct re *re = re_get();
 	int err = 0;
-	int i = fd;
+	int i;
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
@@ -606,6 +606,8 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 		DEBUG_WARNING("fd_listen: fd=%d - no free fd_index\n", fd);
 		return EMFILE;
 	}
+#else
+	i = fd;
 #endif
 
 	if (i >= re->maxfds) {

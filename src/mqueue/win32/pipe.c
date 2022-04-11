@@ -61,7 +61,7 @@ error:
 }
 
 
-ssize_t pipe_read(int s, void *buf, size_t len)
+ssize_t pipe_read(re_sock_t s, void *buf, size_t len)
 {
 	int ret = recv(s, buf, (int)len, 0);
 
@@ -72,7 +72,7 @@ ssize_t pipe_read(int s, void *buf, size_t len)
 }
 
 
-ssize_t pipe_write(int s, const void *buf, size_t len)
+ssize_t pipe_write(re_sock_t s, const void *buf, size_t len)
 {
 	return send(s, buf, (int)len, 0);
 }
