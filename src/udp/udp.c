@@ -147,7 +147,7 @@ static void udp_destructor(void *data)
 }
 
 
-static void udp_read(struct udp_sock *us, int fd)
+static void udp_read(struct udp_sock *us, re_sock_t fd)
 {
 	struct mbuf *mb = mbuf_alloc(us->rxsz);
 	struct sa src;
