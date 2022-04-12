@@ -124,7 +124,7 @@ const struct sa *sdp_session_laddr(struct sdp_session *sess)
 void sdp_session_set_lbandwidth(struct sdp_session *sess,
 				enum sdp_bandwidth type, int32_t bw)
 {
-	if (!sess || type >= SDP_BANDWIDTH_MAX)
+	if (!sess || type < SDP_BANDWIDTH_MIN || type >= SDP_BANDWIDTH_MAX)
 		return;
 
 	sess->lbwv[type] = bw;
@@ -187,7 +187,7 @@ void sdp_session_del_lattr(struct sdp_session *sess, const char *name)
 int32_t sdp_session_lbandwidth(const struct sdp_session *sess,
 			       enum sdp_bandwidth type)
 {
-	if (!sess || type >= SDP_BANDWIDTH_MAX)
+	if (!sess || type < SDP_BANDWIDTH_MIN || type >= SDP_BANDWIDTH_MAX)
 		return 0;
 
 	return sess->lbwv[type];
@@ -205,7 +205,7 @@ int32_t sdp_session_lbandwidth(const struct sdp_session *sess,
 int32_t sdp_session_rbandwidth(const struct sdp_session *sess,
 				enum sdp_bandwidth type)
 {
-	if (!sess || type >= SDP_BANDWIDTH_MAX)
+	if (!sess || type < SDP_BANDWIDTH_MIN || type >= SDP_BANDWIDTH_MAX)
 		return 0;
 
 	return sess->rbwv[type];
