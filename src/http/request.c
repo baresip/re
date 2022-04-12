@@ -224,7 +224,7 @@ static void resp_handler(int err, const struct http_msg *msg, void *arg)
 
 	if (pl_isset(&digest.nonce))
 		err = make_digest_mb(abuf, &digest, conn);
-	else if (pl_isset(&basic->realm))
+	else if (basic && pl_isset(&basic->realm))
 		err = make_basic_mb(abuf, conn);
 	else
 		err = EBADMSG;
