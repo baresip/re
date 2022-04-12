@@ -5,13 +5,15 @@
  */
 #include <winsock2.h>
 #include <re_types.h>
+#include <re_fmt.h>
+#include <re_net.h>
 #include "../mqueue.h"
 
 
 /*
  * Emulate pipe on Windows -- pipe() with select() is not working
  */
-int pipe(int fds[2])
+int pipe(re_sock_t fds[2])
 {
 	SOCKET s, rd, wr;
 	struct sockaddr_in serv_addr;
@@ -47,8 +49,8 @@ int pipe(int fds[2])
 		goto error;
 	}
 
-	fds[0] = (int)rd;
-	fds[1] = (int)wr;
+	fds[0] = rd;
+	fds[1] = wr;
 
 	closesocket(s);
 	return 0;
@@ -59,7 +61,7 @@ error:
 }
 
 
-ssize_t pipe_read(int s, void *buf, size_t len)
+ssize_t pipe_read(re_sock_t s, void *buf, size_t len)
 {
 	int ret = recv(s, buf, (int)len, 0);
 
@@ -70,7 +72,7 @@ ssize_t pipe_read(int s, void *buf, size_t len)
 }
 
 
-ssize_t pipe_write(int s, const void *buf, size_t len)
+ssize_t pipe_write(re_sock_t s, const void *buf, size_t len)
 {
 	return send(s, buf, (int)len, 0);
 }
