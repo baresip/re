@@ -476,7 +476,7 @@ void sdp_media_set_laddr(struct sdp_media *m, const struct sa *laddr)
 void sdp_media_set_lbandwidth(struct sdp_media *m, enum sdp_bandwidth type,
 			      int32_t bw)
 {
-	if (!m || type >= SDP_BANDWIDTH_MAX)
+	if (!m || type < SDP_BANDWIDTH_MIN || type >= SDP_BANDWIDTH_MAX)
 		return;
 
 	m->lbwv[type] = bw;
@@ -656,7 +656,7 @@ void sdp_media_raddr_rtcp(const struct sdp_media *m, struct sa *raddr)
 int32_t sdp_media_rbandwidth(const struct sdp_media *m,
 			      enum sdp_bandwidth type)
 {
-	if (!m || type >= SDP_BANDWIDTH_MAX)
+	if (!m || type < SDP_BANDWIDTH_MIN || type >= SDP_BANDWIDTH_MAX)
 		return 0;
 
 	return m->rbwv[type];
