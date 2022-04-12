@@ -774,7 +774,8 @@ static int fd_poll(struct re *re)
 
 	/* Check for events */
 	for (i=0; (n > 0) && (i < re->nfds); i++) {
-		re_sock_t fd, flags = 0;
+		re_sock_t fd;
+		int flags = 0;
 
 		switch (re->method) {
 
