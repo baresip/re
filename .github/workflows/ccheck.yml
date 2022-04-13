@@ -15,5 +15,5 @@ jobs:
         python3 ccheck.py
     - name: CMakeLint
       run: |
-        pip install cmakelint 
-        ~/.local/bin/cmakelint
+        pip install cmakelint
+        find . -name "CMakeLists.txt" -exec ~/.local/bin/cmakelint {} +
