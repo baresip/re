@@ -70,6 +70,8 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 
+int tls_set_min_proto_version(struct tls *tls, int version);
+int tls_set_max_proto_version(struct tls *tls, int version);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
 
 int tls_set_session_reuse(struct tls *tls, int enabled);
