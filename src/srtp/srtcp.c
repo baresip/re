@@ -71,7 +71,7 @@ int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb)
 		union vect128 iv;
 		uint8_t *p = mbuf_buf(mb);
 		uint8_t tag[GCM_TAGLEN];
-		const uint32_t ix_be = htonl(1<<31 | strm->rtcp_index);
+		const uint32_t ix_be = htonl(1L<<31 | strm->rtcp_index);
 
 		srtp_iv_calc_gcm(&iv, &rtcp->k_s, ssrc, strm->rtcp_index);
 

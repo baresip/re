@@ -12,13 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.2.1 LANGUAGES C)
+project(re VERSION 2.2.2 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
 # set(PROJECT_VERSION_PRE dev)
 
-set(PROJECT_SOVERSION 3) # bump if ABI breaks
+set(PROJECT_SOVERSION 4) # bump if ABI breaks
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -49,6 +49,7 @@ endif()
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_BFCP "Enable BFCP" ON)
+option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
@@ -156,7 +157,63 @@ add_definitions(
 # Source/Header section
 #
 
-file(GLOB RE_INCLUDE_FILES "include/*.h")
+set(HEADERS
+  include/re_aes.h
+  include/re_atomic.h
+  include/re_base64.h
+  include/re_bfcp.h
+  include/re_bitv.h
+  include/re_btrace.h
+  include/re_conf.h
+  include/re_convert.h
+  include/re_crc32.h
+  include/re_dbg.h
+  include/re_dns.h
+  include/re_fmt.h
+  include/re.h
+  include/re_hash.h
+  include/re_hmac.h
+  include/re_httpauth.h
+  include/re_http.h
+  include/re_ice.h
+  include/re_jbuf.h
+  include/re_json.h
+  include/re_list.h
+  include/re_lock.h
+  include/re_main.h
+  include/re_mbuf.h
+  include/re_md5.h
+  include/re_mem.h
+  include/re_mod.h
+  include/re_mqueue.h
+  include/re_msg.h
+  include/re_net.h
+  include/re_odict.h
+  include/re_rtmp.h
+  include/re_rtp.h
+  include/re_sa.h
+  include/re_sdp.h
+  include/re_sha.h
+  include/re_shim.h
+  include/re_sipevent.h
+  include/re_sip.h
+  include/re_sipreg.h
+  include/re_sipsess.h
+  include/re_srtp.h
+  include/re_stun.h
+  include/re_sys.h
+  include/re_tcp.h
+  include/re_telev.h
+  include/re_tls.h
+  include/re_tmr.h
+  include/re_trace.h
+  include/re_trice.h
+  include/re_turn.h
+  include/re_types.h
+  include/re_udp.h
+  include/re_uri.h
+  include/re_websock.h
+)
 
 set(SRCS
 
@@ -350,6 +407,18 @@ if(USE_BFCP)
 endif()
 
 
+if(USE_PCP)
+  list(APPEND SRCS
+    src/pcp/msg.c
+    src/pcp/option.c
+    src/pcp/payload.c
+    src/pcp/pcp.c
+    src/pcp/reply.c
+    src/pcp/request.c
+  )
+endif()
+
+
 if(USE_RTMP)
   list(APPEND SRCS
     src/rtmp/amf.c
@@ -470,12 +539,12 @@ endif()
 # Main target object
 #
 
-add_library(re OBJECT ${SRCS})
+add_library(re-objs OBJECT ${SRCS} ${HEADERS})
 
-set_target_properties(re PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories(re PRIVATE .)
-target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
+target_include_directories(re-objs PRIVATE .)
+target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 
 ##############################################################################
@@ -483,7 +552,7 @@ target_include_directories(re PRIVATE include ${OPENSSL_INCLUDE_DIR})
 # Shared target libre.[so|dll|dylib]
 #
 
-add_library(re-shared SHARED $<TARGET_OBJECTS:re>)
+add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_link_libraries(re-shared
@@ -509,7 +578,6 @@ else()
   )
 endif()
 
-set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
@@ -520,21 +588,22 @@ set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 # Static target libre.a
 #
 
-add_library(re-static STATIC $<TARGET_OBJECTS:re>)
+add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re-static
+  target_link_libraries(re
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
-target_link_libraries(re-static
+target_link_libraries(re
   PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
 
-set_target_properties(re-static PROPERTIES PUBLIC_HEADER "${RE_INCLUDE_FILES}")
-if(NOT MSVC)
-set_target_properties(re-static PROPERTIES OUTPUT_NAME "re")
+set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
+if(MSVC)
+set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
 endif()
 
 
@@ -543,7 +612,7 @@ endif()
 # Install section
 #
 
-install(TARGETS re-shared re-static
+install(TARGETS re-shared re
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re

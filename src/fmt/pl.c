@@ -76,7 +76,7 @@ int32_t pl_i32(const struct pl *pl)
 		const char ch = *--p;
 
 		if ('0' <= ch && ch <= '9') {
-			v += mul * (ch - '0');
+			v -= mul * (ch - '0');
 			mul *= 10;
 		}
 		else if (ch == '-' && p == pl->p) {
@@ -91,7 +91,10 @@ int32_t pl_i32(const struct pl *pl)
 		}
 	}
 
-	return neg ? -v : v;
+	if (!neg && v == INT32_MIN)
+		return INT32_MIN;
+
+	return neg ? v : -v;
 }
 
 
@@ -117,7 +120,7 @@ int64_t pl_i64(const struct pl *pl)
 		const char ch = *--p;
 
 		if ('0' <= ch && ch <= '9') {
-			v += mul * (ch - '0');
+			v -= mul * (ch - '0');
 			mul *= 10;
 		}
 		else if (ch == '-' && p == pl->p) {
@@ -132,7 +135,10 @@ int64_t pl_i64(const struct pl *pl)
 		}
 	}
 
-	return neg ? -v : v;
+	if (!neg && v == INT64_MIN)
+		return INT64_MIN;
+
+	return neg ? v : -v;
 }
 
 

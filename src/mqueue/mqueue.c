@@ -9,8 +9,8 @@
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
-#include <re_main.h>
 #include <re_net.h>
+#include <re_main.h>
 #include <re_mqueue.h>
 #include "mqueue.h"
 
@@ -33,7 +33,7 @@
  * incoming messages from other threads. The sender thread can be any thread.
  */
 struct mqueue {
-	int pfd[2];
+	re_sock_t pfd[2];
 	mqueue_h *h;
 	void *arg;
 };
@@ -49,11 +49,11 @@ static void destructor(void *arg)
 {
 	struct mqueue *q = arg;
 
-	if (q->pfd[0] >= 0) {
+	if (q->pfd[0] != BAD_SOCK) {
 		fd_close(q->pfd[0]);
 		(void)close(q->pfd[0]);
 	}
-	if (q->pfd[1] >= 0)
+	if (q->pfd[1] != BAD_SOCK)
 		(void)close(q->pfd[1]);
 }
 
@@ -111,9 +111,9 @@ int mqueue_alloc(struct mqueue **mqp, mqueue_h *h, void *arg)
 	mq->h   = h;
 	mq->arg = arg;
 
-	mq->pfd[0] = mq->pfd[1] = -1;
+	mq->pfd[0] = mq->pfd[1] = BAD_SOCK;
 	if (pipe(mq->pfd) < 0) {
-		err = errno;
+		err = ERRNO_SOCK;
 		goto out;
 	}
 

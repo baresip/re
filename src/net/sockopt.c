@@ -33,7 +33,7 @@
  *
  * @return 0 if success, otherwise errorcode
  */
-int net_sockopt_blocking_set(int fd, bool blocking)
+int net_sockopt_blocking_set(re_sock_t fd, bool blocking)
 {
 #ifdef WIN32
 	unsigned long noblock = !blocking;
@@ -81,7 +81,7 @@ int net_sockopt_blocking_set(int fd, bool blocking)
  *
  * @return 0 if success, otherwise errorcode
  */
-int net_sockopt_reuse_set(int fd, bool reuse)
+int net_sockopt_reuse_set(re_sock_t fd, bool reuse)
 {
 	int r = reuse;
 

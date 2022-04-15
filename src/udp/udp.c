@@ -27,9 +27,9 @@
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_list.h>
+#include <re_net.h>
 #include <re_main.h>
 #include <re_sa.h>
-#include <re_net.h>
 #include <re_udp.h>
 #ifdef WIN32
 #if !defined(_MSC_VER)
@@ -147,7 +147,7 @@ static void udp_destructor(void *data)
 }
 
 
-static void udp_read(struct udp_sock *us, int fd)
+static void udp_read(struct udp_sock *us, re_sock_t fd)
 {
 	struct mbuf *mb = mbuf_alloc(us->rxsz);
 	struct sa src;
