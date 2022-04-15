@@ -64,6 +64,7 @@ extern "C" {
 #include "re_websock.h"
 #include "re_shim.h"
 #include "re_trice.h"
+#include "re_pcp.h"
 
 #ifdef __cplusplus
 }

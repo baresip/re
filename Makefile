@@ -52,6 +52,7 @@ MODULES += json
 MODULES += rtmp
 MODULES += shim
 MODULES += trice
+MODULES += pcp
 
 INSTALL := install
 ifeq ($(DESTDIR),)

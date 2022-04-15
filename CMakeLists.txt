@@ -49,6 +49,7 @@ endif()
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_BFCP "Enable BFCP" ON)
+option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
@@ -402,6 +403,18 @@ if(USE_BFCP)
     src/bfcp/msg.c
     src/bfcp/reply.c
     src/bfcp/request.c
+  )
+endif()
+
+
+if(USE_PCP)
+  list(APPEND SRCS
+    src/pcp/msg.c
+    src/pcp/option.c
+    src/pcp/payload.c
+    src/pcp/pcp.c
+    src/pcp/reply.c
+    src/pcp/request.c
   )
 endif()
 
