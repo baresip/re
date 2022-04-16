@@ -59,7 +59,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 
 if(NOT MSVC)
-  add_compile_options(
+  set(COMPILE_OPTIONS
     -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
     -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
     -Wshadow -Waggregate-return -Wcast-align -Wold-style-definition
@@ -69,7 +69,7 @@ endif()
 
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+  list(APPEND COMPILE_OPTIONS -Wshorten-64-to-32)
 endif()
 
 
@@ -543,6 +543,8 @@ add_library(re-objs OBJECT ${SRCS} ${HEADERS})
 
 set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+target_compile_options(re-objs PRIVATE ${COMPILE_OPTIONS})
+
 target_include_directories(re-objs PRIVATE .)
 target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
@@ -600,6 +602,8 @@ target_link_libraries(re
   PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
+
+target_compile_options(re PUBLIC ${COMPILE_OPTIONS})
 
 target_include_directories(re PUBLIC include)
 
