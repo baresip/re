@@ -595,10 +595,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
+
 target_link_libraries(re
   PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
+
+target_include_directories(re PUBLIC include)
 
 set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
