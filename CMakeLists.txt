@@ -152,6 +152,11 @@ add_definitions(
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
 )
 
+if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
+  add_definitions(-DRELEASE)
+endif()
+
+
 ##############################################################################
 #
 # Source/Header section
