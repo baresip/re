@@ -121,6 +121,11 @@ if(MSVC)
   )
 endif()
 
+if(WIN32)
+  add_definitions(
+    -DWIN32 -D_WIN32_WINNT=0x0600
+  )
+endif()
 
 if(USE_OPENSSL)
   add_definitions(
