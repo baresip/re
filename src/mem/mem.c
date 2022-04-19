@@ -64,6 +64,38 @@ static inline void mem_unlock(void)
 	pthread_mutex_unlock(&mem_mutex);
 }
 
+#elif defined (WIN32)
+
+INIT_ONCE g_initMemLockOnce = INIT_ONCE_STATIC_INIT;
+CRITICAL_SECTION g_memLock;
+
+
+static BOOL CALLBACK InitHandleFunction(PINIT_ONCE initOnce,
+					PVOID parameter,
+					PVOID *lpContext)
+{
+	(void)initOnce;
+	(void)parameter;
+
+	InitializeCriticalSection((LPCRITICAL_SECTION)lpContext);
+
+	return TRUE;
+}
+
+
+static inline void mem_lock(void)
+{
+	InitOnceExecuteOnce(&g_initMemLockOnce, InitHandleFunction,
+			    NULL, (PVOID*)&g_memLock);
+	EnterCriticalSection(&g_memLock);
+}
+
+
+static inline void mem_unlock(void)
+{
+	LeaveCriticalSection(&g_memLock);
+}
+
 #else
 
 #define mem_lock()    /**< Stub */
