@@ -150,7 +150,7 @@ static void timeout(void *arg)
 	}
 
 	req->RT = RT_next(&req->conf, req->RT);
-	tmr_start(&req->tmr, req->RT * 1000, timeout, req);
+	tmr_start(&req->tmr, (uint64_t)req->RT * 1000, timeout, req);
 }
 
 
@@ -238,7 +238,7 @@ static int start_sending(struct pcp_request *req)
 		return err;
 
 	req->RT = RT_init(&req->conf);
-	tmr_start(&req->tmr, req->RT * 1000, timeout, req);
+	tmr_start(&req->tmr, (uint64_t)req->RT * 1000, timeout, req);
 
 	if (req->conf.mrd) {
 		tmr_start(&req->tmr_dur, req->conf.mrd * 1000,
