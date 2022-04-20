@@ -325,7 +325,7 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 
 			lle = lle->prev;
 
-			if (!lfmt->sup) {
+			if (lfmt && !lfmt->sup) {
 				list_unlink(&lfmt->le);
 				list_append(&m->lfmtl, &lfmt->le, lfmt);
 			}

@@ -84,7 +84,7 @@ int pcp_option_encode(struct mbuf *mb, enum pcp_option_code code,
 	mb->pos = start - 4;
 	err |= mbuf_write_u8(mb, code);
 	err |= mbuf_write_u8(mb, 0x00);
-	err |= mbuf_write_u16(mb, htons(len));
+	err |= mbuf_write_u16(mb, htons((uint16_t)len));
 	mb->pos += len;
 
 	/* padding */

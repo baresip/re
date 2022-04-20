@@ -58,7 +58,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 
-if(NOT MSVC)
+if(MSVC)
+  add_compile_options("/W3")
+else()
   add_compile_options(
     -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
     -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
@@ -121,6 +123,11 @@ if(MSVC)
   )
 endif()
 
+if(WIN32)
+  add_definitions(
+    -DWIN32 -D_WIN32_WINNT=0x0600
+  )
+endif()
 
 if(USE_OPENSSL)
   add_definitions(
@@ -151,6 +158,11 @@ add_definitions(
   -DVER_MINOR=${PROJECT_VERSION_MINOR}
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
 )
+
+if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
+  add_definitions(-DRELEASE)
+endif()
+
 
 ##############################################################################
 #
@@ -595,10 +607,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     PUBLIC "-framework SystemConfiguration" "-framework CoreFoundation"
   )
 endif()
+
 target_link_libraries(re
   PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
+
+target_include_directories(re PUBLIC include)
 
 set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
