@@ -143,10 +143,14 @@ endif()
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions(-DDARWIN -DHAVE_KQUEUE)
+  add_definitions(-DHAVE_KQUEUE -DDARWIN)
   include_directories(/opt/local/include)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  add_definitions(-DHAVE_KQUEUE -DFREEBSD)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+  add_definitions(-DHAVE_KQUEUE -DOPENBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_definitions(-DHAVE_EPOLL)
+  add_definitions(-DHAVE_EPOLL -DLINUX)
 endif()
 
 
