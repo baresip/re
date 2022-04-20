@@ -58,7 +58,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 
-if(NOT MSVC)
+if(MSVC)
+  add_compile_options("/W3")
+else()
   add_compile_options(
     -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
     -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
