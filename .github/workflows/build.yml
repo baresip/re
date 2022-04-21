@@ -35,7 +35,9 @@ jobs:
 
     - name: cmake
       if: ${{ runner.os == 'Linux' }}
-      run: make cmake
+      run: |
+        make cmake
+        cmake --install build --prefix dist
     
     - name: cmake
       if: ${{ runner.os == 'macOS' }}
