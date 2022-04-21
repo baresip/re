@@ -302,7 +302,6 @@ set(SRCS
 
   src/mbuf/mbuf.c
 
-  src/md5/md5.c
   src/md5/wrap.c
 
   src/mem/mem.c
