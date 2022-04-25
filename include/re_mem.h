@@ -19,8 +19,6 @@ struct memstat {
 	size_t bytes_peak;   /**< Peak bytes allocated         */
 	size_t blocks_cur;   /**< Current blocks allocated     */
 	size_t blocks_peak;  /**< Peak blocks allocated        */
-	size_t size_min;     /**< Lowest block size allocated  */
-	size_t size_max;     /**< Largest block size allocated */
 };
 
 void    *mem_alloc(size_t size, mem_destroy_h *dh);

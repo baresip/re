@@ -48,7 +48,7 @@ static const uint32_t mem_magic = 0xe7fb9ac4;
 static ssize_t threshold = -1;  /**< Memory threshold, disabled by default */
 
 static struct memstat memstat = {
-	0,0,0,0,~0,0
+	0,0,0,0
 };
 
 #ifdef HAVE_PTHREAD
@@ -112,8 +112,6 @@ static inline void mem_unlock(void)
 	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	++memstat.blocks_cur; \
 	memstat.blocks_peak = max(memstat.blocks_cur, memstat.blocks_peak); \
-	memstat.size_min = min(memstat.size_min, size);	\
-	memstat.size_max = max(memstat.size_max, size);	\
 	mem_unlock(); \
 	(m)->size = (size); \
 	(m)->magic = mem_magic;
@@ -123,8 +121,6 @@ static inline void mem_unlock(void)
 	mem_lock(); \
 	memstat.bytes_cur += ((size) - (m)->size); \
 	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
-	memstat.size_min = min(memstat.size_min, size);	\
-	memstat.size_max = max(memstat.size_max, size); \
 	mem_unlock(); \
 	(m)->size = (size)
 
@@ -514,8 +510,6 @@ int mem_status(struct re_printf *pf, void *unused)
 			  stat.blocks_peak, stat.bytes_peak,
 			  stat.bytes_peak
 			  +(stat.blocks_peak*sizeof(struct mem)));
-	err |= re_hprintf(pf, " Block size: min=%u, max=%u\n",
-			  stat.size_min, stat.size_max);
 	err |= re_hprintf(pf, " Total %u blocks allocated\n", c);
 
 	return err;
