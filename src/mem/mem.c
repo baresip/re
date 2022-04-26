@@ -100,6 +100,8 @@ static inline void mem_unlock(void)
 
 #else
 
+#warning "mem: no locking available"
+
 #define mem_lock()    /**< Stub */
 #define mem_unlock()  /**< Stub */
 
