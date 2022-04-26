@@ -200,8 +200,6 @@ static struct re *re_get(void)
 	return &global_re;
 }
 
-#error "main: no locking available"
-
 #define re_lock(x)    /**< Stub */
 #define re_unlock(x)  /**< Stub */
 
