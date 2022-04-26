@@ -100,6 +100,8 @@ static inline void mem_unlock(void)
 
 #else
 
+#error "mem: missing locking primitives"
+
 #define mem_lock()    /**< Stub */
 #define mem_unlock()  /**< Stub */
 
