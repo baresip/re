@@ -21,8 +21,6 @@ int libre_init(void)
 {
 	int err;
 
-	rand_init();
-
 #ifdef USE_OPENSSL
 	err = openssl_init();
 	if (err)
