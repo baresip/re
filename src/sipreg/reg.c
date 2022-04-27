@@ -266,7 +266,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 }
 
 
-static int send_handler(enum sip_transp tp, const struct sa *src,
+static int send_handler(enum sip_transp tp, struct sa *src,
 			const struct sa *dst, struct mbuf *mb,
 			struct mbuf **contp, void *arg)
 {
@@ -276,9 +276,11 @@ static int send_handler(enum sip_transp tp, const struct sa *src,
 	(void)dst;
 	(void)contp;
 
-	reg->laddr = *src;
 	reg->tp = tp;
+	if (reg->srcport && tp != SIP_TRANSP_UDP)
+		sa_set_port(src, reg->srcport);
 
+	reg->laddr = *src;
 	err = mbuf_printf(mb, "Contact: <sip:%s@%J%s>;expires=%u%s%s",
 			  reg->cuser, &reg->laddr, sip_transp_param(reg->tp),
 			  reg->expires,

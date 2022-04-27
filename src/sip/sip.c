@@ -282,3 +282,23 @@ void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh)
 
 	sip->traceh = traceh;
 }
+
+
+struct sip_conncfg *sip_conncfg_find(struct sip *sip,
+				     const struct sa *paddr)
+{
+	struct le *le;
+
+	le = list_head(hash_list(sip->ht_conncfg, sa_hash(paddr, SA_ALL)));
+	for (; le; le = le->next) {
+
+		struct sip_conncfg *cfg = le->data;
+
+		if (!sa_cmp(&cfg->paddr, paddr, SA_ALL))
+			continue;
+
+		return cfg;
+	}
+
+	return NULL;
+}

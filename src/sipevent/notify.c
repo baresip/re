@@ -174,7 +174,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 }
 
 
-static int send_handler(enum sip_transp tp, const struct sa *src,
+static int send_handler(enum sip_transp tp, struct sa *src,
 			const struct sa *dst, struct mbuf *mb,
 			struct mbuf **contp, void *arg)
 {

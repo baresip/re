@@ -98,3 +98,7 @@ int  sip_keepalive_tcp(struct sip_keepalive *ka, struct sip_conn *conn,
 int  sip_keepalive_udp(struct sip_keepalive *ka, struct sip *sip,
 		       struct udp_sock *us, const struct sa *paddr,
 		       uint32_t interval);
+
+/* sip_conncfg */
+struct sip_conncfg *sip_conncfg_find(struct sip *sip,
+				     const struct sa *paddr);

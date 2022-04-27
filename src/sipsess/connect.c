@@ -22,7 +22,7 @@
 static int invite(struct sipsess *sess);
 
 
-static int send_handler(enum sip_transp tp, const struct sa *src,
+static int send_handler(enum sip_transp tp, struct sa *src,
 			const struct sa *dst, struct mbuf *mb,
 			struct mbuf **contp, void *arg)
 {
