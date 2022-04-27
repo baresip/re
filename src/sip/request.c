@@ -183,8 +183,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	if (err)
 		goto out;
 
-	err |= req->sendh ? req->sendh(tp, &laddr, dst, mbs, &cont, req->arg) :
-			    0;
+	err = req->sendh ? req->sendh(tp, &laddr, dst, mbs, &cont, req->arg) :
+			   0;
 	if (err)
 		goto out;
 
