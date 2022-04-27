@@ -540,7 +540,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND SRCS
     src/net/linux/rt.c
-    src/main/epoll.c
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   list(APPEND SRCS

@@ -29,8 +29,7 @@ enum poll_method poll_method_best(void)
 #ifdef HAVE_EPOLL
 	/* Supported from Linux 2.5.66 */
 	if (METHOD_NULL == m) {
-		if (epoll_check())
-			m = METHOD_EPOLL;
+		m = METHOD_EPOLL;
 	}
 #endif
 

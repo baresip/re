@@ -1119,8 +1119,6 @@ int poll_method_set(enum poll_method method)
 #endif
 #ifdef HAVE_EPOLL
 	case METHOD_EPOLL:
-		if (!epoll_check())
-			return EINVAL;
 		break;
 #endif
 #ifdef HAVE_KQUEUE
