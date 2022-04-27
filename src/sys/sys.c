@@ -23,57 +23,6 @@
 
 
 /**
- * Get system release version
- *
- * @param rel   Binary encoded release
- * @param maj   Major version number
- * @param min   Minor version number
- * @param patch Patch number
- *
- * @return 0 if success, otherwise errorcode
- */
-int sys_rel_get(uint32_t *rel, uint32_t *maj, uint32_t *min, uint32_t *patch)
-{
-#ifdef HAVE_UNAME
-	struct utsname u;
-	struct pl pl_mj, pl_mn, pl_p;
-	uint32_t mj, mn, p;
-	int err;
-
-	if (0 != uname(&u))
-		return errno;
-
-	err = re_regex(u.release, strlen(u.release),
-		       "[0-9]+.[0-9]+[.\\-]1[0-9]+",
-		       &pl_mj, &pl_mn, NULL, &pl_p);
-	if (err)
-		return err;
-
-	mj = pl_u32(&pl_mj);
-	mn = pl_u32(&pl_mn);
-	p  = pl_u32(&pl_p);
-
-	if (rel)
-		*rel = mj<<16 | mn<<8 | p;
-	if (maj)
-		*maj = mj;
-	if (min)
-		*min = mn;
-	if (patch)
-		*patch = p;
-
-	return 0;
-#else
-	(void)rel;
-	(void)maj;
-	(void)min;
-	(void)patch;
-	return EINVAL;
-#endif
-}
-
-
-/**
  * Get kernel name and version
  *
  * @param pf     Print function for output
