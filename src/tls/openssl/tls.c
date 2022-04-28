@@ -1730,7 +1730,7 @@ int tls_reuse_session(const struct tls_conn *tc)
 
 	if (sess && !SSL_set_session(tc->ssl, sess->sess)) {
 		err = EFAULT;
-		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", err,
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
 			SSL_get_error(tc->ssl, err));
 	}
 
