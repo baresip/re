@@ -555,6 +555,7 @@ if(HAVE_THREADS)
   )
 elseif(HAVE_PTHREAD)
   list(APPEND SRCS
+    src/thread/thread.c
     src/thread/posix.c
   )
 endif()
