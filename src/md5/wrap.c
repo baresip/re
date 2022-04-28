@@ -7,8 +7,6 @@
 #include <stddef.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#else
-#include "md5.h"
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -38,11 +36,7 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	(void)MD5(d, n, md);
 #endif
 #else
-	md5_state_t state;
-
-	md5_init(&state);
-	md5_append(&state, d, (int)n);
-	md5_finish(&state, md);
+#error missing MD5 backend
 #endif
 }
 

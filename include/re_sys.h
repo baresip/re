@@ -32,8 +32,6 @@
 #endif
 
 struct re_printf;
-int  sys_rel_get(uint32_t *rel, uint32_t *maj, uint32_t *min,
-		 uint32_t *patch);
 int  sys_kernel_get(struct re_printf *pf, void *unused);
 int  sys_build_get(struct re_printf *pf, void *unused);
 const char *sys_arch_get(void);
@@ -59,7 +57,6 @@ uint64_t sys_ntohll(uint64_t v);
 
 
 /* Random */
-void     rand_init(void);
 uint16_t rand_u16(void);
 uint32_t rand_u32(void);
 uint64_t rand_u64(void);

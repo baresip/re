@@ -1105,6 +1105,58 @@ int http_client_set_tls_hostname(struct http_cli *cli,
 
 	return pl_strdup(&cli->tlshn, hostname);
 }
+
+
+/**
+ * Enabled / disable tls session reuse.
+ * Note: disabled per default
+ *
+ * @param cli       HTTP Client
+ * @param enabled	Pass 1 for enabled, 0 for disabled
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_set_session_reuse(struct http_cli *cli, bool enabled)
+{
+	if (!cli || !cli->tls)
+		return EINVAL;
+
+	return tls_set_session_reuse(cli->tls, enabled);
+}
+
+
+/**
+ * Set minimum TLS version
+ *
+ * @param cli       HTTP Client
+ * @param version 	Minimum version, e.g.: TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_set_tls_min_version(struct http_cli *cli, int version)
+{
+	if (!cli || !cli->tls)
+		return EINVAL;
+
+	return tls_set_min_proto_version(cli->tls, version);
+}
+
+
+/**
+ * Set minimum TLS version
+ *
+ * @param cli       HTTP Client
+ * @param version 	Minimum version, e.g.: TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_set_tls_max_version(struct http_cli *cli, int version)
+{
+	if (!cli || !cli->tls)
+		return EINVAL;
+
+	return tls_set_max_proto_version(cli->tls, version);
+}
 #endif
 
 

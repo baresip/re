@@ -143,10 +143,14 @@ endif()
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions(-DDARWIN -DHAVE_KQUEUE)
+  add_definitions(-DHAVE_KQUEUE -DDARWIN)
   include_directories(/opt/local/include)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  add_definitions(-DHAVE_KQUEUE -DFREEBSD)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+  add_definitions(-DHAVE_KQUEUE -DOPENBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_definitions(-DHAVE_EPOLL)
+  add_definitions(-DHAVE_EPOLL -DLINUX)
 endif()
 
 
@@ -298,7 +302,6 @@ set(SRCS
 
   src/mbuf/mbuf.c
 
-  src/md5/md5.c
   src/md5/wrap.c
 
   src/mem/mem.c
@@ -537,7 +540,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND SRCS
     src/net/linux/rt.c
-    src/main/epoll.c
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   list(APPEND SRCS
@@ -628,9 +630,22 @@ endif()
 #
 
 install(TARGETS re-shared re
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+  LIBRARY
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT re_run
+  ARCHIVE
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT re_dev
+  PUBLIC_HEADER
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+    COMPONENT re_dev
+)
+
+install(TARGETS re-shared
+  LIBRARY
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    NAMELINK_ONLY
+    COMPONENT re_dev
 )
 
 

@@ -30,6 +30,22 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+#include <re_list.h>
+#include <re_hash.h>
+
+
+struct session_reuse {
+	bool enabled;
+	struct hash *ht_sessions;
+};
+
+struct tls {
+	SSL_CTX *ctx;
+	X509 *cert;
+	char *pass;          /**< password for private key             */
+	bool verify_server;  /**< Enable SIP TLS server verification   */
+	struct session_reuse reuse;
+};
 
 #if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 /**
@@ -88,6 +104,8 @@ static void destructor(void *data)
 	if (tls->cert)
 		X509_free(tls->cert);
 
+	hash_flush(tls->reuse.ht_sessions);
+	mem_deref(tls->reuse.ht_sessions);
 	mem_deref(tls->pass);
 }
 
@@ -268,6 +286,10 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 			goto out;
 		}
 	}
+
+	err = hash_alloc(&tls->reuse.ht_sessions, 256);
+	if (err)
+		goto out;
 
 	err = 0;
  out:
@@ -1422,4 +1444,337 @@ void tls_disable_verify_server(struct tls *tls)
 		return;
 
 	tls->verify_server = false;
+}
+
+
+/**
+ * Set minimum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Minimum version, e.g.: TLS1_2_VERSION
+ */
+int tls_set_min_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_min_proto_version(tls->ctx, version))
+		return 0;
+#else
+	(void) version;
+#endif
+	return EACCES;
+
+}
+
+
+/**
+ * Set maximum TLS version
+ *
+ * @param tls     TLS Object
+ * @param version Maximum version, e.g. TLS1_2_VERSION
+ */
+int tls_set_max_proto_version(struct tls *tls, int version)
+{
+	if (!tls)
+		return EINVAL;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (SSL_CTX_set_max_proto_version(tls->ctx, version))
+		return 0;
+#else
+	(void) version;
+#endif
+	return EACCES;
+}
+
+
+struct session_entry {
+	struct le le;
+	struct sa peer;
+	SSL_SESSION *sess;
+};
+
+
+static void session_destructor(void *arg)
+{
+	struct session_entry *e = arg;
+
+	hash_unlink(&e->le);
+	if (e->sess)
+		SSL_SESSION_free(e->sess);
+}
+
+
+static bool session_cmp_handler(struct le *le, void *arg)
+{
+	const struct session_entry *s = le->data;
+	if (!s)
+		return false;
+
+	return sa_cmp(&s->peer, arg, SA_ALL);
+}
+
+
+static int tls_session_update_cache(const struct tls_conn *tc,
+	SSL_SESSION *sess)
+{
+	struct sa peer;
+	struct session_entry* e = NULL;
+	int err = 0;
+
+	if (!tc || !tc->tls) {
+		DEBUG_WARNING("%s: no tc or tls.\n", __func__);
+		return EINVAL;
+	}
+
+	err = tcp_conn_peer_get(tls_get_tcp_conn(tc), &peer);
+	if (err) {
+		DEBUG_WARNING("%s: tcp_conn_peer_get failed: (%m).\n",
+			__func__, err);
+		return ENODATA;
+	}
+
+	e = list_ledata(hash_lookup(tc->tls->reuse.ht_sessions,
+					     sa_hash(&peer, SA_ALL),
+					     session_cmp_handler, &peer));
+	mem_deref(e);
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L) && \
+	(!defined(LIBRESSL_VERSION_NUMBER) || \
+	  defined(LIBRESSL_HAS_TLS1_3) || \
+	  defined(LIBRESSL_INTERNAL) )
+	if (!SSL_SESSION_is_resumable(sess)) {
+		return EINVAL;
+	}
+#endif
+
+	e = mem_zalloc(sizeof(struct session_entry), session_destructor);
+	if (!e) {
+		DEBUG_WARNING("%s: error allocating session_entry.\n",
+			__func__);
+		return ENOMEM;
+	}
+
+	sa_cpy(&e->peer, &peer);
+	e->sess = sess;
+
+	hash_append(tc->tls->reuse.ht_sessions, sa_hash(&e->peer, SA_ALL),
+		&e->le, e);
+
+	return err;
+}
+
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+static int session_new_cb(struct ssl_st *ssl, SSL_SESSION *sess)
+{
+	BIO *wbio = NULL;
+	const struct tls_conn *tc = NULL;
+
+	wbio = SSL_get_wbio(ssl);
+	if (!wbio) {
+		DEBUG_WARNING("%s: SSL_get_rbio failed.\n", __func__);
+		return 0;
+	}
+
+#ifdef TLS_BIO_OPAQUE
+	tc = BIO_get_data(wbio);
+#else
+	tc = wbio->ptr;
+#endif
+	if (!tc) {
+		DEBUG_WARNING("%s: BIO_get_data tc failed.\n", __func__);
+		return 0;
+	}
+
+	if (tls_session_update_cache(tc, sess))
+		return 0;
+
+	if (!SSL_SESSION_set_ex_data(sess, 0, tc->tls)) {
+		DEBUG_WARNING("%s: SSL_SESSION_set_ex_data failed.\n",
+			__func__);
+		return 0;
+	}
+
+	/* openssl will increments reference counter of sess on 1 */
+	return 1;
+}
+
+
+static bool remove_handler(struct le *le, void *arg)
+{
+	struct session_entry *e = le->data;
+	if (!e || !arg)
+		return false;
+
+	if (e->sess == arg)
+		mem_deref(e);
+
+	return false;
+}
+
+
+static void session_remove_cb(struct ssl_ctx_st *ctx, SSL_SESSION *sess)
+{
+	struct tls *tls = SSL_SESSION_get_ex_data(sess, 0);
+	(void) ctx;
+	if (!tls) {
+		DEBUG_WARNING("%s: SSL_SESSION_get_ex_data failed.\n",
+			__func__);
+		return;
+	}
+
+	/* iterate over all hash table entries and search for session */
+	(void) hash_apply(tls->reuse.ht_sessions, remove_handler, sess);
+}
+#endif
+
+
+/**
+ * Enable/disable TLS session cache.
+ *
+ * @param tls  TLS Object
+ * @param enabled   enabled or disable session cache. Default: disabled
+ *
+ * Note: session reuse in TLSv1.3 is not yet supported
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_session_reuse(struct tls *tls, int enabled)
+{
+	if (!tls)
+		return EINVAL;
+
+	tls->reuse.enabled = enabled;
+
+	SSL_CTX_set_session_cache_mode(tls->ctx, enabled ?
+		SSL_SESS_CACHE_BOTH : SSL_SESS_CACHE_OFF);
+
+	if (!tls->reuse.enabled)
+		return 0;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+	SSL_CTX_sess_set_new_cb(tls->ctx, session_new_cb);
+	SSL_CTX_sess_set_remove_cb(tls->ctx, session_remove_cb);
+
+	return 0;
+#else
+	return EOPNOTSUPP;
+#endif
+}
+
+
+/**
+ * Check if session was reused
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 1 reused, 0 otherwise
+ */
+bool tls_session_reused(const struct tls_conn *tc)
+{
+	if (!tc)
+		return false;
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+	return SSL_session_reused(tc->ssl);
+#else
+	return false;
+#endif
+}
+
+
+/**
+ * getter for session reuse enabled
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 1 enabled, 0 disabled
+ */
+bool tls_get_session_reuse(const struct tls_conn *tc)
+{
+	if (!tc)
+		return false;
+
+	return tc->tls->reuse.enabled;
+}
+
+
+/**
+ * Reuse session if possible
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_reuse_session(const struct tls_conn *tc)
+{
+	int err = 0;
+	struct sa peer;
+	struct session_entry *sess = NULL;
+	if (!tc || !tc->tls)
+		return EINVAL;
+
+	err = tcp_conn_peer_get(tls_get_tcp_conn(tc), &peer);
+	if (err) {
+		DEBUG_WARNING("%s: tcp_conn_peer_get failed: (%m).\n",
+			__func__, err);
+		return 0;
+	}
+
+	sess = list_ledata(hash_lookup(tc->tls->reuse.ht_sessions,
+					     sa_hash(&peer, SA_ALL),
+					     session_cmp_handler, &peer));
+
+	if (sess && !SSL_set_session(tc->ssl, sess->sess)) {
+		err = EFAULT;
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
+			SSL_get_error(tc->ssl, err));
+	}
+
+	return err;
+}
+
+
+/**
+ * update session cache manually
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_update_sessions(const struct tls_conn *tc)
+{
+	int err = 0;
+	SSL_SESSION *sess = NULL;
+	if (!tc || !tc->tls)
+		return EINVAL;
+
+	sess = SSL_get1_session(tc->ssl);
+	if (!sess)
+		return EINVAL;
+
+	err = tls_session_update_cache(tc, sess);
+	if (err)
+		SSL_SESSION_free(sess);
+
+	return err;
+}
+
+
+/**
+ * Reuse session if possible
+ *
+ * @param tls  tls connection object
+ *
+ * @return SSL_CTX* if set or NULL otherwise
+ */
+SSL_CTX *tls_ssl_ctx(const struct tls *tls)
+{
+	if (!tls)
+		return NULL;
+
+	return tls->ctx;
 }

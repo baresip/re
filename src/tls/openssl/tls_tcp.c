@@ -180,6 +180,9 @@ static int tls_connect(struct tls_conn *tc)
 
 	ERR_clear_error();
 
+	if (tls_get_session_reuse(tc))
+		(void) tls_reuse_session(tc);
+
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
@@ -432,9 +435,10 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 	err = ENOMEM;
 
 	/* Connect the SSL socket */
-	tc->ssl = SSL_new(tls->ctx);
+	tc->ssl = SSL_new(tls_ssl_ctx(tls));
 	if (!tc->ssl) {
-		DEBUG_WARNING("alloc: SSL_new() failed (ctx=%p)\n", tls->ctx);
+		DEBUG_WARNING("alloc: SSL_new() failed (ctx=%p)\n",
+			tls_ssl_ctx(tls));
 		ERR_clear_error();
 		goto out;
 	}
@@ -476,4 +480,20 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 		*ptc = tc;
 
 	return err;
+}
+
+
+/**
+ * Get tcp connection
+ *
+ * @param tc   TLS connection
+ *
+ * @return pointer to tcp connection struct
+ */
+const struct tcp_conn *tls_get_tcp_conn(const struct tls_conn *tc)
+{
+	if (!tc)
+		return NULL;
+
+	return tc->tcp;
 }

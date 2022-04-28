@@ -20,40 +20,27 @@
 #include <re_dbg.h>
 
 
-#ifndef RELEASE
-#define RAND_DEBUG 1  /**< Enable random debugging */
-#endif
-
 static const char alphanum[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789";
 
-#if RAND_DEBUG
+
+#if !defined(USE_OPENSSL) && !defined(HAVE_ARC4RANDOM)
+
 static bool inited = false;
-/** Check random state */
-#define RAND_CHECK							\
-	if (!inited) {							\
-		DEBUG_WARNING("%s: random not inited\n", __REFUNC__);	\
-	}
-#else
-#define RAND_CHECK if (0) {}
-#endif
 
 
 /**
  * Initialise random number generator
  */
-void rand_init(void)
+static void rand_init(void)
 {
-#ifndef USE_OPENSSL
 	srand((uint32_t) tmr_jiffies());
-#endif
 
-#if RAND_DEBUG
 	inited = true;
-#endif
 }
+#endif
 
 
 /**
@@ -63,7 +50,6 @@ void rand_init(void)
  */
 uint16_t rand_u16(void)
 {
-	RAND_CHECK;
 
 	/* Use higher-order bits (see man 3 rand) */
 	return rand_u32() >> 16;
@@ -79,8 +65,6 @@ uint32_t rand_u32(void)
 {
 	uint32_t v;
 
-	RAND_CHECK;
-
 #ifdef USE_OPENSSL
 	v = 0;
 	if (RAND_bytes((unsigned char *)&v, sizeof(v)) <= 0) {
@@ -91,8 +75,15 @@ uint32_t rand_u32(void)
 #elif defined(HAVE_ARC4RANDOM)
 	v = arc4random();
 #elif defined(WIN32)
+
+	if (!inited)
+		rand_init();
+
 	v = (rand() << 16) + rand(); /* note: 16-bit rand */
 #else
+	if (!inited)
+		rand_init();
+
 	v = rand();
 #endif
 
@@ -107,7 +98,6 @@ uint32_t rand_u32(void)
  */
 uint64_t rand_u64(void)
 {
-	RAND_CHECK;
 
 	return (uint64_t)rand_u32()<<32 | rand_u32();
 }
@@ -121,8 +111,6 @@ uint64_t rand_u64(void)
 char rand_char(void)
 {
 	char s[2];
-
-	RAND_CHECK;
 
 	rand_str(s, sizeof(s));
 
@@ -142,8 +130,6 @@ void rand_str(char *str, size_t size)
 
 	if (!str || !size)
 		return;
-
-	RAND_CHECK;
 
 	--size;
 

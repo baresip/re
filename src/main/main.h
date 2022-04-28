@@ -5,11 +5,6 @@
  */
 
 
-#ifdef HAVE_EPOLL
-bool epoll_check(void);
-#endif
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
