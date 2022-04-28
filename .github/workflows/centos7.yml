@@ -1,11 +1,11 @@
-name: Centos 7
+name: Centos 8
 
 on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    container: centos:7
+    container: centos:8
 
     strategy:
       matrix:
