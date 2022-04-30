@@ -14,7 +14,7 @@ VER_PATCH := 0
 # VER_PRE   := dev
 
 # bump Major if ABI breaks
-ABI_MAJOR := 4
+ABI_MAJOR := 5
 ABI_AGE   := $(VER_MINOR)
 ABI_REV   := $(VER_PATCH)
 
