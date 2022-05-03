@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    container: centos:7
+    container: fedora
 
     strategy:
       matrix:
