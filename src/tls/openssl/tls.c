@@ -1579,11 +1579,7 @@ static int session_new_cb(struct ssl_st *ssl, SSL_SESSION *sess)
 		return 0;
 	}
 
-#ifdef TLS_BIO_OPAQUE
 	tc = BIO_get_data(wbio);
-#else
-	tc = wbio->ptr;
-#endif
 	if (!tc) {
 		DEBUG_WARNING("%s: BIO_get_data tc failed.\n", __func__);
 		return 0;
