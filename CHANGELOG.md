@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+---
+
+## [v2.3.0] - 2022-05-01
+
+* cmake: use static build as default target (improves subdirectory usage) by @sreimers in https://github.com/baresip/re/pull/311
+* jbuf: fix RELEASE build with DEBUG_LEVEL 6 by @cspiel1 in https://github.com/baresip/re/pull/313
+* fmt/pl: use unsigned type before negation by @sreimers in https://github.com/baresip/re/pull/312
+* fmt/pl: rewrite negative handling (avoid undefined behavior) by @sreimers in https://github.com/baresip/re/pull/314
+* http/request: fix possbile null pointer dereference by @sreimers in https://github.com/baresip/re/pull/316
+* sdp: check sdp_bandwidth lower bound by @sreimers in https://github.com/baresip/re/pull/317
+* main: use re_sock_t by @sreimers in https://github.com/baresip/re/pull/315
+* ccheck: check all CMakeLists.txt files by @sreimers in https://github.com/baresip/re/pull/320
+* list: O(1) sorted insert if we expect append in most cases by @cspiel1 in https://github.com/baresip/re/pull/318
+* add pcp protocol by @alfredh in https://github.com/baresip/re/pull/321
+* cmake: define RELEASE for release builds by @alfredh in https://github.com/baresip/re/pull/323
+* Mem lock win32 by @alfredh in https://github.com/baresip/re/pull/324
+* pcp: fix win32 warning by @alfredh in https://github.com/baresip/re/pull/325
+* ci/msvc: treat all compiler warnings as errors by @sreimers in https://github.com/baresip/re/pull/326
+* cmake: add MSVC /W3 compile option by @sreimers in https://github.com/baresip/re/pull/327
+* cmake: add FreeBSD and OpenBSD by @sreimers in https://github.com/baresip/re/pull/329
+* md5: remove fallback implementation by @sreimers in https://github.com/baresip/re/pull/328
+* cmake: add runtime and development install components by @sreimers in https://github.com/baresip/re/pull/330
+* mem: remove low/high block size stats by @alfredh in https://github.com/baresip/re/pull/331
+* mem: add error about missing locking by @alfredh in https://github.com/baresip/re/pull/332
+* set TCP source port in Via and Contact header by @cspiel1 in https://github.com/baresip/re/pull/334
+* remove sys_rel_get and epoll_check by @alfredh in https://github.com/baresip/re/pull/335
+* support tls session reuse   by @fAuernigg in https://github.com/baresip/re/pull/333
+* rand: init only needed for libc rand by @alfredh in https://github.com/baresip/re/pull/336
+* tls: fix crash in debug warn msg by @fAuernigg in https://github.com/baresip/re/pull/337
+* mem: init g_memLock directly by @alfredh in https://github.com/baresip/re/pull/339
+* prepare for version 2.3.0 by @alfredh in https://github.com/baresip/re/pull/338
 
 ---
 
@@ -450,7 +481,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.3.0...HEAD
+[v2.3.0]: https://github.com/baresip/re/compare/v2.2.2...v2.3.0
 [v2.2.2]: https://github.com/baresip/re/compare/v2.2.1...v2.2.2
 [v2.2.1]: https://github.com/baresip/re/compare/v2.2.0...v2.2.1
 [v2.2.0]: https://github.com/baresip/re/compare/v2.1.1...v2.2.0

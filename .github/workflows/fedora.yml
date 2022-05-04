@@ -1,4 +1,4 @@
-name: Centos
+name: Fedora
 
 on: [push, pull_request]
 

@@ -78,8 +78,9 @@ static BOOL CALLBACK InitHandleFunction(PINIT_ONCE initOnce,
 {
 	(void)initOnce;
 	(void)parameter;
+	(void)lpContext;
 
-	InitializeCriticalSection((LPCRITICAL_SECTION)lpContext);
+	InitializeCriticalSection(&g_memLock);
 
 	return TRUE;
 }
@@ -88,7 +89,7 @@ static BOOL CALLBACK InitHandleFunction(PINIT_ONCE initOnce,
 static inline void mem_lock(void)
 {
 	InitOnceExecuteOnce(&g_initMemLockOnce, InitHandleFunction,
-			    NULL, (PVOID*)&g_memLock);
+			    NULL, NULL);
 	EnterCriticalSection(&g_memLock);
 }
 
