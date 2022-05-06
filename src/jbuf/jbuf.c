@@ -71,6 +71,7 @@ struct jbuf {
 	uint32_t n;          /**< [# frames] Current # of frames in buffer  */
 	uint32_t min;        /**< [# frames] Minimum # of frames to buffer  */
 	uint32_t max;        /**< [# frames] Maximum # of frames to buffer  */
+	uint32_t wish;       /**< [# frames] Wish size for adaptive mode    */
 	uint16_t seq_put;    /**< Sequence number for last jbuf_put()       */
 	uint16_t seq_get;    /**< Sequence number of last played frame      */
 	uint32_t ssrc;       /**< Previous ssrc                             */
@@ -186,6 +187,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	jb->jbtype = JBUF_FIXED;
 	jb->min  = min;
 	jb->max  = max;
+	jb->wish = min;
 	jb->faults = JBUF_FAULT_HI / 2;
 
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
@@ -406,13 +408,14 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	STAT_INC(n_get);
 	switch (jb->jbtype) {
 		case JBUF_ADAPTIVE:
-		if (jb->n < jb->max-1 && jbuf_state(jb) == JS_LOW) {
+		if (jb->wish < jb->max-1 && jb->n < jb->max-1 &&
+		    jbuf_state(jb) == JS_LOW) {
 			DEBUG_INFO("inc buffer due to reordered "
 				      "packets n=%u max=%u\n",
 				      jb->n, jb->max);
 			err = ENOENT;
 			jb->st = JS_GOOD;
-			++jb->min;
+			++jb->wish;
 			goto out;
 		}
 		break;
@@ -461,14 +464,15 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	switch (jb->jbtype) {
 	case JBUF_ADAPTIVE:
 		/* zero faults --> min == 0 */
-		if (jb->min > (jb->faults + JBUF_FAULT_INC - 1) /
+		if (jb->wish > jb->min &&
+		    jb->wish > (jb->faults + JBUF_FAULT_INC - 1) /
 		    JBUF_FAULT_INC)
-			--jb->min;
+			--jb->wish;
 
-		if (jb->n > jb->min) {
+		if (jb->n > jb->wish) {
 			DEBUG_INFO("reducing jitter buffer "
-				   "(n=%u min=%u max=%u)\n",
-				   jb->n, jb->min, jb->max);
+				   "(n=%u min=%u wish=%u max=%u)\n",
+				   jb->n, jb->min, jb->wish, jb->max);
 			err = EAGAIN;
 		}
 		break;
