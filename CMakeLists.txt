@@ -176,6 +176,7 @@ endif()
 set(HEADERS
   include/re_aes.h
   include/re_atomic.h
+  include/re_av1.h
   include/re_base64.h
   include/re_bfcp.h
   include/re_bitv.h
