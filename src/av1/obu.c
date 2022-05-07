@@ -32,7 +32,7 @@ int av1_leb128_encode(struct mbuf *mb, size_t value)
 		value >>= 7;
 	}
 
-	err |= mbuf_write_u8(mb, value);
+	err |= mbuf_write_u8(mb, (uint8_t)value);
 
 	return err;
 }
