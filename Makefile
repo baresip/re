@@ -53,6 +53,7 @@ MODULES += rtmp
 MODULES += shim
 MODULES += trice
 MODULES += pcp
+MODULES += av1
 
 INSTALL := install
 ifeq ($(DESTDIR),)
