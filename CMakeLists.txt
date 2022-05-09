@@ -188,6 +188,7 @@ set(HEADERS
   include/re_dns.h
   include/re_fmt.h
   include/re.h
+  include/re_h265.h
   include/re_hash.h
   include/re_hmac.h
   include/re_httpauth.h
@@ -265,6 +266,8 @@ set(SRCS
   src/fmt/str_error.c
   src/fmt/time.c
   src/fmt/unicode.c
+
+  src/h265/nal.c
 
   src/hash/func.c
   src/hash/hash.c
