@@ -5,3 +5,4 @@
 #
 
 SRCS	+= av1/obu.c
+SRCS	+= av1/pkt.c
