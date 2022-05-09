@@ -42,3 +42,14 @@ typedef int (av1_packet_h)(bool marker, uint64_t rtp_ts,
 int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  const uint8_t *buf, size_t len, size_t maxlen,
 		  av1_packet_h *pkth, void *arg);
+
+
+/** AV1 Aggregation Header */
+struct av1_aggr_hdr {
+	unsigned z:1;  /* continuation of an OBU fragment from prev packet  */
+	unsigned y:1;  /* last OBU element will continue in the next packet */
+	unsigned w:2;  /* number of OBU elements in the packet              */
+	unsigned n:1;  /* first packet of a coded video sequence            */
+};
+
+int av1_aggr_hdr_decode(struct av1_aggr_hdr *hdr, struct mbuf *mb);
