@@ -12,7 +12,7 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.2.2 LANGUAGES C)
+project(re VERSION 2.3.0 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -176,6 +176,7 @@ endif()
 set(HEADERS
   include/re_aes.h
   include/re_atomic.h
+  include/re_av1.h
   include/re_base64.h
   include/re_bfcp.h
   include/re_bitv.h
@@ -232,6 +233,9 @@ set(HEADERS
 )
 
 set(SRCS
+
+  src/av1/obu.c
+  src/av1/pkt.c
 
   src/base64/b64.c
 

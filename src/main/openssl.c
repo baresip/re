@@ -35,17 +35,10 @@ static inline unsigned long threadid(void)
 }
 
 
-#if OPENSSL_VERSION_NUMBER >= 0x10000000
 static void threadid_handler(CRYPTO_THREADID *id)
 {
 	CRYPTO_THREADID_set_numeric(id, threadid());
 }
-#else
-static unsigned long threadid_handler(void)
-{
-	return threadid();
-}
-#endif
 
 
 static void locking_handler(int mode, int type, const char *file, int line)
@@ -131,11 +124,7 @@ int openssl_init(void)
 		}
 	}
 
-#if OPENSSL_VERSION_NUMBER >= 0x10000000
 	CRYPTO_THREADID_set_callback(threadid_handler);
-#else
-	CRYPTO_set_id_callback(threadid_handler);
-#endif
 
 	CRYPTO_set_locking_callback(locking_handler);
 #endif

@@ -28,9 +28,7 @@
 struct tls_conn {
 	SSL *ssl;             /* inheritance */
 	struct tls *tls;      /* inheritance */
-#ifdef TLS_BIO_OPAQUE
 	BIO_METHOD *biomet;
-#endif
 	BIO *sbio_out;
 	BIO *sbio_in;
 	struct tcp_helper *th;
@@ -52,10 +50,8 @@ static void destructor(void *arg)
 		SSL_free(tc->ssl);
 	}
 
-#ifdef TLS_BIO_OPAQUE
 	if (tc->biomet)
 		BIO_meth_free(tc->biomet);
-#endif
 
 	mem_deref(tc->th);
 	mem_deref(tc->tcp);
@@ -64,16 +60,9 @@ static void destructor(void *arg)
 
 static int bio_create(BIO *b)
 {
-#ifdef TLS_BIO_OPAQUE
 	BIO_set_init(b, 1);
 	BIO_set_data(b, NULL);
 	BIO_set_flags(b, 0);
-#else
-	b->init  = 1;
-	b->num   = 0;
-	b->ptr   = NULL;
-	b->flags = 0;
-#endif
 
 	return 1;
 }
@@ -84,15 +73,9 @@ static int bio_destroy(BIO *b)
 	if (!b)
 		return 0;
 
-#ifdef TLS_BIO_OPAQUE
 	BIO_set_init(b, 0);
 	BIO_set_data(b, NULL);
 	BIO_set_flags(b, 0);
-#else
-	b->ptr   = NULL;
-	b->init  = 0;
-	b->flags = 0;
-#endif
 
 	return 1;
 }
@@ -100,11 +83,7 @@ static int bio_destroy(BIO *b)
 
 static int bio_write(BIO *b, const char *buf, int len)
 {
-#ifdef TLS_BIO_OPAQUE
 	struct tls_conn *tc = BIO_get_data(b);
-#else
-	struct tls_conn *tc = b->ptr;
-#endif
 	struct mbuf mb;
 	int err;
 
@@ -135,8 +114,6 @@ static long bio_ctrl(BIO *b, int cmd, long num, void *ptr)
 }
 
 
-#ifdef TLS_BIO_OPAQUE
-
 static BIO_METHOD *bio_method_tcp(void)
 {
 	BIO_METHOD *method;
@@ -155,23 +132,6 @@ static BIO_METHOD *bio_method_tcp(void)
 
 	return method;
 }
-
-#else
-
-static struct bio_method_st bio_tcp_send = {
-	BIO_TYPE_SOURCE_SINK,
-	"tcp_send",
-	bio_write,
-	0,
-	0,
-	0,
-	bio_ctrl,
-	bio_create,
-	bio_destroy,
-	0
-};
-
-#endif
 
 
 static int tls_connect(struct tls_conn *tc)
@@ -424,13 +384,11 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 	tc->tcp = mem_ref(tcp);
 	tc->tls = tls;
 
-#ifdef TLS_BIO_OPAQUE
 	tc->biomet = bio_method_tcp();
 	if (!tc->biomet) {
 		err = ENOMEM;
 		goto out;
 	}
-#endif
 
 	err = ENOMEM;
 
@@ -451,11 +409,7 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 	}
 
 
-#ifdef TLS_BIO_OPAQUE
 	tc->sbio_out = BIO_new(tc->biomet);
-#else
-	tc->sbio_out = BIO_new(&bio_tcp_send);
-#endif
 	if (!tc->sbio_out) {
 		DEBUG_WARNING("alloc: BIO_new_socket() failed\n");
 		ERR_clear_error();
@@ -463,11 +417,7 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 		goto out;
 	}
 
-#ifdef TLS_BIO_OPAQUE
 	BIO_set_data(tc->sbio_out, tc);
-#else
-	tc->sbio_out->ptr = tc;
-#endif
 
 	SSL_set_bio(tc->ssl, tc->sbio_in, tc->sbio_out);
 

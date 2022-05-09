@@ -39,8 +39,8 @@
 #endif
 
 enum {
-	JBUF_FAULT_INC       = 200,
-	JBUF_FAULT_HI        = 3 * JBUF_FAULT_INC,
+	JBUF_RDIFF_EMA_COEFF = 512,
+	JBUF_RDIFF_UP_SPEED  = 512,
 };
 
 
@@ -49,13 +49,6 @@ struct frame {
 	struct le le;           /**< Linked list element       */
 	struct rtp_header hdr;  /**< RTP Header                */
 	void *mem;              /**< Reference counted pointer */
-};
-
-
-enum jb_state {
-	JS_GOOD = 0,
-	JS_LOW,
-	JS_HIGH,
 };
 
 
@@ -71,14 +64,13 @@ struct jbuf {
 	uint32_t n;          /**< [# frames] Current # of frames in buffer  */
 	uint32_t min;        /**< [# frames] Minimum # of frames to buffer  */
 	uint32_t max;        /**< [# frames] Maximum # of frames to buffer  */
+	uint32_t wish;       /**< [# frames] Wish size for adaptive mode    */
 	uint16_t seq_put;    /**< Sequence number for last jbuf_put()       */
 	uint16_t seq_get;    /**< Sequence number of last played frame      */
 	uint32_t ssrc;       /**< Previous ssrc                             */
 	int pt;              /**< Payload type                              */
-	bool started;        /**< Jitter buffer is in start phase           */
 	bool running;        /**< Jitter buffer is running                  */
-	enum jb_state st;    /**< computed jitter buffer state    */
-	uint32_t faults;     /**< Reorder faults                  */
+	int32_t rdiff;       /**< Average out of order reverse diff         */
 
 	struct lock *lock;   /**< Makes jitter buffer thread safe           */
 	enum jbuf_type jbtype;     /**< Jitter buffer type                  */
@@ -186,7 +178,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	jb->jbtype = JBUF_FIXED;
 	jb->min  = min;
 	jb->max  = max;
-	jb->faults = JBUF_FAULT_HI / 2;
+	jb->wish = min;
 
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
@@ -236,40 +228,37 @@ int  jbuf_set_type(struct jbuf *jb, enum jbuf_type jbtype)
 }
 
 
-/**
- * Checks if the number of packets present in the jitter buffer is ok
- * (JS_GOOD), should be increased (JS_LOW) or decremented (JS_HIGH).
- *
- * @param jb Jitter buffer
- *
- * @return JS_GOOD, JS_LOW, JS_HIGH.
- */
-/* ------------------------------------------------------------------------- */
-static enum jb_state jbuf_state(const struct jbuf *jb)
+static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 {
-	return jb->st;
-}
+	int32_t rdiff;
+	int32_t adiff;
+	int32_t s;                         /**< EMA coefficient              */
+	uint32_t wish;
 
-
-static void seq_failure(struct jbuf *jb)
-{
 	if (jb->jbtype != JBUF_ADAPTIVE)
 		return;
 
-	if (jb->faults >= JBUF_FAULT_HI)
-		jb->st = JS_LOW;
-	else
-		jb->faults += JBUF_FAULT_INC;
-}
-
-
-static void seq_ok(struct jbuf *jb)
-{
-	if (jb->jbtype != JBUF_ADAPTIVE)
+	if (!jb->seq_get)
 		return;
 
-	if (jb->faults)
-		--jb->faults;
+	rdiff = (int16_t)(jb->seq_put + 1 - seq);
+	adiff = abs(rdiff * JBUF_RDIFF_EMA_COEFF);
+	s = adiff > jb->rdiff ? JBUF_RDIFF_UP_SPEED :
+		jb->wish > 2  ? 1 :
+		jb->wish > 1  ? 2 : 3;
+	jb->rdiff += (adiff - jb->rdiff) * s / JBUF_RDIFF_EMA_COEFF;
+
+	wish = (uint32_t) (jb->rdiff / JBUF_RDIFF_EMA_COEFF);
+	if (wish < jb->min)
+		wish = jb->min;
+
+	if (wish >= jb->max)
+		wish = jb->max - 1;
+
+	if (wish != jb->wish) {
+		DEBUG_INFO("wish size changed %u\n", jb->wish);
+		jb->wish = wish;
+	}
 }
 
 
@@ -306,6 +295,9 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	if (jb->running) {
 
+		if (jb->jbtype == JBUF_ADAPTIVE)
+			calc_rdiff(jb, seq);
+
 		/* Packet arrived too late to be put into buffer */
 		if (jb->seq_get && seq_less(seq, jb->seq_get + 1)) {
 			STAT_INC(n_late);
@@ -313,11 +305,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 				   "(seq_put=%u seq_get=%u)\n",
 				   seq, jb->seq_put, jb->seq_get);
 			err = ETIMEDOUT;
-			seq_failure(jb);
 			goto out;
-		}
-		else {
-			seq_ok(jb);
 		}
 
 	}
@@ -341,7 +329,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 		const uint16_t seq_le = ((struct frame *)le->data)->hdr.seq;
 
 		if (seq_less(seq_le, seq)) { /* most likely */
-			DEBUG_INFO("put: out-of-sequence"
+			DEBUG_PRINTF("put: out-of-sequence"
 				   " - inserting after seq=%u (seq=%u)\n",
 				   seq_le, seq);
 			list_insert_after(&jb->framel, le, &f->le, f);
@@ -362,7 +350,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	/* no earlier timestamps found, put in head */
 	if (!le) {
-		DEBUG_INFO("put: out-of-sequence"
+		DEBUG_PRINTF("put: out-of-sequence"
 			   " - put in head (seq=%u)\n", seq);
 		list_prepend(&jb->framel, &f->le, f);
 	}
@@ -404,26 +392,10 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	lock_write_get(jb->lock);
 	STAT_INC(n_get);
-	switch (jb->jbtype) {
-		case JBUF_ADAPTIVE:
-		if (jb->n < jb->max-1 && jbuf_state(jb) == JS_LOW) {
-			DEBUG_INFO("inc buffer due to reordered "
-				      "packets n=%u max=%u\n",
-				      jb->n, jb->max);
-			err = ENOENT;
-			jb->st = JS_GOOD;
-			++jb->min;
-			goto out;
-		}
-		break;
 
-		default:
-		break;
-	}
-
-	if (jb->n <= jb->min || !jb->framel.head) {
+	if (jb->n <= jb->wish || !jb->framel.head) {
 		DEBUG_INFO("not enough buffer frames - wait.. "
-			   "(n=%u min=%u)\n", jb->n, jb->min);
+			   "(n=%u wish=%u)\n", jb->n, jb->wish);
 		STAT_INC(n_underflow);
 		err = ENOENT;
 		goto out;
@@ -458,22 +430,11 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	frame_deref(jb, f);
 
-	switch (jb->jbtype) {
-	case JBUF_ADAPTIVE:
-		/* zero faults --> min == 0 */
-		if (jb->min > (jb->faults + JBUF_FAULT_INC - 1) /
-		    JBUF_FAULT_INC)
-			--jb->min;
-
-		if (jb->n > jb->min) {
-			DEBUG_INFO("reducing jitter buffer "
-				   "(n=%u min=%u max=%u)\n",
-				   jb->n, jb->min, jb->max);
-			err = EAGAIN;
-		}
-		break;
-	default:
-		break;
+	if (jb->jbtype == JBUF_ADAPTIVE && jb->n > jb->wish) {
+		DEBUG_INFO("reducing jitter buffer "
+			   "(n=%u min=%u wish=%u max=%u)\n",
+			   jb->n, jb->min, jb->wish, jb->max);
+		err = EAGAIN;
 	}
 
 out:
@@ -519,7 +480,6 @@ void jbuf_flush(struct jbuf *jb)
 	memset(&jb->stat, 0, sizeof(jb->stat));
 	jb->stat.n_flush = n_flush;
 #endif
-	jb->started = false;
 	lock_rel(jb->lock);
 }
 
