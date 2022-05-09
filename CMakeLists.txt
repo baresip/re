@@ -235,6 +235,7 @@ set(HEADERS
 set(SRCS
 
   src/av1/obu.c
+  src/av1/pkt.c
 
   src/base64/b64.c
 
