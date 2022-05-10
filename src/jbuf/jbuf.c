@@ -39,7 +39,7 @@
 #endif
 
 enum {
-	JBUF_RDIFF_EMA_COEFF = 512,
+	JBUF_RDIFF_EMA_COEFF = 1024,
 	JBUF_RDIFF_UP_SPEED  = 512,
 };
 
@@ -71,6 +71,7 @@ struct jbuf {
 	int pt;              /**< Payload type                              */
 	bool running;        /**< Jitter buffer is running                  */
 	int32_t rdiff;       /**< Average out of order reverse diff         */
+	struct tmr tmr;      /**< Rdiff down timer                          */
 
 	struct lock *lock;   /**< Makes jitter buffer thread safe           */
 	enum jbuf_type jbtype;     /**< Jitter buffer type                  */
@@ -136,6 +137,7 @@ static void jbuf_destructor(void *data)
 {
 	struct jbuf *jb = data;
 
+	tmr_cancel(&jb->tmr);
 	jbuf_flush(jb);
 
 	/* Free all frames in the pool list */
@@ -179,6 +181,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	jb->min  = min;
 	jb->max  = max;
 	jb->wish = min;
+	tmr_init(&jb->tmr);
 
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
@@ -228,12 +231,25 @@ int  jbuf_set_type(struct jbuf *jb, enum jbuf_type jbtype)
 }
 
 
+static void wish_down(void *arg)
+{
+	struct jbuf *jb = arg;
+
+	if (jb->wish > jb->min) {
+		DEBUG_INFO("wish size changed %u --> %u\n", jb->wish,
+			   jb->wish - 1);
+		--jb->wish;
+	}
+}
+
+
 static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 {
 	int32_t rdiff;
 	int32_t adiff;
 	int32_t s;                         /**< EMA coefficient              */
 	uint32_t wish;
+	bool down = false;
 
 	if (jb->jbtype != JBUF_ADAPTIVE)
 		return;
@@ -255,10 +271,20 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 	if (wish >= jb->max)
 		wish = jb->max - 1;
 
-	if (wish != jb->wish) {
-		DEBUG_INFO("wish size changed %u\n", jb->wish);
+	if (wish > jb->wish) {
+		DEBUG_INFO("wish size changed %u --> %u\n", jb->wish, wish);
 		jb->wish = wish;
 	}
+	else if (wish < jb->wish) {
+		uint32_t dt = wish + 1 == jb->wish ? 6000 : 1000;
+		if (!tmr_isrunning(&jb->tmr) || tmr_get_expire(&jb->tmr) > dt)
+			tmr_start(&jb->tmr, dt, wish_down, jb);
+
+		down = true;
+	}
+
+	if (!down && tmr_isrunning(&jb->tmr))
+		tmr_cancel(&jb->tmr);
 }
 
 
