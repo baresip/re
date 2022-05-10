@@ -152,7 +152,7 @@ int cnd_signal(cnd_t *cnd)
 }
 
 
-int cnd_wait(cnd_t *cnd, struct lock *lock)
+int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
 	if (!cnd || !lock)
 		return thrd_error;

@@ -1,11 +1,10 @@
 /**
  * @file re_thread.h  Thread support (Experimental)
  *
- * Inspired by C11 thread support this provides a cross platform interface to
- * thread handling (C11, POSIX and Windows Threads). For mutex locking see
- * re_lock.h
+ * Inspired by C11 thread support this provides a cross platform interfaces to
+ * thread, mutex and condition handling (C11, POSIX and Windows Threads).
  *
- * Prefered order:
+ * Preferred order:
  *
  * - C11 threads (glibc>=2.28, musl, FreeBSD>=10)
  * - POSIX PTHREAD (Linux/UNIX, winpthreads)
@@ -27,6 +26,7 @@
 typedef pthread_once_t thrd_once_flag;
 typedef pthread_t thrd_t;
 typedef pthread_cond_t cnd_t;
+typedef pthread_mutex_t mtx_t;
 
 #elif defined(WIN32)
 
@@ -35,9 +35,11 @@ typedef pthread_cond_t cnd_t;
 typedef INIT_ONCE thrd_once_flag;
 typedef HANDLE thrd;
 typedef CONDITION_VARIABLE cnd_t;
+typedef CRITICAL_SECTION mtx_t;
 
 #endif
 
+enum { mtx_plain = 0, mtx_try = 1, mtx_timed = 2, mtx_recursive = 4 };
 
 /* Exit and error codes.  */
 enum {
@@ -155,12 +157,12 @@ int cnd_broadcast(cnd_t *cnd);
 /**
  * Blocks on a condition variable
  *
- * @param cnd  Pointer to condition variable
+ * @param cnd   Pointer to condition variable
  * @param lock  Lock mutex pointer
  *
  * @return 0 if success, otherwise errorcode
  */
-int cnd_wait(cnd_t *cnd, struct lock *lock);
+int cnd_wait(cnd_t *cnd, mtx_t *mtx);
 
 
 /**
@@ -170,6 +172,57 @@ int cnd_wait(cnd_t *cnd, struct lock *lock);
  * @param cnd  pointer to the condition variable to destroy
  */
 void cnd_destroy(cnd_t *cnd);
+
+
+/******************************************************************************
+ * Mutex functions
+ *****************************************************************************/
+
+/**
+ * Creates a new mutex object with type. The object pointed to by mutex is set
+ * to an identifier of the newly created mutex.
+ *
+ * @param mtx   Pointer to the mutex to initialize
+ * @param type  The type of the mutex
+ *
+ * @return thrd_success on success, otherwise thrd_error
+ */
+int mtx_init(mtx_t *mtx, int type);
+
+
+/**
+ * Blocks the current thread until the mutex pointed to by mutex is locked.
+ * The behavior is undefined if the current thread has already locked the
+ * mutex and the mutex is not recursive.
+ *
+ * @param mtx   Pointer to the mutex
+ *
+ * @return thrd_success on success, otherwise thrd_error
+ */
+int mtx_lock(mtx_t *mtx);
+
+
+/**
+ * Tries to lock the mutex pointed to by mutex without blocking.
+ * Returns immediately if the mutex is already locked.
+ *
+ * @param mtx   Pointer to the mutex
+ *
+ * @return thrd_success on success, thrd_busy if alread locked,
+ * otherwise thrd_error
+ */
+int mtx_trylock(mtx_t *mtx);
+
+
+/**
+ * Unlocks the mutex pointed to by mutex.
+ *
+ * @param mtx   Pointer to the mutex
+ *
+ * @return thrd_success on success, otherwise thrd_error
+ */
+int mtx_unlock(mtx_t *mtx);
+
 
 /* @TODO
  * - thrd_sleep
@@ -187,4 +240,3 @@ void cnd_destroy(cnd_t *cnd);
 /* void thrd_print(struct re_printf *pf, void *unused); */
 int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);
-

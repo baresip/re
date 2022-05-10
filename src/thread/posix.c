@@ -3,8 +3,8 @@
  *
  * Copyright (C) 2022 Sebastian Reimers
  */
+#define _GNU_SOURCE 1
 
-#include <pthread.h>
 #include <re_types.h>
 #include <re_lock.h>
 #include <re_mem.h>
@@ -112,10 +112,56 @@ int cnd_signal(cnd_t *cnd)
 }
 
 
-int cnd_wait(cnd_t *cnd, struct lock *lock)
+int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
-	if (!cnd || !lock)
+	if (!cnd || !mtx)
 		return EINVAL;
 
-	return pthread_cond_wait(cnd, lock_mutex(lock));
+	return pthread_cond_wait(cnd, mtx);
+}
+
+
+int mtx_init(mtx_t *mtx, int type)
+{
+	pthread_mutexattr_t attr;
+
+	if (!mtx)
+		return thrd_error;
+
+	if ((type & mtx_recursive) == 0) {
+		pthread_mutex_init(mtx, NULL);
+		return thrd_success;
+	}
+	pthread_mutexattr_init(&attr);
+	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(mtx, &attr);
+	pthread_mutexattr_destroy(&attr);
+	return thrd_success;
+}
+
+
+int mtx_lock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	return (pthread_mutex_lock(mtx) == 0) ? thrd_success : thrd_error;
+}
+
+
+int mtx_trylock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	return (pthread_mutex_trylock(mtx) == 0) ? thrd_success : thrd_busy;
+}
+
+
+int mtx_unlock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	return (pthread_mutex_unlock(mtx) == 0) ? thrd_success : thrd_error;
 }
