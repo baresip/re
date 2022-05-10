@@ -62,7 +62,7 @@ static int decode_scaling_matrix(struct getbit *gb, unsigned chroma_format_idc)
 	unsigned i;
 	int err;
 
-	for (i = 0; i < ((chroma_format_idc != 3) ? 8 : 12); i++) {
+	for (i = 0; i < ((chroma_format_idc != 3) ? 8u : 12u); i++) {
 
 		unsigned seq_scaling_list_present_flag;
 
