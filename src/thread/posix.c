@@ -10,10 +10,10 @@
 #include <re_mem.h>
 #include <re_thread.h>
 
+
 struct thread {
 	thrd_start_t func;
 	void *arg;
-	const char *name;
 };
 
 
@@ -29,13 +29,6 @@ static void *thrd_handler(void *p)
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
-	return thrd_create_name(thr, NULL, func, arg);
-}
-
-
-int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
-		     void *arg)
-{
 	struct thread *th;
 	int err;
 
@@ -48,7 +41,6 @@ int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 
 	th->func = func;
 	th->arg	 = arg;
-	th->name = name; /* TODO: implement */
 
 	err = pthread_create(thr, NULL, thrd_handler, th);
 	if (err)

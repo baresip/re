@@ -558,6 +558,11 @@ elseif(HAVE_PTHREAD)
     src/thread/thread.c
     src/thread/posix.c
   )
+elseif(CMAKE_USE_WIN32_THREADS_INIT)
+  list(APPEND SRCS
+    src/thread/thread.c
+    src/thread/win32.c
+  )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
