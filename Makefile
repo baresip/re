@@ -54,6 +54,7 @@ MODULES += shim
 MODULES += trice
 MODULES += pcp
 MODULES += av1
+MODULES += h265
 
 INSTALL := install
 ifeq ($(DESTDIR),)
