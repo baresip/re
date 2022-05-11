@@ -82,7 +82,7 @@ int thrd_join(thrd_t thr, int *res)
 }
 
 
-void call_once(thrd_once_flag *flag, void (*func)(void))
+void call_once(once_flag *flag, void (*func)(void))
 {
 	pthread_once(flag, func);
 }

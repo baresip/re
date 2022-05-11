@@ -118,7 +118,7 @@ static BOOL CALLBACK call_once_callback(PINIT_ONCE InitOnce, PVOID Parameter,
 }
 
 
-void call_once(thrd_once_flag *flag, void (*func)(void))
+void call_once(once_flag *flag, void (*func)(void))
 {
 	struct impl_call_once_param param;
 	param.func = func;
