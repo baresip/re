@@ -22,8 +22,8 @@
 
 #include <pthread.h>
 #include <time.h>
-#define THREAD_ONCE_FLAG_INIT PTHREAD_ONCE_INIT
-typedef pthread_once_t thrd_once_flag;
+#define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
+typedef pthread_once_t once_flag;
 typedef pthread_t thrd_t;
 typedef pthread_cond_t cnd_t;
 typedef pthread_mutex_t mtx_t;
@@ -31,8 +31,8 @@ typedef pthread_mutex_t mtx_t;
 #elif defined(WIN32)
 
 #include <windows.h>
-#define THREAD_ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
-typedef INIT_ONCE thrd_once_flag;
+#define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
+typedef INIT_ONCE once_flag;
 typedef HANDLE thrd_t;
 typedef CONDITION_VARIABLE cnd_t;
 typedef CRITICAL_SECTION mtx_t;
@@ -109,7 +109,7 @@ int thrd_join(thrd_t thr, int *res);
  * @param flag  Pointer to object initialized by THREAD_ONCE_FLAG_INIT
  * @param func  The function to execute only once
  */
-void call_once(thrd_once_flag *flag, void (*func)(void));
+void call_once(once_flag *flag, void (*func)(void));
 
 
 /**
