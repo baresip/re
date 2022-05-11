@@ -35,7 +35,7 @@ include(GNUInstallDirs)
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 find_package(Backtrace)
-find_package(Threads)
+find_package(Threads REQUIRED)
 find_package(OpenSSL)
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
