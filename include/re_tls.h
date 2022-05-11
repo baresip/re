@@ -121,7 +121,5 @@ void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 
 
 #ifdef USE_OPENSSL
-struct ssl_ctx_st;
-
 struct ssl_ctx_st *tls_openssl_context(const struct tls *tls);
 #endif
