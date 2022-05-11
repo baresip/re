@@ -37,6 +37,10 @@ typedef HANDLE thrd_t;
 typedef CONDITION_VARIABLE cnd_t;
 typedef CRITICAL_SECTION mtx_t;
 
+#else
+
+#error "thread: system not supported"
+
 #endif
 
 enum { mtx_plain = 0, mtx_try = 1, mtx_timed = 2, mtx_recursive = 4 };
