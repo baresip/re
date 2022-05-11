@@ -162,3 +162,47 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 
 	return thrd_success;
 }
+
+
+int mtx_init(mtx_t *mtx, int type)
+{
+	(void)type;
+
+	if (!mtx)
+		return thrd_error;
+
+	InitializeCriticalSection(mtx);
+
+	return thrd_success;
+}
+
+
+int mtx_lock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	EnterCriticalSection(mtx);
+
+	return thrd_success;
+}
+
+
+int mtx_trylock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	return TryEnterCriticalSection(mtx) ? thrd_success : thrd_busy;
+}
+
+
+int mtx_unlock(mtx_t *mtx)
+{
+	if (!mtx)
+		return thrd_error;
+
+	LeaveCriticalSection(mtx);
+
+	return thrd_success;
+}
