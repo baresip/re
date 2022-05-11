@@ -110,7 +110,7 @@ int thrd_join(thrd_t thr, int *res);
 /**
  * Calls a function exactly once
  *
- * @param flag  Pointer to object initialized by THREAD_ONCE_FLAG_INIT
+ * @param flag  Pointer to object initialized by ONCE_FLAG_INIT
  * @param func  The function to execute only once
  */
 void call_once(once_flag *flag, void (*func)(void));
@@ -236,5 +236,16 @@ int mtx_unlock(mtx_t *mtx);
  *****************************************************************************/
 /* int thrd_prio(enum thrd_prio prio) */
 /* void thrd_print(struct re_printf *pf, void *unused); */
+
+/**
+ * Creates a new thread with name
+ *
+ * @param thr   Pointer to new thread
+ * @param name  Unique name for a thread
+ * @param func  Function to execute
+ * @param arg   Argument to pass to the function
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);
