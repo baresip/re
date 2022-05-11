@@ -35,7 +35,7 @@ include(GNUInstallDirs)
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 find_package(Backtrace)
-find_package(Threads)
+find_package(Threads REQUIRED)
 find_package(OpenSSL)
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
@@ -401,6 +401,8 @@ set(SRCS
 
   src/telev/telev.c
 
+  src/thread/thread.c
+
   src/tmr/tmr.c
 
   src/trace/trace.c
@@ -550,18 +552,14 @@ elseif(HAVE_PTHREAD)
 endif()
 
 if(HAVE_THREADS)
-  list(APPEND SRCS
-    src/thread/thread.c
-  )
-elseif(HAVE_PTHREAD)
-  list(APPEND SRCS
-    src/thread/thread.c
-    src/thread/posix.c
-  )
+  #Do nothing
 elseif(CMAKE_USE_WIN32_THREADS_INIT)
   list(APPEND SRCS
-    src/thread/thread.c
     src/thread/win32.c
+  )
+else()
+  list(APPEND SRCS
+    src/thread/posix.c
   )
 endif()
 

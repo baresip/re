@@ -7,8 +7,8 @@
  * Preferred order:
  *
  * - C11 threads (glibc>=2.28, musl, FreeBSD>=10)
- * - POSIX PTHREAD (Linux/UNIX, winpthreads)
  * - Windows Thread API
+ * - POSIX PTHREAD (Linux/UNIX)
  *
  * Copyright (C) 2022 Sebastian Reimers
  */
@@ -18,17 +18,7 @@
 
 #else
 
-#if defined(HAVE_PTHREAD)
-
-#include <pthread.h>
-#include <time.h>
-#define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
-typedef pthread_once_t once_flag;
-typedef pthread_t thrd_t;
-typedef pthread_cond_t cnd_t;
-typedef pthread_mutex_t mtx_t;
-
-#elif defined(WIN32)
+#if defined(WIN32)
 
 #include <windows.h>
 #define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
@@ -39,7 +29,13 @@ typedef CRITICAL_SECTION mtx_t;
 
 #else
 
-#error "thread: system not supported"
+#include <pthread.h>
+#include <time.h>
+#define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
+typedef pthread_once_t once_flag;
+typedef pthread_t thrd_t;
+typedef pthread_cond_t cnd_t;
+typedef pthread_mutex_t mtx_t;
 
 #endif
 
