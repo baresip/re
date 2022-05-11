@@ -401,6 +401,8 @@ set(SRCS
 
   src/telev/telev.c
 
+  src/thread/thread.c
+
   src/tmr/tmr.c
 
   src/trace/trace.c
@@ -549,19 +551,13 @@ elseif(HAVE_PTHREAD)
   )
 endif()
 
-if(HAVE_THREADS)
+if(CMAKE_USE_WIN32_THREADS_INIT)
   list(APPEND SRCS
-    src/thread/thread.c
-  )
-elseif(HAVE_PTHREAD)
-  list(APPEND SRCS
-    src/thread/thread.c
-    src/thread/posix.c
-  )
-elseif(CMAKE_USE_WIN32_THREADS_INIT)
-  list(APPEND SRCS
-    src/thread/thread.c
     src/thread/win32.c
+  )
+else()
+  list(APPEND SRCS
+    src/thread/posix.c
   )
 endif()
 
