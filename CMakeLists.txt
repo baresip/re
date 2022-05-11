@@ -551,7 +551,9 @@ elseif(HAVE_PTHREAD)
   )
 endif()
 
-if(CMAKE_USE_WIN32_THREADS_INIT)
+if(HAVE_THREADS)
+  #Do nothing
+elseif(CMAKE_USE_WIN32_THREADS_INIT)
   list(APPEND SRCS
     src/thread/win32.c
   )
