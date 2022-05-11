@@ -33,6 +33,7 @@ endif()
 #
 include(GNUInstallDirs)
 include(CheckIncludeFile)
+include(CheckFunctionExists)
 find_package(Backtrace)
 find_package(Threads)
 find_package(OpenSSL)
@@ -84,6 +85,11 @@ if(Backtrace_FOUND)
   add_definitions(-DHAVE_EXECINFO)
 else()
   set(Backtrace_LIBRARIES)
+endif()
+
+check_function_exists(thrd_create HAVE_THREADS)
+if(HAVE_THREADS)
+  add_definitions(-DHAVE_THREADS)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
@@ -543,6 +549,21 @@ elseif(HAVE_PTHREAD)
   )
 endif()
 
+if(HAVE_THREADS)
+  list(APPEND SRCS
+    src/thread/thread.c
+  )
+elseif(HAVE_PTHREAD)
+  list(APPEND SRCS
+    src/thread/thread.c
+    src/thread/posix.c
+  )
+elseif(CMAKE_USE_WIN32_THREADS_INIT)
+  list(APPEND SRCS
+    src/thread/thread.c
+    src/thread/win32.c
+  )
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND SRCS
