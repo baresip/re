@@ -33,7 +33,7 @@ typedef pthread_mutex_t mtx_t;
 #include <windows.h>
 #define THREAD_ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
 typedef INIT_ONCE thrd_once_flag;
-typedef HANDLE thrd;
+typedef HANDLE thrd_t;
 typedef CONDITION_VARIABLE cnd_t;
 typedef CRITICAL_SECTION mtx_t;
 

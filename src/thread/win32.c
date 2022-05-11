@@ -4,6 +4,7 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#include <process.h>
 #include <re_types.h>
 #include <re_lock.h>
 #include <re_mem.h>
@@ -16,13 +17,13 @@ struct thread {
 };
 
 
-static unsigned __stdcall *thrd_handler(void *p)
+static unsigned __stdcall thrd_handler(void *p)
 {
 	struct thread th = *(struct thread *)p;
 
 	mem_deref(p);
 
-	return (void *)(intptr_t)th.func(th.arg);
+	return th.func(th.arg);
 }
 
 
@@ -135,7 +136,7 @@ int cnd_init(cnd_t *cnd)
 	if (!cnd)
 		return thrd_error;
 
-	InitializeConditionVariable(&cond->condvar);
+	InitializeConditionVariable(cnd);
 
 	return thrd_success;
 }
@@ -146,7 +147,7 @@ int cnd_signal(cnd_t *cnd)
 	if (!cnd)
 		return thrd_error;
 
-	WakeConditionVariable(&cond->condvar);
+	WakeConditionVariable(cnd);
 
 	return thrd_success;
 }
@@ -154,10 +155,10 @@ int cnd_signal(cnd_t *cnd)
 
 int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
-	if (!cnd || !lock)
+	if (!cnd || !mtx)
 		return thrd_error;
 
-	SleepConditionVariableCS(&cond->condvar, &mtx->cs, INFINITE);
+	SleepConditionVariableCS(cnd, mtx, INFINITE);
 
 	return thrd_success;
 }
