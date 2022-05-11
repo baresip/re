@@ -1,5 +1,5 @@
 /**
- * @file re_thread.h  Thread support (Experimental)
+ * @file re_thread.h  Thread support
  *
  * Inspired by C11 thread support this provides a cross platform interfaces to
  * thread, mutex and condition handling (C11, POSIX and Windows Threads).
@@ -224,13 +224,7 @@ int mtx_trylock(mtx_t *mtx);
 int mtx_unlock(mtx_t *mtx);
 
 
-/* @TODO
- * - thrd_sleep
- * - thrd_yield
- * - cnd_timedwait
- */
-
-#endif /* C11 threads */
+#endif /* C11 threads fallback */
 
 
 /******************************************************************************

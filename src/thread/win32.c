@@ -108,11 +108,12 @@ struct impl_call_once_param {
 static BOOL CALLBACK call_once_callback(PINIT_ONCE InitOnce, PVOID Parameter,
 					PVOID *Context)
 {
-	struct impl_call_once_param *param =
-		(struct impl_call_once_param *)Parameter;
-	(param->func)();
-	((void)InitOnce);
-	((void)Context);
+	struct impl_call_once_param *param = Parameter;
+	(void)InitOnce;
+	(void)Context;
+
+	param->func();
+
 	return true;
 }
 
