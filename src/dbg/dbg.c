@@ -7,16 +7,13 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_PTHREAD
-#include <stdlib.h>
-#include <pthread.h>
-#endif
 #include <time.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_tmr.h>
 #include <re_sys.h>
+#include <re_thread.h>
 
 
 #define DEBUG_MODULE "dbg"
@@ -32,9 +29,6 @@ static struct {
 	dbg_print_h *ph;       /**< Optional print handler */
 	void *arg;             /**< Handler argument       */
 	FILE *f;               /**< Logfile                */
-#ifdef HAVE_PTHREAD
-	pthread_mutex_t mutex; /**< Thread locking         */
-#endif
 } dbg = {
 	0,
 	DBG_INFO,
@@ -42,27 +36,29 @@ static struct {
 	NULL,
 	NULL,
 	NULL,
-#ifdef HAVE_PTHREAD
-	PTHREAD_MUTEX_INITIALIZER,
-#endif
 };
 
+static once_flag flag = ONCE_FLAG_INIT;
+static mtx_t mtx;
 
-#ifdef HAVE_PTHREAD
+
+static void mem_lock_init(void)
+{
+	mtx_init(&mtx, mtx_plain);
+}
+
+
 static inline void dbg_lock(void)
 {
-	pthread_mutex_lock(&dbg.mutex);
+	call_once(&flag, mem_lock_init);
+	mtx_lock(&mtx);
 }
 
 
 static inline void dbg_unlock(void)
 {
-	pthread_mutex_unlock(&dbg.mutex);
+	mtx_unlock(&mtx);
 }
-#else
-#define dbg_lock()    /**< Stub */
-#define dbg_unlock()  /**< Stub */
-#endif
 
 
 /**
