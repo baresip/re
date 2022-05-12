@@ -26,6 +26,7 @@ typedef INIT_ONCE once_flag;
 typedef HANDLE thrd_t;
 typedef CONDITION_VARIABLE cnd_t;
 typedef CRITICAL_SECTION mtx_t;
+typedef DWORD tss_t;
 
 #else
 
@@ -36,6 +37,7 @@ typedef pthread_once_t once_flag;
 typedef pthread_t thrd_t;
 typedef pthread_cond_t cnd_t;
 typedef pthread_mutex_t mtx_t;
+typedef pthread_key_t tss_t;
 
 #endif
 
@@ -50,6 +52,7 @@ enum {
 	thrd_timedout = 4
 };
 
+typedef void (*tss_dtor_t)(void *);
 typedef int (*thrd_start_t)(void *);
 
 
@@ -223,6 +226,14 @@ int mtx_trylock(mtx_t *mtx);
  */
 int mtx_unlock(mtx_t *mtx);
 
+
+/******************************************************************************
+ * Thread-local storage functions
+ *****************************************************************************/
+int tss_create(tss_t *key, tss_dtor_t destructor);
+void *tss_get(tss_t key);
+int tss_set(tss_t key, void *val);
+void tss_delete(tss_t key);
 
 #endif /* C11 threads fallback */
 
