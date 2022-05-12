@@ -10,6 +10,11 @@
 #include <re_mem.h>
 #include <re_thread.h>
 
+
+#define DEBUG_MODULE "thread"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
+
 #define TSS_DESTRUCTOR_MAX 64
 
 static struct tss_dtor_entry {
@@ -32,8 +37,10 @@ static int tss_dtor_register(tss_t key, tss_dtor_t dtor)
 			break;
 	}
 
-	if (i >= TSS_DESTRUCTOR_MAX)
+	if (i >= TSS_DESTRUCTOR_MAX) {
+		DEBUG_WARNING("thread: max tss destructors reached\n");
 		return ENOMEM;
+	}
 
 	tss_dtor_tbl[i].key  = key;
 	tss_dtor_tbl[i].dtor = dtor;
