@@ -37,15 +37,19 @@ static int tss_dtor_register(tss_t key, tss_dtor_t dtor)
 
 	tss_dtor_tbl[i].key  = key;
 	tss_dtor_tbl[i].dtor = dtor;
+
+	return 0;
 }
 
 
 static void tss_dtor_destruct(void)
 {
+	void *val;
+
 	for (int i = 0; i < TSS_DESTRUCTOR_MAX; i++) {
 		if (!tss_dtor_tbl[i].dtor)
 			continue;
-		void *val = tss_get(tss_dtor_tbl[i].key);
+		val = tss_get(tss_dtor_tbl[i].key);
 		if (val) {
 			tss_dtor_tbl[i].dtor(val);
 			tss_dtor_tbl[i].dtor = NULL;
