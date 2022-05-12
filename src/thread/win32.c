@@ -11,19 +11,71 @@
 #include <re_thread.h>
 
 
+#define DEBUG_MODULE "thread"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
+
+#define TSS_DESTRUCTOR_MAX 64
+
+static struct tss_dtor_entry {
+	tss_t key;
+	tss_dtor_t dtor;
+} tss_dtor_tbl[TSS_DESTRUCTOR_MAX];
+
+
 struct thread {
 	thrd_start_t func;
 	void *arg;
 };
 
+static int tss_dtor_register(tss_t key, tss_dtor_t dtor)
+{
+	int i;
+
+	for (i = 0; i < TSS_DESTRUCTOR_MAX; i++) {
+		if (!tss_dtor_tbl[i].dtor)
+			break;
+	}
+
+	if (i >= TSS_DESTRUCTOR_MAX) {
+		DEBUG_WARNING("thread: max tss destructors reached\n");
+		return ENOMEM;
+	}
+
+	tss_dtor_tbl[i].key  = key;
+	tss_dtor_tbl[i].dtor = dtor;
+
+	return 0;
+}
+
+
+static void tss_dtor_destruct(void)
+{
+	void *val;
+
+	for (int i = 0; i < TSS_DESTRUCTOR_MAX; i++) {
+		if (!tss_dtor_tbl[i].dtor)
+			continue;
+		val = tss_get(tss_dtor_tbl[i].key);
+		if (val) {
+			tss_dtor_tbl[i].dtor(val);
+			tss_dtor_tbl[i].dtor = NULL;
+		}
+	}
+}
+
 
 static unsigned __stdcall thrd_handler(void *p)
 {
 	struct thread th = *(struct thread *)p;
+	int err;
 
 	mem_deref(p);
+	err = th.func(th.arg);
 
-	return th.func(th.arg);
+	tss_dtor_destruct();
+
+	return err;
 }
 
 
@@ -206,4 +258,46 @@ int mtx_unlock(mtx_t *mtx)
 	LeaveCriticalSection(mtx);
 
 	return thrd_success;
+}
+
+
+int tss_create(tss_t *key, tss_dtor_t destructor)
+{
+	int err;
+
+	if (!key)
+		return thrd_error;
+
+	*key = TlsAlloc();
+	if (*key == TLS_OUT_OF_INDEXES)
+		return thrd_error;
+
+	if (!destructor)
+		return thrd_success;
+
+	err = tss_dtor_register(*key, destructor);
+	if (err) {
+		TlsFree(*key);
+		return thrd_error;
+	}
+
+	return thrd_success;
+}
+
+
+void *tss_get(tss_t key)
+{
+	return TlsGetValue(key);
+}
+
+
+int tss_set(tss_t key, void *val)
+{
+	return TlsSetValue(key, val) ? thrd_success : thrd_error;
+}
+
+
+void tss_delete(tss_t key)
+{
+	TlsFree(key);
 }
