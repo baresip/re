@@ -17,6 +17,7 @@
 #include <re_mbuf.h>
 #include <re_mem.h>
 #include <re_btrace.h>
+#include <re_thread.h>
 
 
 #define DEBUG_MODULE "mem"
@@ -51,62 +52,25 @@ static struct memstat memstat = {
 	0,0,0,0
 };
 
-#ifdef HAVE_PTHREAD
+static once_flag flag = ONCE_FLAG_INIT;
+static mtx_t mtx;
 
-static pthread_mutex_t mem_mutex = PTHREAD_MUTEX_INITIALIZER;
+static void mem_lock_init(void)
+{
+	mtx_init(&mtx, mtx_plain);
+}
 
 static inline void mem_lock(void)
 {
-	pthread_mutex_lock(&mem_mutex);
-}
+	call_once(&flag, mem_lock_init);
 
+	mtx_lock(&mtx);
+}
 
 static inline void mem_unlock(void)
 {
-	pthread_mutex_unlock(&mem_mutex);
+	mtx_unlock(&mtx);
 }
-
-#elif defined (WIN32)
-
-INIT_ONCE g_initMemLockOnce = INIT_ONCE_STATIC_INIT;
-CRITICAL_SECTION g_memLock;
-
-
-static BOOL CALLBACK InitHandleFunction(PINIT_ONCE initOnce,
-					PVOID parameter,
-					PVOID *lpContext)
-{
-	(void)initOnce;
-	(void)parameter;
-	(void)lpContext;
-
-	InitializeCriticalSection(&g_memLock);
-
-	return TRUE;
-}
-
-
-static inline void mem_lock(void)
-{
-	InitOnceExecuteOnce(&g_initMemLockOnce, InitHandleFunction,
-			    NULL, NULL);
-	EnterCriticalSection(&g_memLock);
-}
-
-
-static inline void mem_unlock(void)
-{
-	LeaveCriticalSection(&g_memLock);
-}
-
-#else
-
-#error "mem: missing locking primitives"
-
-#define mem_lock()    /**< Stub */
-#define mem_unlock()  /**< Stub */
-
-#endif
 
 /** Update statistics for mem_zalloc() */
 #define STAT_ALLOC(m, size) \

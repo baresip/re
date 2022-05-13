@@ -500,6 +500,10 @@ CFLAGS  += -DUSE_ZLIB
 LIBS    += -lz
 endif
 
+HAVE_THREADS := $(shell $(call CC_TEST,threads.h))
+ifneq ($(HAVE_THREADS),)
+CFLAGS  += -DHAVE_THREADS
+endif
 
 HAVE_PTHREAD := $(shell $(call CC_TEST,pthread.h))
 ifneq ($(HAVE_PTHREAD),)
