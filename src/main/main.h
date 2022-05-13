@@ -11,7 +11,6 @@ extern "C" {
 
 #ifdef USE_OPENSSL
 int  openssl_init(void);
-void openssl_close(void);
 #endif
 
 #ifdef __cplusplus
