@@ -1098,7 +1098,6 @@ int re_thread_init(void)
 	call_once(&flag, re_once);
 
 	re = re_get();
-
 	if (re) {
 		DEBUG_WARNING("thread_init: already added for thread %d\n",
 			      thrd_current());
@@ -1113,7 +1112,7 @@ int re_thread_init(void)
 
 	err = mtx_init(&re->mutex, mtx_plain);
 	if (err) {
-		DEBUG_WARNING("re_init: mtx_init error\n");
+		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
 	}
 	re->mutexp = &re->mutex;
@@ -1130,7 +1129,7 @@ int re_thread_init(void)
 
 	err = tss_set(key, re);
 	if (err)
-		DEBUG_WARNING("re_init: tss_set error\n");
+		DEBUG_WARNING("thread_init: tss_set error\n");
 
 out:
 	if (err)
