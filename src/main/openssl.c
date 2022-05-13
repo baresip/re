@@ -6,15 +6,7 @@
 #ifdef HAVE_SIGNAL
 #include <signal.h>
 #endif
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif
-#include <openssl/crypto.h>
 #include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <re_types.h>
-#include <re_lock.h>
-#include <re_mem.h>
 #include "main.h"
 
 
