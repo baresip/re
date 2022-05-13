@@ -31,7 +31,9 @@ int libre_init(void)
 	if (err)
 		goto out;
 
- out:
+	err = re_thread_init();
+
+out:
 	if (err) {
 		net_sock_close();
 #ifdef USE_OPENSSL
