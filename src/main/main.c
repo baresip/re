@@ -95,7 +95,7 @@ struct re {
 	struct kevent *evlist;
 	int kqfd;
 #endif
-	mtx_t mutex;                 /**< Pointer to active mutex           */
+	mtx_t mutex;                 /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 };
 
