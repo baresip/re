@@ -32,12 +32,8 @@ int libre_init(void)
 		goto out;
 
  out:
-	if (err) {
+	if (err)
 		net_sock_close();
-#ifdef USE_OPENSSL
-		openssl_close();
-#endif
-	}
 
 	return err;
 }
@@ -50,7 +46,4 @@ void libre_close(void)
 {
 	(void)fd_setsize(0);
 	net_sock_close();
-#ifdef USE_OPENSSL
-	openssl_close();
-#endif
 }
