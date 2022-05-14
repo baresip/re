@@ -1152,8 +1152,7 @@ int re_thread_init(void)
 
 	re = tss_get(key);
 	if (re) {
-		DEBUG_WARNING("thread_init: already added for thread %d\n",
-			      (unsigned long)thrd_current());
+		DEBUG_WARNING("thread_init: already added for thread\n");
 		return EALREADY;
 	}
 
