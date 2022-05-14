@@ -28,10 +28,6 @@ int libre_init(void)
 #endif
 
 	err = net_sock_init();
-	if (err)
-		goto out;
-
-	err = re_thread_init();
 
 out:
 	if (err)

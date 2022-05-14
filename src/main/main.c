@@ -99,11 +99,11 @@ struct re {
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 };
 
-static void poll_close(struct re *re);
-
+static struct re *re_global = NULL;
 static tss_t key;
 static once_flag flag = ONCE_FLAG_INIT;
 
+static void poll_close(struct re *re);
 
 /** fallback destructor if thread gets destroyed before re_thread_close() */
 static void thread_destructor(void *arg)
@@ -113,15 +113,69 @@ static void thread_destructor(void *arg)
 }
 
 
+static int re_init(void)
+{
+	struct re *re;
+	int err;
+
+	re = malloc(sizeof(struct re));
+	if (!re)
+		return ENOMEM;
+
+	memset(re, 0, sizeof(*re));
+
+	err = mtx_init(&re->mutex, mtx_plain);
+	if (err) {
+		DEBUG_WARNING("thread_init: mtx_init error\n");
+		goto out;
+	}
+	re->mutexp = &re->mutex;
+
+	list_init(&re->tmrl);
+
+#ifdef HAVE_EPOLL
+	re->epfd = -1;
+#endif
+
+#ifdef HAVE_KQUEUE
+	re->kqfd = -1;
+#endif
+
+	err = tss_set(key, re);
+	if (err)
+		DEBUG_WARNING("thread_init: tss_set error\n");
+
+out:
+	if (err)
+		mem_deref(re);
+
+	return err;
+}
+
+
 static void re_once(void)
 {
+	int err;
+
 	tss_create(&key, thread_destructor);
+	err = re_init();
+	if (err) {
+		DEBUG_WARNING("re_init failed: %m\n", err);
+		exit(err);
+	}
+	re_global = tss_get(key);
 }
 
 
 static struct re *re_get(void)
 {
-	return tss_get(key);
+	struct re *re;
+
+	call_once(&flag, re_once);
+	re = tss_get(key);
+	if (!re)
+		re = re_global;
+	return re;
 }
 
 
@@ -842,7 +896,7 @@ static int fd_poll(struct re *re)
  * Set the maximum number of file descriptors
  *
  * @note Only first call inits maxfds and fhs, so call before re_main() in
- * custom applications.
+ * custom applications. But not before libre_init.
  *
  * @param maxfds Max FDs. 0 to free.
  *
@@ -851,6 +905,9 @@ static int fd_poll(struct re *re)
 int fd_setsize(int maxfds)
 {
 	struct re *re = re_get();
+
+	if (!re)
+		return EFAULT;
 
 	if (!maxfds) {
 		fd_debug();
@@ -1093,49 +1150,17 @@ int poll_method_set(enum poll_method method)
 int re_thread_init(void)
 {
 	struct re *re;
-	int err;
 
 	call_once(&flag, re_once);
 
-	re = re_get();
+	re = tss_get(key);
 	if (re) {
 		DEBUG_WARNING("thread_init: already added for thread %d\n",
-			      thrd_current());
+			      (unsigned long)thrd_current());
 		return EALREADY;
 	}
 
-	re = malloc(sizeof(struct re));
-	if (!re)
-		return ENOMEM;
-
-	memset(re, 0, sizeof(*re));
-
-	err = mtx_init(&re->mutex, mtx_plain);
-	if (err) {
-		DEBUG_WARNING("thread_init: mtx_init error\n");
-		goto out;
-	}
-	re->mutexp = &re->mutex;
-
-	list_init(&re->tmrl);
-
-#ifdef HAVE_EPOLL
-	re->epfd = -1;
-#endif
-
-#ifdef HAVE_KQUEUE
-	re->kqfd = -1;
-#endif
-
-	err = tss_set(key, re);
-	if (err)
-		DEBUG_WARNING("thread_init: tss_set error\n");
-
-out:
-	if (err)
-		mem_deref(re);
-
-	return err;
+	return re_init();
 }
 
 
