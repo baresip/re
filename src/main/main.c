@@ -906,9 +906,6 @@ int fd_setsize(int maxfds)
 {
 	struct re *re = re_get();
 
-	if (!re)
-		return EFAULT;
-
 	if (!maxfds) {
 		fd_debug();
 		poll_close(re);
