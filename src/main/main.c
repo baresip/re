@@ -157,12 +157,18 @@ static void re_once(void)
 {
 	int err;
 
-	tss_create(&key, thread_destructor);
-	err = re_init();
+	err = tss_create(&key, thread_destructor);
 	if (err) {
-		DEBUG_WARNING("re_init failed: %m\n", err);
+		DEBUG_WARNING("tss_create failed: %d\n", err);
 		exit(err);
 	}
+
+	err = re_init();
+	if (err) {
+		DEBUG_WARNING("re_init failed: %d\n", err);
+		exit(err);
+	}
+
 	re_global = tss_get(key);
 }
 
@@ -896,7 +902,7 @@ static int fd_poll(struct re *re)
  * Set the maximum number of file descriptors
  *
  * @note Only first call inits maxfds and fhs, so call before re_main() in
- * custom applications. But not before libre_init.
+ * custom applications.
  *
  * @param maxfds Max FDs. 0 to free.
  *
@@ -1169,7 +1175,7 @@ void re_thread_close(void)
 
 	call_once(&flag, re_once);
 
-	re = re_get();
+	re = tss_get(key);
 	if (re) {
 		poll_close(re);
 		free(re);
