@@ -63,10 +63,18 @@ if(MSVC)
   add_compile_options("/W3")
 else()
   add_compile_options(
-    -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
-    -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
-    -Wshadow -Waggregate-return -Wcast-align -Wold-style-definition
-    -Wdeclaration-after-statement -Wvla
+    -Wall
+    -Wbad-function-cast
+    -Wcast-align
+    -Wdeclaration-after-statement
+    -Wextra
+    -Wmissing-declarations
+    -Wmissing-prototypes
+    -Wnested-externs
+    -Wold-style-definition
+    -Wshadow -Waggregate-return
+    -Wstrict-prototypes
+    -Wvla
   )
 endif()
 
