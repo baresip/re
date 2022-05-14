@@ -282,6 +282,7 @@ int sipsess_set_close_headers(struct sipsess *sess, const char *hdrs, ...)
 /**
  * Send BYE and terminate session (useful when ACK has not been received)
  *
+ * @param sess      SIP Session
  */
 void sipsess_abort(struct sipsess *sess)
 {
