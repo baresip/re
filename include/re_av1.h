@@ -1,5 +1,5 @@
 /**
- * @file re_av1.c AV1 Open Bitstream Unit (OBU)
+ * @file re_av1.h AV1 Open Bitstream Unit (OBU)
  *
  * Copyright (C) 2010 - 2022 Alfred E. Heggestad
  */
