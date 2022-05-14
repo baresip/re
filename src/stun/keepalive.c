@@ -232,8 +232,6 @@ int stun_keepalive_alloc(struct stun_keepalive **skap,
  *
  * @param ska      Keepalive object
  * @param interval Interval in seconds (0 to disable)
- *
- * @return 0 if success, otherwise errorcode
  */
 void stun_keepalive_enable(struct stun_keepalive *ska, uint32_t interval)
 {

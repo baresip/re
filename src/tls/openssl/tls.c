@@ -1452,6 +1452,8 @@ void tls_disable_verify_server(struct tls *tls)
  *
  * @param tls     TLS Object
  * @param version Minimum version, e.g.: TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int tls_set_min_proto_version(struct tls *tls, int version)
 {
@@ -1474,6 +1476,8 @@ int tls_set_min_proto_version(struct tls *tls, int version)
  *
  * @param tls     TLS Object
  * @param version Maximum version, e.g. TLS1_2_VERSION
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int tls_set_max_proto_version(struct tls *tls, int version)
 {
