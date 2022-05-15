@@ -152,7 +152,7 @@ bool trice_checklist_iscompleted(const struct trice *icem)
 }
 
 
-/**
+/*
  * Scheduling Checks
  */
 void trice_conncheck_schedule_check(struct trice *icem)
@@ -200,7 +200,7 @@ void trice_conncheck_schedule_check(struct trice *icem)
 }
 
 
-/**
+/*
  * Computing States
  */
 void trice_checklist_set_waiting(struct trice *icem)
