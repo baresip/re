@@ -18,10 +18,6 @@
 #else
 #include <time.h>
 #endif
-#ifdef HAVE_PTHREAD
-#include <stdlib.h>
-#include <pthread.h>
-#endif
 #include <re_types.h>
 #include <re_list.h>
 #include <re_fmt.h>

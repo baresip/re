@@ -6,11 +6,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#elif defined (WIN32)
-#include <windows.h>
-#endif
 #include <re_types.h>
 #include <re_list.h>
 #include <re_fmt.h>
