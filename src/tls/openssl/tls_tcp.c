@@ -176,8 +176,6 @@ static int tls_accept(struct tls_conn *tc)
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
 
-		ERR_clear_error();
-
 		switch (ssl_err) {
 
 		case SSL_ERROR_WANT_READ:
@@ -186,9 +184,12 @@ static int tls_accept(struct tls_conn *tc)
 		default:
 			DEBUG_WARNING("accept error: (r=%d, ssl_err=%d)\n",
 				      r, ssl_err);
+			tls_flush_error();
 			err = EPROTO;
 			break;
 		}
+
+		ERR_clear_error();
 	}
 
 	return err;
