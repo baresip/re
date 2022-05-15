@@ -42,11 +42,11 @@ jobs:
 
     - name: install gcovr
       run: |
-        pip install gcovr
+        pip install gcovr==5.0
 
     - name: coverage check
       run: |
-        min_cov="57.7"
+        min_cov="57.1"
         cov=$(~/.local/bin/gcovr -r . -s | grep lines | awk '{ print $2 }' | sed 's/%//')
         echo "Coverage: ${cov}% (min $min_cov%)"
         exit $(echo "$cov < $min_cov" | bc -l)
