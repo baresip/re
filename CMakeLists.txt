@@ -552,7 +552,7 @@ if(CMAKE_USE_WIN32_THREADS_INIT)
   list(APPEND SRCS
     src/lock/win32/lock.c
   )
-elseif(HAVE_PTHREAD)
+else()
   list(APPEND SRCS
     src/lock/lock.c
   )
