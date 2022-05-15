@@ -66,7 +66,6 @@ else()
     -Wall
     -Wbad-function-cast
     -Wcast-align
-    -Wdeclaration-after-statement
     -Wextra
     -Wmissing-declarations
     -Wmissing-prototypes
