@@ -915,7 +915,7 @@ int fd_setsize(int maxfds)
 {
 	struct re *re = re_get();
 
-	if (maxfds == 0) {
+	if (!maxfds) {
 		fd_debug();
 		poll_close(re);
 		return 0;
@@ -938,7 +938,6 @@ int fd_setsize(int maxfds)
 		maxfds = (int)limits.rlim_cur;
 	}
 #endif
-
 
 	if (!re->maxfds)
 		re->maxfds = maxfds;
