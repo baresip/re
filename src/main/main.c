@@ -16,6 +16,8 @@
 #endif
 #ifdef WIN32
 #include <winsock2.h>
+#else
+#include <sys/resource.h>
 #endif
 #ifdef HAVE_SIGNAL
 #include <signal.h>
@@ -904,7 +906,8 @@ static int fd_poll(struct re *re)
  * @note Only first call inits maxfds and fhs, so call before re_main() in
  * custom applications.
  *
- * @param maxfds Max FDs. 0 to free.
+ * @param maxfds Max FDs. 0 to free and -1 for RLIMIT_NOFILE (Linux/Unix only)
+ *
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -917,6 +920,24 @@ int fd_setsize(int maxfds)
 		poll_close(re);
 		return 0;
 	}
+
+#ifdef WIN32
+	if (maxfds < 0)
+		return ENOSYS;
+#else
+	if (maxfds < 0) {
+		struct rlimit limits;
+		int err;
+
+		err = getrlimit(RLIMIT_NOFILE, &limits);
+		if (err) {
+			DEBUG_WARNING("fd_setsize: error rlimit: %m\n", err);
+			return err;
+		}
+
+		maxfds = (int)limits.rlim_cur;
+	}
+#endif
 
 	if (!re->maxfds)
 		re->maxfds = maxfds;
