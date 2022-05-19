@@ -211,6 +211,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	uint32_t nv[3];
 	struct dnsquery dq;
 	int err = 0;
+	int64_t ttl = 600;
 
 	if (!dnsc || !mb)
 		return EINVAL;
@@ -276,6 +277,8 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 			}
 
 			list_append(&q->rrlv[i], &rr->le_priv, rr);
+			if (rr->ttl < ttl)
+				ttl = rr->ttl;
 		}
 	}
 
@@ -304,8 +307,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	/* Cache DNS query with TTL timeout */
 	hash_append(dnsc->ht_query_cache, hash_joaat_str_ci(q->name), &q->le,
 		    q);
-	/*@TODO use shortest RR TTL */
-	tmr_start(&q->tmr, 60 * 1000, ttl_timeout_handler, q);
+	tmr_start(&q->tmr, ttl * 1000, ttl_timeout_handler, q);
 
  out:
 	mem_deref(dq.name);
