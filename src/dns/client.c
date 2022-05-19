@@ -890,9 +890,11 @@ static void dnsc_destructor(void *data)
 
 	(void)hash_apply(dnsc->ht_query, query_close_handler, NULL);
 	hash_flush(dnsc->ht_tcpconn);
+	hash_flush(dnsc->ht_query_cache);
 
 	mem_deref(dnsc->ht_tcpconn);
 	mem_deref(dnsc->ht_query);
+	mem_deref(dnsc->ht_query_cache);
 	mem_deref(dnsc->us6);
 	mem_deref(dnsc->us);
 }
