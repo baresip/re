@@ -304,7 +304,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	hash_append(dnsc->ht_query_cache, hash_joaat_str_ci(q->name), &q->le,
 		    q);
 	/*@TODO use shortest RR TTL */
-	tmr_start(&q->tmr, 60, ttl_timeout_handler, q);
+	tmr_start(&q->tmr, 60 * 1000, ttl_timeout_handler, q);
 
  out:
 	mem_deref(dq.name);
