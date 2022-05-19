@@ -80,6 +80,7 @@ struct dnsquery {
 struct dnsc {
 	struct dnsc_conf conf;
 	struct hash *ht_query;
+	struct hash *ht_query_cache;
 	struct hash *ht_tcpconn;
 	struct udp_sock *us;
 	struct udp_sock *us6;
@@ -93,6 +94,7 @@ static const struct dnsc_conf default_conf = {
 	TCP_HASH_SIZE,
 	CONN_TIMEOUT,
 	IDLE_TIMEOUT,
+	true /* Query Cache */
 };
 
 
@@ -194,6 +196,14 @@ static bool query_cmp_handler(struct le *le, void *arg)
 }
 
 
+static void ttl_timeout_handler(void *arg)
+{
+	struct dns_query *q = arg;
+
+	mem_deref(q);
+}
+
+
 static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 {
 	struct dns_query *q = NULL;
@@ -283,7 +293,18 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	}
 
 	query_handler(q, 0, &dq.hdr, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
-	mem_deref(q);
+
+	if (!dnsc->conf.cache) {
+		mem_deref(q);
+		goto out;
+	}
+
+	/* Cache DNS query with TTL timeout */
+	hash_unlink(&q->le);
+	hash_append(dnsc->ht_query_cache, hash_joaat_str_ci(q->name), &q->le,
+		    q);
+	/*@TODO use shortest RR TTL */
+	tmr_start(&q->tmr, 60, ttl_timeout_handler, q);
 
  out:
 	mem_deref(dq.name);
@@ -639,6 +660,29 @@ static void udp_timeout_handler(void *arg)
 }
 
 
+static bool query_cache_handler(struct dns_query *q, struct dnshdr *hdr)
+{
+	struct dnsquery dq;
+	struct dns_query *qc = NULL;
+
+	dq.hdr	    = *hdr;
+	dq.type	    = q->type;
+	dq.dnsclass = q->dnsclass;
+	dq.name	    = q->name;
+
+	qc = list_ledata(hash_lookup(q->dnsc->ht_query_cache,
+				     hash_joaat_str_ci(q->name),
+				     query_cmp_handler, &dq));
+	if (qc) {
+		query_handler(qc, 0, &dq.hdr, &qc->rrlv[0], &qc->rrlv[1],
+			      &qc->rrlv[2]);
+		return true;
+	}
+
+	return false;
+}
+
+
 static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		 const char *name, uint16_t type, uint16_t dnsclass,
 		 const struct dnsrr *ans_rr, int proto,
@@ -687,6 +731,11 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	hdr.rd = rd;
 	hdr.nq = 1;
 	hdr.nans = ans_rr ? 1 : 0;
+
+	if (query_cache_handler(q, &hdr)) {
+		mem_deref(q);
+		return 0;
+	}
 
 	if (proto == IPPROTO_TCP)
 		q->mb.pos += 2;
@@ -899,6 +948,10 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 	if (err)
 		goto out;
 
+	err = hash_alloc(&dnsc->ht_query_cache, dnsc->conf.query_hash_size);
+	if (err)
+		goto out;
+
 	err = hash_alloc(&dnsc->ht_tcpconn, dnsc->conf.tcp_hash_size);
 	if (err)
 		goto out;
@@ -929,6 +982,10 @@ int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 	dnsc->ht_tcpconn = mem_deref(dnsc->ht_tcpconn);
 
 	err = hash_alloc(&dnsc->ht_query, dnsc->conf.query_hash_size);
+	if (err)
+		return err;
+	
+	err = hash_alloc(&dnsc->ht_query_cache, dnsc->conf.query_hash_size);
 	if (err)
 		return err;
 
