@@ -984,7 +984,7 @@ int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 	err = hash_alloc(&dnsc->ht_query, dnsc->conf.query_hash_size);
 	if (err)
 		return err;
-	
+
 	err = hash_alloc(&dnsc->ht_query_cache, dnsc->conf.query_hash_size);
 	if (err)
 		return err;
