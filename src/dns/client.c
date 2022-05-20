@@ -2,6 +2,7 @@
  * @file dns/client.c  DNS Client
  *
  * Copyright (C) 2010 Creytiv.com
+ * Copyright (C) 2022 Sebastian Reimers
  */
 #include <string.h>
 #include <re_types.h>
@@ -19,7 +20,7 @@
 
 
 #define DEBUG_MODULE "dnsc"
-#define DEBUG_LEVEL 6
+#define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
 
@@ -31,6 +32,7 @@ enum {
 	IDLE_TIMEOUT = 30 * 1000,
 	SRVC_MAX = 32,
 	RR_MAX = 32,
+	CACHE_TTL_MAX = 600
 };
 
 
@@ -221,7 +223,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	uint32_t nv[3];
 	struct dnsquery dq;
 	int err = 0;
-	int64_t ttl = 600;
+	int64_t ttl = CACHE_TTL_MAX;
 
 	if (!dnsc || !mb)
 		return EINVAL;
@@ -313,7 +315,17 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	q->hdr = dq.hdr;
 	query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
+
 	if (!dnsc->conf.cache || q->type == DNS_QTYPE_AXFR) {
+		mem_deref(q);
+		goto out;
+	}
+
+	/* 
+	 * Don't cache empty RR answer if authority is also empty.
+	 * Otherwise negative answer is cached with respecting the SOA TTL. 
+	 * */
+	if ((!dq.hdr.nans && !dq.hdr.nauth)) {
 		mem_deref(q);
 		goto out;
 	}
@@ -322,6 +334,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	hash_append(dnsc->ht_query_cache, hash_joaat_str_ci(q->name), &q->le,
 		    q);
 	DEBUG_INFO("cache %s. (id: %d) %d secs\n", q->name, q->id, ttl);
+	/* Fallback to 100ms for faster unit tests */
 	tmr_start(&q->tmr_cache, ttl > 1 ? ttl * 1000 : 100,
 		  ttl_timeout_handler, q);
 
@@ -1108,3 +1121,22 @@ void dnsc_cache_flush(struct dnsc *dnsc)
 
 	hash_flush(dnsc->ht_query_cache);
 }
+
+
+/**
+ * Enable/Disable DNS cache
+ *
+ * @param dnsc     DNS Client
+ * @param enabled  true for enable and false for disable
+ */
+void dnsc_set_cache(struct dnsc *dnsc, bool enabled)
+{
+	if (!dnsc)
+		return;
+
+	dnsc->conf.cache = enabled;
+
+	if (!enabled)
+		dnsc_cache_flush(dnsc);
+}
+

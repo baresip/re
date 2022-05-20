@@ -219,6 +219,7 @@ int  dnsc_notify(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 		 int proto, const struct sa *srvv, const uint32_t *srvc,
 		 dns_query_h *qh, void *arg);
 void dnsc_cache_flush(struct dnsc *dnsc);
+void dnsc_set_cache(struct dnsc *dnsc, bool enabled);
 
 
 /* DNS System functions */
