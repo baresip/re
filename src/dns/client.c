@@ -19,7 +19,7 @@
 
 
 #define DEBUG_MODULE "dnsc"
-#define DEBUG_LEVEL 5
+#define DEBUG_LEVEL 6
 #include <re_dbg.h>
 
 
@@ -53,6 +53,7 @@ struct dns_query {
 	struct le le_tc;
 	struct dnshdr hdr;
 	struct tmr tmr;
+	struct tmr tmr_cache;
 	struct mbuf mb;
 	struct list rrlv[3];
 	char *name;
@@ -113,7 +114,8 @@ static bool rr_unlink_handler(struct le *le, void *arg)
 	struct dnsrr *rr = le->data;
 	(void)arg;
 
-	list_unlink(&rr->le_priv);
+	if (mem_nrefs(rr) < 2)
+		list_unlink(&rr->le_priv);
 	mem_deref(rr);
 
 	return false;
@@ -138,6 +140,7 @@ static void query_destructor(void *data)
 	uint32_t i;
 
 	query_abort(q);
+	tmr_cancel(&q->tmr_cache);
 	mbuf_reset(&q->mb);
 	mem_deref(q->name);
 	list_unlink(&q->le_hdl);
@@ -205,6 +208,9 @@ static void ttl_timeout_handler(void *arg)
 {
 	struct dns_query *q = arg;
 
+	DEBUG_INFO("ttl cache delete (id: %d): %s.\t%s\t%s\n", q->id, q->name,
+		   dns_rr_classname(q->dnsclass), dns_rr_typename(q->type));
+
 	mem_deref(q);
 }
 
@@ -261,6 +267,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	nv[1] = dq.hdr.nauth;
 	nv[2] = dq.hdr.nadd;
 
+	DEBUG_INFO("--- ANSWER SECTION id: %d ---\n", q->id);
 	for (uint32_t i = 0; i < ARRAY_SIZE(nv); i++) {
 		uint32_t l = nv[i];
 
@@ -279,6 +286,8 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 				mem_deref(q);
 				goto out;
 			}
+
+			DEBUG_INFO("%H\n", dns_rr_print, rr);
 
 			list_append(&q->rrlv[i], &rr->le_priv, rr);
 			if (rr->ttl < ttl)
@@ -304,7 +313,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	q->hdr = dq.hdr;
 	query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
-	if (!dnsc->conf.cache) {
+	if (!dnsc->conf.cache || q->type == DNS_QTYPE_AXFR) {
 		mem_deref(q);
 		goto out;
 	}
@@ -312,7 +321,9 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	/* Cache DNS query with TTL timeout */
 	hash_append(dnsc->ht_query_cache, hash_joaat_str_ci(q->name), &q->le,
 		    q);
-	tmr_start(&q->tmr, ttl * 1000, ttl_timeout_handler, q);
+	DEBUG_INFO("cache %s. (id: %d) %d secs\n", q->name, q->id, ttl);
+	tmr_start(&q->tmr_cache, ttl > 1 ? ttl * 1000 : 100,
+		  ttl_timeout_handler, q);
 
  out:
 	mem_deref(dq.name);
@@ -675,9 +686,17 @@ static void hdl_tmr_cache(void *arg)
 
 	LIST_FOREACH(l, le) {
 		struct dns_query *q = le->data;
+#if DEBUG_LEVEL > 5
+		struct le *re_rr;
+		DEBUG_INFO("--- ANSWER SECTION (CACHED) id: %d ---\n",
+			   q->id);
+		LIST_FOREACH(&q->rrlv[0], re_rr) {
+			struct dnsrr *rr = re_rr->data;
+			DEBUG_INFO("%H\n", dns_rr_print, rr);
+		}
+#endif
 		query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 	}
-
 	list_flush(l);
 }
 
@@ -686,6 +705,7 @@ static bool query_cache_handler(struct dns_query *q)
 {
 	struct dnsquery dq;
 	struct dns_query *qc = NULL;
+	struct le *le;
 
 	dq.hdr	    = q->hdr;
 	dq.type	    = q->type;
@@ -698,6 +718,15 @@ static bool query_cache_handler(struct dns_query *q)
 				     query_cmp_handler, &dq));
 	if (!qc)
 		return false;
+
+
+	for (uint32_t i = 0; i < ARRAY_SIZE(qc->rrlv); i++) {
+		LIST_FOREACH(&qc->rrlv[i], le)
+		{
+			struct dnsrr *rr = le->data;
+			mem_ref(rr);
+		}
+	}
 
 	q->rrlv[0] = qc->rrlv[0];
 	q->rrlv[1] = qc->rrlv[1];
@@ -735,6 +764,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 	hash_append(dnsc->ht_query, hash_joaat_str_ci(name), &q->le, q);
 	tmr_init(&q->tmr);
+	tmr_init(&q->tmr_cache);
 	mbuf_init(&q->mb);
 
 	for (i=0; i<ARRAY_SIZE(q->rrlv); i++)
@@ -764,6 +794,10 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	q->qh  = qh;
 	q->arg = arg;
 	q->hdr = hdr;
+
+	DEBUG_INFO("--- QUESTION SECTION id: %d ---\n", q->id);
+	DEBUG_INFO("%s.\t%s\t%s\n", q->name, dns_rr_classname(q->dnsclass),
+		   dns_rr_typename(q->type));
 
 	if (query_cache_handler(q))
 		goto out;
@@ -1059,4 +1093,18 @@ int dnsc_srv_set(struct dnsc *dnsc, const struct sa *srvv, uint32_t srvc)
 	}
 
 	return 0;
+}
+
+
+/**
+ * Flush DNS cache
+ *
+ * @param dnsc DNS Client
+ */
+void dnsc_cache_flush(struct dnsc *dnsc)
+{
+	if (!dnsc)
+		return;
+
+	hash_flush(dnsc->ht_query_cache);
 }
