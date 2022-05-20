@@ -321,10 +321,10 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 		goto out;
 	}
 
-	/* 
+	/**
 	 * Don't cache empty RR answer if authority is also empty.
-	 * Otherwise negative answer is cached with respecting the SOA TTL. 
-	 * */
+	 * Otherwise negative answer is cached with respecting the SOA TTL.
+	 */
 	if ((!dq.hdr.nans && !dq.hdr.nauth)) {
 		mem_deref(q);
 		goto out;
