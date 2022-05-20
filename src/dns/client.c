@@ -49,7 +49,9 @@ struct tcpconn {
 
 struct dns_query {
 	struct le le;
+	struct le le_hdl;
 	struct le le_tc;
+	struct dnshdr hdr;
 	struct tmr tmr;
 	struct mbuf mb;
 	struct list rrlv[3];
@@ -80,6 +82,8 @@ struct dnsquery {
 
 struct dnsc {
 	struct dnsc_conf conf;
+	struct tmr hdl_tmr;
+	struct list hdl_cache;
 	struct hash *ht_query;
 	struct hash *ht_query_cache;
 	struct hash *ht_tcpconn;
@@ -95,7 +99,7 @@ static const struct dnsc_conf default_conf = {
 	TCP_HASH_SIZE,
 	CONN_TIMEOUT,
 	IDLE_TIMEOUT,
-	true /* Query Cache */
+	true /* activate query cache */
 };
 
 
@@ -136,14 +140,14 @@ static void query_destructor(void *data)
 	query_abort(q);
 	mbuf_reset(&q->mb);
 	mem_deref(q->name);
+	list_unlink(&q->le_hdl);
 
 	for (i=0; i<ARRAY_SIZE(q->rrlv); i++)
 		(void)list_apply(&q->rrlv[i], true, rr_unlink_handler, NULL);
 }
 
 
-static void query_handler(struct dns_query *q, int err,
-			  const struct dnshdr *hdr, struct list *ansl,
+static void query_handler(struct dns_query *q, int err, struct list *ansl,
 			  struct list *authl, struct list *addl)
 {
 	/* deref here - before calling handler */
@@ -152,7 +156,7 @@ static void query_handler(struct dns_query *q, int err,
 
 	/* The handler must only be called _once_ */
 	if (q->qh) {
-		q->qh(err, hdr, ansl, authl, addl, q->arg);
+		q->qh(err, &q->hdr, ansl, authl, addl, q->arg);
 		q->qh = NULL;
 	}
 
@@ -166,7 +170,7 @@ static bool query_close_handler(struct le *le, void *arg)
 	struct dns_query *q = le->data;
 	(void)arg;
 
-	query_handler(q, ECONNABORTED, NULL, NULL, NULL, NULL);
+	query_handler(q, ECONNABORTED, NULL, NULL, NULL);
 	mem_deref(q);
 
 	return false;
@@ -271,7 +275,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 
 			err = dns_rr_decode(mb, &rr, 0);
 			if (err) {
-				query_handler(q, err, NULL, NULL, NULL, NULL);
+				query_handler(q, err, NULL, NULL, NULL);
 				mem_deref(q);
 				goto out;
 			}
@@ -297,7 +301,8 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 		}
 	}
 
-	query_handler(q, 0, &dq.hdr, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
+	q->hdr = dq.hdr;
+	query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
 	if (!dnsc->conf.cache) {
 		mem_deref(q);
@@ -474,7 +479,7 @@ static bool tcpconn_fail_handler(struct le *le, void *arg)
 
  out:
 	if (err) {
-		query_handler(q, err, NULL, NULL, NULL, NULL);
+		query_handler(q, err, NULL, NULL, NULL);
 		mem_deref(q);
 	}
 
@@ -594,7 +599,7 @@ static void tcp_timeout_handler(void *arg)
 {
 	struct dns_query *q = arg;
 
-	query_handler(q, ETIMEDOUT, NULL, NULL, NULL, NULL);
+	query_handler(q, ETIMEDOUT, NULL, NULL, NULL);
 	mem_deref(q);
 }
 
@@ -657,18 +662,32 @@ static void udp_timeout_handler(void *arg)
 
  out:
 	if (err) {
-		query_handler(q, err, NULL, NULL, NULL, NULL);
+		query_handler(q, err, NULL, NULL, NULL);
 		mem_deref(q);
 	}
 }
 
 
-static bool query_cache_handler(struct dns_query *q, struct dnshdr *hdr)
+static void hdl_tmr_cache(void *arg)
+{
+	struct list *l = arg;
+	struct le *le;
+
+	LIST_FOREACH(l, le) {
+		struct dns_query *q = le->data;
+		query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
+	}
+
+	list_flush(l);
+}
+
+
+static bool query_cache_handler(struct dns_query *q)
 {
 	struct dnsquery dq;
 	struct dns_query *qc = NULL;
 
-	dq.hdr	    = *hdr;
+	dq.hdr	    = q->hdr;
 	dq.type	    = q->type;
 	dq.dnsclass = q->dnsclass;
 	dq.name	    = q->name;
@@ -677,13 +696,19 @@ static bool query_cache_handler(struct dns_query *q, struct dnshdr *hdr)
 	qc = list_ledata(hash_lookup(q->dnsc->ht_query_cache,
 				     hash_joaat_str_ci(q->name),
 				     query_cmp_handler, &dq));
-	if (qc) {
-		query_handler(q, 0, &dq.hdr, &qc->rrlv[0], &qc->rrlv[1],
-			      &qc->rrlv[2]);
-		return true;
-	}
+	if (!qc)
+		return false;
 
-	return false;
+	q->rrlv[0] = qc->rrlv[0];
+	q->rrlv[1] = qc->rrlv[1];
+	q->rrlv[2] = qc->rrlv[2];
+
+	hash_unlink(&q->le);
+	list_append(&q->dnsc->hdl_cache, &q->le_hdl, q);
+
+	tmr_start(&q->dnsc->hdl_tmr, 0, hdl_tmr_cache, &q->dnsc->hdl_cache);
+
+	return true;
 }
 
 
@@ -738,11 +763,10 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 	q->qh  = qh;
 	q->arg = arg;
+	q->hdr = hdr;
 
-	if (query_cache_handler(q, &hdr)) {
-		mem_deref(q);
-		return 0;
-	}
+	if (query_cache_handler(q))
+		goto out;
 
 	if (proto == IPPROTO_TCP)
 		q->mb.pos += 2;
@@ -792,6 +816,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		goto error;
 	}
 
+out:
 	if (qp) {
 		q->qp = qp;
 		*qp = q;
@@ -892,9 +917,12 @@ static void dnsc_destructor(void *data)
 {
 	struct dnsc *dnsc = data;
 
+	list_flush(&dnsc->hdl_cache);
+
 	(void)hash_apply(dnsc->ht_query, query_close_handler, NULL);
 	hash_flush(dnsc->ht_tcpconn);
 	hash_flush(dnsc->ht_query_cache);
+	tmr_cancel(&dnsc->hdl_tmr);
 
 	mem_deref(dnsc->ht_tcpconn);
 	mem_deref(dnsc->ht_query);
@@ -961,6 +989,9 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 	err = hash_alloc(&dnsc->ht_tcpconn, dnsc->conf.tcp_hash_size);
 	if (err)
 		goto out;
+
+	tmr_init(&dnsc->hdl_tmr);
+	list_init(&dnsc->hdl_cache);
 
  out:
 	if (err)
