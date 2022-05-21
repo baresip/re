@@ -55,7 +55,7 @@ struct dns_query {
 	struct le le_tc;
 	struct dnshdr hdr;
 	struct tmr tmr;
-	struct tmr tmr_cache;
+	struct tmr tmr_ttl;
 	struct mbuf mb;
 	struct list rrlv[3];
 	char *name;
@@ -142,7 +142,7 @@ static void query_destructor(void *data)
 	uint32_t i;
 
 	query_abort(q);
-	tmr_cancel(&q->tmr_cache);
+	tmr_cancel(&q->tmr_ttl);
 	mbuf_reset(&q->mb);
 	mem_deref(q->name);
 	list_unlink(&q->le_hdl);
@@ -335,7 +335,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 		    q);
 	DEBUG_INFO("cache %s. (id: %d) %d secs\n", q->name, q->id, ttl);
 	/* Fallback to 100ms for faster unit tests */
-	tmr_start(&q->tmr_cache, ttl > 1 ? ttl * 1000 : 100,
+	tmr_start(&q->tmr_ttl, ttl > 1 ? ttl * 1000 : 100,
 		  ttl_timeout_handler, q);
 
  out:
@@ -777,7 +777,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 	hash_append(dnsc->ht_query, hash_joaat_str_ci(name), &q->le, q);
 	tmr_init(&q->tmr);
-	tmr_init(&q->tmr_cache);
+	tmr_init(&q->tmr_ttl);
 	mbuf_init(&q->mb);
 
 	for (i=0; i<ARRAY_SIZE(q->rrlv); i++)
