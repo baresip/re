@@ -321,13 +321,23 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 		goto out;
 	}
 
-	/**
-	 * Don't cache empty RR answer if authority is also empty.
-	 * Otherwise negative answer is cached with respecting the SOA TTL.
-	 */
-	if ((!dq.hdr.nans && !dq.hdr.nauth)) {
+	/* Don't cache empty RR answer if authority is also empty. */
+	if (!dq.hdr.nans && !dq.hdr.nauth) {
 		mem_deref(q);
 		goto out;
+	}
+
+	/* Cache negative answer with SOA negative TTL value. (RFC 2308) */
+	if (!dq.hdr.nans && dq.hdr.nauth) {
+		struct dnsrr *rr = list_ledata(list_head(&q->rrlv[1]));
+
+		if (!rr || rr->type != DNS_TYPE_SOA) {
+			mem_deref(q);
+			goto out;
+		}
+
+		if (rr->rdata.soa.ttlmin < CACHE_TTL_MAX)
+			ttl = rr->rdata.soa.ttlmin;
 	}
 
 	/* Cache DNS query with TTL timeout */
