@@ -167,6 +167,15 @@ int mtx_unlock(mtx_t *mtx)
 }
 
 
+void mtx_destroy(mtx_t *mtx)
+{
+	if (!mtx)
+		return;
+
+	pthread_mutex_destroy(mtx);
+}
+
+
 int tss_create(tss_t *key, tss_dtor_t destructor)
 {
 	if (!key)
