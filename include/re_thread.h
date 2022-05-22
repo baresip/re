@@ -234,6 +234,15 @@ int mtx_trylock(mtx_t *mtx);
 int mtx_unlock(mtx_t *mtx);
 
 
+/**
+ * Destroys the mutex pointed to by mutex.
+ * If there are threads waiting on mutex, the behavior is undefined.
+ *
+ * @param mtx   Pointer to the mutex
+ */
+void mtx_destroy(mtx_t *mtx);
+
+
 /******************************************************************************
  * Thread-local storage functions
  *****************************************************************************/
