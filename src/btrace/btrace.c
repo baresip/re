@@ -26,26 +26,30 @@ static int print_debug(struct re_printf *pf, struct btrace *btrace,
 	if (!btrace->len)
 		return 0;
 
+#if defined(FREEBSD) || defined(OPENBSD)
 	symbols = backtrace_symbols(btrace->stack, btrace->len);
+#else
+	symbols = backtrace_symbols(btrace->stack, (int)btrace->len);
+#endif
 
 	if (!symbols)
 		return 0;
 
 	switch (type) {
 	case BTRACE_CSV:
-		for (int j = 0; j < btrace->len; j++) {
+		for (size_t j = 0; j < btrace->len; j++) {
 			re_hprintf(pf, "%s%s", symbols[j],
 				   ((j + 1) < btrace->len) ? ", " : "");
 		}
 		break;
 	case BTRACE_NEWLINE:
-		for (int j = 0; j < btrace->len; j++) {
+		for (size_t j = 0; j < btrace->len; j++) {
 			re_hprintf(pf, "%s \n", symbols[j]);
 		}
 		break;
 	case BTRACE_JSON:
 		re_hprintf(pf, "[");
-		for (int j = 0; j < btrace->len; j++) {
+		for (size_t j = 0; j < btrace->len; j++) {
 			re_hprintf(pf, "\"%s\"%s", symbols[j],
 				   ((j + 1) < btrace->len) ? ", " : "");
 		}

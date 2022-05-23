@@ -27,12 +27,12 @@
 
 /** Defines a reference-counting memory object */
 struct mem {
-	uint32_t nrefs;     /**< Number of references  */
-	mem_destroy_h *dh;  /**< Destroy handler       */
+	size_t nrefs;          /**< Number of references  */
+	mem_destroy_h *dh;     /**< Destroy handler       */
 #if MEM_DEBUG
-	struct le le;          /**< Linked list element   */
-	uint32_t magic;        /**< Magic number          */
+	size_t magic;          /**< Magic number          */
 	size_t size;           /**< Size of memory object */
+	struct le le;          /**< Linked list element   */
 	struct btrace btraces; /**< Backtrace array       */
 #endif
 };
@@ -40,7 +40,7 @@ struct mem {
 #if MEM_DEBUG
 /* Memory debugging */
 static struct list meml = LIST_INIT;
-static const uint32_t mem_magic = 0xe7fb9ac4;
+static const size_t mem_magic = 0xe7fb9ac4;
 static ssize_t threshold = -1;  /**< Memory threshold, disabled by default */
 
 static struct memstat memstat = {
@@ -349,7 +349,7 @@ uint32_t mem_nrefs(const void *data)
 
 	MAGIC_CHECK(m);
 
-	return m->nrefs;
+	return (uint32_t)m->nrefs;
 }
 
 
