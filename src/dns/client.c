@@ -32,7 +32,7 @@ enum {
 	IDLE_TIMEOUT = 30 * 1000,
 	SRVC_MAX = 32,
 	RR_MAX = 32,
-	CACHE_TTL_MAX = 600
+	CACHE_TTL_MAX = 1800,
 };
 
 
@@ -102,7 +102,7 @@ static const struct dnsc_conf default_conf = {
 	TCP_HASH_SIZE,
 	CONN_TIMEOUT,
 	IDLE_TIMEOUT,
-	true /* activate query cache */
+	CACHE_TTL_MAX,
 };
 
 
@@ -223,7 +223,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	uint32_t nv[3];
 	struct dnsquery dq;
 	int err = 0;
-	int64_t ttl = CACHE_TTL_MAX;
+	int64_t ttl = dnsc->conf.cache_ttl_max;
 
 	if (!dnsc || !mb)
 		return EINVAL;
@@ -316,7 +316,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	query_handler(q, 0, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
 
-	if (!dnsc->conf.cache || q->type == DNS_QTYPE_AXFR) {
+	if (!dnsc->conf.cache_ttl_max || q->type == DNS_QTYPE_AXFR) {
 		mem_deref(q);
 		goto out;
 	}
@@ -327,7 +327,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 		goto out;
 	}
 
-	/* Cache negative answer with SOA negative TTL value. (RFC 2308) */
+	/* Cache negative answer with SOA minimum value (RFC 2308) */
 	if (!dq.hdr.nans && dq.hdr.nauth) {
 		struct dnsrr *rr = list_ledata(list_head(&q->rrlv[1]));
 
@@ -336,7 +336,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 			goto out;
 		}
 
-		if (rr->rdata.soa.ttlmin < CACHE_TTL_MAX)
+		if (rr->rdata.soa.ttlmin < dnsc->conf.cache_ttl_max)
 			ttl = rr->rdata.soa.ttlmin;
 	}
 
@@ -1134,19 +1134,18 @@ void dnsc_cache_flush(struct dnsc *dnsc)
 
 
 /**
- * Enable/Disable DNS cache
+ * Set max. Cache TTL
  *
- * @param dnsc     DNS Client
- * @param enabled  true for enable and false for disable
+ * @param dnsc  DNS Client
+ * @param max   Value in [s] and 0 to disable caching
  */
-void dnsc_set_cache(struct dnsc *dnsc, bool enabled)
+void dnsc_cache_max(struct dnsc *dnsc, uint32_t max)
 {
 	if (!dnsc)
 		return;
 
-	dnsc->conf.cache = enabled;
+	dnsc->conf.cache_ttl_max = max;
 
-	if (!enabled)
+	if (!max)
 		dnsc_cache_flush(dnsc);
 }
-

@@ -200,7 +200,7 @@ struct dnsc_conf {
 	uint32_t tcp_hash_size;
 	uint32_t conn_timeout;  /* in [ms] */
 	uint32_t idle_timeout;  /* in [ms] */
-	bool cache;
+	uint32_t cache_ttl_max; /* in [s] 0 for disabled */
 };
 
 int  dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
@@ -219,7 +219,7 @@ int  dnsc_notify(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 		 int proto, const struct sa *srvv, const uint32_t *srvc,
 		 dns_query_h *qh, void *arg);
 void dnsc_cache_flush(struct dnsc *dnsc);
-void dnsc_set_cache(struct dnsc *dnsc, bool enabled);
+void dnsc_cache_max(struct dnsc *dnsc, uint32_t max);
 
 
 /* DNS System functions */
