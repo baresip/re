@@ -180,8 +180,6 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
  * @param sa   Socket Address
  * @param addr IPv4 address in host order
  * @param port Port number
- *
- * @return 0 if success, otherwise errorcode
  */
 void sa_set_in(struct sa *sa, uint32_t addr, uint16_t port)
 {
@@ -202,8 +200,6 @@ void sa_set_in(struct sa *sa, uint32_t addr, uint16_t port)
  * @param sa   Socket Address
  * @param addr IPv6 address
  * @param port Port number
- *
- * @return 0 if success, otherwise errorcode
  */
 void sa_set_in6(struct sa *sa, const uint8_t *addr, uint16_t port)
 {

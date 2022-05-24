@@ -75,6 +75,9 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 /**
  * Checks whether `lhs` and `rhs` refer to the same thread.
  *
+ * @param lhs  Left hand side thread
+ * @param rhs  Right hand side thread
+ *
  * @return Non-zero value if lhs and rhs refer to the same value, 0 otherwise.
  */
 int thrd_equal(thrd_t lhs, thrd_t rhs);
@@ -82,12 +85,16 @@ int thrd_equal(thrd_t lhs, thrd_t rhs);
 
 /**
  * Return the identifier of the calling thread.
+ *
+ * @return Current thread
  */
 thrd_t thrd_current(void);
 
 
 /**
  * Detaches the thread identified by `thr` from the current environment.
+ *
+ * @param thr  Thread
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -161,7 +168,7 @@ int cnd_broadcast(cnd_t *cnd);
  * Blocks on a condition variable
  *
  * @param cnd   Pointer to condition variable
- * @param lock  Lock mutex pointer
+ * @param mtx   Lock mutex pointer
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -225,6 +232,15 @@ int mtx_trylock(mtx_t *mtx);
  * @return thrd_success on success, otherwise thrd_error
  */
 int mtx_unlock(mtx_t *mtx);
+
+
+/**
+ * Destroys the mutex pointed to by mutex.
+ * If there are threads waiting on mutex, the behavior is undefined.
+ *
+ * @param mtx   Pointer to the mutex
+ */
+void mtx_destroy(mtx_t *mtx);
 
 
 /******************************************************************************

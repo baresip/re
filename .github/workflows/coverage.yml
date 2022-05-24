@@ -42,7 +42,7 @@ jobs:
 
     - name: install gcovr
       run: |
-        pip install gcovr
+        pip install gcovr==5.0
 
     - name: coverage check
       run: |

@@ -137,7 +137,7 @@ int trice_candpair_alloc(struct ice_candpair **cpp, struct trice *icem,
 }
 
 
-/** Computing Pair Priority and Ordering Pairs */
+/* Computing Pair Priority and Ordering Pairs */
 void trice_candpair_prio_order(struct list *lst, bool controlling)
 {
 	struct le *le;

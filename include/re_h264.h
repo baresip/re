@@ -1,5 +1,5 @@
 /**
- * @file rem_h264.h Interface to H.264 header parser
+ * @file re_h264.h Interface to H.264 header parser
  *
  * Copyright (C) 2010 Creytiv.com
  */

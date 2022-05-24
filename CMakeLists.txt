@@ -63,10 +63,17 @@ if(MSVC)
   add_compile_options("/W3")
 else()
   add_compile_options(
-    -Wall -Wextra -Wmissing-declarations -Wmissing-prototypes
-    -Wstrict-prototypes -Wbad-function-cast -Wnested-externs
-    -Wshadow -Waggregate-return -Wcast-align -Wold-style-definition
-    -Wdeclaration-after-statement -Wvla
+    -Wall
+    -Wbad-function-cast
+    -Wcast-align
+    -Wextra
+    -Wmissing-declarations
+    -Wmissing-prototypes
+    -Wnested-externs
+    -Wold-style-definition
+    -Wshadow -Waggregate-return
+    -Wstrict-prototypes
+    -Wvla
   )
 endif()
 
@@ -545,7 +552,7 @@ if(CMAKE_USE_WIN32_THREADS_INIT)
   list(APPEND SRCS
     src/lock/win32/lock.c
   )
-elseif(HAVE_PTHREAD)
+else()
   list(APPEND SRCS
     src/lock/lock.c
   )

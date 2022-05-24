@@ -41,6 +41,7 @@
 enum {
 	JBUF_RDIFF_EMA_COEFF = 1024,
 	JBUF_RDIFF_UP_SPEED  = 512,
+	JBUF_PUT_TIMEOUT     = 400,
 };
 
 
@@ -68,6 +69,7 @@ struct jbuf {
 	uint16_t seq_put;    /**< Sequence number for last jbuf_put()       */
 	uint16_t seq_get;    /**< Sequence number of last played frame      */
 	uint32_t ssrc;       /**< Previous ssrc                             */
+	uint64_t tr;         /**< Time of previous jbuf_put()               */
 	int pt;              /**< Payload type                              */
 	bool running;        /**< Jitter buffer is running                  */
 	int32_t rdiff;       /**< Average out of order reverse diff         */
@@ -302,6 +304,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 	struct frame *f;
 	struct le *le, *tail;
 	uint16_t seq;
+	uint64_t tr, dt;
 	int err = 0;
 
 	if (!jb || !hdr)
@@ -315,6 +318,16 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 		DEBUG_INFO("ssrc changed %u %u\n", jb->ssrc, hdr->ssrc);
 		jbuf_flush(jb);
 	}
+
+	tr = tmr_jiffies();
+	dt = tr - jb->tr;
+	if (jb->tr && dt > JBUF_PUT_TIMEOUT) {
+		DEBUG_INFO("put timeout %lu ms, marker %d\n", dt, hdr->m);
+		if (hdr->m)
+			jbuf_flush(jb);
+	}
+
+	jb->tr = tr;
 
 	lock_write_get(jb->lock);
 	jb->ssrc = hdr->ssrc;
