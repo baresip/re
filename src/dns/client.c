@@ -223,11 +223,12 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	uint32_t nv[3];
 	struct dnsquery dq;
 	int err = 0;
-	int64_t ttl = dnsc->conf.cache_ttl_max;
+	int64_t ttl;
 
 	if (!dnsc || !mb)
 		return EINVAL;
 
+	ttl = dnsc->conf.cache_ttl_max;
 	dq.name = NULL;
 	dq.cache = false;
 

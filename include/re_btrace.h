@@ -6,7 +6,7 @@
 
 struct btrace {
 	void *stack[BTRACE_SZ];
-	int len;
+	size_t len;
 };
 
 int btrace_print(struct re_printf *pf, struct btrace *btrace);
@@ -20,7 +20,7 @@ static inline int btrace(struct btrace *btrace)
 	if (!btrace)
 		return EINVAL;
 
-	btrace->len = (int)backtrace(btrace->stack, BTRACE_SZ);
+	btrace->len = backtrace(btrace->stack, BTRACE_SZ);
 
 	return 0;
 }
