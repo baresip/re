@@ -859,6 +859,7 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf)
 	dconf.tcp_hash_size = TCP_HASH_SIZE;
 	dconf.conn_timeout = conf->conn_timeout;
 	dconf.idle_timeout = conf->idle_timeout;
+	dconf.cache_ttl_max = 1800;
 
 	return dnsc_conf_set(cli->dnsc, &dconf);
 }
