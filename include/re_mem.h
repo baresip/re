@@ -36,6 +36,7 @@ struct re_printf;
 int      mem_status(struct re_printf *pf, void *unused);
 int      mem_get_stat(struct memstat *mstat);
 
+void *mem_check(void *p, const void *base);
 
 /* Secure memory functions */
 int mem_seccmp(const uint8_t *s1, const uint8_t *s2, size_t n);

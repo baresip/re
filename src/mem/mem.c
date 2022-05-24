@@ -353,6 +353,36 @@ uint32_t mem_nrefs(const void *data)
 }
 
 
+/**
+ * Security out-of-bound pointer check
+ *
+ * @param pointer to check
+ * @param pointer to base object (allocated with mem_alloc)
+ *
+ * @return checked pointer
+ */
+void *mem_check(void *p, const void *base)
+{
+	struct mem *m;
+
+	if (!p || !base)
+		return 0;
+
+	m = ((struct mem *)base) - 1;
+
+	MAGIC_CHECK(m);
+
+	/* Check upper and lower bound with unsigned integer underflow */
+	if ((uintptr_t)p - (uintptr_t)base >= m->size)
+		BREAKPOINT;
+
+	return p;
+}
+
+/* https://www.comp.nus.edu.sg/~gregory/papers/cc16lowfatptrs.pdf */
+/* @TODO: add safe mem_zero(), mem_set(), mem_move(), mem_cpy() variants */
+
+
 #if MEM_DEBUG
 static bool debug_handler(struct le *le, void *arg)
 {
