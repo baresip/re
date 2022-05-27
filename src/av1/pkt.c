@@ -27,7 +27,7 @@ int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  av1_packet_h *pkth, void *arg)
 {
 	uint8_t hdr[HDR_SIZE];
-	bool start = true;
+	bool cont = false;
 	uint8_t w = 0;  /* variable OBU count */
 	int err = 0;
 
@@ -38,17 +38,17 @@ int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 
 	while (len > maxlen) {
 
-		hdr_encode(hdr, !start, true, w, *newp);
+		hdr_encode(hdr, cont, true, w, *newp);
 		*newp = false;
 
 		err |= pkth(false, rtp_ts, hdr, sizeof(hdr), buf, maxlen, arg);
 
 		buf  += maxlen;
 		len  -= maxlen;
-		start = false;
+		cont = true;
 	}
 
-	hdr_encode(hdr, !start, false, w, *newp);
+	hdr_encode(hdr, cont, false, w, *newp);
 	*newp = false;
 
 	err |= pkth(marker, rtp_ts, hdr, sizeof(hdr), buf, len, arg);
