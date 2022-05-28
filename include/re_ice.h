@@ -125,7 +125,7 @@ const char    *ice_role2name(enum ice_role role);
 const char    *ice_candpair_state2name(enum ice_candpair_state st);
 
 
-uint32_t ice_cand_calc_prio(enum ice_cand_type type, uint16_t local,
+uint32_t ice_cand_calc_prio(enum ice_cand_type type, uint16_t lpref,
 			    unsigned compid);
 
 
