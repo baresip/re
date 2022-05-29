@@ -692,7 +692,7 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	if (!X509_set_pubkey(cert, key))
 		goto out;
 
-	if (!X509_sign(cert, key, EVP_sha1()))
+	if (!X509_sign(cert, key, EVP_sha256()))
 		goto out;
 
 	r = SSL_CTX_use_certificate(tls->ctx, cert);
