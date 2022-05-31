@@ -15,10 +15,11 @@ typedef struct ssl_ctx_st SSL_CTX;
 
 /** Defines the TLS method */
 enum tls_method {
-	TLS_METHOD_SSLV23,
-	TLS_METHOD_DTLSV1,
+	TLS_METHOD_TLS,
+	TLS_METHOD_SSLV23,    /* deprecated - fallback to TLS_METHOD_TLS */
 	TLS_METHOD_DTLS,      /* DTLS 1.0 and 1.2 */
-	TLS_METHOD_DTLSV1_2,  /* DTLS 1.2 */
+	TLS_METHOD_DTLSV1,    /* deprecated - fallback to TLS_METHOD_DTLS */
+	TLS_METHOD_DTLSV1_2,  /* deprecated - fallback to TLS_METHOD_DTLS */
 };
 
 enum tls_fingerprint {
