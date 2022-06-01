@@ -46,6 +46,7 @@
 #include <re_list.h>
 #include <re_tmr.h>
 #include <re_main.h>
+#include <re_poll.h>
 #include <re_thread.h>
 #include "main.h"
 
