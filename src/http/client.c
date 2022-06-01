@@ -634,7 +634,7 @@ static int read_file(char **pbuf, const char *path)
 	}
 	fseek(f, 0L, SEEK_SET);
 
-	buf = mem_alloc(s + 1, NULL);
+	buf = mem_zalloc(s + 1, NULL);
 	if (!buf) {
 		DEBUG_WARNING("Could not allocate cert file buffer\n");
 		fclose(f);
@@ -643,7 +643,6 @@ static int read_file(char **pbuf, const char *path)
 
 	n = fread(buf, 1, s, f);
 	fclose(f);
-	buf[s] = 0;
 	if (n < (size_t)s) {
 		mem_deref(buf);
 		return EIO;
