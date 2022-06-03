@@ -221,7 +221,7 @@ void cnd_destroy(cnd_t *cnd)
 {
 	if (!cnd)
 		return;
-	// do nothing
+	/* do nothing */
 }
 
 
