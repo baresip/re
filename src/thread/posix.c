@@ -121,6 +121,15 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 }
 
 
+void cnd_destroy(cnd_t *cnd)
+{
+	if (!cnd)
+		return;
+
+	pthread_cond_destroy(cnd);
+}
+
+
 int mtx_init(mtx_t *mtx, int type)
 {
 	pthread_mutexattr_t attr;
