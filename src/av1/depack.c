@@ -10,6 +10,14 @@
 #include <re_av1.h>
 
 
+/**
+ * Decode an AV1 Aggregation header from mbuffer
+ *
+ * @param hdr Decoded aggregation header
+ * @param mb  Mbuffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_aggr_hdr_decode(struct av1_aggr_hdr *hdr, struct mbuf *mb)
 {
 	uint8_t v;

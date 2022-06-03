@@ -16,6 +16,15 @@
 #include <re_dbg.h>
 
 
+/**
+ * Encode a number into LEB128 format, which is an unsigned integer
+ * represented by a variable number of little-endian bytes.
+ *
+ * @param mb    Mbuffer to encode into
+ * @param value Value to encode
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_leb128_encode(struct mbuf *mb, size_t value)
 {
 	int err = 0;
@@ -38,6 +47,15 @@ int av1_leb128_encode(struct mbuf *mb, size_t value)
 }
 
 
+/**
+ * Decode a number in LEB128 format, which is an unsigned integer
+ * represented by a variable number of little-endian bytes.
+ *
+ * @param mb    Mbuffer to decode from
+ * @param value Decoded value, set on return
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_leb128_decode(struct mbuf *mb, size_t *value)
 {
 	size_t ret = 0;
@@ -67,6 +85,17 @@ int av1_leb128_decode(struct mbuf *mb, size_t *value)
 }
 
 
+/**
+ * Encode an OBU into an mbuffer
+ *
+ * @param mb       Mbuffer to encode into
+ * @param type     OBU type
+ * @param has_size True to use the 'has_size' field
+ * @param len      Number of bytes
+ * @param payload  Optional OBU payload
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 		   size_t len, const uint8_t *payload)
 {
@@ -91,6 +120,14 @@ int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 }
 
 
+/**
+ * Decode an OBU header from mbuffer
+ *
+ * @param hdr Decoded OBU header
+ * @param mb  Mbuffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb)
 {
 	uint8_t val;
