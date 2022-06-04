@@ -72,7 +72,6 @@ static void destructor(void *arg)
 
 	if (!reg->terminated) {
 
-		reg->resph = dummy_handler;
 		reg->terminated = true;
 
 		if (reg->req) {
@@ -252,6 +251,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 			reg->resph(err, msg, reg->arg);
 		}
 		else if (reg->terminated) {
+			reg->resph(err, msg, reg->arg);
 			mem_deref(reg);
 		}
 	}
