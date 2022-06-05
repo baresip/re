@@ -52,7 +52,7 @@ jobs:
     - name: "build"
       run: |
         cd baresip-win32/retest && \
-          cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/mingw.cmake && \
+          cmake -B build -DCMAKE_TOOLCHAIN_FILE=../re/cmake/mingw.cmake && \
           cmake --build build -j
     
     - uses: actions/upload-artifact@v2
