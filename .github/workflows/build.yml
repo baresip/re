@@ -21,6 +21,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: openssl path macos
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        echo "OPENSSL_ROOT_DIR=/usr/local/opt/openssl" >> $GITHUB_ENV
+
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
@@ -36,16 +41,10 @@ jobs:
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
     - name: cmake
-      if: ${{ runner.os == 'Linux' }}
       run: |
         make cmake
         cmake --install build --prefix dist
     
-    - name: cmake
-      if: ${{ runner.os == 'macOS' }}
-      run: |
-        OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake -B build && cmake --build build -j
-
     - uses: sreimers/pr-dependency-action@v0.3
       with:
         name: rem
