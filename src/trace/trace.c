@@ -59,7 +59,7 @@ static struct {
 	bool init;
 	uint64_t start_time;
 } trace = {
-	.init = true
+	.init = false
 };
 
 
