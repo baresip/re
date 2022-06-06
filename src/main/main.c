@@ -47,6 +47,7 @@
 #include <re_tmr.h>
 #include <re_main.h>
 #include <re_thread.h>
+#include <re_btrace.h>
 #include "main.h"
 
 
@@ -1263,6 +1264,7 @@ void re_set_mutex(void *mutexp)
 int re_thread_check(void)
 {
 	struct re *re = re_get();
+	struct btrace trace;
 
 	if (re->thread_enter)
 		return 0;
@@ -1270,8 +1272,10 @@ int re_thread_check(void)
 	if (thrd_equal(re->tid, thrd_current()))
 		return 0;
 
+	btrace(&trace);
+
 	DEBUG_WARNING("thread check: called from a NON-RE thread without "
-		      "thread_enter()!");
+		      "thread_enter()!\n %H", btrace_println, &trace);
 
 	return EPERM;
 }
