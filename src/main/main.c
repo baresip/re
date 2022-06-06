@@ -48,6 +48,7 @@
 #include <re_main.h>
 #include <re_thread.h>
 #include <re_btrace.h>
+#include <re_atomic.h>
 #include "main.h"
 
 
@@ -101,7 +102,7 @@ struct re {
 	mtx_t mutex;                 /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
-	bool thread_enter;           /**< Thread enter is called            */
+	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
 };
 
 static struct re *re_global = NULL;
