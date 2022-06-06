@@ -48,6 +48,7 @@ int  re_thread_init(void);
 void re_thread_close(void);
 void re_thread_enter(void);
 void re_thread_leave(void);
+int  re_thread_check(void);
 
 void re_set_mutex(void *mutexp);
 
