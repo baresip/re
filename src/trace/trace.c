@@ -153,6 +153,7 @@ int re_trace_close(void)
 	trace.event_buffer = mem_deref(trace.event_buffer);
 	trace.event_buffer_flush = mem_deref(trace.event_buffer_flush);
 	mtx_destroy(&trace.lock);
+	trace.init = false;
 
 	(void)re_fprintf(trace.f, "\n\t]\n}\n");
 	if (trace.f)
