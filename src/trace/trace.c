@@ -174,6 +174,7 @@ int re_trace_flush(void)
 	struct trace_event *e;
 	char json_arg[256];
 	char name[128];
+	static bool first = true;
 
 #ifndef RE_TRACE_ENABLED
 	return 0;
@@ -223,10 +224,10 @@ int re_trace_flush(void)
 		(void)re_fprintf(trace.f,
 			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%llu,"
 			"\"ph\":\"%c\",%s%s}",
-			trace.init ? "" : ",\n",
+			first ? "" : ",\n",
 			e->cat, e->pid, e->tid, e->ts - trace.start_time,
 			e->ph, name, str_isset(json_arg) ? json_arg : "");
-		trace.init = false;
+		first = false;
 	}
 
 	(void)fflush(trace.f);
