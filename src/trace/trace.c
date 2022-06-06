@@ -11,7 +11,7 @@
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_tmr.h>
-#include <re_lock.h>
+#include <re_thread.h>
 #include <re_sys.h>
 
 #ifdef HAVE_PTHREAD
@@ -55,18 +55,11 @@ static struct {
 	int event_count;
 	struct trace_event *event_buffer;
 	struct trace_event *event_buffer_flush;
-	struct lock *lock;
+	mtx_t lock;
 	bool init;
 	uint64_t start_time;
 } trace = {
-	0,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	true,
-	0
+	.init = true
 };
 
 
@@ -122,7 +115,9 @@ int re_trace_init(const char *json_file)
 		return ENOMEM;
 	}
 
-	lock_alloc(&trace.lock);
+	err = mtx_init(&trace.lock, mtx_plain);
+	if (err)
+		goto out;
 
 	err = fs_fopen(&trace.f, json_file, "w+");
 	if (err)
@@ -157,7 +152,7 @@ int re_trace_close(void)
 
 	trace.event_buffer = mem_deref(trace.event_buffer);
 	trace.event_buffer_flush = mem_deref(trace.event_buffer_flush);
-	trace.lock = mem_deref(trace.lock);
+	mtx_destroy(&trace.lock);
 
 	(void)re_fprintf(trace.f, "\n\t]\n}\n");
 	if (trace.f)
@@ -184,17 +179,17 @@ int re_trace_flush(void)
 	return 0;
 #endif
 
-	if (!trace.lock)
+	if (!trace.init)
 		return 0;
 
-	lock_write_get(trace.lock);
+	mtx_lock(&trace.lock);
 	event_tmp = trace.event_buffer_flush;
 	trace.event_buffer_flush = trace.event_buffer;
 	trace.event_buffer = event_tmp;
 
 	flush_count = trace.event_count;
 	trace.event_count = 0;
-	lock_rel(trace.lock);
+	mtx_unlock(&trace.lock);
 
 	for (i = 0; i < flush_count; i++)
 	{
@@ -249,17 +244,17 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
 	return;
 #endif
 
-	if (!trace.lock)
+	if (!trace.init)
 		return;
 
-	lock_write_get(trace.lock);
+	mtx_lock(&trace.lock);
 	if (trace.event_count >= TRACE_BUFFER_SIZE) {
-		lock_rel(trace.lock);
+		mtx_unlock(&trace.lock);
 		return;
 	}
 	e = &trace.event_buffer[trace.event_count];
 	++trace.event_count;
-	lock_rel(trace.lock);
+	mtx_unlock(&trace.lock);
 
 	e->ts = tmr_jiffies_usec();
 	e->id = id;
