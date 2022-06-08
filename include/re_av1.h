@@ -44,6 +44,10 @@ int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  av1_packet_h *pkth, void *arg);
 
 
+enum {
+	AV1_AGGR_HDR_SIZE = 1,
+};
+
 /** AV1 Aggregation Header */
 struct av1_aggr_hdr {
 	unsigned z:1;  /**< Continuation of OBU fragment from prev packet */

@@ -10,12 +10,7 @@
 #include <re_av1.h>
 
 
-enum {
-	HDR_SIZE = 1,
-};
-
-
-static void hdr_encode(uint8_t hdr[HDR_SIZE],
+static void hdr_encode(uint8_t hdr[AV1_AGGR_HDR_SIZE],
 		       bool z, bool y, uint8_t w, bool n)
 {
 	hdr[0] = z<<7 | y<<6 | w<<4 | n<<3;
@@ -40,12 +35,12 @@ int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  const uint8_t *buf, size_t len, size_t maxlen,
 		  av1_packet_h *pkth, void *arg)
 {
-	uint8_t hdr[HDR_SIZE];
+	uint8_t hdr[AV1_AGGR_HDR_SIZE];
 	bool cont = false;
 	uint8_t w = 0;  /* variable OBU count */
 	int err = 0;
 
-	if (!newp || !buf || !len || maxlen < (HDR_SIZE + 1) || !pkth)
+	if (!newp || !buf || !len || maxlen < (AV1_AGGR_HDR_SIZE + 1) || !pkth)
 		return EINVAL;
 
 	maxlen -= sizeof(hdr);
