@@ -13,9 +13,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef WIN32
-#include <windows.h>
-#else
+#ifndef WIN32
 #include <time.h>
 #endif
 #include <re_types.h>
@@ -23,6 +21,8 @@
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_tmr.h>
+#include <re_net.h>
+#include <re_main.h>
 
 
 #define DEBUG_MODULE "tmr"
@@ -256,6 +256,11 @@ void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 
 	if (!tmr)
 		return;
+
+#ifndef RELEASE
+	if (re_thread_check())
+		return;
+#endif
 
 	if (tmr->th) {
 		list_unlink(&tmr->le);
