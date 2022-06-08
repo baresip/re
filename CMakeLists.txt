@@ -124,6 +124,7 @@ if(UNIX)
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
     -DHAVE_SELECT_H
+    -DHAVE_SIGNAL
     )
   if(NOT ANDROID)
     add_definitions(-DHAVE_GETIFADDRS)
