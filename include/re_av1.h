@@ -28,6 +28,7 @@ int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 		   size_t len, const uint8_t *payload);
 int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb);
 int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr);
+unsigned av1_obu_count(const uint8_t *buf, size_t size);
 
 
 /*
