@@ -196,3 +196,33 @@ int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr)
 	return re_hprintf(pf, "type=%u x=%d s=%d size=%zu",
 			  hdr->type, hdr->x, hdr->s, hdr->size);
 }
+
+
+unsigned av1_obu_count(const uint8_t *buf, size_t size)
+{
+	struct mbuf wrap = {
+		.buf = (uint8_t *)buf,
+		.size = size,
+		.pos = 0,
+		.end = size
+	};
+	unsigned count = 0;
+
+	while (mbuf_get_left(&wrap) > 1) {
+
+		struct av1_obu_hdr hdr;
+
+		int err = av1_obu_decode(&hdr, &wrap);
+		if (err) {
+			DEBUG_WARNING("count: could not decode OBU"
+				      " [%zu bytes]: %m\n", size, err);
+			return 0;
+		}
+
+		mbuf_advance(&wrap, hdr.size);
+
+		++count;
+	}
+
+	return count;
+}
