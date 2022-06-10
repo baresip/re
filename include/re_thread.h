@@ -255,10 +255,20 @@ void tss_delete(tss_t key);
 
 
 /******************************************************************************
- * Extra
+ * Extra - non C11 helpers
  *****************************************************************************/
 /* int thrd_prio(enum thrd_prio prio) */
 /* void thrd_print(struct re_printf *pf, void *unused); */
+
+/**
+ * Allocates and initializes a new mutex
+ *
+ * @param mtx   Pointer to new mutex
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int mtx_alloc(mtx_t **mtx);
+
 
 /**
  * Creates a new thread with name
