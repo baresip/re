@@ -16,6 +16,15 @@
 #include <re_dbg.h>
 
 
+/**
+ * Encode a number into LEB128 format, which is an unsigned integer
+ * represented by a variable number of little-endian bytes.
+ *
+ * @param mb    Mbuffer to encode into
+ * @param value Value to encode
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_leb128_encode(struct mbuf *mb, size_t value)
 {
 	int err = 0;
@@ -38,6 +47,15 @@ int av1_leb128_encode(struct mbuf *mb, size_t value)
 }
 
 
+/**
+ * Decode a number in LEB128 format, which is an unsigned integer
+ * represented by a variable number of little-endian bytes.
+ *
+ * @param mb    Mbuffer to decode from
+ * @param value Decoded value, set on return
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_leb128_decode(struct mbuf *mb, size_t *value)
 {
 	size_t ret = 0;
@@ -67,6 +85,17 @@ int av1_leb128_decode(struct mbuf *mb, size_t *value)
 }
 
 
+/**
+ * Encode an OBU into an mbuffer
+ *
+ * @param mb       Mbuffer to encode into
+ * @param type     OBU type
+ * @param has_size True to use the 'has_size' field
+ * @param len      Number of bytes
+ * @param payload  Optional OBU payload
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 		   size_t len, const uint8_t *payload)
 {
@@ -91,6 +120,14 @@ int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 }
 
 
+/**
+ * Decode an OBU header from mbuffer
+ *
+ * @param hdr Decoded OBU header
+ * @param mb  Mbuffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb)
 {
 	uint8_t val;
@@ -158,4 +195,34 @@ int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr)
 
 	return re_hprintf(pf, "type=%u x=%d s=%d size=%zu",
 			  hdr->type, hdr->x, hdr->s, hdr->size);
+}
+
+
+unsigned av1_obu_count(const uint8_t *buf, size_t size)
+{
+	struct mbuf wrap = {
+		.buf = (uint8_t *)buf,
+		.size = size,
+		.pos = 0,
+		.end = size
+	};
+	unsigned count = 0;
+
+	while (mbuf_get_left(&wrap) > 1) {
+
+		struct av1_obu_hdr hdr;
+
+		int err = av1_obu_decode(&hdr, &wrap);
+		if (err) {
+			DEBUG_WARNING("count: could not decode OBU"
+				      " [%zu bytes]: %m\n", size, err);
+			return 0;
+		}
+
+		mbuf_advance(&wrap, hdr.size);
+
+		++count;
+	}
+
+	return count;
 }

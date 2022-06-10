@@ -254,3 +254,9 @@ static inline bool rtp_pt_is_rtcp(uint8_t pt)
 {
 	return 64 <= pt && pt <= 95;
 }
+
+
+static inline int16_t rtp_seq_diff(uint16_t x, uint16_t y)
+{
+	return (int16_t)(y - x);
+}

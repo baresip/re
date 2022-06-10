@@ -18,6 +18,7 @@ extern "C" {
 /* With MSVC volatile is atomic */
 #elif defined(_MSC_VER)
 #define RE_ATOMIC volatile
+#define atomic_load(object) InterlockedOr((object), 0)
 
 /* C99 compiler builtin fallbacks */
 #elif defined(__clang__)

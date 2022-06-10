@@ -50,12 +50,15 @@ jobs:
         make -j$(nproc) -C baresip-win32 openssl
     
     - name: "build"
-      run: make -j$(nproc) -C baresip-win32 retest
+      run: |
+        cd baresip-win32/retest && \
+          cmake -B build -DCMAKE_TOOLCHAIN_FILE=../re/cmake/mingw.cmake && \
+          cmake --build build -j
     
     - uses: actions/upload-artifact@v2
       with:
         name: retest-exe
-        path: baresip-win32/retest/retest.exe
+        path: baresip-win32/retest/build/retest.exe
         retention-days: 1
 
   wintest:

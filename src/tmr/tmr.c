@@ -13,9 +13,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef WIN32
-#include <windows.h>
-#else
+#ifndef WIN32
 #include <time.h>
 #endif
 #include <re_types.h>
@@ -23,6 +21,8 @@
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_tmr.h>
+#include <re_net.h>
+#include <re_main.h>
 
 
 #define DEBUG_MODULE "tmr"
@@ -211,10 +211,10 @@ int tmr_status(struct re_printf *pf, void *unused)
 
 	for (le = tmrl->head; le; le = le->next) {
 		const struct tmr *tmr = le->data;
-
-		err |= re_hprintf(pf, "  %p: th=%p expire=%llums\n",
+		err |= re_hprintf(pf, "  %p: th=%p expire=%llums file=%s:%d\n",
 				  tmr, tmr->th,
-				  (unsigned long long)tmr_get_expire(tmr));
+				  (unsigned long long)tmr_get_expire(tmr),
+				  tmr->file, tmr->line);
 	}
 
 	if (n > 100)
@@ -248,15 +248,8 @@ void tmr_init(struct tmr *tmr)
 }
 
 
-/**
- * Start a timer
- *
- * @param tmr   Timer to start
- * @param delay Timer delay in [ms]
- * @param th    Timeout handler
- * @param arg   Handler argument
- */
-void tmr_start(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg)
+void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
+		   char *file, int line)
 {
 	struct list *tmrl = tmrl_get();
 	struct le *le;
@@ -264,12 +257,19 @@ void tmr_start(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg)
 	if (!tmr)
 		return;
 
+#ifndef RELEASE
+	if (re_thread_check())
+		return;
+#endif
+
 	if (tmr->th) {
 		list_unlink(&tmr->le);
 	}
 
-	tmr->th  = th;
-	tmr->arg = arg;
+	tmr->th	  = th;
+	tmr->arg  = arg;
+	tmr->file = file;
+	tmr->line = line;
 
 	if (!th)
 		return;

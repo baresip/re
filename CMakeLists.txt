@@ -12,13 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.3.0 LANGUAGES C)
+project(re VERSION 2.4.0 LANGUAGES C)
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
 # set(PROJECT_VERSION_PRE dev)
 
-set(PROJECT_SOVERSION 4) # bump if ABI breaks
+set(PROJECT_SOVERSION 6) # bump if ABI breaks
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -124,6 +124,7 @@ if(UNIX)
     -DHAVE_SYS_TIME_H
     -DHAVE_UNAME
     -DHAVE_SELECT_H
+    -DHAVE_SIGNAL
     )
   if(NOT ANDROID)
     add_definitions(-DHAVE_GETIFADDRS)
@@ -172,7 +173,7 @@ endif()
 add_definitions(
   -DARCH="${CMAKE_SYSTEM_PROCESSOR}"
   -DOS="${CMAKE_SYSTEM_NAME}"
-  -DVERSION="${CMAKE_PROJECT_VERSION}"
+  -DVERSION="${PROJECT_VERSION}"
   -DVER_MAJOR=${PROJECT_VERSION_MAJOR}
   -DVER_MINOR=${PROJECT_VERSION_MINOR}
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
@@ -251,6 +252,7 @@ set(HEADERS
 
 set(SRCS
 
+  src/av1/depack.c
   src/av1/obu.c
   src/av1/pkt.c
 

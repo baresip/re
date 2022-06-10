@@ -205,40 +205,16 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	tls->verify_server = true;
 	switch (method) {
 
+	case TLS_METHOD_TLS:
 	case TLS_METHOD_SSLV23:
-		tls->ctx = SSL_CTX_new(SSLv23_method());
+		tls->ctx = SSL_CTX_new(TLS_method());
 		break;
-
-#ifdef USE_OPENSSL_DTLS
-	case TLS_METHOD_DTLSV1:
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
-
-		tls->ctx = SSL_CTX_new(DTLS_method());
-#else
-		tls->ctx = SSL_CTX_new(DTLSv1_method());
-#endif
-		break;
-
-#ifdef SSL_OP_NO_DTLSv1_2
-		/* DTLS v1.2 is available in OpenSSL 1.0.2 and later */
 
 	case TLS_METHOD_DTLS:
-		tls->ctx = SSL_CTX_new(DTLS_method());
-		break;
-
+	case TLS_METHOD_DTLSV1:
 	case TLS_METHOD_DTLSV1_2:
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
-
 		tls->ctx = SSL_CTX_new(DTLS_method());
-#else
-		tls->ctx = SSL_CTX_new(DTLSv1_2_method());
-#endif
 		break;
-#endif
-
-#endif
 
 	default:
 		DEBUG_WARNING("tls method %d not supported\n", method);
@@ -692,7 +668,7 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	if (!X509_set_pubkey(cert, key))
 		goto out;
 
-	if (!X509_sign(cert, key, EVP_sha1()))
+	if (!X509_sign(cert, key, EVP_sha256()))
 		goto out;
 
 	r = SSL_CTX_use_certificate(tls->ctx, cert);

@@ -47,6 +47,8 @@
 #include <re_tmr.h>
 #include <re_main.h>
 #include <re_thread.h>
+#include <re_btrace.h>
+#include <re_atomic.h>
 #include "main.h"
 
 
@@ -99,6 +101,8 @@ struct re {
 #endif
 	mtx_t mutex;                 /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
+	thrd_t tid;                  /**< Thread id                         */
+	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
 };
 
 static struct re *re_global = NULL;
@@ -134,6 +138,7 @@ static int re_init(void)
 	re->mutexp = &re->mutex;
 
 	list_init(&re->tmrl);
+	re->tid = thrd_current();
 
 #ifdef HAVE_EPOLL
 	re->epfd = -1;
@@ -589,6 +594,12 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 	int i;
 
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
+
+#ifndef RELEASE
+	err = re_thread_check();
+	if (err)
+		return err;
+#endif
 
 	if (fd == BAD_SOCK) {
 		DEBUG_WARNING("fd_listen: corrupt fd %d\n", fd);
@@ -1212,7 +1223,10 @@ void re_thread_close(void)
  */
 void re_thread_enter(void)
 {
-	re_lock(re_get());
+	struct re *re = re_get();
+
+	re->thread_enter = true;
+	re_lock(re);
 }
 
 
@@ -1223,7 +1237,10 @@ void re_thread_enter(void)
  */
 void re_thread_leave(void)
 {
-	re_unlock(re_get());
+	struct re *re = re_get();
+
+	re->thread_enter = false;
+	re_unlock(re);
 }
 
 
@@ -1237,6 +1254,31 @@ void re_set_mutex(void *mutexp)
 	struct re *re = re_get();
 
 	re->mutexp = mutexp ? mutexp : &re->mutex;
+}
+
+
+/**
+ * Check for NON-RE thread calls
+ *
+ * @return 0 if success, otherwise EPERM
+ */
+int re_thread_check(void)
+{
+	struct re *re = re_get();
+	struct btrace trace;
+
+	if (re->thread_enter)
+		return 0;
+
+	if (thrd_equal(re->tid, thrd_current()))
+		return 0;
+
+	btrace(&trace);
+
+	DEBUG_WARNING("thread check: called from a NON-RE thread without "
+		      "thread_enter()!\n %H", btrace_println, &trace);
+
+	return EPERM;
 }
 
 

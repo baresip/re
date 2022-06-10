@@ -49,10 +49,10 @@ static uint32_t type_prio(enum ice_cand_type type)
 }
 
 
-uint32_t ice_cand_calc_prio(enum ice_cand_type type, uint16_t local,
+uint32_t ice_cand_calc_prio(enum ice_cand_type type, uint16_t lpref,
 			    unsigned compid)
 {
-	return type_prio(type)<<24 | (uint32_t)local<<8 | (256 - compid);
+	return type_prio(type)<<24 | (uint32_t)lpref<<8 | (256 - compid);
 }
 
 

@@ -14,7 +14,7 @@
 #include <re_mbuf.h>
 #include <re_mem.h>
 #include <re_rtp.h>
-#include <re_lock.h>
+#include <re_thread.h>
 #include <re_tmr.h>
 #include <re_jbuf.h>
 
@@ -75,7 +75,7 @@ struct jbuf {
 	int32_t rdiff;       /**< Average out of order reverse diff         */
 	struct tmr tmr;      /**< Rdiff down timer                          */
 
-	struct lock *lock;   /**< Makes jitter buffer thread safe           */
+	mtx_t lock;          /**< Makes jitter buffer thread safe           */
 	enum jbuf_type jbtype;     /**< Jitter buffer type                  */
 #if JBUF_STAT
 	struct jbuf_stat stat; /**< Jitter buffer Statistics       */
@@ -144,7 +144,7 @@ static void jbuf_destructor(void *data)
 
 	/* Free all frames in the pool list */
 	list_flush(&jb->pooll);
-	mem_deref(jb->lock);
+	mtx_destroy(&jb->lock);
 }
 
 
@@ -188,7 +188,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
 	jb->pt = -1;
-	err = lock_alloc(&jb->lock);
+	err = mtx_init(&jb->lock, mtx_plain);
 	if (err)
 		goto out;
 
@@ -329,7 +329,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	jb->tr = tr;
 
-	lock_write_get(jb->lock);
+	mtx_lock(&jb->lock);
 	jb->ssrc = hdr->ssrc;
 
 	if (jb->running) {
@@ -406,7 +406,7 @@ success:
 	f->mem = mem_ref(mem);
 
 out:
-	lock_rel(jb->lock);
+	mtx_unlock(&jb->lock);
 	return err;
 }
 
@@ -429,7 +429,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	if (!jb || !hdr || !mem)
 		return EINVAL;
 
-	lock_write_get(jb->lock);
+	mtx_lock(&jb->lock);
 	STAT_INC(n_get);
 
 	if (jb->n <= jb->wish || !jb->framel.head) {
@@ -477,7 +477,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	}
 
 out:
-	lock_rel(jb->lock);
+	mtx_unlock(&jb->lock);
 	return err;
 }
 
@@ -497,7 +497,7 @@ void jbuf_flush(struct jbuf *jb)
 	if (!jb)
 		return;
 
-	lock_write_get(jb->lock);
+	mtx_lock(&jb->lock);
 	if (jb->framel.head) {
 		DEBUG_INFO("flush: %u frames\n", jb->n);
 	}
@@ -519,7 +519,7 @@ void jbuf_flush(struct jbuf *jb)
 	memset(&jb->stat, 0, sizeof(jb->stat));
 	jb->stat.n_flush = n_flush;
 #endif
-	lock_rel(jb->lock);
+	mtx_unlock(&jb->lock);
 }
 
 

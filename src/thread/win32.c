@@ -217,6 +217,14 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 }
 
 
+void cnd_destroy(cnd_t *cnd)
+{
+	if (!cnd)
+		return;
+	/* do nothing */
+}
+
+
 int mtx_init(mtx_t *mtx, int type)
 {
 	(void)type;

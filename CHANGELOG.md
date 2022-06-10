@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+---
+
+## [v2.4.0] - 2022-06-01
+
+## What's Changed
+* ci: test centos -> fedora by @alfredh in https://github.com/baresip/re/pull/340
+* Tls bio opaque by @alfredh in https://github.com/baresip/re/pull/341
+* main: remove usage of crypto_set_id_callback() by @alfredh in https://github.com/baresip/re/pull/342
+* jbuf: in adaptive mode do not manipulate min buffer size by @cspiel1 in https://github.com/baresip/re/pull/343
+* av1 obu by @alfredh in https://github.com/baresip/re/pull/345
+* jbuf: improve adaptive mode by @cspiel1 in https://github.com/baresip/re/pull/344
+* av1 packetizer by @alfredh in https://github.com/baresip/re/pull/346
+* av1: depacketizer by @alfredh in https://github.com/baresip/re/pull/347
+* h265: move from rem to re by @alfredh in https://github.com/baresip/re/pull/348
+* jbuf: avoid reducing of wish size too early by @cspiel1 in https://github.com/baresip/re/pull/349
+* ci/build: add ubuntu 22.04 (beta) by @sreimers in https://github.com/baresip/re/pull/351
+* h264: move from rem to re by @alfredh in https://github.com/baresip/re/pull/350
+* add C11 thread, mutex and condition API by @sreimers in https://github.com/baresip/re/pull/249
+* thread: use pthread as default fallback by @sreimers in https://github.com/baresip/re/pull/354
+* mem: use new C11 mutex locking by @sreimers in https://github.com/baresip/re/pull/352
+* dbg: use C11 thread mutex by @sreimers in https://github.com/baresip/re/pull/356
+* thread: add thread-local storage functions by @sreimers in https://github.com/baresip/re/pull/355
+* main/openssl: cleanup by @sreimers in https://github.com/baresip/re/pull/358
+* cmake: sort warning flags by @alfredh in https://github.com/baresip/re/pull/359
+* doxygen: update comments by @alfredh in https://github.com/baresip/re/pull/360
+* main: use C11 thread mutex by @sreimers in https://github.com/baresip/re/pull/357
+* make: disable warning flag -Wdeclaration-after-statement by @alfredh in https://github.com/baresip/re/pull/363
+* cleanup pthread by @sreimers in https://github.com/baresip/re/pull/362
+* update doxygen comments by @alfredh in https://github.com/baresip/re/pull/366
+* ci/coverage: downgrade gcovr by @sreimers in https://github.com/baresip/re/pull/365
+* tls: print openssl error queue if accept failed by @alfredh in https://github.com/baresip/re/pull/367
+* main: fd_setsize -1 for RLIMIT_NOFILE value by @sreimers in https://github.com/baresip/re/pull/368
+* jbuf: flush on RTP timeout by @cspiel1 in https://github.com/baresip/re/pull/370
+* thread: add mtx_destroy by @sreimers in https://github.com/baresip/re/pull/371
+* dns: add query cache by @sreimers in https://github.com/baresip/re/pull/369
+* mem,btrace: fix struct alignment by @sreimers in https://github.com/baresip/re/pull/372
+* av1: change start flag to continuation flag (inverse) by @alfredh in https://github.com/baresip/re/pull/375
+* tmr: add tmr_start_dbg by @sreimers in https://github.com/baresip/re/pull/373
+* ice: rename to local pref by @alfredh in https://github.com/baresip/re/pull/376
+* tls: Switch from EVP_sha1() to EVP_sha256() when using it for X509_sign() by @robert-scheck in https://github.com/baresip/re/pull/377
+
 ---
 
 ## [v2.3.0] - 2022-05-01
@@ -481,7 +523,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.4.0...HEAD
+[v2.4.0]: https://github.com/baresip/re/compare/v2.3.0...v2.4.0
 [v2.3.0]: https://github.com/baresip/re/compare/v2.2.2...v2.3.0
 [v2.2.2]: https://github.com/baresip/re/compare/v2.2.1...v2.2.2
 [v2.2.1]: https://github.com/baresip/re/compare/v2.2.0...v2.2.1
