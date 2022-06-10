@@ -261,6 +261,15 @@ void tss_delete(tss_t key);
 /* void thrd_print(struct re_printf *pf, void *unused); */
 
 /**
+ * Creates a new mutex
+ *
+ * @param mtx   Pointer to new mutex
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int mtx_alloc(mtx_t **mtx);
+
+/**
  * Creates a new thread with name
  *
  * @param thr   Pointer to new thread
