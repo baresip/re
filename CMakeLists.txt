@@ -214,7 +214,6 @@ set(HEADERS
   include/re_jbuf.h
   include/re_json.h
   include/re_list.h
-  include/re_lock.h
   include/re_main.h
   include/re_mbuf.h
   include/re_md5.h
@@ -551,16 +550,6 @@ elseif(UNIX)
   endif()
 endif()
 
-
-if(CMAKE_USE_WIN32_THREADS_INIT)
-  list(APPEND SRCS
-    src/lock/win32/lock.c
-  )
-else()
-  list(APPEND SRCS
-    src/lock/lock.c
-  )
-endif()
 
 if(HAVE_THREADS)
   #Do nothing
