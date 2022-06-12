@@ -212,7 +212,7 @@ static void timeout(void *arg)
 
 	DEBUG_INFO("timeout\n");
 
-	if (0 <= DTLSv1_handle_timeout(tc->ssl)) {
+	if (0 >= DTLSv1_handle_timeout(tc->ssl)) {
 
 		check_timer(tc);
 	}
