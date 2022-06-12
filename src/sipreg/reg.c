@@ -454,7 +454,7 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 
 
 /**
- * Unregisteres SIP Registration client
+ * Unregisters SIP Registration client
  *
  * @param reg   SIP Registration client
  *
