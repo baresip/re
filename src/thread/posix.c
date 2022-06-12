@@ -6,7 +6,6 @@
 #define _GNU_SOURCE 1
 
 #include <re_types.h>
-#include <re_lock.h>
 #include <re_mem.h>
 #include <re_thread.h>
 
