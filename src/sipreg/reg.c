@@ -457,14 +457,15 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
  * Unregisters SIP Registration client
  *
  * @param reg   SIP Registration client
- *
- * @return 0 if success, otherwise errorcode
  */
-int sipreg_unregister(struct sipreg *reg)
+void sipreg_unregister(struct sipreg *reg)
 {
+	if (!reg)
+		return;
+
 	reg->expires = 0;
 
-	return sipreg_send(reg);
+	(void)sipreg_send(reg);
 }
 
 
