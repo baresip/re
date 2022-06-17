@@ -104,7 +104,7 @@ static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
 		.end  = size
 	};
 	struct mbuf *mb_obu = NULL;
-	int err;
+	int err = 0;
 
 	while (mbuf_get_left(&wrap) >= 2) {
 
