@@ -14,6 +14,7 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 		    int regid, sip_auth_h *authh, void *aarg, bool aref,
 		    sip_resp_h *resph, void *arg,
 		    const char *params, const char *fmt, ...);
+void sipreg_unregister(struct sipreg *reg);
 int sipreg_alloc(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 		    const char *to_uri, const char *from_name,
 		    const char *from_uri, uint32_t expires,
