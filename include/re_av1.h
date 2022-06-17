@@ -5,6 +5,19 @@
  */
 
 
+enum obu_type {
+	AV1_OBU_SEQUENCE_HEADER        =  1,
+	AV1_OBU_TEMPORAL_DELIMITER     =  2,
+	AV1_OBU_FRAME_HEADER           =  3,
+	AV1_OBU_TILE_GROUP             =  4,
+	AV1_OBU_METADATA               =  5,
+	AV1_OBU_FRAME                  =  6,
+	AV1_OBU_REDUNDANT_FRAME_HEADER =  7,
+	AV1_OBU_TILE_LIST              =  8,
+	AV1_OBU_PADDING                = 15,
+};
+
+
 /* OBU (Open Bitstream Units) */
 
 /**
@@ -29,6 +42,8 @@ int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb);
 int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr);
 unsigned av1_obu_count(const uint8_t *buf, size_t size);
+unsigned av1_obu_count_rtp(const uint8_t *buf, size_t size);
+const char *av1_obu_name(enum obu_type type);
 
 
 /*
@@ -43,6 +58,9 @@ typedef int (av1_packet_h)(bool marker, uint64_t rtp_ts,
 int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  const uint8_t *buf, size_t len, size_t maxlen,
 		  av1_packet_h *pkth, void *arg);
+int av1_packetize_high(bool *newp, bool marker, uint64_t rtp_ts,
+		       const uint8_t *buf, size_t len, size_t maxlen,
+		       av1_packet_h *pkth, void *arg);
 
 
 enum {

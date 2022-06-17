@@ -193,8 +193,9 @@ int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr)
 	if (!hdr)
 		return 0;
 
-	return re_hprintf(pf, "type=%u x=%d s=%d size=%zu",
-			  hdr->type, hdr->x, hdr->s, hdr->size);
+	return re_hprintf(pf, "type=%u,%s x=%d s=%d size=%zu",
+			  hdr->type, av1_obu_name(hdr->type),
+			  hdr->x, hdr->s, hdr->size);
 }
 
 
@@ -225,4 +226,66 @@ unsigned av1_obu_count(const uint8_t *buf, size_t size)
 	}
 
 	return count;
+}
+
+
+unsigned av1_obu_count_rtp(const uint8_t *buf, size_t size)
+{
+	struct mbuf wrap = {
+		.buf = (uint8_t *)buf,
+		.size = size,
+		.pos = 0,
+		.end = size
+	};
+	unsigned count = 0;
+
+	while (mbuf_get_left(&wrap) > 1) {
+
+		struct av1_obu_hdr hdr;
+
+		int err = av1_obu_decode(&hdr, &wrap);
+		if (err) {
+			DEBUG_WARNING("count: could not decode OBU"
+				      " [%zu bytes]: %m\n", size, err);
+			return 0;
+		}
+
+		switch (hdr.type) {
+
+		case AV1_OBU_SEQUENCE_HEADER:
+		case AV1_OBU_FRAME_HEADER:
+		case AV1_OBU_METADATA:
+		case AV1_OBU_FRAME:
+		case AV1_OBU_REDUNDANT_FRAME_HEADER:
+		case AV1_OBU_TILE_LIST:
+			++count;
+			break;
+
+		default:
+			break;
+		}
+
+		mbuf_advance(&wrap, hdr.size);
+	}
+
+	return count;
+}
+
+
+const char *av1_obu_name(enum obu_type type)
+{
+	switch (type) {
+
+	case AV1_OBU_SEQUENCE_HEADER:        return "OBU_SEQUENCE_HEADER";
+	case AV1_OBU_TEMPORAL_DELIMITER:     return "OBU_TEMPORAL_DELIMITER";
+	case AV1_OBU_FRAME_HEADER:           return "OBU_FRAME_HEADER";
+	case AV1_OBU_REDUNDANT_FRAME_HEADER:
+		return "OBU_REDUNDANT_FRAME_HEADER";
+	case AV1_OBU_FRAME:                  return "OBU_FRAME";
+	case AV1_OBU_TILE_GROUP:             return "OBU_TILE_GROUP";
+	case AV1_OBU_METADATA:               return "OBU_METADATA";
+	case AV1_OBU_TILE_LIST:              return "OBU_TILE_LIST";
+	case AV1_OBU_PADDING:                return "OBU_PADDING";
+	default: return "???";
+	}
 }
