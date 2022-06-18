@@ -119,44 +119,44 @@ static void thread_destructor(void *arg)
 }
 
 
-static int re_init(struct re **re)
+static int re_alloc(struct re **rep)
 {
-	struct re *re_alloc;
+	struct re *re;
 	int err;
 
-	if (!re)
+	if (!rep)
 		return EINVAL;
 
-	re_alloc = malloc(sizeof(struct re));
-	if (!re_alloc)
+	re = malloc(sizeof(struct re));
+	if (!re)
 		return ENOMEM;
 
-	memset(re_alloc, 0, sizeof(struct re));
+	memset(re, 0, sizeof(struct re));
 
-	err = mtx_init(&re_alloc->mutex, mtx_plain);
+	err = mtx_init(&re->mutex, mtx_plain);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
 	}
-	re_alloc->mutexp = &re_alloc->mutex;
+	re->mutexp = &re->mutex;
 
-	list_init(&re_alloc->tmrl);
-	re_alloc->tid = thrd_current();
+	list_init(&re->tmrl);
+	re->tid = thrd_current();
 
 #ifdef HAVE_EPOLL
-	re_alloc->epfd = -1;
+	re->epfd = -1;
 #endif
 
 #ifdef HAVE_KQUEUE
-	re_alloc->kqfd = -1;
+	re->kqfd = -1;
 #endif
 
 
 out:
 	if (err)
-		free(re_alloc);
+		free(re);
 	else
-		*re = re_alloc;
+		*rep = re;
 
 	return err;
 }
@@ -172,7 +172,7 @@ static void re_once(void)
 		exit(err);
 	}
 
-	err = re_init(&re_global);
+	err = re_alloc(&re_global);
 	if (err) {
 		DEBUG_WARNING("re_init_global failed: %d\n", err);
 		exit(err);
@@ -1195,7 +1195,7 @@ int re_thread_init(void)
 		return EALREADY;
 	}
 
-	err = re_init(&re);
+	err = re_alloc(&re);
 	if (err)
 		return err;
 
