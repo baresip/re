@@ -119,42 +119,44 @@ static void thread_destructor(void *arg)
 }
 
 
-static int re_init(void)
+static int re_init(struct re **re)
 {
-	struct re *re;
+	struct re *re_alloc;
 	int err;
 
-	re = malloc(sizeof(struct re));
 	if (!re)
+		return EINVAL;
+
+	re_alloc = malloc(sizeof(struct re));
+	if (!re_alloc)
 		return ENOMEM;
 
-	memset(re, 0, sizeof(*re));
+	memset(re_alloc, 0, sizeof(*re_alloc));
 
-	err = mtx_init(&re->mutex, mtx_plain);
+	err = mtx_init(&re_alloc->mutex, mtx_plain);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
 	}
-	re->mutexp = &re->mutex;
+	re_alloc->mutexp = &re_alloc->mutex;
 
-	list_init(&re->tmrl);
-	re->tid = thrd_current();
+	list_init(&re_alloc->tmrl);
+	re_alloc->tid = thrd_current();
 
 #ifdef HAVE_EPOLL
-	re->epfd = -1;
+	re_alloc->epfd = -1;
 #endif
 
 #ifdef HAVE_KQUEUE
-	re->kqfd = -1;
+	re_alloc->kqfd = -1;
 #endif
 
-	err = tss_set(key, re);
-	if (err)
-		DEBUG_WARNING("thread_init: tss_set error\n");
 
 out:
 	if (err)
-		mem_deref(re);
+		mem_deref(re_alloc);
+	else
+		*re = re_alloc;
 
 	return err;
 }
@@ -170,13 +172,11 @@ static void re_once(void)
 		exit(err);
 	}
 
-	err = re_init();
+	err = re_init(&re_global);
 	if (err) {
-		DEBUG_WARNING("re_init failed: %d\n", err);
+		DEBUG_WARNING("re_init_global failed: %d\n", err);
 		exit(err);
 	}
-
-	re_global = tss_get(key);
 }
 
 
@@ -1185,6 +1185,7 @@ int poll_method_set(enum poll_method method)
 int re_thread_init(void)
 {
 	struct re *re;
+	int err;
 
 	call_once(&flag, re_once);
 
@@ -1194,7 +1195,15 @@ int re_thread_init(void)
 		return EALREADY;
 	}
 
-	return re_init();
+	err = re_init(&re);
+	if (err)
+		return err;
+
+	err = tss_set(key, re);
+	if (err)
+		DEBUG_WARNING("thread_init: tss_set error\n");
+
+	return err;
 }
 
 
