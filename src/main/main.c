@@ -131,7 +131,7 @@ static int re_init(struct re **re)
 	if (!re_alloc)
 		return ENOMEM;
 
-	memset(re_alloc, 0, sizeof(*re_alloc));
+	memset(re_alloc, 0, sizeof(struct re));
 
 	err = mtx_init(&re_alloc->mutex, mtx_plain);
 	if (err) {
@@ -154,7 +154,7 @@ static int re_init(struct re **re)
 
 out:
 	if (err)
-		mem_deref(re_alloc);
+		free(re_alloc);
 	else
 		*re = re_alloc;
 
