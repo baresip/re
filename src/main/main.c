@@ -187,6 +187,7 @@ static struct re *re_get(void)
 	re = tss_get(key);
 	if (!re)
 		re = re_global;
+
 	return re;
 }
 
@@ -913,8 +914,8 @@ static int fd_poll(struct re *re)
 /**
  * Set the maximum number of file descriptors
  *
- * @note Only first call inits maxfds and fhs, so call before re_main() in
- * custom applications.
+ * @note Only first call inits maxfds and fhs, so call after libre_init() and
+ * before re_main() in custom applications.
  *
  * @param maxfds Max FDs. 0 to free and -1 for RLIMIT_NOFILE (Linux/Unix only)
  *
@@ -924,6 +925,11 @@ static int fd_poll(struct re *re)
 int fd_setsize(int maxfds)
 {
 	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("fd_setsize: libre_init is not ready\n");
+		return EINVAL;
+	}
 
 	if (!maxfds) {
 		fd_debug();
@@ -1179,7 +1185,7 @@ int poll_method_set(enum poll_method method)
 /**
  * Add a worker thread for this thread
  *
- * @note: for main thread this is called by libre_init
+ * @note: for main thread this is called by libre_init()
  *
  * @return 0 if success, otherwise errorcode
  */
