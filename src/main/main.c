@@ -111,11 +111,17 @@ static once_flag flag = ONCE_FLAG_INIT;
 
 static void poll_close(struct re *re);
 
+
 /** fallback destructor if thread gets destroyed before re_thread_close() */
 static void thread_destructor(void *arg)
 {
-	poll_close(arg);
-	free(arg);
+	struct re *re = arg;
+
+	if (!re)
+		return;
+
+	poll_close(re);
+	mem_deref(re);
 }
 
 
@@ -127,7 +133,7 @@ static int re_alloc(struct re **rep)
 	if (!rep)
 		return EINVAL;
 
-	re = malloc(sizeof(struct re));
+	re = mem_alloc(sizeof(struct re), NULL);
 	if (!re)
 		return ENOMEM;
 
@@ -154,7 +160,7 @@ static int re_alloc(struct re **rep)
 
 out:
 	if (err)
-		free(re);
+		mem_deref(re);
 	else
 		*rep = re;
 
@@ -172,11 +178,6 @@ static void re_once(void)
 		exit(err);
 	}
 
-	err = re_alloc(&re_global);
-	if (err) {
-		DEBUG_WARNING("re_init_global failed: %d\n", err);
-		exit(err);
-	}
 }
 
 
@@ -1179,6 +1180,8 @@ int poll_method_set(enum poll_method method)
 
 /**
  * Add a worker thread for this thread
+ * 
+ * @note: for main thread this is called by libre_init
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -1195,10 +1198,21 @@ int re_thread_init(void)
 		return EALREADY;
 	}
 
+	if (!re_global) {
+		err = re_alloc(&re_global);
+		if (err) {
+			DEBUG_WARNING("re_init_global failed: %d\n", err);
+			exit(err);
+		}
+		re = re_global;
+		goto out;
+	}
+
 	err = re_alloc(&re);
 	if (err)
 		return err;
 
+out:
 	err = tss_set(key, re);
 	if (err)
 		DEBUG_WARNING("thread_init: tss_set error\n");
@@ -1218,8 +1232,10 @@ void re_thread_close(void)
 
 	re = tss_get(key);
 	if (re) {
+		if (re == re_global)
+			re_global = NULL;
 		poll_close(re);
-		free(re);
+		mem_deref(re);
 		tss_set(key, NULL);
 	}
 }
@@ -1276,6 +1292,9 @@ int re_thread_check(void)
 	struct re *re = re_get();
 	struct btrace trace;
 
+	if (!re)
+		return EINVAL;
+
 	if (re->thread_enter)
 		return 0;
 
@@ -1301,5 +1320,10 @@ int re_thread_check(void)
 struct list *tmrl_get(void);
 struct list *tmrl_get(void)
 {
-	return &re_get()->tmrl;
+	struct re *re = re_get();
+
+	if (!re)
+		return NULL;
+
+	return &re->tmrl;
 }
