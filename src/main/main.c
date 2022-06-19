@@ -133,11 +133,9 @@ static int re_alloc(struct re **rep)
 	if (!rep)
 		return EINVAL;
 
-	re = mem_alloc(sizeof(struct re), NULL);
+	re = mem_zalloc(sizeof(struct re), NULL);
 	if (!re)
 		return ENOMEM;
-
-	memset(re, 0, sizeof(struct re));
 
 	err = mtx_init(&re->mutex, mtx_plain);
 	if (err) {
