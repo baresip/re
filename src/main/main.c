@@ -1197,22 +1197,14 @@ int re_thread_init(void)
 		DEBUG_WARNING("thread_init: already added for thread\n");
 		return EALREADY;
 	}
-
-	if (!re_global) {
-		err = re_alloc(&re_global);
-		if (err) {
-			DEBUG_WARNING("re_init_global failed: %d\n", err);
-			exit(err);
-		}
-		re = re_global;
-		goto out;
-	}
-
+	
 	err = re_alloc(&re);
 	if (err)
 		return err;
 
-out:
+	if (!re_global)
+		re_global = re;
+
 	err = tss_set(key, re);
 	if (err)
 		DEBUG_WARNING("thread_init: tss_set error\n");

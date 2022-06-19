@@ -31,7 +31,6 @@ int libre_init(void)
 	if (err)
 		net_sock_close();
 
-
 	err = re_thread_init();
 
 	return err;
