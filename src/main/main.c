@@ -594,7 +594,7 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 	int i;
 
 	if (!re) {
-		DEBUG_WARNING("fd_listen: re not ready");
+		DEBUG_WARNING("fd_listen: re not ready\n");
 		return EINVAL;
 	}
 
@@ -985,7 +985,7 @@ void fd_debug(void)
 	int i;
 
 	if (!re) {
-		DEBUG_WARNING("fd_debug: re not ready");
+		DEBUG_WARNING("fd_debug: re not ready\n");
 		return;
 	}
 
@@ -1012,7 +1012,7 @@ static void signal_handler(int sig)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("signal_handler: re not ready");
+		DEBUG_WARNING("signal_handler: re not ready\n");
 		return;
 	}
 
@@ -1036,7 +1036,7 @@ int re_main(re_signal_h *signalh)
 	int err;
 
 	if (!re) {
-		DEBUG_WARNING("re_main: re not ready");
+		DEBUG_WARNING("re_main: re not ready\n");
 		return EINVAL;
 	}
 
@@ -1117,7 +1117,7 @@ void re_cancel(void)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("re_cancel: re not ready");
+		DEBUG_WARNING("re_cancel: re not ready\n");
 		return;
 	}
 
@@ -1141,7 +1141,7 @@ int re_debug(struct re_printf *pf, void *unused)
 	(void)unused;
 
 	if (!re) {
-		DEBUG_WARNING("re_debug: re not ready");
+		DEBUG_WARNING("re_debug: re not ready\n");
 		return EINVAL;
 	}
 
@@ -1279,7 +1279,7 @@ void re_thread_enter(void)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("re_thread_enter: re not ready");
+		DEBUG_WARNING("re_thread_enter: re not ready\n");
 		return;
 	}
 
@@ -1298,7 +1298,7 @@ void re_thread_leave(void)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("re_thread_leave: re not ready");
+		DEBUG_WARNING("re_thread_leave: re not ready\n");
 		return;
 	}
 
@@ -1317,7 +1317,7 @@ void re_set_mutex(void *mutexp)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("re_set_mutex: re not ready");
+		DEBUG_WARNING("re_set_mutex: re not ready\n");
 		return;
 	}
 
@@ -1365,8 +1365,10 @@ struct list *tmrl_get(void)
 {
 	struct re *re = re_get();
 
-	if (!re)
+	if (!re) {
+		DEBUG_WARNING("tmrl_get: re not ready\n");
 		return NULL;
+	}
 
 	return &re->tmrl;
 }
