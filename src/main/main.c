@@ -1197,7 +1197,7 @@ int re_thread_init(void)
 		DEBUG_WARNING("thread_init: already added for thread\n");
 		return EALREADY;
 	}
-	
+
 	err = re_alloc(&re);
 	if (err)
 		return err;
