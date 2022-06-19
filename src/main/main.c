@@ -593,6 +593,11 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 	int err = 0;
 	int i;
 
+	if (!re) {
+		DEBUG_WARNING("fd_listen: re not ready");
+		return EINVAL;
+	}
+
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
 #ifndef RELEASE
@@ -979,6 +984,11 @@ void fd_debug(void)
 	const struct re *re = re_get();
 	int i;
 
+	if (!re) {
+		DEBUG_WARNING("fd_debug: re not ready");
+		return;
+	}
+
 	if (!re->fhs)
 		return;
 
@@ -999,8 +1009,15 @@ void fd_debug(void)
 /* Thread-safe signal handling */
 static void signal_handler(int sig)
 {
+	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("signal_handler: re not ready");
+		return;
+	}
+
 	(void)signal(sig, signal_handler);
-	re_get()->sig = sig;
+	re->sig = sig;
 }
 #endif
 
@@ -1017,6 +1034,11 @@ int re_main(re_signal_h *signalh)
 {
 	struct re *re = re_get();
 	int err;
+
+	if (!re) {
+		DEBUG_WARNING("re_main: re not ready");
+		return EINVAL;
+	}
 
 #ifdef HAVE_SIGNAL
 	if (signalh) {
@@ -1094,6 +1116,11 @@ void re_cancel(void)
 {
 	struct re *re = re_get();
 
+	if (!re) {
+		DEBUG_WARNING("re_cancel: re not ready");
+		return;
+	}
+
 	re->polling = false;
 }
 
@@ -1112,6 +1139,11 @@ int re_debug(struct re_printf *pf, void *unused)
 	int err = 0;
 
 	(void)unused;
+
+	if (!re) {
+		DEBUG_WARNING("re_debug: re not ready");
+		return EINVAL;
+	}
 
 	err |= re_hprintf(pf, "re main loop:\n");
 	err |= re_hprintf(pf, "  maxfds:  %d\n", re->maxfds);
@@ -1246,6 +1278,11 @@ void re_thread_enter(void)
 {
 	struct re *re = re_get();
 
+	if (!re) {
+		DEBUG_WARNING("re_thread_enter: re not ready");
+		return;
+	}
+
 	re->thread_enter = true;
 	re_lock(re);
 }
@@ -1260,6 +1297,11 @@ void re_thread_leave(void)
 {
 	struct re *re = re_get();
 
+	if (!re) {
+		DEBUG_WARNING("re_thread_leave: re not ready");
+		return;
+	}
+
 	re->thread_enter = false;
 	re_unlock(re);
 }
@@ -1273,6 +1315,11 @@ void re_thread_leave(void)
 void re_set_mutex(void *mutexp)
 {
 	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("re_set_mutex: re not ready");
+		return;
+	}
 
 	re->mutexp = mutexp ? mutexp : &re->mutex;
 }
