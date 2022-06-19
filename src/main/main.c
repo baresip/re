@@ -179,6 +179,13 @@ static void re_once(void)
 }
 
 
+/**
+ * Get thread specific re pointer (fallback to re_global if called by non re
+ * thread)
+ *
+ * @return re pointer on success, otherwise NULL if libre_init() or
+ * re_thread_init() is missing
+ */
 static struct re *re_get(void)
 {
 	struct re *re;
