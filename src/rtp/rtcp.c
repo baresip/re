@@ -283,3 +283,16 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 
 	return err;
 }
+
+
+bool rtp_is_rtcp_packet(const struct mbuf *mb)
+{
+	uint8_t pt;
+
+	if (mbuf_get_left(mb) < 2)
+		return false;
+
+	pt = mbuf_buf(mb)[1] & 0x7f;
+
+	return rtp_pt_is_rtcp(pt);
+}
