@@ -1180,7 +1180,7 @@ int poll_method_set(enum poll_method method)
 
 /**
  * Add a worker thread for this thread
- * 
+ *
  * @note: for main thread this is called by libre_init
  *
  * @return 0 if success, otherwise errorcode
