@@ -932,7 +932,7 @@ int fd_setsize(int maxfds)
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("fd_setsize: libre_init is not ready\n");
+		DEBUG_WARNING("fd_setsize: re not ready\n");
 		return EINVAL;
 	}
 
