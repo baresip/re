@@ -1297,8 +1297,8 @@ void re_thread_enter(void)
 		return;
 	}
 
-	re->thread_enter = true;
 	re_lock(re);
+	re->thread_enter = true;
 }
 
 
