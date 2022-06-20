@@ -82,7 +82,7 @@ struct re {
 	int nfds;                    /**< Number of active file descriptors */
 	enum poll_method method;     /**< The current polling method        */
 	bool update;                 /**< File descriptor set need updating */
-	bool polling;                /**< Is polling flag                   */
+	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct list tmrl;            /**< List of timers                    */
 
@@ -99,7 +99,7 @@ struct re {
 	struct kevent *evlist;
 	int kqfd;
 #endif
-	mtx_t mutex;                 /**< Mutex for thread synchronization  */
+	mtx_t *mutex;                /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
@@ -117,7 +117,7 @@ static void re_destructor(void *arg)
 	struct re *re = arg;
 
 	poll_close(re);
-	mtx_destroy(&re->mutex);
+	mem_deref(re->mutex);
 }
 
 
@@ -145,12 +145,12 @@ static int re_alloc(struct re **rep)
 	if (!re)
 		return ENOMEM;
 
-	err = mtx_init(&re->mutex, mtx_plain);
+	err = mtx_alloc(&re->mutex);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
 	}
-	re->mutexp = &re->mutex;
+	re->mutexp = re->mutex;
 
 	list_init(&re->tmrl);
 	re->tid = thrd_current();
@@ -1285,8 +1285,6 @@ void re_thread_close(void)
 
 /**
  * Enter an 're' thread
- *
- * @note Must only be called from a non-re thread
  */
 void re_thread_enter(void)
 {
@@ -1298,14 +1296,15 @@ void re_thread_enter(void)
 	}
 
 	re_lock(re);
-	re->thread_enter = true;
+
+	/* set only for non-re threads */
+	if (!thrd_equal(re->tid, thrd_current()))
+		re->thread_enter = true;
 }
 
 
 /**
  * Leave an 're' thread
- *
- * @note Must only be called from a non-re thread
  */
 void re_thread_leave(void)
 {
@@ -1335,7 +1334,7 @@ void re_set_mutex(void *mutexp)
 		return;
 	}
 
-	re->mutexp = mutexp ? mutexp : &re->mutex;
+	re->mutexp = mutexp ? mutexp : re->mutex;
 }
 
 
