@@ -112,10 +112,10 @@ static once_flag flag = ONCE_FLAG_INIT;
 static void poll_close(struct re *re);
 
 
-static void re_destruct(void *arg)
+static void re_destructor(void *arg)
 {
 	struct re *re = arg;
-	
+
 	poll_close(re);
 	mtx_destroy(&re->mutex);
 }
@@ -133,7 +133,6 @@ static void thread_destructor(void *arg)
 }
 
 
-
 static int re_alloc(struct re **rep)
 {
 	struct re *re;
@@ -142,7 +141,7 @@ static int re_alloc(struct re **rep)
 	if (!rep)
 		return EINVAL;
 
-	re = mem_zalloc(sizeof(struct re), re_destruct);
+	re = mem_zalloc(sizeof(struct re), re_destructor);
 	if (!re)
 		return ENOMEM;
 
