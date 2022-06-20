@@ -19,13 +19,15 @@ int mtx_alloc(mtx_t **mtx)
 	if (!mtx)
 		return EINVAL;
 
-	m = mem_alloc(sizeof(mtx_t), mtx_destructor);
+	m = mem_alloc(sizeof(mtx_t), NULL);
 	if (!m)
 		return ENOMEM;
 
 	err = mtx_init(m, mtx_plain);
 	if (err)
 		goto out;
+
+	mem_destructor(m, mtx_destructor);
 
 	*mtx = m;
 
