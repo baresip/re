@@ -34,7 +34,6 @@ extern "C" {
 #include "re_httpauth.h"
 #include "re_ice.h"
 #include "re_jbuf.h"
-#include "re_lock.h"
 #include "re_net.h"
 #include "re_main.h"
 #include "re_md5.h"

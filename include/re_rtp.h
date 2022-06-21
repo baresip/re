@@ -248,6 +248,7 @@ int   rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg);
 int   rtcp_sdes_encode(struct mbuf *mb, uint32_t src, uint32_t itemc, ...);
 const char *rtcp_type_name(enum rtcp_type type);
 const char *rtcp_sdes_name(enum rtcp_sdes_type sdes);
+bool rtp_is_rtcp_packet(const struct mbuf *mb);
 
 
 static inline bool rtp_pt_is_rtcp(uint8_t pt)

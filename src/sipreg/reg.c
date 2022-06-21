@@ -246,14 +246,17 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 		if (msg && msg->scode >= 400 && msg->scode < 500)
 			reg->fbregint = 0;
 
-		if (!reg->terminated && reg->fbregint) {
-			tmr_start(&reg->tmr, reg->fbregint * 1000, tmr_handler,
-					reg);
-			reg->resph(err, msg, reg->arg);
-		}
-		else if (reg->terminated) {
+		if (reg->terminated) {
 			mem_deref(reg);
+			return;
 		}
+
+		if (reg->fbregint)
+			tmr_start(&reg->tmr, reg->fbregint * 1000,
+					  tmr_handler, reg);
+
+		reg->resph(err, msg, reg->arg);
+
 	}
 	else if (reg->terminated) {
 		if (!reg->registered || request(reg, true))
@@ -447,6 +450,22 @@ int sipreg_register(struct sipreg **regp, struct sip *sip, const char *reg_uri,
 		return err;
 
 	return sipreg_send(*regp);
+}
+
+
+/**
+ * Unregisters SIP Registration client
+ *
+ * @param reg   SIP Registration client
+ */
+void sipreg_unregister(struct sipreg *reg)
+{
+	if (!reg)
+		return;
+
+	reg->expires = 0;
+
+	(void)sipreg_send(reg);
 }
 
 

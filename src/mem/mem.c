@@ -263,6 +263,27 @@ void *mem_reallocarray(void *ptr, size_t nmemb, size_t membsize,
 
 
 /**
+ * Set or unset a destructor for a memory object
+ *
+ * @param data Memory object
+ * @param dh   called when destroyed, NULL for remove
+ */
+void mem_destructor(void *data, mem_destroy_h *dh)
+{
+	struct mem *m;
+
+	if (!data)
+		return;
+
+	m = ((struct mem *)data) - 1;
+
+	MAGIC_CHECK(m);
+
+	m->dh = dh;
+}
+
+
+/**
  * Reference a reference-counted memory object
  *
  * @param data Memory object

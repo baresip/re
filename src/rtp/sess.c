@@ -19,7 +19,7 @@
 #include <re_hash.h>
 #include <re_tmr.h>
 #include <re_sa.h>
-#include <re_lock.h>
+#include <re_thread.h>
 #include <re_rtp.h>
 #include "rtcp.h"
 
@@ -56,7 +56,7 @@ struct rtcp_sess {
 	uint32_t srate_rx;          /**< Receive sampling rate               */
 
 	/* stats */
-	struct lock *lock;          /**< Lock for txstat                     */
+	mtx_t *lock;                /**< Lock for txstat                     */
 	struct txstat txstat;       /**< Local transmit statistics           */
 };
 
@@ -248,7 +248,7 @@ int rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs)
 	sess->rs = rs;
 	tmr_init(&sess->tmr);
 
-	err = lock_alloc(&sess->lock);
+	err = mtx_alloc(&sess->lock);
 	if (err)
 		goto out;
 
@@ -403,10 +403,10 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	if (err)
 		return err;
 
-	lock_write_get(sess->lock);
+	mtx_lock(sess->lock);
 	txstat = sess->txstat;
 	sess->txstat.ts_synced = false;
-	lock_rel(sess->lock);
+	mtx_unlock(sess->lock);
 
 	if (txstat.jfs_ref) {
 		dur = (uint32_t)(tmr_jiffies() - txstat.jfs_ref);
@@ -516,7 +516,7 @@ void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, size_t payload_size)
 	if (!sess)
 		return;
 
-	lock_write_get(sess->lock);
+	mtx_lock(sess->lock);
 
 	sess->txstat.osent += (uint32_t)payload_size;
 	sess->txstat.psent += 1;
@@ -527,7 +527,7 @@ void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, size_t payload_size)
 		sess->txstat.ts_synced = true;
 	}
 
-	lock_rel(sess->lock);
+	mtx_unlock(sess->lock);
 }
 
 
@@ -599,9 +599,9 @@ int rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats)
 	if (!mbr)
 		return ENOENT;
 
-	lock_read_get(sess->lock);
+	mtx_lock(sess->lock);
 	stats->tx.sent = sess->txstat.psent;
-	lock_rel(sess->lock);
+	mtx_unlock(sess->lock);
 
 	stats->tx.lost = mbr->cum_lost;
 	stats->tx.jit  = mbr->jit;
@@ -666,10 +666,10 @@ int rtcp_debug(struct re_printf *pf, const struct rtp_sock *rs)
 
 	hash_apply(sess->members, debug_handler, pf);
 
-	lock_read_get(sess->lock);
+	mtx_lock(sess->lock);
 	err |= re_hprintf(pf, "  TX: packets=%u, octets=%u\n",
 			  sess->txstat.psent, sess->txstat.osent);
-	lock_rel(sess->lock);
+	mtx_unlock(sess->lock);
 
 	return err;
 }
