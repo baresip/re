@@ -193,7 +193,7 @@ int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr)
 	if (!hdr)
 		return 0;
 
-	return re_hprintf(pf, "type=%u,%s x=%d s=%d size=%zu",
+	return re_hprintf(pf, "type=%u,%-24s x=%d s=%d size=%zu",
 			  hdr->type, av1_obu_name(hdr->type),
 			  hdr->x, hdr->s, hdr->size);
 }

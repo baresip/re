@@ -5,6 +5,10 @@
  */
 
 
+/* OBU (Open Bitstream Units) */
+
+
+/** Defines the OBU type */
 enum obu_type {
 	AV1_OBU_SEQUENCE_HEADER        =  1,
 	AV1_OBU_TEMPORAL_DELIMITER     =  2,
@@ -16,9 +20,6 @@ enum obu_type {
 	AV1_OBU_TILE_LIST              =  8,
 	AV1_OBU_PADDING                = 15,
 };
-
-
-/* OBU (Open Bitstream Units) */
 
 /**
  * AV1 OBU Header
