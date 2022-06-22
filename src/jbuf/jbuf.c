@@ -481,6 +481,48 @@ out:
 	return err;
 }
 
+/**
+ * Get one frame from the jitter buffer, even if it becomes depleted
+ *
+ * @param jb   Jitter buffer
+ * @param hdr  Returned RTP Header
+ * @param mem  Pointer to memory object storage - referenced on success
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
+{
+	struct frame *f;
+	int err = 0;
+
+	if (!jb || !hdr || !mem)
+		return EINVAL;
+
+	mtx_lock(&jb->lock);
+
+	if (jb->n <= 0 || !jb->framel.head) {
+		err = ENOENT;
+		goto out;
+	}
+
+	/* When we get one frame F[i], check that the next frame F[i+1]
+	   is present and have a seq no. of seq[i] + 1.
+	   If not, we should consider that packet lost. */
+
+	f = jb->framel.head->data;
+
+	/* Update sequence number for 'get' */
+	jb->seq_get = f->hdr.seq;
+
+	*hdr = f->hdr;
+	*mem = mem_ref(f->mem);
+
+	frame_deref(jb, f);
+
+out:
+	mtx_unlock(&jb->lock);
+	return err;
+}
 
 /**
  * Flush all frames in the jitter buffer
