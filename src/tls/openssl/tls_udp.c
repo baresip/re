@@ -92,19 +92,31 @@ static int bio_destroy(BIO *b)
 static int bio_write(BIO *b, const char *buf, int len)
 {
 	struct tls_conn *tc = BIO_get_data(b);
+	const char *end = buf + len;
 	struct mbuf *mb;
 	enum {SPACE = 4};
-	int err;
+	size_t sz;
+	int err = 0;
 
 	mb = mbuf_alloc(SPACE + len);
 	if (!mb)
 		return -1;
 
-	mb->pos = SPACE;
-	(void)mbuf_write_mem(mb, (void *)buf, len);
-	mb->pos = SPACE;
+	while (buf < end) {
+		mb->pos = SPACE;
+		mb->end = 0;
+		sz = (((uint8_t)buf[11] << 8) | (uint8_t)buf[12]) + 13;
+		if ((size_t)(end - buf) < sz)
+			sz = (size_t)(end - buf);
+		(void)mbuf_write_mem(mb, (void *)buf, sz);
+		mb->pos = SPACE;
+		buf += sz;
 
-	err = udp_send_helper(tc->sock->us, &tc->peer, mb, tc->sock->uh);
+		err = udp_send_helper(
+			tc->sock->us, &tc->peer, mb, tc->sock->uh);
+		if (err)
+			break;
+	}
 
 	mem_deref(mb);
 
