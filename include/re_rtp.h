@@ -69,6 +69,7 @@ enum rtcp_rtpfb {
 enum rtcp_psfb {
 	RTCP_PSFB_PLI  = 1,   /**< Picture Loss Indication (PLI) */
 	RTCP_PSFB_SLI  = 2,   /**< Slice Loss Indication (SLI)   */
+	RTCP_PSFB_FIR  = 4,   /**< Full INTRA-frame Request (FIR) (RFC 5104) */
 	RTCP_PSFB_AFB  = 15,  /**< Application layer Feedback Messages */
 };
 
@@ -167,6 +168,10 @@ struct rtcp_msg {
 					uint16_t number;
 					uint8_t picid;
 				} *sliv;
+				struct fir_rfc5104 {
+					uint32_t ssrc;
+					uint8_t seq_n;
+				} *firv;
 				struct twcc {
 					uint16_t seq;
 					uint16_t count;
@@ -237,6 +242,8 @@ int   rtcp_send_app(struct rtp_sock *rs, const char name[4],
 int   rtcp_send_fir(struct rtp_sock *rs, uint32_t ssrc);
 int   rtcp_send_nack(struct rtp_sock *rs, uint16_t fsn, uint16_t blp);
 int   rtcp_send_pli(struct rtp_sock *rs, uint32_t fb_ssrc);
+int   rtcp_send_fir_rfc5104(struct rtp_sock *rs, uint32_t ssrc,
+			    uint8_t fir_seqn);
 int   rtcp_debug(struct re_printf *pf, const struct rtp_sock *rs);
 void *rtcp_sock(const struct rtp_sock *rs);
 int   rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats);

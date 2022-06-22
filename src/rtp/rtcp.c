@@ -103,6 +103,33 @@ int rtcp_send_pli(struct rtp_sock *rs, uint32_t fb_ssrc)
 			       rtp_sess_ssrc(rs), fb_ssrc, NULL, NULL);
 }
 
+static int encode_fir_rfc5104_fci(struct mbuf *mb, void *arg)
+{
+	struct fir_rfc5104 *fci = arg;
+	int err = mbuf_write_u32(mb, htonl(fci->ssrc));
+	err |= mbuf_write_u8(mb, fci->seq_n);
+	err |= mbuf_write_u8(mb, 0);
+	err |= mbuf_write_u8(mb, 0);
+	err |= mbuf_write_u8(mb, 0);
+	return err;
+}
+
+/**
+ * Send an RTCP Full INTRA-frame Request (FIR) packet according to RFC 5104
+ *
+ * @param rs       RTP Socket
+ * @param ssrc     SSRC of the target encoder
+ * @param fir_seqn FIR sequence number
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_send_fir_rfc5104(struct rtp_sock *rs, uint32_t ssrc, uint8_t fir_seqn)
+{
+	struct fir_rfc5104 fci = { ssrc, fir_seqn };
+	return rtcp_quick_send(rs, RTCP_PSFB, RTCP_PSFB_FIR,
+			       rtp_sess_ssrc(rs), (uint32_t)0u,
+			       &encode_fir_rfc5104_fci, &fci);
+}
 
 const char *rtcp_type_name(enum rtcp_type type)
 {
@@ -271,6 +298,15 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 		else if (msg->hdr.count == RTCP_PSFB_AFB) {
 			err |= re_hprintf(pf, " AFB %u bytes",
 					  msg->r.fb.n * 4);
+		}
+		else if (msg->hdr.count == RTCP_PSFB_FIR) {
+			err |= re_hprintf(pf, " FIR (RFC5104)");
+			for (i=0; i<msg->r.fb.n; i++) {
+				err |= re_hprintf(pf,
+						  " {ssrc=%08x seq_n=%02x}",
+						  msg->r.fb.fci.firv[i].ssrc,
+						  msg->r.fb.fci.firv[i].seq_n);
+			}
 		}
 		break;
 

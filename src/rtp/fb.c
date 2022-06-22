@@ -22,6 +22,7 @@
 
 enum {
 	GNACK_SIZE = 4,
+	FIR_SIZE = 8,
 	SLI_SIZE   = 4
 };
 
@@ -251,6 +252,22 @@ int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 
 		msg->r.fb.fci.afb->end = msg->r.fb.fci.afb->pos + sz;
 		mbuf_advance(mb, sz);
+		break;
+
+	case RTCP_PSFB_FIR:
+		msg->r.fb.n /= 2u; /* each FCI entry size is 2 32-bit words */
+		sz = msg->r.fb.n * sizeof(*msg->r.fb.fci.firv);
+		msg->r.fb.fci.firv = mem_alloc(sz, NULL);
+		if (!msg->r.fb.fci.firv)
+			return ENOMEM;
+
+		if (mbuf_get_left(mb) < msg->r.fb.n * FIR_SIZE)
+			return EBADMSG;
+		for (i=0; i<msg->r.fb.n; i++) {
+			msg->r.fb.fci.firv[i].ssrc = ntohl(mbuf_read_u32(mb));
+			msg->r.fb.fci.firv[i].seq_n = mbuf_read_u8(mb);
+			mbuf_advance(mb, 3);
+		}
 		break;
 
 	default:
