@@ -8,6 +8,10 @@
 #define __USE_POSIX 1 /**< Use POSIX flag */
 #include <time.h>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <re_types.h>
 #include <re_fmt.h>
 
