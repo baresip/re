@@ -92,12 +92,12 @@ int fmt_human_time(struct re_printf *pf, const uint32_t *seconds)
 /**
  * Print local time stamp including milli seconds relative to user's timezone
  *
- * @param pf Print function for output
- * @param ts Time in seconds since the Epoch or NULL for current time
+ * @param pf  Print function for output
+ * @param arg Not used
  *
  * @return 0 if success, otherwise errorcode
  */
-int fmt_timestamp(struct re_printf *pf, void *ts)
+int fmt_timestamp(struct re_printf *pf, void *arg)
 {
 	int h, m, s;
 	uint64_t ms;
@@ -122,7 +122,7 @@ int fmt_timestamp(struct re_printf *pf, void *ts)
 	m = tm.tm_min;
 	s = tm.tm_sec;
 #endif
-	(void) ts;
+	(void) arg;
 
 	return re_hprintf(pf, "%02u:%02u:%02u.%03d", h, m, s, ms);
 }
