@@ -4,11 +4,12 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
-#include <re_types.h>
-#include <re_fmt.h>
-
+#define _POSIX_C_SOURCE 200809L
 #define __USE_POSIX 1 /**< Use POSIX flag */
 #include <time.h>
+
+#include <re_types.h>
+#include <re_fmt.h>
 
 
 static const char *dayv[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -37,10 +38,10 @@ int fmt_gmtime(struct re_printf *pf, void *ts)
 
 #ifdef WIN32
 	if (gmtime_s(&tm, ts))
-	 	return EINVAL;
+		return EINVAL;
 #else
 	if (!gmtime_r(ts, &tm))
-	 	return EINVAL;
+		return EINVAL;
 #endif
 
 	return re_hprintf(pf, "%s, %02u %s %u %02u:%02u:%02u GMT",
@@ -85,4 +86,43 @@ int fmt_human_time(struct re_printf *pf, const uint32_t *seconds)
 	}
 
 	return err;
+}
+
+
+/**
+ * Print local time stamp including milli seconds relative to user's timezone
+ *
+ * @param pf Print function for output
+ * @param ts Time in seconds since the Epoch or NULL for current time
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int fmt_timestamp(struct re_printf *pf, void *ts)
+{
+	int h, m, s;
+	uint64_t ms;
+#ifdef WIN32
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	ms = st.wMilliseconds;
+	h  = st.wHour;
+	m  = st.wMinute;
+	s  = st.wSecond;
+
+#else
+	struct timespec tspec;
+	struct tm tm;
+
+	(void)clock_gettime(CLOCK_REALTIME, &tspec);
+	ms = tspec.tv_nsec / 1000000;
+	if (!localtime_r(&tspec.tv_sec, &tm))
+		return EINVAL;
+
+	h = tm.tm_hour;
+	m = tm.tm_min;
+	s = tm.tm_sec;
+#endif
+	(void) ts;
+
+	return re_hprintf(pf, "%02u:%02u:%02u.%03d", h, m, s, ms);
 }
