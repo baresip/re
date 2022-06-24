@@ -122,9 +122,9 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 	if (!localtime_r(&tspec.tv_sec, &tm))
 		return EINVAL;
 
-	h = tm.tm_hour;
-	m = tm.tm_min;
-	s = tm.tm_sec;
+	h  = tm.tm_hour;
+	m  = tm.tm_min;
+	s  = tm.tm_sec;
 	ms = tspec.tv_nsec / 1000000;
 #endif
 	(void)arg;
