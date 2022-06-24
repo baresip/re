@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+struct re;
 
 enum {
 #ifndef FD_READ
@@ -43,6 +44,10 @@ void  libre_close(void);
 int   re_main(re_signal_h *signalh);
 void  re_cancel(void);
 int   re_debug(struct re_printf *pf, void *unused);
+
+int  re_alloc(struct re **rep);
+int  re_thread_attach(struct re *re);
+void re_thread_detach(void);
 
 int  re_thread_init(void);
 void re_thread_close(void);
