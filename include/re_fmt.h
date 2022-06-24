@@ -132,6 +132,7 @@ static inline bool str_isset(const char *s)
 
 /* time */
 int  fmt_gmtime(struct re_printf *pf, void *ts);
+int  fmt_timestamp(struct re_printf *pf, void *ts);
 int  fmt_human_time(struct re_printf *pf, const uint32_t *seconds);
 
 
