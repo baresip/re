@@ -383,9 +383,9 @@ static bool debug_handler(struct le *le, void *arg)
 
 	(void)arg;
 
-	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p, m->nrefs);
+	(void)re_fprintf(stderr, "  %p: nrefs=%-2zu", p, m->nrefs);
 
-	(void)re_fprintf(stderr, " size=%-7u", m->size);
+	(void)re_fprintf(stderr, " size=%-7zu", m->size);
 
 	(void)re_fprintf(stderr, " [");
 
