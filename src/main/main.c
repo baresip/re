@@ -133,7 +133,7 @@ static void thread_destructor(void *arg)
 }
 
 
-static int re_alloc(struct re **rep)
+int re_alloc(struct re **rep)
 {
 	struct re *re;
 	int err;
@@ -1317,6 +1317,42 @@ void re_thread_leave(void)
 
 	re->thread_enter = false;
 	re_unlock(re);
+}
+
+
+/**
+ * Attach the current thread to re context
+ */
+int re_thread_attach(struct re *context)
+{
+	struct re *re;
+
+	if (!context)
+		return EINVAL;
+
+	call_once(&flag, re_once);
+
+	re = tss_get(key);
+	if (re) {
+		if (re != context)
+			return EALREADY;
+		return 0;
+	}
+
+	tss_set(key, context);
+
+	return 0;
+}
+
+
+/**
+ * Detach the current thread from re context
+ */
+void re_thread_detach(void)
+{
+	call_once(&flag, re_once);
+
+	tss_set(key, NULL);
 }
 
 
