@@ -114,7 +114,7 @@ int  rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs);
 int  rtcp_enable(struct rtcp_sess *sess, bool enabled, const char *cname);
 int  rtcp_send(struct rtp_sock *rs, struct mbuf *mb);
 void rtcp_handler(struct rtcp_sess *sess, struct rtcp_msg *msg);
-void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts,
+void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
 		      size_t payload_size);
 void rtcp_sess_rx_rtp(struct rtcp_sess *sess, uint16_t seq, uint32_t ts,
 		      uint32_t src, size_t payload_size,
