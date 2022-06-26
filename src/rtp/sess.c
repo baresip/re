@@ -39,7 +39,8 @@ enum {
 struct txstat {
 	uint32_t psent;      /**< Total number of RTP packets sent */
 	uint32_t osent;      /**< Total number of RTP octets  sent */
-	uint64_t jfs_ref;    /**< Timer ticks at RTP timestamp reference */
+	uint64_t jfs_rt_ref; /**< Realtime clock timer ticks at RTP timestamp
+	                      *   reference */
 	uint32_t ts_ref;     /**< RTP timestamp reference (transmit)     */
 	bool ts_synced;      /**< RTP timestamp synchronization flag     */
 };
@@ -399,14 +400,14 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	sess->txstat.ts_synced = false;
 	mtx_unlock(sess->lock);
 
-	if (txstat.jfs_ref) {
+	if (txstat.jfs_rt_ref) {
 		struct ntp_time ntp;
 		uint64_t jfs_rt, dur;
 		uint32_t rtp_ts;
 
 		ntp_time_get(&ntp, &jfs_rt);
 
-		dur = jfs_rt - txstat.jfs_ref;
+		dur = jfs_rt - txstat.jfs_rt_ref;
 		rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref + dur *
 				    sess->srate_tx / 1000000u);
 
@@ -515,7 +516,8 @@ static void schedule(struct rtcp_sess *sess)
 }
 
 
-void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, size_t payload_size)
+void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
+			   size_t payload_size)
 {
 	if (!sess)
 		return;
@@ -526,9 +528,9 @@ void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, size_t payload_size)
 	sess->txstat.psent += 1;
 
 	if (!sess->txstat.ts_synced) {
-		sess->txstat.jfs_ref   = tmr_jiffies();
-		sess->txstat.ts_ref    = ts;
-		sess->txstat.ts_synced = true;
+		sess->txstat.jfs_rt_ref = jfs_rt;
+		sess->txstat.ts_ref     = ts;
+		sess->txstat.ts_synced  = true;
 	}
 
 	mtx_unlock(sess->lock);
