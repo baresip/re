@@ -91,7 +91,7 @@ int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
 struct timeval;
 void unix2ntp(struct ntp_time *ntp, const struct timeval *tv);
 void ntp2unix(struct timeval *tv, const struct ntp_time *ntp);
-int  ntp_time_get(struct ntp_time *ntp);
+void ntp_time_get(struct ntp_time *ntp, uint64_t* jfs_rt);
 uint32_t ntp_compact(const struct ntp_time *ntp);
 uint64_t ntp_compact2us(uint32_t ntpc);
 

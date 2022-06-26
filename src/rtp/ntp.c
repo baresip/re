@@ -5,14 +5,14 @@
  */
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <time.h>
 #endif
+#include <time.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_rtp.h>
+#include <re_tmr.h>
 #include "rtcp.h"
 
 
@@ -52,25 +52,32 @@ void ntp2unix(struct timeval *tv, const struct ntp_time *ntp)
 }
 
 
-int ntp_time_get(struct ntp_time *ntp)
+/**
+ * Obtain the current wallclock time in NTP and jiffies formats
+ *
+ * @param ntp NTP time
+ * @param jfs_rt Microseconds since UNIX epoch. Optional, may be NULL.
+ */
+void ntp_time_get(struct ntp_time *ntp, uint64_t *jfs_rt)
 {
-	struct timeval tv;
-#ifdef WIN32
-	union {
-		long long ns100;
-		FILETIME ft;
-	} now;
-
-	GetSystemTimeAsFileTime(&now.ft);
-	tv.tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
-	tv.tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+#if defined(WIN32)
+	/* timeval::tv_sec on Windows is 32-bit, and it doesn't
+	 * define suseconds_t */
+	typedef long tv_sec_t;
+	typedef long tv_usec_t;
 #else
-	if (gettimeofday(&tv, NULL) != 0)
-		return errno;
+	typedef time_t tv_sec_t;
+	typedef suseconds_t tv_usec_t;
 #endif
-	unix2ntp(ntp, &tv);
 
-	return 0;
+	struct timeval tv;
+	uint64_t jfs = tmr_jiffies_rt_usec();
+	if (jfs_rt)
+		*jfs_rt = jfs;
+
+	tv.tv_sec  = (tv_sec_t)(jfs / 1000000u);
+	tv.tv_usec = (tv_usec_t)(jfs % 1000000u);
+	unix2ntp(ntp, &tv);
 }
 
 
