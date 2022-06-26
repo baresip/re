@@ -108,11 +108,8 @@ static void calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr)
 {
 	struct ntp_time ntp_time;
 	uint64_t a_us, lsr_us, dlsr_us;
-	int err;
 
-	err = ntp_time_get(&ntp_time);
-	if (err)
-		return;
+	ntp_time_get(&ntp_time, NULL);
 
 	a_us    = ntp_compact2us(ntp_compact(&ntp_time));
 	lsr_us  = ntp_compact2us(lsr);
@@ -394,14 +391,8 @@ static int encode_handler(struct mbuf *mb, void *arg)
 /** Create a Sender Report */
 static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 {
-	struct ntp_time ntp = {0, 0};
 	struct txstat txstat;
-	uint32_t dur, rtp_ts = 0;
 	int err;
-
-	err = ntp_time_get(&ntp);
-	if (err)
-		return err;
 
 	mtx_lock(sess->lock);
 	txstat = sess->txstat;
@@ -409,15 +400,28 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	mtx_unlock(sess->lock);
 
 	if (txstat.jfs_ref) {
-		dur = (uint32_t)(tmr_jiffies() - txstat.jfs_ref);
-		rtp_ts = txstat.ts_ref + dur * sess->srate_tx / 1000;
-	}
+		struct ntp_time ntp;
+		uint64_t jfs_rt, dur;
+		uint32_t rtp_ts;
 
-	err = rtcp_encode(mb, RTCP_SR, sess->senderc, rtp_sess_ssrc(sess->rs),
-			  ntp.hi, ntp.lo, rtp_ts, txstat.psent, txstat.osent,
-			  encode_handler, sess->members);
-	if (err)
-		return err;
+		ntp_time_get(&ntp, &jfs_rt);
+
+		dur = jfs_rt - txstat.jfs_ref;
+		rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref + dur *
+				    sess->srate_tx / 1000000u);
+
+		err = rtcp_encode(mb, RTCP_SR, sess->senderc,
+				  rtp_sess_ssrc(sess->rs), ntp.hi, ntp.lo,
+				  rtp_ts, txstat.psent, txstat.osent,
+				  encode_handler, sess->members);
+	}
+	else {
+		/* No packets were sent yet, no NTP/RTP timestamps available,
+		 * generate receiver report */
+		err = rtcp_encode(mb, RTCP_RR, sess->senderc,
+				  rtp_sess_ssrc(sess->rs),
+				  encode_handler, sess->members);
+	}
 
 	return err;
 }
