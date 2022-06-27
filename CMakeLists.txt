@@ -181,6 +181,7 @@ endif()
 set(HEADERS
   include/re.h
   include/re_aes.h
+  include/re_async.h
   include/re_atomic.h
   include/re_av1.h
   include/re_base64.h
@@ -245,6 +246,8 @@ set(SRCS
   src/av1/depack.c
   src/av1/obu.c
   src/av1/pkt.c
+
+  src/async/async.c
 
   src/base64/b64.c
 
