@@ -28,6 +28,8 @@ static void destructor(void *arg)
 	mem_deref(sock->ht_sess);
 	hash_flush(sock->ht_ack);
 	mem_deref(sock->ht_ack);
+	hash_flush(sock->ht_prack);
+	mem_deref(sock->ht_prack);
 }
 
 
@@ -185,6 +187,39 @@ static void ack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 }
 
 
+static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
+{
+	struct sipsess *sess;
+	bool awaiting_answer;
+	int err = 0;
+
+	sess = sipsess_find(sock, msg);
+	if (!sess)
+		return;
+
+	if (sipsess_reply_prack(sess, msg, &awaiting_answer)) {
+		(void)sip_reply(sock->sip, msg, 481, "Transaction Does Not Exist");
+		return;
+	}
+
+	if (sess->terminated) {
+		if (!sess->replyl.head) {
+			sess->established = true;
+			mem_deref(sess);
+		}
+		return;
+	}
+
+	if (awaiting_answer) {
+		sess->awaiting_answer = false;
+		err = sess->answerh(msg, sess->arg);
+	}
+
+	if (err)
+		sipsess_terminate(sess, err, NULL);
+}
+
+
 static void reinvite_handler(struct sipsess_sock *sock,
 			     const struct sip_msg *msg)
 {
@@ -262,6 +297,10 @@ static bool request_handler(const struct sip_msg *msg, void *arg)
 		ack_handler(sock, msg);
 		return true;
 	}
+	else if (!pl_strcmp(&msg->met, "PRACK")) {
+		prack_handler(sock, msg);
+		return true;
+	}
 	else if (!pl_strcmp(&msg->met, "BYE")) {
 		bye_handler(sock, msg);
 		return true;
@@ -336,6 +375,10 @@ int sipsess_listen(struct sipsess_sock **sockp, struct sip *sip,
 		goto out;
 
 	err = hash_alloc(&sock->ht_ack, htsize);
+	if (err)
+		goto out;
+
+	err = hash_alloc(&sock->ht_prack, htsize);
 	if (err)
 		goto out;
 

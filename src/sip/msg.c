@@ -222,6 +222,14 @@ static inline int hdr_add(struct sip_msg *msg, const struct pl *name,
 		err = sip_cseq_decode(&msg->cseq, &hdr->val);
 		break;
 
+	case SIP_HDR_RSEQ:
+		msg->rel_seq = pl_u32(&hdr->val);
+		break;
+
+	case SIP_HDR_RACK:
+		err = sip_rack_decode(&msg->rack, &hdr->val);
+		break;
+
 	case SIP_HDR_MAX_FORWARDS:
 		msg->maxfwd = hdr->val;
 		break;

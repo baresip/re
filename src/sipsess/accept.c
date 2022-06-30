@@ -42,6 +42,7 @@ static void cancel_handler(void *arg)
  * @param msg       Incoming SIP message
  * @param scode     Response status code
  * @param reason    Response reason phrase
+ * @param rel100    Sending 1xx reliably supported, required or disabled
  * @param cuser     Contact username or URI
  * @param ctype     Session content-type
  * @param desc      Content description (e.g. SDP)
@@ -61,8 +62,8 @@ static void cancel_handler(void *arg)
  */
 int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 		   const struct sip_msg *msg, uint16_t scode,
-		   const char *reason, const char *cuser, const char *ctype,
-		   struct mbuf *desc,
+		   const char *reason, enum rel100_mode rel100, const char *cuser,
+		   const char *ctype, struct mbuf *desc,
 		   sip_auth_h *authh, void *aarg, bool aref,
 		   sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		   sipsess_estab_h *estabh, sipsess_info_h *infoh,
@@ -100,7 +101,10 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	va_start(ap, fmt);
 
-	if (scode >= 200)
+	if (scode > 100 && scode < 200) {
+		err = sipsess_reply_1xx(sess, msg, scode, reason, rel100, desc,
+					fmt, &ap);
+	} else if (scode >= 200)
 		err = sipsess_reply_2xx(sess, msg, scode, reason, desc,
 					fmt, &ap);
 	else {
@@ -147,15 +151,15 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
  * @param sess      SIP Session
  * @param scode     Response status code
  * @param reason    Response reason phrase
+ * @param rel100    Sending 1xx reliably supported, required or disabled
  * @param desc      Content description (e.g. SDP)
  * @param fmt       Formatted strings with extra SIP Headers
  *
  * @return 0 if success, otherwise errorcode
  */
 int sipsess_progress(struct sipsess *sess, uint16_t scode, const char *reason,
-		     struct mbuf *desc, const char *fmt, ...)
+		     enum rel100_mode rel100, struct mbuf *desc, const char *fmt, ...)
 {
-	struct sip_contact contact;
 	va_list ap;
 	int err;
 
@@ -164,24 +168,8 @@ int sipsess_progress(struct sipsess *sess, uint16_t scode, const char *reason,
 
 	va_start(ap, fmt);
 
-	sip_contact_set(&contact, sess->cuser, &sess->msg->dst, sess->msg->tp);
-
-	err = sip_treplyf(&sess->st, NULL, sess->sip, sess->msg, true,
-			  scode, reason,
-			  "%H"
-			  "%v"
-			  "%s%s%s"
-			  "Content-Length: %zu\r\n"
-			  "\r\n"
-			  "%b",
-			  sip_contact_print, &contact,
-			  fmt, &ap,
-			  desc ? "Content-Type: " : "",
-			  desc ? sess->ctype : "",
-			  desc ? "\r\n" : "",
-			  desc ? mbuf_get_left(desc) : (size_t)0,
-			  desc ? mbuf_buf(desc) : NULL,
-			  desc ? mbuf_get_left(desc) : (size_t)0);
+	err = sipsess_reply_1xx(sess, sess->msg, scode, reason, rel100, desc,
+				fmt, &ap);
 
 	va_end(ap);
 
@@ -206,7 +194,8 @@ int sipsess_answer(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || !sess->st || !sess->msg || scode < 200 || scode > 299)
+	if (!sess || (!sess->st && (sess->established || sess->awaiting_answer))
+		|| !sess->msg || scode < 200 || scode > 299)
 		return EINVAL;
 
 	va_start(ap, fmt);

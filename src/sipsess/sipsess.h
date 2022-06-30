@@ -39,6 +39,7 @@ struct sipsess {
 	bool modify_pending;
 	bool established;
 	bool peerterm;
+	bool rel100_supported;
 	int terminated;
 };
 
@@ -48,6 +49,7 @@ struct sipsess_sock {
 	struct sip_lsnr *lsnr_req;
 	struct hash *ht_sess;
 	struct hash *ht_ack;
+	struct hash *ht_prack;
 	struct sip *sip;
 	sipsess_conn_h *connh;
 	void *arg;
@@ -80,10 +82,18 @@ int  sipsess_ack(struct sipsess_sock *sock, struct sip_dialog *dlg,
 		uint32_t cseq, struct sip_auth *auth,
 		const char *ctype, struct mbuf *desc);
 int  sipsess_ack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
+int  sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
+		const struct pl *met, struct mbuf *desc);
+int  sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
 int  sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		       uint16_t scode, const char *reason, struct mbuf *desc,
 		       const char *fmt, va_list *ap);
+int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
+		       uint16_t scode, const char *reason, enum rel100_mode rel100,
+			   struct mbuf *desc, const char *fmt, va_list *ap);
 int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
+		       bool *awaiting_answer);
+int  sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
 int  sipsess_reinvite(struct sipsess *sess, bool reset_ls);
 int  sipsess_bye(struct sipsess *sess, bool reset_ls);

@@ -135,6 +135,13 @@ enum sip_hdrid {
 };
 
 
+enum rel100_mode {
+	REL100_DISABLED = 0,
+	REL100_ENABLED,
+	REL100_REQUIRED,
+};
+
+
 enum {
 	SIP_T1 =  500,
 	SIP_T2 = 4000,
@@ -176,6 +183,13 @@ struct sip_cseq {
 	uint32_t num;
 };
 
+/** SIP RAck header (RFC 3262) */
+struct sip_rack {
+	struct pl met;
+	uint32_t rel_seq;
+	uint32_t cseq;
+};
+
 /** SIP Header */
 struct sip_hdr {
 	struct le le;          /**< Linked-list element    */
@@ -200,6 +214,8 @@ struct sip_msg {
 	struct sip_taddr to;   /**< Parsed To header                     */
 	struct sip_taddr from; /**< Parsed From header                   */
 	struct sip_cseq cseq;  /**< Parsed CSeq header                   */
+	struct sip_rack rack;  /**< Parsed RAck header (RFC 3262)        */
+	uint32_t rel_seq;	   /**< RSeq number (RFC 3262)               */
 	struct msg_ctype ctyp; /**< Content Type                         */
 	struct pl callid;      /**< Cached Call-ID header                */
 	struct pl maxfwd;      /**< Cached Max-Forwards header           */
@@ -397,6 +413,7 @@ void sip_msg_dump(const struct sip_msg *msg);
 int sip_addr_decode(struct sip_addr *addr, const struct pl *pl);
 int sip_via_decode(struct sip_via *via, const struct pl *pl);
 int sip_cseq_decode(struct sip_cseq *cseq, const struct pl *pl);
+int sip_rack_decode(struct sip_rack *rack, const struct pl *pl);
 
 
 /* keepalive */
