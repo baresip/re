@@ -215,7 +215,7 @@ struct sip_msg {
 	struct sip_taddr from; /**< Parsed From header                   */
 	struct sip_cseq cseq;  /**< Parsed CSeq header                   */
 	struct sip_rack rack;  /**< Parsed RAck header (RFC 3262)        */
-	uint32_t rel_seq;	   /**< RSeq number (RFC 3262)               */
+	uint32_t rel_seq;      /**< RSeq number (RFC 3262)               */
 	struct msg_ctype ctyp; /**< Content Type                         */
 	struct pl callid;      /**< Cached Call-ID header                */
 	struct pl maxfwd;      /**< Cached Max-Forwards header           */

@@ -77,8 +77,8 @@ static void resp_handler(int err, const struct sip_msg *msg, void *arg)
 	if (err || !msg)
 		goto out;
 
-	if (msg->scode > 100 && msg->scode < 200 &&
-			sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")) {
+	if (msg->scode > 100 && msg->scode < 200
+	    && sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")) {
 		(void)sipsess_prack_again(prack->sock, msg);
 		return;
 	}
@@ -109,11 +109,13 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
 	prack->cseq = cseq;
 
 	(void)pl_strcpy(met, method, sizeof(method));
-	re_snprintf(rack_header, sizeof(rack_header), "%d %d %s", rel_seq, cseq, method);
+	re_snprintf(rack_header, sizeof(rack_header), "%d %d %s", rel_seq,
+		    cseq, method);
 
-	err = sip_drequestf(&prack->req, sess->sock->sip, true, "PRACK", sess->dlg, cseq,
-			    sess->auth, send_handler, resp_handler, prack,
-				"RAck: %s\n"
+	err = sip_drequestf(&prack->req, sess->sock->sip, true, "PRACK",
+			    sess->dlg, cseq, sess->auth, send_handler,
+			    resp_handler, prack,
+			    "RAck: %s\n"
 			    "%s%s%s"
 			    "Content-Length: %zu\r\n"
 			    "\r\n"

@@ -29,8 +29,9 @@ int sip_rack_decode(struct sip_rack *rack, const struct pl *pl)
 	if (!rack || !pl)
 		return EINVAL;
 
-	err = re_regex(pl->p, pl->l, "[0-9]+[ \t\r\n]+[0-9]+[ \t\r\n]+[^ \t\r\n]+",
-		       &rel_seq, NULL, &cseq, NULL, &rack->met);
+	err = re_regex(pl->p, pl->l,
+			"[0-9]+[ \t\r\n]+[0-9]+[ \t\r\n]+[^ \t\r\n]+",
+			&rel_seq, NULL, &cseq, NULL, &rack->met);
 	if (err)
 		return err;
 

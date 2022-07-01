@@ -121,7 +121,8 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (pl_strcmp(&msg->met, "PRACK")) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
-	} else {
+	}
+	else {
 		mem_deref(reply);
 	}
 
@@ -141,8 +142,9 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 
 
 int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
-		      uint16_t scode, const char *reason, enum rel100_mode rel100,
-			  struct mbuf *desc, const char *fmt, va_list *ap)
+		      uint16_t scode, const char *reason,
+		      enum rel100_mode rel100, struct mbuf *desc,
+		      const char *fmt, va_list *ap)
 {
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
@@ -153,25 +155,29 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	struct pl require_header;
 	int err = ENOMEM;
 
-	rel100_peer_sup = sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED, "100rel");
-	rel100_peer_req = sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel");
+	rel100_peer_sup = sip_msg_hdr_has_value(msg,
+						SIP_HDR_SUPPORTED, "100rel");
+	rel100_peer_req = sip_msg_hdr_has_value(msg,
+						SIP_HDR_REQUIRE, "100rel");
 
-	if (rel100 == REL100_REQUIRED && !(rel100_peer_sup || rel100_peer_req)) {
+	if (rel100 == REL100_REQUIRED
+	    && !(rel100_peer_sup || rel100_peer_req)) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false,
 				  421, "Extension required",
 				  "Require: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
-	} else if (rel100_peer_req && !rel100) {
-		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false,
-				  420, "Bad Extension",
-				  "Unsupported: 100rel\r\n"
+	}
+	else if (rel100_peer_req && !rel100) {
+		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false, 420,
+				  "Bad Extension", "Unsupported: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
 	}
 	if (rel100 != REL100_REQUIRED && rel100_peer_req) {
 		pl_set_str(&require_header, "Require: 100rel\r\n");
-	} else {
+	}
+	else {
 		require_header.p = NULL;
 	}
 
@@ -190,7 +196,8 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 
 	if (send_reliably) {
 		reply->rel_seq = rand_u16();
-		re_snprintf(rseq_header, sizeof(rseq_header), "%d", reply->rel_seq);
+		re_snprintf(rseq_header, sizeof(rseq_header), "%d",
+			    reply->rel_seq);
 	}
 
 	err = sip_treplyf(&sess->st, &reply->mb, sess->sip,
@@ -220,7 +227,8 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (send_reliably) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
-	} else {
+	}
+	else {
 		mem_deref(reply);
 	}
 

@@ -92,7 +92,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 					sip_dialog_update(sess->dlg, msg) :
 					sip_dialog_create(sess->dlg, msg);
 			err |= sipsess_prack(sess, msg->cseq.num, msg->rel_seq,
-								&msg->cseq.met, desc);
+					     &msg->cseq.met, desc);
 			mem_deref(desc);
 			sess->desc = mem_deref(sess->desc);
 			if (err)

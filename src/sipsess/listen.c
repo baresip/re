@@ -198,7 +198,8 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 		return;
 
 	if (sipsess_reply_prack(sess, msg, &awaiting_answer)) {
-		(void)sip_reply(sock->sip, msg, 481, "Transaction Does Not Exist");
+		(void)sip_reply(sock->sip, msg, 481,
+				"Transaction Does Not Exist");
 		return;
 	}
 

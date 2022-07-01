@@ -89,8 +89,9 @@ int  sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		       uint16_t scode, const char *reason, struct mbuf *desc,
 		       const char *fmt, va_list *ap);
 int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
-		       uint16_t scode, const char *reason, enum rel100_mode rel100,
-			   struct mbuf *desc, const char *fmt, va_list *ap);
+		       uint16_t scode, const char *reason,
+		       enum rel100_mode rel100, struct mbuf *desc,
+		       const char *fmt, va_list *ap);
 int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
 int  sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
