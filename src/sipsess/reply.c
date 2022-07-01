@@ -151,6 +151,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		      enum rel100_mode rel100, struct mbuf *desc,
 		      const char *fmt, va_list *ap)
 {
+	struct sipsess_reply *prev_reply;
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
 	char rseq_header[64];
@@ -192,6 +193,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (!reply)
 		goto out;
 
+	prev_reply = list_ledata(list_tail(&sess->replyl));
 	list_append(&sess->replyl, &reply->le, reply);
 	reply->seq  = msg->cseq.num;
 	reply->msg  = mem_ref((void *)msg);
@@ -200,9 +202,10 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 
 	if (send_reliably) {
-		reply->rel_seq = rand_u16();
-		re_snprintf(rseq_header, sizeof(rseq_header), "%d",
-			    reply->rel_seq);
+		reply->rel_seq = prev_reply ?
+			prev_reply->rel_seq+1 : rand_u16();
+		re_snprintf(rseq_header, sizeof(rseq_header),
+					"%d", reply->rel_seq);
 	}
 
 	err = sip_treplyf(&sess->st, &reply->mb, sess->sip,
