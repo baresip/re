@@ -69,13 +69,17 @@ static void tmr_handler(void *arg)
 static void retransmit_handler(void *arg)
 {
 	struct sipsess_reply *reply = arg;
+	uint32_t delay;
 
 	(void)sip_send(reply->sess->sip, reply->msg->sock, reply->msg->tp,
 		       &reply->msg->src, reply->mb);
 
 	reply->txc++;
-	tmr_start(&reply->tmrg, MIN(SIP_T1<<reply->txc, SIP_T2),
-		  retransmit_handler, reply);
+
+	delay = !reply->rel_seq ?
+		MIN(SIP_T1<<reply->txc, SIP_T2) : SIP_T1<<reply->txc;
+
+	tmr_start(&reply->tmrg, delay, retransmit_handler, reply);
 }
 
 
@@ -92,6 +96,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		goto out;
 
 	list_append(&sess->replyl, &reply->le, reply);
+	reply->rel_seq = 0;
 	reply->seq  = msg->cseq.num;
 	reply->msg  = mem_ref((void *)msg);
 	reply->sess = sess;
