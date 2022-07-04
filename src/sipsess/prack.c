@@ -88,6 +88,17 @@ out:
 }
 
 
+/**
+ * Send PRACK message (RFC 3262)
+ *
+ * @param sess      SIP Session
+ * @param cseq      CSeq number to be written in RAck header
+ * @param rel_seq   RSeq number to be written in RAck header
+ * @param met       Method to be written in RAck header
+ * @param desc      Content description (e.g. SDP)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
 		const struct pl *met, struct mbuf *desc)
 {
@@ -150,6 +161,14 @@ static bool cmp_handler(struct le *le, void *arg)
 }
 
 
+/**
+ * Re-send a PRACK message (RFC 3262)
+ *
+ * @param sock      SIP Session socket
+ * @param msg       SIP message
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg)
 {
 	struct sipsess_prack *prack;
