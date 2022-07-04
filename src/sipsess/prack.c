@@ -120,7 +120,7 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
 			    "Content-Length: %zu\r\n"
 			    "\r\n"
 			    "%b",
-				rack_header,
+			    rack_header,
 			    desc ? "Content-Type: " : "",
 			    desc ? sess->ctype : "",
 			    desc ? "\r\n" : "",

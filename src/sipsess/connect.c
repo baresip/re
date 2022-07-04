@@ -272,6 +272,7 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 
 		if (err)
 			goto out;
+
 		pl_set_mbuf(&hdrs, sess->hdrs);
 	}
 
