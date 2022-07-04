@@ -289,6 +289,7 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		      bool *awaiting_answer)
 {
 	struct sipsess_reply *reply;
+	int err;
 
 	reply = list_ledata(list_apply(&sess->replyl, false, cmp_handler,
 				       (void *)msg));
@@ -296,10 +297,10 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		return ENOENT;
 
 	*awaiting_answer = reply->awaiting_answer;
-	(void)sipsess_reply_2xx(sess, msg, 200, "OK", NULL,
+	err = sipsess_reply_2xx(sess, msg, 200, "OK", NULL,
 					NULL, NULL);
 
 	mem_deref(reply);
 
-	return 0;
+	return err;
 }
