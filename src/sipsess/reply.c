@@ -158,7 +158,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	bool rel100_peer_sup;
 	bool rel100_peer_req;
 	bool send_reliably;
-	struct pl require_header;
+	struct pl require_header = pl_null;
 	int err = ENOMEM;
 
 	rel100_peer_sup = sip_msg_hdr_has_value(msg,
@@ -180,14 +180,12 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
 	}
-	if (rel100 != REL100_REQUIRED && rel100_peer_req) {
+
+	send_reliably = rel100 && (rel100_peer_req || rel100_peer_sup);
+
+	if (rel100 != REL100_REQUIRED && send_reliably) {
 		pl_set_str(&require_header, "Require: 100rel\r\n");
 	}
-	else {
-		require_header.p = NULL;
-	}
-
-	send_reliably = rel100 == REL100_REQUIRED || rel100_peer_req;
 
 	reply = mem_zalloc(sizeof(*reply), destructor);
 	if (!reply)
