@@ -25,7 +25,7 @@ extern "C" {
 #define __CLANG_ATOMICS
 
 #elif defined(__GNUC__)
-#if __GNUC_PREREQ(4, 9)
+#if (__GNUC__ << 16) + __GNUC_MINOR__ >= 0x40009
 #define __SYNC_ATOMICS
 #else
 #error "Atomic requires gcc >= 4.9"
