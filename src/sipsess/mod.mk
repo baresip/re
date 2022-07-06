@@ -12,5 +12,6 @@ SRCS	+= sipsess/connect.c
 SRCS	+= sipsess/info.c
 SRCS	+= sipsess/listen.c
 SRCS	+= sipsess/modify.c
+SRCS	+= sipsess/prack.c
 SRCS	+= sipsess/reply.c
 SRCS	+= sipsess/request.c

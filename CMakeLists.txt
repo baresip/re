@@ -491,6 +491,7 @@ if(USE_SIP)
     src/sip/keepalive.c
     src/sip/keepalive_udp.c
     src/sip/msg.c
+    src/sip/rack.c
     src/sip/reply.c
     src/sip/request.c
     src/sip/sip.c
@@ -512,6 +513,7 @@ if(USE_SIP)
     src/sipsess/info.c
     src/sipsess/listen.c
     src/sipsess/modify.c
+    src/sipsess/prack.c
     src/sipsess/reply.c
     src/sipsess/request.c
     src/sipsess/sess.c

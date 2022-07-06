@@ -84,13 +84,30 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 	if (msg->scode < 200) {
 		sess->progrh(msg, sess->arg);
+
+		if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")
+				&& sess->rel100_supported) {
+
+			err = sip_dialog_established(sess->dlg) ?
+					sip_dialog_update(sess->dlg, msg) :
+					sip_dialog_create(sess->dlg, msg);
+			err |= sipsess_prack(sess, msg->cseq.num, msg->rel_seq,
+					     &msg->cseq.met, desc);
+			mem_deref(desc);
+			sess->desc = mem_deref(sess->desc);
+			if (err)
+				goto out;
+		}
+
 		return;
 	}
 	else if (msg->scode < 300) {
 
 		sess->hdrs = mem_deref(sess->hdrs);
 
-		err = sip_dialog_create(sess->dlg, msg);
+		err = sip_dialog_established(sess->dlg) ?
+				sip_dialog_update(sess->dlg, msg) :
+				sip_dialog_create(sess->dlg, msg);
 		if (err)
 			goto out;
 
@@ -226,6 +243,7 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 		    sipsess_close_h *closeh, void *arg, const char *fmt, ...)
 {
 	struct sipsess *sess;
+	struct pl hdrs;
 	int err;
 
 	if (!sessp || !sock || !to_uri || !from_uri || !cuser || !ctype)
@@ -255,9 +273,12 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 
 		if (err)
 			goto out;
+
+		pl_set_mbuf(&hdrs, sess->hdrs);
 	}
 
 	sess->owner = true;
+	sess->rel100_supported = fmt && !re_regex(hdrs.p, hdrs.l, "100rel");
 
 	err = sip_dialog_alloc(&sess->dlg, to_uri, to_uri, from_name,
 			       from_uri, routev, routec);
