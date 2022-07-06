@@ -160,11 +160,10 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	struct pl require_header = pl_null;
 	int err = ENOMEM;
 
-	if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED, "100rel"))
-		rel100_peer |= REL100_ENABLED;
-
 	if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel"))
-		rel100_peer |= REL100_REQUIRED;
+		rel100_peer = REL100_REQUIRED;
+	else if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED, "100rel"))
+		rel100_peer = REL100_ENABLED;
 
 	if (rel100 == REL100_REQUIRED && !rel100_peer) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false,
@@ -173,7 +172,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
 	}
-	else if (rel100_peer & REL100_REQUIRED && !rel100) {
+	else if (rel100_peer == REL100_REQUIRED && !rel100) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false, 420,
 				  "Bad Extension", "Unsupported: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
@@ -181,7 +180,6 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	}
 
 	reliably = rel100 && rel100_peer;
-
 	if (rel100 != REL100_REQUIRED && reliably) {
 		pl_set_str(&require_header, "Require: 100rel\r\n");
 	}
