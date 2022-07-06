@@ -82,7 +82,7 @@ int  sipsess_ack(struct sipsess_sock *sock, struct sip_dialog *dlg,
 		 uint32_t cseq, struct sip_auth *auth,
 		 const char *ctype, struct mbuf *desc);
 int  sipsess_ack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
-int  sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
+int  sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 		   const struct pl *met, struct mbuf *desc);
 int  sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
 int  sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,

@@ -137,8 +137,8 @@ enum sip_hdrid {
 
 enum rel100_mode {
 	REL100_DISABLED = 0,
-	REL100_ENABLED,
-	REL100_REQUIRED,
+	REL100_ENABLED = 1,
+	REL100_REQUIRED = 2,
 };
 
 

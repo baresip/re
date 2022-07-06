@@ -194,10 +194,8 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 	int err = 0;
 
 	sess = sipsess_find(sock, msg);
-	if (!sess)
-		return;
 
-	if (sipsess_reply_prack(sess, msg, &awaiting_answer)) {
+	if (!sess || sipsess_reply_prack(sess, msg, &awaiting_answer)) {
 		(void)sip_reply(sock->sip, msg, 481,
 				"Transaction Does Not Exist");
 		return;
@@ -208,6 +206,7 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 			sess->established = true;
 			mem_deref(sess);
 		}
+
 		return;
 	}
 

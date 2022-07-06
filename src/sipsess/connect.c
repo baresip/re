@@ -98,6 +98,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 			if (err)
 				goto out;
 		}
+
 		return;
 	}
 	else if (msg->scode < 300) {

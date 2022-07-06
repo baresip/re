@@ -66,7 +66,6 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 	prack->tp  = tp;
 
 	tmr_start(&prack->tmr, 64 * SIP_T1, tmr_handler, prack);
-
 	return 0;
 }
 
@@ -93,14 +92,14 @@ out:
  *
  * @param sess      SIP Session
  * @param cseq      CSeq number to be written in RAck header
- * @param rel_seq   RSeq number to be written in RAck header
+ * @param rseq      RSeq number to be written in RAck header
  * @param met       Method to be written in RAck header
  * @param desc      Content description (e.g. SDP)
  *
  * @return 0 if success, otherwise errorcode
  */
-int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
-		const struct pl *met, struct mbuf *desc)
+int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
+		  const struct pl *met, struct mbuf *desc)
 {
 	struct sipsess_prack *prack;
 	char rack_header[256];
@@ -120,8 +119,8 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rel_seq,
 	prack->cseq = cseq;
 
 	(void)pl_strcpy(met, method, sizeof(method));
-	re_snprintf(rack_header, sizeof(rack_header), "%d %d %s", rel_seq,
-		    cseq, method);
+	re_snprintf(rack_header, sizeof(rack_header), "%d %d %s", rseq, cseq,
+		    method);
 
 	err = sip_drequestf(&prack->req, sess->sock->sip, true, "PRACK",
 			    sess->dlg, cseq, sess->auth, send_handler,
@@ -174,8 +173,8 @@ int sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg)
 	struct sipsess_prack *prack;
 
 	prack = list_ledata(hash_lookup(sock->ht_prack,
-				      hash_joaat_pl(&msg->callid),
-				      cmp_handler, (void *)msg));
+					hash_joaat_pl(&msg->callid),
+					cmp_handler, (void *)msg));
 	if (!prack)
 		return ENOENT;
 

@@ -155,35 +155,34 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
 	char rseq_header[64];
-	bool rel100_peer_sup;
-	bool rel100_peer_req;
-	bool send_reliably;
+	bool reliably;
+	enum rel100_mode rel100_peer = REL100_DISABLED;
 	struct pl require_header = pl_null;
 	int err = ENOMEM;
 
-	rel100_peer_sup = sip_msg_hdr_has_value(msg,
-						SIP_HDR_SUPPORTED, "100rel");
-	rel100_peer_req = sip_msg_hdr_has_value(msg,
-						SIP_HDR_REQUIRE, "100rel");
+	if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED, "100rel"))
+		rel100_peer |= REL100_ENABLED;
 
-	if (rel100 == REL100_REQUIRED
-	    && !(rel100_peer_sup || rel100_peer_req)) {
+	if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel"))
+		rel100_peer |= REL100_REQUIRED;
+
+	if (rel100 == REL100_REQUIRED && !rel100_peer) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false,
 				  421, "Extension required",
 				  "Require: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
 	}
-	else if (rel100_peer_req && !rel100) {
+	else if (rel100_peer & REL100_REQUIRED && !rel100) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false, 420,
 				  "Bad Extension", "Unsupported: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
 		return -1;
 	}
 
-	send_reliably = rel100 && (rel100_peer_req || rel100_peer_sup);
+	reliably = rel100 && rel100_peer;
 
-	if (rel100 != REL100_REQUIRED && send_reliably) {
+	if (rel100 != REL100_REQUIRED && reliably) {
 		pl_set_str(&require_header, "Require: 100rel\r\n");
 	}
 
@@ -198,7 +197,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	reply->sess = sess;
 
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
-	if (send_reliably) {
+	if (reliably) {
 		reply->rel_seq = prev ? prev->rel_seq+1 : rand_u16();
 		re_snprintf(rseq_header, sizeof(rseq_header),
 					"%d", reply->rel_seq);
@@ -215,9 +214,9 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 			  sip_contact_print, &contact,
 			  fmt, ap,
 			  require_header.p ? require_header.p : "",
-			  send_reliably ? "RSeq: " : "",
-			  send_reliably ? rseq_header : "",
-			  send_reliably ? "\n" : "",
+			  reliably ? "RSeq: " : "",
+			  reliably ? rseq_header : "",
+			  reliably ? "\n" : "",
 			  desc ? "Content-Type: " : "",
 			  desc ? sess->ctype : "",
 			  desc ? "\r\n" : "",
@@ -228,7 +227,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (err)
 		goto out;
 
-	if (send_reliably) {
+	if (reliably) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
 	}
@@ -261,6 +260,7 @@ static bool cmp_handler(struct le *le, void *arg)
 				msg->rack.rel_seq == reply->rel_seq &&
 				!pl_cmp(&msg->rack.met, &reply->msg->met);
 	}
+
 	return msg->cseq.num == reply->seq;
 }
 
@@ -295,8 +295,7 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		return ENOENT;
 
 	*awaiting_answer = reply->awaiting_answer;
-	err = sipsess_reply_2xx(sess, msg, 200, "OK", NULL,
-					NULL, NULL);
+	err = sipsess_reply_2xx(sess, msg, 200, "OK", NULL, NULL, NULL);
 
 	mem_deref(reply);
 

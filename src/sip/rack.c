@@ -30,13 +30,12 @@ int sip_rack_decode(struct sip_rack *rack, const struct pl *pl)
 		return EINVAL;
 
 	err = re_regex(pl->p, pl->l,
-			"[0-9]+[ \t\r\n]+[0-9]+[ \t\r\n]+[^ \t\r\n]+",
-			&rel_seq, NULL, &cseq, NULL, &rack->met);
+		       "[0-9]+[ \t\r\n]+[0-9]+[ \t\r\n]+[^ \t\r\n]+",
+		       &rel_seq, NULL, &cseq, NULL, &rack->met);
 	if (err)
 		return err;
 
 	rack->rel_seq = pl_u32(&rel_seq);
 	rack->cseq = pl_u32(&cseq);
-
 	return 0;
 }
