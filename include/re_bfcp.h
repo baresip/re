@@ -102,6 +102,7 @@ enum bfcp_priority {
 enum bfcp_transp {
 	BFCP_UDP,
 	BFCP_DTLS,
+	BFCP_TCP
 };
 
 /** BFCP Request Status */
@@ -260,10 +261,40 @@ const char *bfcp_prim_name(enum bfcp_prim prim);
 
 
 /* conn */
-int bfcp_listen(struct bfcp_conn **bcp, enum bfcp_transp tp, struct sa *laddr,
-		struct tls *tls, bfcp_recv_h *recvh, void *arg);
-void *bfcp_sock(const struct bfcp_conn *bc);
 
+/**
+ * Defines the BFCP incoming connection handler
+ *
+ * @param peer Remote peer address
+ * @param arg Handler argument
+ */
+typedef void (bfcp_conn_h)(const struct sa *peer, void *arg);
+
+/**
+ * Defines the BFCP connection established handler
+ *
+ * @param arg Handler argument
+ */
+typedef void (bfcp_estab_h)(void *arg);
+
+/**
+ * Defines the BFCP close handler for example for TCP connection
+ *
+ * @param err Error code
+ * @param arg Handler argument
+ */
+typedef void (bfcp_close_h)(int err, void *arg);
+
+int bfcp_listen(struct bfcp_conn **bcp, enum bfcp_transp tp,
+		struct sa *laddr, struct tls *tls, bfcp_conn_h *connh,
+		bfcp_estab_h *estabh, bfcp_recv_h *recvh, bfcp_close_h *closeh,
+		void *arg);
+int bfcp_connect(struct bfcp_conn **bcp, enum bfcp_transp tp,
+		 struct sa *laddr, const struct sa *peer, bfcp_estab_h *estabh,
+		 bfcp_recv_h *recvh, bfcp_close_h *closeh, void *arg);
+int bfcp_accept(struct bfcp_conn *bc);
+void bfcp_reject(struct bfcp_conn *bc);
+void *bfcp_sock(const struct bfcp_conn *bc);
 
 /* request */
 int bfcp_request(struct bfcp_conn *bc, const struct sa *dst, uint8_t ver,
