@@ -368,11 +368,13 @@ int sip_strans_reply(struct sip_strans **stp, struct sip *sip,
 		}
 		else if (scode < 300) {
 			tmr_start(&st->tmr, 64 * SIP_T1, tmr_handler, st);
-			st->state = ACCEPTED;
+			if (!pl_strcmp(&msg->met, "INVITE"))
+				st->state = ACCEPTED;
 		}
 		else {
 			tmr_start(&st->tmr, 64 * SIP_T1, tmr_handler, st);
-			st->state = COMPLETED;
+			if (!pl_strcmp(&msg->met, "INVITE"))
+				st->state = COMPLETED;
 
 			if (!sip_transp_reliable(st->msg->tp))
 				tmr_start(&st->tmrg, SIP_T1,
