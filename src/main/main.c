@@ -924,6 +924,7 @@ static int fd_poll(struct re *re)
 			return 0;
 		}
 
+		/* Handle only active events */
 		--n;
 	}
 
