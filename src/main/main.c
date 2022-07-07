@@ -81,6 +81,7 @@ struct re {
 	int maxfds;                  /**< Maximum number of polling fds     */
 	int nfds;                    /**< Number of active file descriptors */
 	enum poll_method method;     /**< The current polling method        */
+	bool fast_poll;		     /**< Fast event polling		    */
 	bool update;                 /**< File descriptor set need updating */
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
@@ -805,7 +806,7 @@ static int fd_poll(struct re *re)
 	if (n < 0)
 		return ERRNO_SOCK;
 
-	if (re->method == METHOD_EPOLL || re->method == METHOD_KQUEUE)
+	if (re->fast_poll)
 		nfds = n;
 	else
 		nfds = re->nfds;
@@ -1208,10 +1209,12 @@ int poll_method_set(enum poll_method method)
 #endif
 #ifdef HAVE_EPOLL
 	case METHOD_EPOLL:
+		re->fast_poll = true;
 		break;
 #endif
 #ifdef HAVE_KQUEUE
 	case METHOD_KQUEUE:
+		re->fast_poll = true;
 		break;
 #endif
 	default:
