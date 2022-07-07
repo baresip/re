@@ -1343,7 +1343,7 @@ void tls_flush_error(void)
  *
  * @return OpenSSL context
  */
-struct ssl_ctx_st *tls_openssl_context(const struct tls *tls)
+SSL_CTX *tls_openssl_context(const struct tls *tls)
 {
 	return tls ? tls->ctx : NULL;
 }
@@ -1641,7 +1641,7 @@ static bool remove_handler(struct le *le, void *arg)
 }
 
 
-static void session_remove_cb(struct ssl_ctx_st *ctx, SSL_SESSION *sess)
+static void session_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 {
 	struct tls *tls = SSL_SESSION_get_ex_data(sess, 0);
 	(void) ctx;
