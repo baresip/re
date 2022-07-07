@@ -1193,6 +1193,8 @@ int poll_method_set(enum poll_method method)
 	if (err)
 		return err;
 
+	re->fast_poll = false;
+
 	switch (method) {
 
 #ifdef HAVE_POLL
