@@ -201,9 +201,8 @@ int sipsess_answer(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || (!sess->st
-	    && (sess->established || sess->awaiting_answer))
-	    || !sess->msg || scode < 200 || scode > 299)
+	if (!sess || !sess->msg || scode < 200 || scode > 299
+	    || (!sess->st && (sess->established || sess->awaiting_answer)))
 		return EINVAL;
 
 	va_start(ap, fmt);
@@ -231,9 +230,8 @@ int sipsess_reject(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || (!sess->st
-	    && (sess->established || sess->awaiting_answer))
-	    || !sess->msg || scode < 300)
+	if (!sess || !sess->msg || scode < 300
+	    || (!sess->st && (sess->established || sess->awaiting_answer)))
 		return EINVAL;
 
 	va_start(ap, fmt);
