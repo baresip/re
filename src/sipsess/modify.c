@@ -106,6 +106,82 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 }
 
 
+static void update_resp_handler(int err, const struct sip_msg *msg, void *arg)
+{
+	struct sipsess *sess = arg;
+	const struct sip_hdr *hdr;
+	struct mbuf *desc = NULL;
+
+	if (err || sip_request_loops(&sess->ls, msg->scode))
+		goto out;
+
+	if (msg->scode < 200) {
+		return;
+	}
+	else if (msg->scode < 300) {
+		(void)sip_dialog_update(sess->dlg, msg);
+
+		if (sess->sent_offer)
+			(void)sess->answerh(msg, sess->arg);
+		else {
+			sess->modify_pending = false;
+			(void)sess->offerh(&desc, msg, sess->arg);
+		}
+
+		mem_deref(desc);
+	}
+	else {
+		if (sess->terminated)
+			goto out;
+
+		switch (msg->scode) {
+
+		case 401:
+		case 407:
+			err = sip_auth_authenticate(sess->auth, msg);
+			if (err) {
+				err = (err == EAUTH) ? 0 : err;
+				break;
+			}
+
+			err = sipsess_update(sess, false);
+			if (err)
+				break;
+
+			return;
+
+		case 408:
+		case 481:
+			sipsess_terminate(sess, 0, msg);
+			return;
+
+		case 491:
+			tmr_start(&sess->tmr, sess->owner ? 3000 : 1000,
+				  tmr_handler, sess);
+			return;
+
+		case 500:
+			hdr = sip_msg_hdr(msg, SIP_HDR_RETRY_AFTER);
+			if (!hdr)
+				break;
+
+			tmr_start(&sess->tmr, pl_u32(&hdr->val) * 1000,
+				  tmr_handler, sess);
+			return;
+		}
+	}
+ out:
+	if (sess->terminated)
+		mem_deref(sess);
+	else if (err == ETIMEDOUT)
+		sipsess_terminate(sess, err, NULL);
+	else if (sess->modify_pending)
+		(void)sipsess_update(sess, true);
+	else
+		sess->desc = mem_deref(sess->desc);
+}
+
+
 static int send_handler(enum sip_transp tp, struct sa *src,
 			const struct sa *dst, struct mbuf *mb,
 			struct mbuf **contp, void *arg)
@@ -148,6 +224,30 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 }
 
 
+int sipsess_update(struct sipsess *sess, bool reset_ls)
+{
+	sess->sent_offer = sess->desc ? true : false;
+	sess->modify_pending = false;
+
+	if (reset_ls)
+		sip_loopstate_reset(&sess->ls);
+
+	return sip_drequestf(&sess->req, sess->sip, true, "UPDATE",
+			     sess->dlg, 0, sess->auth,
+			     send_handler, update_resp_handler, sess,
+			     "%s%s%s"
+			     "Content-Length: %zu\r\n"
+			     "\r\n"
+			     "%b",
+			     sess->desc ? "Content-Type: " : "",
+			     sess->desc ? sess->ctype : "",
+			     sess->desc ? "\r\n" : "",
+			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+			     sess->desc ? mbuf_buf(sess->desc) : NULL,
+			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+}
+
+
 /**
  * Modify an established SIP Session sending Re-INVITE or UPDATE
  *
@@ -158,16 +258,20 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
  */
 int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 {
-	if (!sess || sess->st || sess->terminated)
+	if (!sess || (sess->st && sess->established) || sess->terminated)
 		return EINVAL;
 
 	mem_deref(sess->desc);
 	sess->desc = mem_ref(desc);
 
-	if (sess->req || sess->tmr.th || sess->replyl.head) {
+	if (sess->tmr.th || sess->replyl.head ||
+	    (sess->req && sess->established)) {
 		sess->modify_pending = true;
 		return 0;
 	}
 
-	return sipsess_reinvite(sess, true);
+	if (sess->established)
+		return sipsess_reinvite(sess, true);
+	else
+		return sipsess_update(sess, true);
 }
