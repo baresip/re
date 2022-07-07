@@ -89,6 +89,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 {
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
+	bool is_prack = false;
 	int err = ENOMEM;
 
 	reply = mem_zalloc(sizeof(*reply), destructor);
@@ -103,7 +104,9 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 
-	err = sip_treplyf(&sess->st, &reply->mb, sess->sip,
+	is_prack = !pl_strcmp(&msg->met, "PRACK");
+
+	err = sip_treplyf(is_prack ? NULL : &sess->st, &reply->mb, sess->sip,
 			  msg, true, scode, reason,
 			  "%H"
 			  "%v"
@@ -123,7 +126,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (err)
 		goto out;
 
-	if (pl_strcmp(&msg->met, "PRACK")) {
+	if (!is_prack) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
 	}
@@ -138,7 +141,8 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 
  out:
 	if (err) {
-		sess->st = mem_deref(sess->st);
+		if (!is_prack)
+			sess->st = mem_deref(sess->st);
 		mem_deref(reply);
 	}
 

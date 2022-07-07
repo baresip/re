@@ -22,12 +22,8 @@ static void cancel_handler(void *arg)
 {
 	struct sipsess *sess = arg;
 
-	if (!sess->st && !sess->awaiting_answer && !sess->established)
-		(void)sip_reply(sess->sip, sess->msg, 487,
-				"Request Terminated");
-	else
-		(void)sip_treply(&sess->st, sess->sip, sess->msg, 487,
-				 "Request Terminated");
+	(void)sip_treply(&sess->st, sess->sip, sess->msg, 487,
+			 "Request Terminated");
 
 	sess->peerterm = true;
 
@@ -201,8 +197,7 @@ int sipsess_answer(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || !sess->msg || scode < 200 || scode > 299
-	    || (!sess->st && (sess->established || sess->awaiting_answer)))
+	if (!sess || !sess->st || !sess->msg || scode < 200 || scode > 299)
 		return EINVAL;
 
 	va_start(ap, fmt);
@@ -230,8 +225,7 @@ int sipsess_reject(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || !sess->msg || scode < 300
-	    || (!sess->st && (sess->established || sess->awaiting_answer)))
+	if (!sess || !sess->st || !sess->msg || scode < 300)
 		return EINVAL;
 
 	va_start(ap, fmt);
