@@ -721,7 +721,7 @@ void fd_close(re_sock_t fd)
 static int fd_poll(struct re *re)
 {
 	const uint64_t to = tmr_next_timeout(&re->tmrl);
-	int i, n, index;
+	int i, n, nfds, index;
 #ifdef HAVE_SELECT
 	fd_set rfds, wfds, efds;
 #endif
@@ -805,8 +805,13 @@ static int fd_poll(struct re *re)
 	if (n < 0)
 		return ERRNO_SOCK;
 
+	if (re->method == METHOD_EPOLL || re->method == METHOD_KQUEUE)
+		nfds = n;
+	else
+		nfds = re->nfds;
+
 	/* Check for events */
-	for (i=0; (n > 0) && (i < re->nfds); i++) {
+	for (i=0; (n > 0) && (i < nfds); i++) {
 		re_sock_t fd;
 		int flags = 0;
 
