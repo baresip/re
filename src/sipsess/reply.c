@@ -90,9 +90,10 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	struct sipsess_reply *reply = NULL;
 	struct sip_contact contact;
 	int err = ENOMEM;
-	bool is_prack = !pl_strcmp(&msg->met, "PRACK");
+	bool non_invite = !pl_strcmp(&msg->met, "PRACK")
+			  || !pl_strcmp(&msg->met, "UPDATE");
 
-	if (!is_prack) {
+	if (!non_invite) {
 		reply = mem_zalloc(sizeof(*reply), destructor);
 		if (!reply)
 			goto out;
@@ -106,8 +107,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	}
 
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
-
-	err = sip_treplyf(is_prack ? NULL : &sess->st,
+	err = sip_treplyf(non_invite ? NULL : &sess->st,
 			  reply ? &reply->mb : NULL, sess->sip,
 			  msg, true, scode, reason,
 			  "%H"
@@ -140,7 +140,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 
  out:
 	if (err) {
-		if (!is_prack)
+		if (!non_invite)
 			sess->st = mem_deref(sess->st);
 
 		mem_deref(reply);

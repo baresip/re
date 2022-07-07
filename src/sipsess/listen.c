@@ -277,6 +277,53 @@ static void reinvite_handler(struct sipsess_sock *sock,
 }
 
 
+static void update_handler(struct sipsess_sock *sock,
+			   const struct sip_msg *msg)
+{
+	struct sip *sip = sock->sip;
+	struct sipsess *sess;
+	struct mbuf *desc;
+	char m[256];
+	int err;
+
+	sess = sipsess_find(sock, msg);
+	if (!sess || sess->terminated) {
+		(void)sip_treply(NULL, sip, msg, 481, "Call Does Not Exist");
+		return;
+	}
+
+	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
+		(void)sip_treply(NULL, sip, msg, 500, "Server Internal Error");
+		return;
+	}
+
+	if (sess->awaiting_answer) {
+		(void)sip_treplyf(NULL, NULL, sip, msg, false,
+				  500, "Server Internal Error",
+				  "Retry-After: 5\r\n"
+				  "Content-Length: 0\r\n"
+				  "\r\n");
+		return;
+	}
+
+	err = sess->offerh(&desc, msg, sess->arg);
+	if (err) {
+		(void)sip_reply(sip, msg, 488, str_error(err, m, sizeof(m)));
+		return;
+	}
+
+	(void)sip_dialog_update(sess->dlg, msg);
+	(void)sipsess_reply_2xx(sess, msg, 200, "OK", desc, NULL, NULL);
+
+	/* pending modifications considered outdated;
+	 * sdp may have changed in above exchange */
+	sess->desc = mem_deref(sess->desc);
+	sess->modify_pending = false;
+	tmr_cancel(&sess->tmr);
+	mem_deref(desc);
+}
+
+
 static void invite_handler(struct sipsess_sock *sock,
 			   const struct sip_msg *msg)
 {
@@ -295,6 +342,10 @@ static bool request_handler(const struct sip_msg *msg, void *arg)
 		else
 			invite_handler(sock, msg);
 
+		return true;
+	}
+	else if (!pl_strcmp(&msg->met, "UPDATE")) {
+		update_handler(sock, msg);
 		return true;
 	}
 	else if (!pl_strcmp(&msg->met, "ACK")) {
