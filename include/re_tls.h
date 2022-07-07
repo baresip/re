@@ -4,6 +4,10 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#ifdef USE_OPENSSL
+#include <openssl/ossl_typ.h>
+#endif
+
 struct tls;
 struct tls_conn;
 struct tcp_conn;
@@ -123,4 +127,6 @@ void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 
 #ifdef USE_OPENSSL
 struct ssl_ctx_st *tls_openssl_context(const struct tls *tls);
+int tls_set_certificate_openssl(struct tls *tls, X509* cert, EVP_PKEY* pkey,
+				bool up_ref);
 #endif
