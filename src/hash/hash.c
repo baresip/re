@@ -149,10 +149,10 @@ struct le *hash_apply(const struct hash *h, list_apply_h *ah, void *arg)
  */
 struct list *hash_list_idx(const struct hash *h, uint32_t i)
 {
-	if (i >= h->bsize)
+	if (!h || i >= h->bsize)
 		return NULL;
 
-	return h ? &h->bucket[i] : NULL;
+	return &h->bucket[i];
 }
 
 
