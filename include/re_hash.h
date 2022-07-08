@@ -15,6 +15,7 @@ void hash_unlink(struct le *le);
 struct le *hash_lookup(const struct hash *h, uint32_t key, list_apply_h *ah,
 		       void *arg);
 struct le *hash_apply(const struct hash *h, list_apply_h *ah, void *arg);
+struct list *hash_list_idx(const struct hash *h, uint32_t i);
 struct list *hash_list(const struct hash *h, uint32_t key);
 uint32_t hash_bsize(const struct hash *h);
 void hash_flush(struct hash *h);

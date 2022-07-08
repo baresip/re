@@ -140,7 +140,24 @@ struct le *hash_apply(const struct hash *h, list_apply_h *ah, void *arg)
 
 
 /**
- * Return bucket list for a given index
+ * Return bucket list for a given bucket index
+ *
+ * @param h  Hashmap table
+ * @param i  Bucket index
+ *
+ * @return Bucket list if valid input, otherwise NULL
+ */
+struct list *hash_list_idx(const struct hash *h, uint32_t i)
+{
+	if (i >= h->bsize)
+		return NULL;
+
+	return h ? &h->bucket[i] : NULL;
+}
+
+
+/**
+ * Return bucket list for a given key
  *
  * @param h   Hashmap table
  * @param key Hash key
