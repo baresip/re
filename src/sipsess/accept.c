@@ -197,9 +197,7 @@ int sipsess_answer(struct sipsess *sess, uint16_t scode, const char *reason,
 	va_list ap;
 	int err;
 
-	if (!sess || (!sess->st
-	    && (sess->established || sess->awaiting_answer))
-	    || !sess->msg || scode < 200 || scode > 299)
+	if (!sess || !sess->st || !sess->msg || scode < 200 || scode > 299)
 		return EINVAL;
 
 	va_start(ap, fmt);
