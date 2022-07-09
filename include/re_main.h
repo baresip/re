@@ -65,6 +65,7 @@ enum poll_method {
 	METHOD_SELECT,
 	METHOD_EPOLL,
 	METHOD_KQUEUE,
+	METHOD_IOCP,
 	/* sep */
 	METHOD_MAX
 };

@@ -99,6 +99,12 @@ struct re {
 	struct kevent *evlist;
 	int kqfd;
 #endif
+
+#ifdef HAVE_IOCP
+	HANDLE iocp;
+	OVERLAPPED_ENTRY iocp_events[128];
+#endif
+
 	mtx_t *mutex;                /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
@@ -163,6 +169,9 @@ int re_alloc(struct re **rep)
 	re->kqfd = -1;
 #endif
 
+#ifdef HAVE_IOCP
+	re->iocp = INVALID_HANDLE_VALUE;
+#endif
 
 out:
 	if (err)
@@ -522,6 +531,13 @@ static int poll_init(struct re *re)
 		break;
 #endif
 
+#ifdef HAVE_IOCP
+	case METHOD_IOCP:
+		re->iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL,
+						  0, 1);
+		break;
+#endif
+
 	default:
 		break;
 	}
@@ -785,15 +801,25 @@ static int fd_poll(struct re *re)
 	case METHOD_KQUEUE: {
 		struct timespec timeout;
 
-		timeout.tv_sec = (time_t) (to / 1000);
+		timeout.tv_sec	= (time_t)(to / 1000);
 		timeout.tv_nsec = (to % 1000) * 1000000;
 
 		re_unlock(re);
 		n = kevent(re->kqfd, NULL, 0, re->evlist, re->maxfds,
 			   to ? &timeout : NULL);
 		re_lock(re);
-		}
-		break;
+	} break;
+#endif
+#ifdef HAVE_IOCP
+	case METHOD_IOCP: {
+		bool success = GetQueuedCompletionStatusEx(
+			re->iocp, re->iocp_events, ARRAY_SIZE(re->iocp_events),
+			&n, to, FALSE);
+
+		if (!success)
+			n = -1;
+
+	} break;
 #endif
 
 	default:
@@ -896,6 +922,10 @@ static int fd_poll(struct re *re)
 			}
 		}
 			break;
+#endif
+#ifdef HAVE_IOCP
+/* I/O Completion Ports */
+
 #endif
 
 		default:
