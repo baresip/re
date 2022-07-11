@@ -27,7 +27,7 @@ struct thread {
 	void *arg;
 };
 
-static int tss_dtor_register(tss_t key, tss_dtor_t dtor)
+static int dtor_register(tss_t key, tss_dtor_t dtor)
 {
 	int i;
 
@@ -81,7 +81,7 @@ static unsigned __stdcall thrd_handler(void *p)
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
 	struct thread *th;
-	int err = 0;
+	int err = thrd_success;
 	uintptr_t handle;
 
 	if (!thr || !func)
@@ -291,7 +291,7 @@ int tss_create(tss_t *key, tss_dtor_t destructor)
 	if (!destructor)
 		return thrd_success;
 
-	err = tss_dtor_register(*key, destructor);
+	err = dtor_register(*key, destructor);
 	if (err) {
 		TlsFree(*key);
 		return thrd_error;
