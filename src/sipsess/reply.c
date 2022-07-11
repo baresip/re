@@ -286,7 +286,7 @@ int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 
 
 int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-		      bool *awaiting_answer)
+			struct mbuf *desc, bool *awaiting_answer)
 {
 	struct sipsess_reply *reply;
 	int err;
@@ -297,7 +297,7 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		return ENOENT;
 
 	*awaiting_answer = reply->awaiting_answer;
-	err = sipsess_reply_2xx(sess, msg, 200, "OK", NULL, NULL, NULL);
+	err = sipsess_reply_2xx(sess, msg, 200, "OK", desc, NULL, NULL);
 
 	mem_deref(reply);
 
