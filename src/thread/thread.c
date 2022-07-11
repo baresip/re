@@ -24,8 +24,10 @@ int mtx_alloc(mtx_t **mtx)
 		return ENOMEM;
 
 	err = mtx_init(m, mtx_plain);
-	if (err)
+	if (err == thrd_error) {
+		err = EBUSY;
 		goto out;
+	}
 
 	mem_destructor(m, mtx_destructor);
 
@@ -42,13 +44,10 @@ out:
 int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg)
 {
-	int err;
 	(void)name; /* @TODO implement */
 
 	if (!thr || !func)
-		return EINVAL;
+		return thrd_error;
 
-	err = thrd_create(thr, func, arg);
-
-	return err;
+	return thrd_create(thr, func, arg);
 }

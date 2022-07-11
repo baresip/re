@@ -179,7 +179,7 @@ static void re_once(void)
 	int err;
 
 	err = tss_create(&key, thread_destructor);
-	if (err) {
+	if (err == thrd_error) {
 		DEBUG_WARNING("tss_create failed: %d\n", err);
 		exit(err);
 	}
@@ -1258,7 +1258,7 @@ int re_thread_init(void)
 		re_global = re;
 
 	err = tss_set(key, re);
-	if (err)
+	if (err == thrd_error)
 		DEBUG_WARNING("thread_init: tss_set error\n");
 
 	return err;
