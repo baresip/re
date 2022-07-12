@@ -155,7 +155,7 @@ static void ack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 	if (!sess)
 		return;
 
-	if (sipsess_reply_ack(sess, msg, &awaiting_answer))
+	if (sipsess_reply_find(sess, msg, &awaiting_answer))
 		return;
 
 	if (sess->terminated) {
@@ -194,8 +194,7 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 	bool awaiting_answer = false;
 
 	sess = sipsess_find(sock, msg);
-
-	if (!sess || sipsess_reply_prack(sess, msg, &awaiting_answer)) {
+	if (!sess || sipsess_reply_find(sess, msg, &awaiting_answer)) {
 		(void)sip_reply(sock->sip, msg, 481,
 				"Transaction Does Not Exist");
 		return;

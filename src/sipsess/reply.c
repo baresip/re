@@ -267,26 +267,8 @@ static bool cmp_handler(struct le *le, void *arg)
 }
 
 
-int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
+int sipsess_reply_find(struct sipsess *sess, const struct sip_msg *msg,
 		      bool *awaiting_answer)
-{
-	struct sipsess_reply *reply;
-
-	reply = list_ledata(list_apply(&sess->replyl, false, cmp_handler,
-				       (void *)msg));
-	if (!reply)
-		return ENOENT;
-
-	*awaiting_answer = reply->awaiting_answer;
-
-	mem_deref(reply);
-
-	return 0;
-}
-
-
-int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-			bool *awaiting_answer)
 {
 	struct sipsess_reply *reply;
 

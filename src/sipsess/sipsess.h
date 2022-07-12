@@ -92,10 +92,8 @@ int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		       uint16_t scode, const char *reason,
 		       enum rel100_mode rel100, struct mbuf *desc,
 		       const char *fmt, va_list *ap);
-int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
+int  sipsess_reply_find(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
-int  sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-			 bool *awaiting_answer);
 int  sipsess_reinvite(struct sipsess *sess, bool reset_ls);
 int  sipsess_bye(struct sipsess *sess, bool reset_ls);
 int  sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
