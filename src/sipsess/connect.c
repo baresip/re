@@ -101,6 +101,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 							   sess->arg);
 				}
 			}
+
 			err |= sip_dialog_established(sess->dlg) ?
 					sip_dialog_update(sess->dlg, msg) :
 					sip_dialog_create(sess->dlg, msg);

@@ -267,7 +267,7 @@ static bool cmp_handler(struct le *le, void *arg)
 }
 
 
-int sipsess_reply_find(struct sipsess *sess, const struct sip_msg *msg,
+int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 		      bool *awaiting_answer)
 {
 	struct sipsess_reply *reply;
