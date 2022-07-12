@@ -190,12 +190,12 @@ static void ack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 {
 	struct sipsess *sess;
-	bool awaiting_answer;
-	int err = 0;
+	struct mbuf *desc = NULL;
+	bool awaiting_answer = false;
 
 	sess = sipsess_find(sock, msg);
 
-	if (!sess || sipsess_reply_prack(sess, msg, &awaiting_answer)) {
+	if (!sess || sipsess_reply_ack(sess, msg, &awaiting_answer)) {
 		(void)sip_reply(sock->sip, msg, 481,
 				"Transaction Does Not Exist");
 		return;
@@ -212,11 +212,15 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 
 	if (awaiting_answer) {
 		sess->awaiting_answer = false;
-		err = sess->answerh(msg, sess->arg);
+		(void)sess->answerh(msg, sess->arg);
+	}
+	else if (msg && mbuf_get_left(msg->mb)) {
+		(void)sess->offerh(&desc, msg, sess->arg);
 	}
 
-	if (err)
-		sipsess_terminate(sess, err, NULL);
+	(void)sipsess_reply_2xx(sess, msg, 200, "OK", desc, NULL, NULL);
+
+	mem_deref(desc);
 }
 
 

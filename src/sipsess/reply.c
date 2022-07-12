@@ -87,25 +87,28 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		      uint16_t scode, const char *reason, struct mbuf *desc,
 		      const char *fmt, va_list *ap)
 {
-	struct sipsess_reply *reply;
+	struct sipsess_reply *reply = NULL;
 	struct sip_contact contact;
-	bool is_prack = false;
 	int err = ENOMEM;
+	bool is_prack = !pl_strcmp(&msg->met, "PRACK");
 
-	reply = mem_zalloc(sizeof(*reply), destructor);
-	if (!reply)
-		goto out;
+	if (!is_prack) {
+		reply = mem_zalloc(sizeof(*reply), destructor);
+		if (!reply)
+			goto out;
 
-	list_append(&sess->replyl, &reply->le, reply);
-	reply->rel_seq = 0;
-	reply->seq  = msg->cseq.num;
-	reply->msg  = mem_ref((void *)msg);
-	reply->sess = sess;
+		list_append(&sess->replyl, &reply->le, reply);
 
-	is_prack = !pl_strcmp(&msg->met, "PRACK");
+		reply->rel_seq = 0;
+		reply->seq  = msg->cseq.num;
+		reply->msg  = mem_ref((void *)msg);
+		reply->sess = sess;
+	}
+
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 
-	err = sip_treplyf(is_prack ? NULL : &sess->st, &reply->mb, sess->sip,
+	err = sip_treplyf(is_prack ? NULL : &sess->st,
+			  reply ? &reply->mb : NULL, sess->sip,
 			  msg, true, scode, reason,
 			  "%H"
 			  "%v"
@@ -125,17 +128,14 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (err)
 		goto out;
 
-	if (!is_prack) {
+	if (reply) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
-	}
-	else {
-		mem_deref(reply);
-	}
 
-	if (!mbuf_get_left(msg->mb) && desc) {
-		reply->awaiting_answer = true;
-		sess->awaiting_answer = true;
+		if (!mbuf_get_left(msg->mb) && desc) {
+			reply->awaiting_answer = true;
+			sess->awaiting_answer = true;
+		}
 	}
 
  out:
@@ -282,24 +282,4 @@ int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 	mem_deref(reply);
 
 	return 0;
-}
-
-
-int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-		      bool *awaiting_answer)
-{
-	struct sipsess_reply *reply;
-	int err;
-
-	reply = list_ledata(list_apply(&sess->replyl, false, cmp_handler,
-				       (void *)msg));
-	if (!reply)
-		return ENOENT;
-
-	*awaiting_answer = reply->awaiting_answer;
-	err = sipsess_reply_2xx(sess, msg, 200, "OK", NULL, NULL, NULL);
-
-	mem_deref(reply);
-
-	return err;
 }

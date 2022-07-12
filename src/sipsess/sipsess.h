@@ -94,8 +94,6 @@ int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		       const char *fmt, va_list *ap);
 int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
-int  sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-			 bool *awaiting_answer);
 int  sipsess_reinvite(struct sipsess *sess, bool reset_ls);
 int  sipsess_bye(struct sipsess *sess, bool reset_ls);
 int  sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
