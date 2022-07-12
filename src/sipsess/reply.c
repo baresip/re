@@ -89,20 +89,20 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 {
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
-	bool is_prack = false;
 	int err = ENOMEM;
+	bool is_prack = !pl_strcmp(&msg->met, "PRACK");
 
 	reply = mem_zalloc(sizeof(*reply), destructor);
 	if (!reply)
 		goto out;
 
-	list_append(&sess->replyl, &reply->le, reply);
+	if (!is_prack)
+		list_append(&sess->replyl, &reply->le, reply);
+
 	reply->rel_seq = 0;
 	reply->seq  = msg->cseq.num;
 	reply->msg  = mem_ref((void *)msg);
 	reply->sess = sess;
-
-	is_prack = !pl_strcmp(&msg->met, "PRACK");
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 
 	err = sip_treplyf(is_prack ? NULL : &sess->st, &reply->mb, sess->sip,
@@ -286,10 +286,9 @@ int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 
 
 int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-			struct mbuf *desc, bool *awaiting_answer)
+			bool *awaiting_answer)
 {
 	struct sipsess_reply *reply;
-	int err;
 
 	reply = list_ledata(list_apply(&sess->replyl, false, cmp_handler,
 				       (void *)msg));
@@ -297,9 +296,8 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 		return ENOENT;
 
 	*awaiting_answer = reply->awaiting_answer;
-	err = sipsess_reply_2xx(sess, msg, 200, "OK", desc, NULL, NULL);
 
 	mem_deref(reply);
 
-	return err;
+	return 0;
 }
