@@ -3,7 +3,7 @@
 #include <re_thread.h>
 
 
-static void mtx_destructor(void *data)
+static void mutex_destructor(void *data)
 {
 	mtx_t *mtx = data;
 
@@ -11,7 +11,7 @@ static void mtx_destructor(void *data)
 }
 
 
-int mtx_alloc(mtx_t **mtx)
+int mutex_alloc(mtx_t **mtx)
 {
 	mtx_t *m;
 	int err;
@@ -29,7 +29,7 @@ int mtx_alloc(mtx_t **mtx)
 		goto out;
 	}
 
-	mem_destructor(m, mtx_destructor);
+	mem_destructor(m, mutex_destructor);
 
 	*mtx = m;
 
@@ -41,13 +41,13 @@ out:
 }
 
 
-int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
+int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg)
 {
-	(void)name; /* @TODO implement */
+	(void)name;
 
 	if (!thr || !func)
-		return thrd_error;
+		return EINVAL;
 
-	return thrd_create(thr, func, arg);
+	return (thrd_create(thr, func, arg) == thrd_success) ? 0 : EAGAIN;
 }

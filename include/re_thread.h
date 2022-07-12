@@ -256,9 +256,13 @@ void tss_delete(tss_t key);
 
 /******************************************************************************
  * Extra - non C11 helpers
+ * (We avoid tss_ mtx_ cnd_ prefixes since these reserved for functions with
+ * different return values)
  *****************************************************************************/
-/* int thrd_prio(enum thrd_prio prio) */
-/* void thrd_print(struct re_printf *pf, void *unused); */
+
+/* Ideas: */
+/* int thread_prio(enum thrd_prio prio) */
+/* void thread_print(struct re_printf *pf, void *unused); */
 
 /**
  * Allocates and initializes a new mutex
@@ -267,7 +271,7 @@ void tss_delete(tss_t key);
  *
  * @return 0 if success, otherwise errorcode
  */
-int mtx_alloc(mtx_t **mtx);
+int mutex_alloc(mtx_t **mtx);
 
 
 /**
@@ -278,7 +282,7 @@ int mtx_alloc(mtx_t **mtx);
  * @param func  Function to execute
  * @param arg   Argument to pass to the function
  *
- * @return thrd_success on success, otherwise thrd_error or thrd_nomem
+ * @return 0 if success, otherwise errorcode
  */
-int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
+int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);

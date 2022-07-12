@@ -16,7 +16,7 @@ struct thread {
 };
 
 
-static void *thrd_handler(void *p)
+static void *handler(void *p)
 {
 	struct thread th = *(struct thread *)p;
 
@@ -41,7 +41,7 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 	th->func = func;
 	th->arg	 = arg;
 
-	err = pthread_create(thr, NULL, thrd_handler, th);
+	err = pthread_create(thr, NULL, handler, th);
 	if (err) {
 		mem_deref(th);
 		return thrd_error;

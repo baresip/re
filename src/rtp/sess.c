@@ -248,7 +248,7 @@ int rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs)
 	sess->rs = rs;
 	tmr_init(&sess->tmr);
 
-	err = mtx_alloc(&sess->lock);
+	err = mutex_alloc(&sess->lock);
 	if (err)
 		goto out;
 
