@@ -189,8 +189,10 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 
 	jb->pt = -1;
 	err = mtx_init(&jb->lock, mtx_plain);
-	if (err)
+	if (err != thrd_success) {
+		err = ENOMEM;
 		goto out;
+	}
 
 	/* Allocate all frames now */
 	for (i=0; i<jb->max; i++) {

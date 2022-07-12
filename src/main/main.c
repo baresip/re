@@ -145,7 +145,7 @@ int re_alloc(struct re **rep)
 	if (!re)
 		return ENOMEM;
 
-	err = mtx_alloc(&re->mutex);
+	err = mutex_alloc(&re->mutex);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
@@ -212,8 +212,8 @@ static inline void re_lock(struct re *re)
 	int err;
 
 	err = mtx_lock(re->mutexp);
-	if (err)
-		DEBUG_WARNING("re_lock: %m\n", err);
+	if (err != thrd_success)
+		DEBUG_WARNING("re_lock err\n");
 }
 
 
@@ -222,8 +222,8 @@ static inline void re_unlock(struct re *re)
 	int err;
 
 	err = mtx_unlock(re->mutexp);
-	if (err)
-		DEBUG_WARNING("re_unlock: %m\n", err);
+	if (err != thrd_success)
+		DEBUG_WARNING("re_unlock err\n");
 }
 
 
@@ -1258,8 +1258,10 @@ int re_thread_init(void)
 		re_global = re;
 
 	err = tss_set(key, re);
-	if (err == thrd_error)
+	if (err != thrd_success) {
+		err = ENOMEM;
 		DEBUG_WARNING("thread_init: tss_set error\n");
+	}
 
 	return err;
 }
