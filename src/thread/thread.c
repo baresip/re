@@ -24,8 +24,8 @@ int mutex_alloc(mtx_t **mtx)
 		return ENOMEM;
 
 	err = mtx_init(m, mtx_plain);
-	if (err == thrd_error) {
-		err = EBUSY;
+	if (err != thrd_success) {
+		err = ENOMEM;
 		goto out;
 	}
 
