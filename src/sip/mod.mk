@@ -13,6 +13,7 @@ SRCS	+= sip/dialog.c
 SRCS	+= sip/keepalive.c
 SRCS	+= sip/keepalive_udp.c
 SRCS	+= sip/msg.c
+SRCS	+= sip/rack.c
 SRCS	+= sip/reply.c
 SRCS	+= sip/request.c
 SRCS	+= sip/sip.c

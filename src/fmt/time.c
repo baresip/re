@@ -107,26 +107,27 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 	uint64_t ms;
 #ifdef WIN32
 	SYSTEMTIME st;
+
 	GetSystemTime(&st);
-	ms = st.wMilliseconds;
+
 	h  = st.wHour;
 	m  = st.wMinute;
 	s  = st.wSecond;
-
+	ms = st.wMilliseconds;
 #else
 	struct timespec tspec;
 	struct tm tm;
 
 	(void)clock_gettime(CLOCK_REALTIME, &tspec);
-	ms = tspec.tv_nsec / 1000000;
 	if (!localtime_r(&tspec.tv_sec, &tm))
 		return EINVAL;
 
-	h = tm.tm_hour;
-	m = tm.tm_min;
-	s = tm.tm_sec;
+	h  = tm.tm_hour;
+	m  = tm.tm_min;
+	s  = tm.tm_sec;
+	ms = tspec.tv_nsec / 1000000;
 #endif
-	(void) arg;
+	(void)arg;
 
 	return re_hprintf(pf, "%02u:%02u:%02u.%03d", h, m, s, ms);
 }

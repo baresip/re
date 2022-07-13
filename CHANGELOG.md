@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.5.0] - 2022-07-01
+
+* av1: add doxygen comments by @alfredh in https://github.com/baresip/re/pull/384
+* rtp: add function to calc sequence number diff by @alfredh in https://github.com/baresip/re/pull/385
+* CI fixes by @sreimers in https://github.com/baresip/re/pull/387
+* trace: C11 mutex by @alfredh in https://github.com/baresip/re/pull/390
+* trace: init refactor by @sreimers in https://github.com/baresip/re/pull/391
+* jbuf: use C11 mutex by @alfredh in https://github.com/baresip/re/pull/392
+* av1: define and make AV1_AGGR_HDR_SIZE public by @alfredh in https://github.com/baresip/re/pull/393
+* main: add re_thread_check() for NON-RE thread calls by @sreimers in https://github.com/baresip/re/pull/389
+* cmake: add HAVE_SIGNAL on UNIX by @sreimers in https://github.com/baresip/re/pull/394
+* av1: add av1_obu_count() by @alfredh in https://github.com/baresip/re/pull/395
+* thread: add mtx_alloc by @sreimers in https://github.com/baresip/re/pull/396
+* rtp: C11 mutex by @alfredh in https://github.com/baresip/re/pull/397
+* lock: remove deprecated module by @alfredh in https://github.com/baresip/re/pull/398
+* Added sippreg_unregister API function by @juha-h in https://github.com/baresip/re/pull/400
+* av1 work by @alfredh in https://github.com/baresip/re/pull/402
+* rtp: add rtp_is_rtcp_packet() by @alfredh in https://github.com/baresip/re/pull/405
+* Fix mutex alloc destroy by @sreimers in https://github.com/baresip/re/pull/406
+* av1: minor fixes and doxygen comments by @alfredh in https://github.com/baresip/re/pull/407
+* rtp: Add support for RFC5104 PSFB FIR by @Lastique in https://github.com/baresip/re/pull/408
+* jbuf: Add drain method by @Lastique in https://github.com/baresip/re/pull/409
+* uag: add timestamps to SIP trace by @cspiel1 in https://github.com/baresip/re/pull/412
+* fmt/fmt_timestamp: some cleanup by @sreimers in https://github.com/baresip/re/pull/413
+* main: refactor libre_init and re_global handling by @sreimers in https://github.com/baresip/re/pull/404
+* main: Add support for external threads attaching/detaching re context by @Lastique in https://github.com/baresip/re/pull/414
+* mem: Fix formatting for nrefs and size. by @Lastique in https://github.com/baresip/re/pull/415
+
+---
+
 ## [v2.4.0] - 2022-06-01
 
 ## What's Changed

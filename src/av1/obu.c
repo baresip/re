@@ -257,7 +257,7 @@ unsigned av1_obu_count_rtp(const uint8_t *buf, size_t size)
 		case AV1_OBU_METADATA:
 		case AV1_OBU_FRAME:
 		case AV1_OBU_REDUNDANT_FRAME_HEADER:
-		case AV1_OBU_TILE_LIST:
+		case AV1_OBU_TILE_GROUP:
 			++count;
 			break;
 

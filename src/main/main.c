@@ -82,7 +82,7 @@ struct re {
 	int nfds;                    /**< Number of active file descriptors */
 	enum poll_method method;     /**< The current polling method        */
 	bool update;                 /**< File descriptor set need updating */
-	bool polling;                /**< Is polling flag                   */
+	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct list tmrl;            /**< List of timers                    */
 
@@ -99,7 +99,7 @@ struct re {
 	struct kevent *evlist;
 	int kqfd;
 #endif
-	mtx_t mutex;                 /**< Mutex for thread synchronization  */
+	mtx_t *mutex;                /**< Mutex for thread synchronization  */
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
@@ -111,31 +111,46 @@ static once_flag flag = ONCE_FLAG_INIT;
 
 static void poll_close(struct re *re);
 
-/** fallback destructor if thread gets destroyed before re_thread_close() */
-static void thread_destructor(void *arg)
+
+static void re_destructor(void *arg)
 {
-	poll_close(arg);
-	free(arg);
+	struct re *re = arg;
+
+	poll_close(re);
+	mem_deref(re->mutex);
 }
 
 
-static int re_init(void)
+/** fallback destructor if thread gets destroyed before re_thread_close() */
+static void thread_destructor(void *arg)
+{
+	struct re *re = arg;
+
+	if (!re)
+		return;
+
+	mem_deref(re);
+}
+
+
+int re_alloc(struct re **rep)
 {
 	struct re *re;
 	int err;
 
-	re = malloc(sizeof(struct re));
+	if (!rep)
+		return EINVAL;
+
+	re = mem_zalloc(sizeof(struct re), re_destructor);
 	if (!re)
 		return ENOMEM;
 
-	memset(re, 0, sizeof(*re));
-
-	err = mtx_init(&re->mutex, mtx_plain);
+	err = mutex_alloc(&re->mutex);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
 	}
-	re->mutexp = &re->mutex;
+	re->mutexp = re->mutex;
 
 	list_init(&re->tmrl);
 	re->tid = thrd_current();
@@ -148,13 +163,12 @@ static int re_init(void)
 	re->kqfd = -1;
 #endif
 
-	err = tss_set(key, re);
-	if (err)
-		DEBUG_WARNING("thread_init: tss_set error\n");
 
 out:
 	if (err)
 		mem_deref(re);
+	else
+		*rep = re;
 
 	return err;
 }
@@ -165,21 +179,20 @@ static void re_once(void)
 	int err;
 
 	err = tss_create(&key, thread_destructor);
-	if (err) {
-		DEBUG_WARNING("tss_create failed: %d\n", err);
-		exit(err);
+	if (err != thrd_success) {
+		DEBUG_WARNING("tss_create failed\n");
+		exit(ENOMEM);
 	}
-
-	err = re_init();
-	if (err) {
-		DEBUG_WARNING("re_init failed: %d\n", err);
-		exit(err);
-	}
-
-	re_global = tss_get(key);
 }
 
 
+/**
+ * Get thread specific re pointer (fallback to re_global if called by non re
+ * thread)
+ *
+ * @return re pointer on success, otherwise NULL if libre_init() or
+ * re_thread_init() is missing
+ */
 static struct re *re_get(void)
 {
 	struct re *re;
@@ -188,6 +201,7 @@ static struct re *re_get(void)
 	re = tss_get(key);
 	if (!re)
 		re = re_global;
+
 	return re;
 }
 
@@ -197,8 +211,8 @@ static inline void re_lock(struct re *re)
 	int err;
 
 	err = mtx_lock(re->mutexp);
-	if (err)
-		DEBUG_WARNING("re_lock: %m\n", err);
+	if (err != thrd_success)
+		DEBUG_WARNING("re_lock err\n");
 }
 
 
@@ -207,8 +221,8 @@ static inline void re_unlock(struct re *re)
 	int err;
 
 	err = mtx_unlock(re->mutexp);
-	if (err)
-		DEBUG_WARNING("re_unlock: %m\n", err);
+	if (err != thrd_success)
+		DEBUG_WARNING("re_unlock err\n");
 }
 
 
@@ -593,6 +607,11 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 	int err = 0;
 	int i;
 
+	if (!re) {
+		DEBUG_WARNING("fd_listen: re not ready\n");
+		return EINVAL;
+	}
+
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
 #ifndef RELEASE
@@ -904,6 +923,7 @@ static int fd_poll(struct re *re)
 			return 0;
 		}
 
+		/* Handle only active events */
 		--n;
 	}
 
@@ -914,8 +934,8 @@ static int fd_poll(struct re *re)
 /**
  * Set the maximum number of file descriptors
  *
- * @note Only first call inits maxfds and fhs, so call before re_main() in
- * custom applications.
+ * @note Only first call inits maxfds and fhs, so call after libre_init() and
+ * before re_main() in custom applications.
  *
  * @param maxfds Max FDs. 0 to free and -1 for RLIMIT_NOFILE (Linux/Unix only)
  *
@@ -925,6 +945,11 @@ static int fd_poll(struct re *re)
 int fd_setsize(int maxfds)
 {
 	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("fd_setsize: re not ready\n");
+		return EINVAL;
+	}
 
 	if (!maxfds) {
 		fd_debug();
@@ -974,6 +999,11 @@ void fd_debug(void)
 	const struct re *re = re_get();
 	int i;
 
+	if (!re) {
+		DEBUG_WARNING("fd_debug: re not ready\n");
+		return;
+	}
+
 	if (!re->fhs)
 		return;
 
@@ -994,8 +1024,15 @@ void fd_debug(void)
 /* Thread-safe signal handling */
 static void signal_handler(int sig)
 {
+	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("signal_handler: re not ready\n");
+		return;
+	}
+
 	(void)signal(sig, signal_handler);
-	re_get()->sig = sig;
+	re->sig = sig;
 }
 #endif
 
@@ -1012,6 +1049,11 @@ int re_main(re_signal_h *signalh)
 {
 	struct re *re = re_get();
 	int err;
+
+	if (!re) {
+		DEBUG_WARNING("re_main: re not ready\n");
+		return EINVAL;
+	}
 
 #ifdef HAVE_SIGNAL
 	if (signalh) {
@@ -1089,6 +1131,11 @@ void re_cancel(void)
 {
 	struct re *re = re_get();
 
+	if (!re) {
+		DEBUG_WARNING("re_cancel: re not ready\n");
+		return;
+	}
+
 	re->polling = false;
 }
 
@@ -1107,6 +1154,11 @@ int re_debug(struct re_printf *pf, void *unused)
 	int err = 0;
 
 	(void)unused;
+
+	if (!re) {
+		DEBUG_WARNING("re_debug: re not ready\n");
+		return EINVAL;
+	}
 
 	err |= re_hprintf(pf, "re main loop:\n");
 	err |= re_hprintf(pf, "  maxfds:  %d\n", re->maxfds);
@@ -1180,11 +1232,14 @@ int poll_method_set(enum poll_method method)
 /**
  * Add a worker thread for this thread
  *
+ * @note: for main thread this is called by libre_init()
+ *
  * @return 0 if success, otherwise errorcode
  */
 int re_thread_init(void)
 {
 	struct re *re;
+	int err;
 
 	call_once(&flag, re_once);
 
@@ -1194,7 +1249,20 @@ int re_thread_init(void)
 		return EALREADY;
 	}
 
-	return re_init();
+	err = re_alloc(&re);
+	if (err)
+		return err;
+
+	if (!re_global)
+		re_global = re;
+
+	err = tss_set(key, re);
+	if (err != thrd_success) {
+		err = ENOMEM;
+		DEBUG_WARNING("thread_init: tss_set error\n");
+	}
+
+	return err;
 }
 
 
@@ -1209,8 +1277,9 @@ void re_thread_close(void)
 
 	re = tss_get(key);
 	if (re) {
-		poll_close(re);
-		free(re);
+		if (re == re_global)
+			re_global = NULL;
+		mem_deref(re);
 		tss_set(key, NULL);
 	}
 }
@@ -1218,29 +1287,74 @@ void re_thread_close(void)
 
 /**
  * Enter an 're' thread
- *
- * @note Must only be called from a non-re thread
  */
 void re_thread_enter(void)
 {
 	struct re *re = re_get();
 
-	re->thread_enter = true;
+	if (!re) {
+		DEBUG_WARNING("re_thread_enter: re not ready\n");
+		return;
+	}
+
 	re_lock(re);
+
+	/* set only for non-re threads */
+	if (!thrd_equal(re->tid, thrd_current()))
+		re->thread_enter = true;
 }
 
 
 /**
  * Leave an 're' thread
- *
- * @note Must only be called from a non-re thread
  */
 void re_thread_leave(void)
 {
 	struct re *re = re_get();
 
+	if (!re) {
+		DEBUG_WARNING("re_thread_leave: re not ready\n");
+		return;
+	}
+
 	re->thread_enter = false;
 	re_unlock(re);
+}
+
+
+/**
+ * Attach the current thread to re context
+ */
+int re_thread_attach(struct re *context)
+{
+	struct re *re;
+
+	if (!context)
+		return EINVAL;
+
+	call_once(&flag, re_once);
+
+	re = tss_get(key);
+	if (re) {
+		if (re != context)
+			return EALREADY;
+		return 0;
+	}
+
+	tss_set(key, context);
+
+	return 0;
+}
+
+
+/**
+ * Detach the current thread from re context
+ */
+void re_thread_detach(void)
+{
+	call_once(&flag, re_once);
+
+	tss_set(key, NULL);
 }
 
 
@@ -1253,7 +1367,12 @@ void re_set_mutex(void *mutexp)
 {
 	struct re *re = re_get();
 
-	re->mutexp = mutexp ? mutexp : &re->mutex;
+	if (!re) {
+		DEBUG_WARNING("re_set_mutex: re not ready\n");
+		return;
+	}
+
+	re->mutexp = mutexp ? mutexp : re->mutex;
 }
 
 
@@ -1265,7 +1384,9 @@ void re_set_mutex(void *mutexp)
 int re_thread_check(void)
 {
 	struct re *re = re_get();
-	struct btrace trace;
+
+	if (!re)
+		return EINVAL;
 
 	if (re->thread_enter)
 		return 0;
@@ -1273,10 +1394,14 @@ int re_thread_check(void)
 	if (thrd_equal(re->tid, thrd_current()))
 		return 0;
 
-	btrace(&trace);
-
 	DEBUG_WARNING("thread check: called from a NON-RE thread without "
-		      "thread_enter()!\n %H", btrace_println, &trace);
+		      "thread_enter()!\n");
+
+#if DEBUG_LEVEL > 5
+	struct btrace trace;
+	btrace(&trace);
+	DEBUG_INFO("%H", btrace_println, &trace);
+#endif
 
 	return EPERM;
 }
@@ -1292,5 +1417,12 @@ int re_thread_check(void)
 struct list *tmrl_get(void);
 struct list *tmrl_get(void)
 {
-	return &re_get()->tmrl;
+	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("tmrl_get: re not ready\n");
+		return NULL;
+	}
+
+	return &re->tmrl;
 }

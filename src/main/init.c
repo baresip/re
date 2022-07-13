@@ -28,8 +28,12 @@ int libre_init(void)
 #endif
 
 	err = net_sock_init();
-	if (err)
+	if (err) {
 		net_sock_close();
+		return err;
+	}
+
+	err = re_thread_init();
 
 	return err;
 }
@@ -42,4 +46,5 @@ void libre_close(void)
 {
 	(void)fd_setsize(0);
 	net_sock_close();
+	re_thread_close();
 }

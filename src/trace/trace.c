@@ -116,8 +116,10 @@ int re_trace_init(const char *json_file)
 	}
 
 	err = mtx_init(&trace.lock, mtx_plain);
-	if (err)
+	if (err != thrd_success) {
+		err = ENOMEM;
 		goto out;
+	}
 
 	err = fs_fopen(&trace.f, json_file, "w+");
 	if (err)

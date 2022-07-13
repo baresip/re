@@ -16,7 +16,7 @@ struct thread {
 };
 
 
-static void *thrd_handler(void *p)
+static void *handler(void *p)
 {
 	struct thread th = *(struct thread *)p;
 
@@ -32,20 +32,22 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 	int err;
 
 	if (!thr || !func)
-		return EINVAL;
+		return thrd_error;
 
 	th = mem_alloc(sizeof(struct thread), NULL);
 	if (!th)
-		return ENOMEM;
+		return thrd_nomem;
 
 	th->func = func;
 	th->arg	 = arg;
 
-	err = pthread_create(thr, NULL, thrd_handler, th);
-	if (err)
+	err = pthread_create(thr, NULL, handler, th);
+	if (err) {
 		mem_deref(th);
+		return thrd_error;
+	}
 
-	return err;
+	return thrd_success;
 }
 
 
@@ -63,7 +65,7 @@ thrd_t thrd_current(void)
 
 int thrd_detach(thrd_t thr)
 {
-	return pthread_detach(thr);
+	return (pthread_detach(thr) == 0) ? thrd_success : thrd_error;
 }
 
 
@@ -96,27 +98,27 @@ void thrd_exit(int res)
 int cnd_init(cnd_t *cnd)
 {
 	if (!cnd)
-		return EINVAL;
+		return thrd_error;
 
-	return pthread_cond_init(cnd, NULL);
+	return (pthread_cond_init(cnd, NULL) == 0) ? thrd_success : thrd_error;
 }
 
 
 int cnd_signal(cnd_t *cnd)
 {
 	if (!cnd)
-		return EINVAL;
+		return thrd_error;
 
-	return pthread_cond_signal(cnd);
+	return (pthread_cond_signal(cnd) == 0) ? thrd_success : thrd_error;
 }
 
 
 int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
 	if (!cnd || !mtx)
-		return EINVAL;
+		return thrd_error;
 
-	return pthread_cond_wait(cnd, mtx);
+	return (pthread_cond_wait(cnd, mtx) == 0) ? thrd_success : thrd_error;
 }
 
 
@@ -140,10 +142,12 @@ int mtx_init(mtx_t *mtx, int type)
 		pthread_mutex_init(mtx, NULL);
 		return thrd_success;
 	}
+
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(mtx, &attr);
 	pthread_mutexattr_destroy(&attr);
+
 	return thrd_success;
 }
 

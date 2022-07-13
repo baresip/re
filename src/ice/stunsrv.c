@@ -114,10 +114,10 @@ static int handle_stun_full(struct icem *icem,
 		lcand = icem_lcand_find_checklist(icem, comp->id);
 
 	if (!lcand) {
-		DEBUG_WARNING("{%s.%u} local candidate not found"
-			      " (checklist=%u) (src=%J)\n",
-			      icem->name, comp->id,
-			      list_count(&icem->checkl), src);
+		DEBUG_NOTICE("{%s.%u} local candidate not found"
+			     " (checklist=%u) (src=%J)\n",
+			     icem->name, comp->id,
+			     list_count(&icem->checkl), src);
 		return 0;
 	}
 
