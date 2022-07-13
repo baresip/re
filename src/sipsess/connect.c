@@ -79,7 +79,10 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	struct sipsess *sess = arg;
 	struct mbuf *desc = NULL;
 
-	if (err || sip_request_loops(&sess->ls, msg->scode))
+	if (!sess)
+		return;
+
+	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
 
 	if (msg->scode < 200) {
@@ -88,7 +91,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")
 				&& sess->rel100_supported) {
 
-			if (msg && mbuf_get_left(msg->mb)) {
+			if (mbuf_get_left(msg->mb)) {
 				if (sess->sent_offer) {
 					sess->awaiting_answer = false;
 					err = sess->answerh(msg, sess->arg);

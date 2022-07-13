@@ -109,28 +109,6 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 		err = sipsess_reply_2xx(sess, msg, scode, reason, desc,
 					fmt, &ap);
 	}
-	else {
-		struct sip_contact contact;
-
-		sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
-
-		err = sip_treplyf(&sess->st, NULL, sess->sip,
-				  msg, true, scode, reason,
-				  "%H"
-				  "%v"
-				  "%s%s%s"
-				  "Content-Length: %zu\r\n"
-				  "\r\n"
-				  "%b",
-				  sip_contact_print, &contact,
-				  fmt, &ap,
-				  desc ? "Content-Type: " : "",
-				  desc ? sess->ctype : "",
-				  desc ? "\r\n" : "",
-				  desc ? mbuf_get_left(desc) : (size_t)0,
-				  desc ? mbuf_buf(desc) : NULL,
-				  desc ? mbuf_get_left(desc) : (size_t)0);
-	}
 
 	va_end(ap);
 
