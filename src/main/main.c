@@ -179,11 +179,10 @@ static void re_once(void)
 	int err;
 
 	err = tss_create(&key, thread_destructor);
-	if (err == thrd_error) {
-		DEBUG_WARNING("tss_create failed: %d\n", err);
-		exit(err);
+	if (err != thrd_success) {
+		DEBUG_WARNING("tss_create failed\n");
+		exit(ENOMEM);
 	}
-
 }
 
 
