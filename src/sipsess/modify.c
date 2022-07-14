@@ -26,15 +26,18 @@ static void tmr_handler(void *arg)
 }
 
 
-static void reinvite_resp_handler(int err, const struct sip_msg *msg,
+static void target_refresh_resp_handler(int err, const struct sip_msg *msg,
 				  void *arg)
 {
 	struct sipsess *sess = arg;
 	const struct sip_hdr *hdr;
+	bool is_invite = true;
 	struct mbuf *desc = NULL;
 
-	if (err || sip_request_loops(&sess->ls, msg->scode))
+	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
+
+	is_invite = !pl_strcmp(&msg->cseq.met, "INVITE");
 
 	if (msg->scode < 200) {
 		return;
@@ -45,13 +48,15 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 
 		if (sess->sent_offer)
 			(void)sess->answerh(msg, sess->arg);
-		else {
+		else if (is_invite) {
 			sess->modify_pending = false;
 			(void)sess->offerh(&desc, msg, sess->arg);
 		}
 
-		(void)sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
-				  sess->auth, sess->ctype, desc);
+		if (is_invite)
+			(void)sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
+					  sess->auth, sess->ctype, desc);
+
 		mem_deref(desc);
 	}
 	else {
@@ -68,7 +73,8 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 				break;
 			}
 
-			err = sipsess_reinvite(sess, false);
+			err = is_invite ? sipsess_reinvite(sess, false) :
+					  sipsess_update(sess, false);
 			if (err)
 				break;
 
@@ -100,83 +106,11 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 	else if (err == ETIMEDOUT)
 		sipsess_terminate(sess, err, NULL);
 	else if (sess->modify_pending)
-		(void)sipsess_reinvite(sess, true);
-	else
-		sess->desc = mem_deref(sess->desc);
-}
+		if (is_invite)
+			(void)sipsess_reinvite(sess, true);
+		else
+			(void)sipsess_update(sess, true);
 
-
-static void update_resp_handler(int err, const struct sip_msg *msg, void *arg)
-{
-	struct sipsess *sess = arg;
-	const struct sip_hdr *hdr;
-	struct mbuf *desc = NULL;
-
-	if (err || sip_request_loops(&sess->ls, msg->scode))
-		goto out;
-
-	if (msg->scode < 200) {
-		return;
-	}
-	else if (msg->scode < 300) {
-		(void)sip_dialog_update(sess->dlg, msg);
-
-		if (sess->sent_offer)
-			(void)sess->answerh(msg, sess->arg);
-		else {
-			sess->modify_pending = false;
-			(void)sess->offerh(&desc, msg, sess->arg);
-		}
-
-		mem_deref(desc);
-	}
-	else {
-		if (sess->terminated)
-			goto out;
-
-		switch (msg->scode) {
-
-		case 401:
-		case 407:
-			err = sip_auth_authenticate(sess->auth, msg);
-			if (err) {
-				err = (err == EAUTH) ? 0 : err;
-				break;
-			}
-
-			err = sipsess_update(sess, false);
-			if (err)
-				break;
-
-			return;
-
-		case 408:
-		case 481:
-			sipsess_terminate(sess, 0, msg);
-			return;
-
-		case 491:
-			tmr_start(&sess->tmr, sess->owner ? 3000 : 1000,
-				  tmr_handler, sess);
-			return;
-
-		case 500:
-			hdr = sip_msg_hdr(msg, SIP_HDR_RETRY_AFTER);
-			if (!hdr)
-				break;
-
-			tmr_start(&sess->tmr, pl_u32(&hdr->val) * 1000,
-				  tmr_handler, sess);
-			return;
-		}
-	}
- out:
-	if (sess->terminated)
-		mem_deref(sess);
-	else if (err == ETIMEDOUT)
-		sipsess_terminate(sess, err, NULL);
-	else if (sess->modify_pending)
-		(void)sipsess_update(sess, true);
 	else
 		sess->desc = mem_deref(sess->desc);
 }
@@ -210,7 +144,7 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 
 	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
 			     sess->dlg, 0, sess->auth,
-			     send_handler, reinvite_resp_handler, sess,
+			     send_handler, target_refresh_resp_handler, sess,
 			     "%s%s%s"
 			     "Content-Length: %zu\r\n"
 			     "\r\n"
@@ -234,7 +168,7 @@ int sipsess_update(struct sipsess *sess, bool reset_ls)
 
 	return sip_drequestf(&sess->req, sess->sip, true, "UPDATE",
 			     sess->dlg, 0, sess->auth,
-			     send_handler, update_resp_handler, sess,
+			     send_handler, target_refresh_resp_handler, sess,
 			     "%s%s%s"
 			     "Content-Length: %zu\r\n"
 			     "\r\n"
