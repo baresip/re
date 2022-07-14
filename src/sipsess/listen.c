@@ -228,9 +228,10 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 			     const struct sip_msg *msg)
 {
 	struct sip *sip = sock->sip;
-	bool is_invite = true;
+	bool is_invite;
+	bool got_offer;
 	struct sipsess *sess;
-	struct mbuf *desc;
+	struct mbuf *desc = NULL;
 	char m[256];
 	int err;
 
@@ -241,6 +242,8 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 	}
 
 	is_invite = !pl_strcmp(&msg->met, "INVITE");
+	got_offer = (mbuf_get_left(msg->mb) > 0);
+
 	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
 		(void)sip_treply(NULL, sip, msg, 500, "Server Internal Error");
 		return;
@@ -260,10 +263,13 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 		return;
 	}
 
-	err = sess->offerh(&desc, msg, sess->arg);
-	if (err) {
-		(void)sip_reply(sip, msg, 488, str_error(err, m, sizeof(m)));
-		return;
+	if (got_offer || is_invite) {
+		err = sess->offerh(&desc, msg, sess->arg);
+		if (err) {
+			(void)sip_reply(sip, msg, 488,
+					str_error(err, m, sizeof(m)));
+			return;
+		}
 	}
 
 	(void)sip_dialog_update(sess->dlg, msg);
