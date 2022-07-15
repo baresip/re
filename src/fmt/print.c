@@ -72,7 +72,7 @@ static int write_padded(const char *p, size_t sz, size_t pad, char pch,
 }
 
 
-static uint32_t local_itoa(char *buf, size_t n, uint8_t base, bool uc)
+static uint32_t local_itoa(char *buf, uint64_t n, uint8_t base, bool uc)
 {
 	char c, *p = buf + NUM_SIZE;
 	uint32_t len = 1;
