@@ -175,14 +175,14 @@ int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb)
 		if (err)
 			return err;
 
-		hdr->size = size;
-
-		if (hdr->size > mbuf_get_left(mb)) {
+		if (size > mbuf_get_left(mb)) {
 			DEBUG_WARNING("av1: obu decode: short packet:"
-				      " %zu > %zu\n",
-				      hdr->size, mbuf_get_left(mb));
+				      " %llu > %zu\n",
+				      size, mbuf_get_left(mb));
 			return EBADMSG;
 		}
+
+		hdr->size = (size_t)size;
 	}
 	else {
 		hdr->size = mbuf_get_left(mb);
