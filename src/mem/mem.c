@@ -27,8 +27,8 @@
 
 /** Defines a reference-counting memory object */
 struct mem {
-	size_t nrefs;          /**< Number of references  */
-	size_t size;           /**< Size of memory object */
+	uint32_t nrefs;        /**< Number of references  */
+	uint32_t size;         /**< Size of memory object */
 	mem_destroy_h *dh;     /**< Destroy handler       */
 #if MEM_DEBUG
 	size_t magic;          /**< Magic number          */
@@ -75,7 +75,7 @@ static inline void mem_unlock(void)
 	++memstat.blocks_cur; \
 	memstat.blocks_peak = max(memstat.blocks_cur, memstat.blocks_peak); \
 	mem_unlock(); \
-	(_m)->size = (_size); \
+	(_m)->size = (uint32_t)(_size); \
 	(_m)->magic = mem_magic;
 
 /** Update statistics for mem_realloc() */
@@ -84,7 +84,7 @@ static inline void mem_unlock(void)
 	memstat.bytes_cur += ((_size) - (_m)->size); \
 	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	mem_unlock(); \
-	(_m)->size = (_size)
+	(_m)->size = (uint32_t)(_size)
 
 /** Update statistics for mem_deref() */
 #define STAT_DEREF(_m) \
@@ -102,14 +102,10 @@ static inline void mem_unlock(void)
 		BREAKPOINT;					      \
 	}
 #else
-#define STAT_ALLOC(_m, _size) (_m)->size = (_size);
-#define STAT_REALLOC(_m, _size) (_m)->size = (_size);
+#define STAT_ALLOC(_m, _size) (_m)->size = (uint32_t)(_size);
+#define STAT_REALLOC(_m, _size) (_m)->size = (uint32_t)(_size);
 #define STAT_DEREF(_m)
 #define MAGIC_CHECK(_m)
-#endif
-
-#ifndef SIZE_MAX
-#define SIZE_MAX    (~((size_t)0))
 #endif
 
 
@@ -124,6 +120,10 @@ enum {
 	mem_header_size = (sizeof(struct mem) + alignment_mask) &
 		(~(size_t)alignment_mask)
 };
+
+#define MEM_SIZE_MAX \
+	(size_t)(sizeof(size_t) > sizeof(uint32_t) ? \
+		(~(uint32_t)0u) : (~(size_t)0u) - mem_header_size)
 
 
 static inline struct mem *get_mem(void *p)
@@ -150,7 +150,7 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 {
 	struct mem *m;
 
-	if (size > (SIZE_MAX - mem_header_size))
+	if (size > MEM_SIZE_MAX)
 		return NULL;
 
 #if MEM_DEBUG
@@ -222,7 +222,7 @@ void *mem_realloc(void *data, size_t size)
 	if (!data)
 		return NULL;
 
-	if (size > (SIZE_MAX - mem_header_size))
+	if (size > MEM_SIZE_MAX)
 		return NULL;
 
 	m = get_mem(data);
@@ -287,7 +287,7 @@ void *mem_reallocarray(void *ptr, size_t nmemb, size_t membsize,
 {
 	size_t tsize;
 
-	if (membsize && nmemb > SIZE_MAX / membsize) {
+	if (membsize && nmemb > MEM_SIZE_MAX / membsize) {
 		return NULL;
 	}
 
@@ -410,7 +410,7 @@ uint32_t mem_nrefs(const void *data)
 
 	MAGIC_CHECK(m);
 
-	return (uint32_t)m->nrefs;
+	return m->nrefs;
 }
 
 
@@ -423,9 +423,9 @@ static bool debug_handler(struct le *le, void *arg)
 
 	(void)arg;
 
-	(void)re_fprintf(stderr, "  %p: nrefs=%-2zu", p, m->nrefs);
+	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p, m->nrefs);
 
-	(void)re_fprintf(stderr, " size=%-7zu", m->size);
+	(void)re_fprintf(stderr, " size=%-7u", m->size);
 
 	(void)re_fprintf(stderr, " [");
 
