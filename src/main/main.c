@@ -1171,6 +1171,34 @@ int re_debug(struct re_printf *pf, void *unused)
 
 
 /**
+ * Get number of active file descriptors
+ *
+ * @return nfds
+ */
+int re_nfds(void)
+{
+	struct re *re = re_get();
+
+	return re ? re->nfds : 0;
+}
+
+
+/**
+ * Get current async I/O polling method.
+ *
+ * @return enum poll_method
+ */
+enum poll_method poll_method_get(void)
+{
+	struct re *re = re_get();
+	if (!re)
+		return METHOD_NULL;
+
+	return re->method;
+}
+
+
+/**
  * Set async I/O polling method. This function can also be called while the
  * program is running.
  *
