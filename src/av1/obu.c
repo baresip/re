@@ -25,7 +25,7 @@
  *
  * @return 0 if success, otherwise errorcode
  */
-int av1_leb128_encode(struct mbuf *mb, size_t value)
+int av1_leb128_encode(struct mbuf *mb, uint64_t value)
 {
 	int err = 0;
 
@@ -56,9 +56,9 @@ int av1_leb128_encode(struct mbuf *mb, size_t value)
  *
  * @return 0 if success, otherwise errorcode
  */
-int av1_leb128_decode(struct mbuf *mb, size_t *value)
+int av1_leb128_decode(struct mbuf *mb, uint64_t *value)
 {
-	size_t ret = 0;
+	uint64_t ret = 0;
 	unsigned i;
 
 	if (!mb || !value)
@@ -73,7 +73,7 @@ int av1_leb128_decode(struct mbuf *mb, size_t *value)
 
 		byte = mbuf_read_u8(mb);
 
-		ret |= (size_t)(byte & 0x7f) << (i * 7);
+		ret |= (uint64_t)(byte & 0x7f) << (i * 7);
 
 		if (!(byte & 0x80))
 			break;
@@ -169,16 +169,20 @@ int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb)
 	}
 
 	if (hdr->s) {
-		err = av1_leb128_decode(mb, &hdr->size);
+		uint64_t size;
+
+		err = av1_leb128_decode(mb, &size);
 		if (err)
 			return err;
 
-		if (hdr->size > mbuf_get_left(mb)) {
+		if (size > mbuf_get_left(mb)) {
 			DEBUG_WARNING("av1: obu decode: short packet:"
-				      " %zu > %zu\n",
-				      hdr->size, mbuf_get_left(mb));
+				      " %llu > %zu\n",
+				      size, mbuf_get_left(mb));
 			return EBADMSG;
 		}
+
+		hdr->size = (size_t)size;
 	}
 	else {
 		hdr->size = mbuf_get_left(mb);
