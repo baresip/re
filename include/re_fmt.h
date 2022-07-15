@@ -93,7 +93,8 @@ int re_vsdprintf(char **strp, const char *fmt, va_list ap);
 int re_hprintf(struct re_printf *pf, const char *fmt, ...);
 int re_fprintf(FILE *stream, const char *fmt, ...);
 int re_printf(const char *fmt, ...);
-int re_snprintf(char *str, size_t size, const char *fmt, ...);
+int re_snprintf(char *restrict str, size_t size, const char *restrict fmt,
+		...);
 int re_sdprintf(char **strp, const char *fmt, ...);
 
 

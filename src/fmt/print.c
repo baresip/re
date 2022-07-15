@@ -756,7 +756,7 @@ int re_printf(const char *fmt, ...)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_snprintf(char *str, size_t size, const char *fmt, ...)
+int re_snprintf(char *restrict str, size_t size, const char *restrict fmt, ...)
 {
 	va_list ap;
 	int n;
