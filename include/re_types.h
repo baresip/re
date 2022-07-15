@@ -6,6 +6,10 @@
 
 #include <sys/types.h>
 
+#ifdef __cplusplus
+#define restrict
+#endif
+
 #ifdef _MSC_VER
 #include <stdlib.h>
 
