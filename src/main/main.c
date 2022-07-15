@@ -1191,10 +1191,8 @@ int re_nfds(void)
 enum poll_method poll_method_get(void)
 {
 	struct re *re = re_get();
-	if (!re)
-		return METHOD_NULL;
 
-	return re->method;
+	return re ? re->method : METHOD_NULL;
 }
 
 
