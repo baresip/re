@@ -1209,6 +1209,11 @@ int poll_method_set(enum poll_method method)
 	struct re *re = re_get();
 	int err;
 
+	if (!re) {
+		DEBUG_WARNING("poll_method_set: re not ready\n");
+		return EINVAL;
+	}
+
 	err = fd_setsize(DEFAULT_MAXFDS);
 	if (err)
 		return err;
