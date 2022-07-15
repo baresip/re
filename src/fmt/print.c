@@ -72,7 +72,7 @@ static int write_padded(const char *p, size_t sz, size_t pad, char pch,
 }
 
 
-static uint32_t local_itoa(char *buf, uint64_t n, uint8_t base, bool uc)
+static uint32_t local_itoa(char *buf, size_t n, uint8_t base, bool uc)
 {
 	char c, *p = buf + NUM_SIZE;
 	uint32_t len = 1;
@@ -326,7 +326,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			ptr = va_arg(ap, void *);
 
 			if (ptr) {
-				len = local_itoa(num, (uint64_t)ptr,
+				len = local_itoa(num, (size_t)ptr,
 						 16, false);
 				err |= write_padded(num, len, pad,
 						    plr ? ' ' : pch, plr,
