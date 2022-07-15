@@ -44,6 +44,7 @@ void  libre_close(void);
 int   re_main(re_signal_h *signalh);
 void  re_cancel(void);
 int   re_debug(struct re_printf *pf, void *unused);
+int   re_nfds(void);
 
 int  re_alloc(struct re **rep);
 int  re_thread_attach(struct re *re);
@@ -70,6 +71,7 @@ enum poll_method {
 };
 
 int              poll_method_set(enum poll_method method);
+enum poll_method poll_method_get(void);
 enum poll_method poll_method_best(void);
 const char      *poll_method_name(enum poll_method method);
 int poll_method_type(enum poll_method *method, const struct pl *name);
