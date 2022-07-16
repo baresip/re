@@ -9,7 +9,6 @@
 struct uri {
 	struct pl scheme;    /**< URI scheme e.g. "sip:" "sips:"    */
 	struct pl user;      /**< Username                          */
-	struct pl password;  /**< Optional password                 */
 	struct pl host;      /**< Hostname or IP-address            */
 	int af;              /**< Address family of host IP-address */
 	uint16_t port;       /**< Port number                       */
