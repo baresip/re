@@ -50,7 +50,7 @@ struct net_rt {
 };
 
 
-static int read_sock(int fd, uint8_t *buf, size_t size, int seq, int pid)
+static int read_sock(int fd, uint8_t *buf, size_t size, uint32_t seq, int pid)
 {
 	struct nlmsghdr *nlhdr;
 	int n = 0, len = 0;
@@ -85,7 +85,7 @@ static int read_sock(int fd, uint8_t *buf, size_t size, int seq, int pid)
 			/* return if its not */
 			break;
 		}
-	} while (nlhdr->nlmsg_seq != (uint32_t)seq ||
+	} while (nlhdr->nlmsg_seq != seq ||
 		 nlhdr->nlmsg_pid != (uint32_t)pid);
 
 	return len;
@@ -135,17 +135,11 @@ static int rt_parse(const struct nlmsghdr *nlhdr, struct net_rt *rt)
 #endif
 
 			default:
-				DEBUG_WARNING("RTA_DST: unknown family %d\n",
+				DEBUG_WARNING("RTA_GW: unknown family %d\n",
 					      rtmsg->rtm_family);
 				break;
 			}
 			break;
-
-#if 0
-		case RTA_PREFSRC:
-			rt->srcaddr = *(uint32_t *)RTA_DATA(rtattr);
-			break;
-#endif
 
 		case RTA_DST:
 			switch (rtmsg->rtm_family) {
@@ -190,7 +184,8 @@ int net_rt_list(net_rt_h *rth, void *arg)
 		struct nlmsghdr msg[1];
 	} u;
 	struct nlmsghdr *nlmsg;
-	int sock, len, seq = 0, err = 0;
+	uint32_t seq = 0;
+	int sock, len, err = 0;
 
 	if (!rth)
 		return EINVAL;
@@ -229,7 +224,7 @@ int net_rt_list(net_rt_h *rth, void *arg)
 	}
 
 	/* Parse and print the response */
-	for (;NLMSG_OK(nlmsg,(uint32_t)len);nlmsg = NLMSG_NEXT(nlmsg,len)) {
+	for (; NLMSG_OK(nlmsg,(uint32_t)len); nlmsg = NLMSG_NEXT(nlmsg,len)) {
 		struct net_rt rt;
 
 		memset(&rt, 0, sizeof(struct net_rt));
@@ -247,7 +242,7 @@ int net_rt_list(net_rt_h *rth, void *arg)
 	}
 
  out:
-	(void)close(sock);
+	close(sock);
 
 	return err;
 }
