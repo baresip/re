@@ -12,20 +12,9 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.5.0 LANGUAGES C)
-
-# Pre-release identifier, comment out on a release
-# Increment for breaking changes (dev2, dev3...)
-# set(PROJECT_VERSION_PRE dev)
+project(re VERSION 2.6.0 LANGUAGES C)
 
 set(PROJECT_SOVERSION 7) # bump if ABI breaks
-
-if(PROJECT_VERSION_PRE)
-  set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
-else()
-  set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
-endif()
-
 
 ##############################################################################
 #
