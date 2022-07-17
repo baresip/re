@@ -13,6 +13,7 @@
 #include <re_mem.h>
 #include <re_btrace.h>
 #include <re_thread.h>
+#include <re_atomic.h>
 
 
 #define DEBUG_MODULE "mem"
@@ -27,7 +28,7 @@
 
 /** Defines a reference-counting memory object */
 struct mem {
-	uint32_t nrefs;        /**< Number of references  */
+	RE_ATOMIC uint32_t nrefs; /**< Number of references  */
 	uint32_t size;         /**< Size of memory object */
 	mem_destroy_h *dh;     /**< Destroy handler       */
 #if MEM_DEBUG
@@ -174,7 +175,7 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 	mem_unlock();
 #endif
 
-	m->nrefs = 1;
+	re_atomic_store(&m->nrefs, 1u, re_memory_order_relaxed);
 	m->dh    = dh;
 
 	STAT_ALLOC(m, size);
@@ -229,7 +230,7 @@ void *mem_realloc(void *data, size_t size)
 
 	MAGIC_CHECK(m);
 
-	if (m->nrefs > 1u) {
+	if (re_atomic_load(&m->nrefs, re_memory_order_acquire) > 1u) {
 		void* p = mem_alloc(size, m->dh);
 		if (p) {
 			memcpy(p, data, m->size);
@@ -341,7 +342,7 @@ void *mem_ref(void *data)
 
 	MAGIC_CHECK(m);
 
-	++m->nrefs;
+	re_atomic_fetch_add(&m->nrefs, 1u, re_memory_order_relaxed);
 
 	return data;
 }
@@ -368,14 +369,16 @@ void *mem_deref(void *data)
 
 	MAGIC_CHECK(m);
 
-	if (--m->nrefs > 0)
+	if (re_atomic_fetch_sub(
+		&m->nrefs, 1u, re_memory_order_acq_rel) > 1u) {
 		return NULL;
+	}
 
 	if (m->dh)
 		m->dh(data);
 
 	/* NOTE: check if the destructor called mem_ref() */
-	if (m->nrefs > 0)
+	if (re_atomic_load(&m->nrefs, re_memory_order_relaxed) > 0u)
 		return NULL;
 
 #if MEM_DEBUG
@@ -410,7 +413,7 @@ uint32_t mem_nrefs(const void *data)
 
 	MAGIC_CHECK(m);
 
-	return m->nrefs;
+	return (uint32_t)re_atomic_load(&m->nrefs, re_memory_order_acquire);
 }
 
 
@@ -423,7 +426,8 @@ static bool debug_handler(struct le *le, void *arg)
 
 	(void)arg;
 
-	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p, m->nrefs);
+	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p,
+		(uint32_t)re_atomic_load(&m->nrefs, re_memory_order_relaxed));
 
 	(void)re_fprintf(stderr, " size=%-7u", m->size);
 
