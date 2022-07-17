@@ -49,6 +49,8 @@ typedef SSIZE_T ssize_t;
 /** Align a value to the boundary of mask */
 #define ALIGN_MASK(x, mask)    (((x)+(mask))&~(mask))
 
+/** Check alignment of pointer (p) and byte count (c) **/
+#define is_aligned(p, c) (((uintptr_t)(const void *)(p)) % (c) == 0)
 
 /** Get the minimal value */
 #undef MIN
