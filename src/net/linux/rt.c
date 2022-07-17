@@ -107,6 +107,7 @@ static int rt_parse(const struct nlmsghdr *nlhdr, struct net_rt *rt)
 
 	sa_init(&rt->dst, rtmsg->rtm_family);
 	rt->dstlen = rtmsg->rtm_dst_len;
+	sa_init(&rt->gw, rtmsg->rtm_family);
 
 	/* get the rtattr field */
 	rtattr = (struct rtattr *)RTM_RTA(rtmsg);
