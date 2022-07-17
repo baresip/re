@@ -16,14 +16,14 @@ jobs:
     - name: make
       run: make EXTRA_CFLAGS=-Werror CCACHE=
 
-    - uses: sreimers/pr-dependency-action@main
+    - uses: sreimers/pr-dependency-action@v0.5
       with:
         name: rem
         repo: https://github.com/baresip/rem
         secret: ${{ secrets.GITHUB_TOKEN }}
         working-directory: '../.'
 
-    - uses: sreimers/pr-dependency-action@main
+    - uses: sreimers/pr-dependency-action@v0.5
       with:
         name: retest
         repo: https://github.com/baresip/retest
