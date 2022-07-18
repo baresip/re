@@ -32,6 +32,7 @@ struct sipsess {
 	sipsess_refer_h *referh;
 	sipsess_close_h *closeh;
 	sipsess_redirect_h *redirecth;
+	sipsess_prack_h *prackh;
 	void *arg;
 	bool owner;
 	bool sent_offer;
@@ -84,7 +85,6 @@ int  sipsess_ack(struct sipsess_sock *sock, struct sip_dialog *dlg,
 int  sipsess_ack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
 int  sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 		   const struct pl *met, struct mbuf *desc);
-int  sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg);
 int  sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		       uint16_t scode, const char *reason, struct mbuf *desc,
 		       const char *fmt, va_list *ap);
@@ -100,3 +100,5 @@ int  sipsess_bye(struct sipsess *sess, bool reset_ls);
 int  sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 			   const char *ctype, struct mbuf *body,
 			   sip_resp_h *resph, void *arg);
+struct sipsess *sipsess_find(struct sipsess_sock *sock,
+			     const struct sip_msg *msg);
