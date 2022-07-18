@@ -41,24 +41,6 @@ static void internal_connect_handler(const struct sip_msg *msg, void *arg)
 }
 
 
-static bool cmp_handler(struct le *le, void *arg)
-{
-	struct sipsess *sess = le->data;
-	const struct sip_msg *msg = arg;
-
-	return sip_dialog_cmp(sess->dlg, msg);
-}
-
-
-static struct sipsess *sipsess_find(struct sipsess_sock *sock,
-				    const struct sip_msg *msg)
-{
-	return list_ledata(hash_lookup(sock->ht_sess,
-				       hash_joaat_pl(&msg->callid),
-				       cmp_handler, (void *)msg));
-}
-
-
 static void info_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 {
 	struct sip *sip = sock->sip;
@@ -209,6 +191,9 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 
 		return;
 	}
+
+	if (sess->prackh)
+		sess->prackh(msg, sess->arg);
 
 	if (awaiting_answer) {
 		sess->awaiting_answer = false;

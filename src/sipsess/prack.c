@@ -72,15 +72,16 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 
 static void resp_handler(int err, const struct sip_msg *msg, void *arg)
 {
+	struct sipsess *sess;
 	struct sipsess_prack *prack = arg;
 	if (err || !msg)
 		goto out;
 
-	if (msg->scode > 100 && msg->scode < 200
-	    && sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")) {
-		(void)sipsess_prack_again(prack->sock, msg);
-		return;
-	}
+	sess = sipsess_find(prack->sock, msg);
+	if (!sess)
+		goto out;
+	if (sess->prackh)
+		sess->prackh(msg, sess->arg);
 
 out:
 	mem_deref(prack);
@@ -142,41 +143,4 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 		mem_deref(prack);
 
 	return err;
-}
-
-
-static bool cmp_handler(struct le *le, void *arg)
-{
-	struct sipsess_prack *prack = le->data;
-	const struct sip_msg *msg = arg;
-
-	if (!sip_dialog_cmp(prack->dlg, msg))
-		return false;
-
-	if (prack->cseq != msg->cseq.num)
-		return false;
-
-	return true;
-}
-
-
-/**
- * Re-send a PRACK message (RFC 3262)
- *
- * @param sock      SIP Session socket
- * @param msg       SIP message
- *
- * @return 0 if success, otherwise errorcode
- */
-int sipsess_prack_again(struct sipsess_sock *sock, const struct sip_msg *msg)
-{
-	struct sipsess_prack *prack;
-
-	prack = list_ledata(hash_lookup(sock->ht_prack,
-					hash_joaat_pl(&msg->callid),
-					cmp_handler, (void *)msg));
-	if (!prack)
-		return ENOENT;
-
-	return sip_send(sock->sip, NULL, prack->tp, &prack->dst, prack->mb);
 }
