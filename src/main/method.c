@@ -24,33 +24,24 @@ static const char str_kqueue[] = "kqueue";
  */
 enum poll_method poll_method_best(void)
 {
-	enum poll_method m = METHOD_NULL;
-
 #ifdef HAVE_EPOLL
 	/* Supported from Linux 2.5.66 */
-	if (METHOD_NULL == m) {
-		m = METHOD_EPOLL;
-	}
+	return METHOD_EPOLL;
 #endif
 
 #ifdef HAVE_KQUEUE
-	if (METHOD_NULL == m) {
-		m = METHOD_KQUEUE;
-	}
+	return METHOD_KQUEUE;
 #endif
 
 #ifdef HAVE_POLL
-	if (METHOD_NULL == m) {
-		m = METHOD_POLL;
-	}
-#endif
-#ifdef HAVE_SELECT
-	if (METHOD_NULL == m) {
-		m = METHOD_SELECT;
-	}
+	return METHOD_POLL;
 #endif
 
-	return m;
+#ifdef HAVE_SELECT
+	return METHOD_SELECT;
+#endif
+
+	return METHOD_NULL;
 }
 
 
