@@ -49,7 +49,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 
 if(MSVC)
-  add_compile_options("/W3")
+  add_compile_options("/W3" "/volatile:ms")
 else()
   add_compile_options(
     -Wall
