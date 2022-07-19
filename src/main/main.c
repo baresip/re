@@ -1063,7 +1063,7 @@ int re_main(re_signal_h *signalh)
 	}
 #endif
 
-	if (re->polling) {
+	if (re_atomic_load(&re->polling, re_memory_order_relaxed)) {
 		DEBUG_WARNING("main loop already polling\n");
 		return EALREADY;
 	}
@@ -1075,7 +1075,7 @@ int re_main(re_signal_h *signalh)
 	DEBUG_INFO("Using async I/O polling method: `%s'\n",
 		   poll_method_name(re->method));
 
-	re->polling = true;
+	re_atomic_store(&re->polling, true, re_memory_order_relaxed);
 
 	re_lock(re);
 	for (;;) {
@@ -1087,7 +1087,7 @@ int re_main(re_signal_h *signalh)
 			re->sig = 0;
 		}
 
-		if (!re->polling) {
+		if (!re_atomic_load(&re->polling, re_memory_order_relaxed)) {
 			err = 0;
 			break;
 		}
@@ -1118,7 +1118,7 @@ int re_main(re_signal_h *signalh)
 	re_unlock(re);
 
  out:
-	re->polling = false;
+	re_atomic_store(&re->polling, false, re_memory_order_relaxed);
 
 	return err;
 }
@@ -1136,7 +1136,7 @@ void re_cancel(void)
 		return;
 	}
 
-	re->polling = false;
+	re_atomic_store(&re->polling, false, re_memory_order_relaxed);
 }
 
 
@@ -1331,8 +1331,10 @@ void re_thread_enter(void)
 	re_lock(re);
 
 	/* set only for non-re threads */
-	if (!thrd_equal(re->tid, thrd_current()))
-		re->thread_enter = true;
+	if (!thrd_equal(re->tid, thrd_current())) {
+		re_atomic_store(&re->thread_enter, true,
+				re_memory_order_relaxed);
+	}
 }
 
 
@@ -1348,7 +1350,7 @@ void re_thread_leave(void)
 		return;
 	}
 
-	re->thread_enter = false;
+	re_atomic_store(&re->thread_enter, false, re_memory_order_relaxed);
 	re_unlock(re);
 }
 
@@ -1419,7 +1421,7 @@ int re_thread_check(void)
 	if (!re)
 		return EINVAL;
 
-	if (re->thread_enter)
+	if (re_atomic_load(&re->thread_enter, re_memory_order_relaxed))
 		return 0;
 
 	if (thrd_equal(re->tid, thrd_current()))
