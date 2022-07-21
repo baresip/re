@@ -174,8 +174,7 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 	list_append(&meml, &m->le, m);
 	mem_unlock();
 #endif
-
-	re_atomic_store(&m->nrefs, 1u, re_memory_order_relaxed);
+	re_atomic_weak_set(&m->nrefs, 1u);
 	m->dh    = dh;
 
 	STAT_ALLOC(m, size);
@@ -230,7 +229,7 @@ void *mem_realloc(void *data, size_t size)
 
 	MAGIC_CHECK(m);
 
-	if (re_atomic_load(&m->nrefs, re_memory_order_acquire) > 1u) {
+	if (re_atomic_strong(&m->nrefs) > 1u) {
 		void* p = mem_alloc(size, m->dh);
 		if (p) {
 			memcpy(p, data, m->size);
@@ -342,7 +341,7 @@ void *mem_ref(void *data)
 
 	MAGIC_CHECK(m);
 
-	re_atomic_fetch_add(&m->nrefs, 1u, re_memory_order_relaxed);
+	re_atomic_weak_add(&m->nrefs, 1u);
 
 	return data;
 }
@@ -369,8 +368,7 @@ void *mem_deref(void *data)
 
 	MAGIC_CHECK(m);
 
-	if (re_atomic_fetch_sub(
-		&m->nrefs, 1u, re_memory_order_acq_rel) > 1u) {
+	if (re_atomic_strong_sub(&m->nrefs, 1u) > 1u) {
 		return NULL;
 	}
 
@@ -378,7 +376,7 @@ void *mem_deref(void *data)
 		m->dh(data);
 
 	/* NOTE: check if the destructor called mem_ref() */
-	if (re_atomic_load(&m->nrefs, re_memory_order_relaxed) > 0u)
+	if (re_atomic_weak(&m->nrefs) > 0u)
 		return NULL;
 
 #if MEM_DEBUG
@@ -413,7 +411,7 @@ uint32_t mem_nrefs(const void *data)
 
 	MAGIC_CHECK(m);
 
-	return (uint32_t)re_atomic_load(&m->nrefs, re_memory_order_acquire);
+	return (uint32_t)re_atomic_strong(&m->nrefs);
 }
 
 
@@ -427,7 +425,7 @@ static bool debug_handler(struct le *le, void *arg)
 	(void)arg;
 
 	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p,
-		(uint32_t)re_atomic_load(&m->nrefs, re_memory_order_relaxed));
+		(uint32_t)re_atomic_weak(&m->nrefs));
 
 	(void)re_fprintf(stderr, " size=%-7u", m->size);
 
