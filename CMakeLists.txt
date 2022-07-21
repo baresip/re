@@ -68,7 +68,7 @@ endif()
 
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
   # Ensure struct mem is aligned (used as fat pointer)
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()

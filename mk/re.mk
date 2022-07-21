@@ -155,6 +155,7 @@ CFLAGS	+= -Wold-style-definition
 CFLAGS	+= -Wvla # Avoid insecure variable-length arrays
 ifeq ($(CC_NAME), clang)
 CFLAGS	+= -Wshorten-64-to-32
+CFLAGS  += -Watomic-implicit-seq-cst
 endif
 
 CFLAGS  += -g
