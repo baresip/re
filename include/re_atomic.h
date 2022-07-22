@@ -719,7 +719,7 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
 /* --- Some short alias helpers --- */
 
 /**
- * @def re_atomic_weak(_a)
+ * @def re_atomic_rlx(_a)
  *
  * Load value from an atomic object with relaxed order
  *
@@ -727,23 +727,23 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value of the atomic variable
  */
-#define re_atomic_weak(_a) re_atomic_load(_a, re_memory_order_relaxed)
+#define re_atomic_rlx(_a) re_atomic_load(_a, re_memory_order_relaxed)
 
 
 /**
- * @def re_atomic_weak_set(_a, _v)
+ * @def re_atomic_rlx_set(_a, _v)
  *
  * Store value in an atomic object with relaxed order
  *
  * @param _a  pointer to the atomic object
  * @param _v  new value
  */
-#define re_atomic_weak_set(_a, _v)                                            \
+#define re_atomic_rlx_set(_a, _v)                                            \
 	re_atomic_store(_a, _v, re_memory_order_relaxed)
 
 
 /**
- * @def re_atomic_weak_add(_a, _v)
+ * @def re_atomic_rlx_add(_a, _v)
  *
  * Replace value from an atomic object with addition and relaxed order
  *
@@ -752,12 +752,12 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_weak_add(_a, _v)                                            \
+#define re_atomic_rlx_add(_a, _v)                                            \
 	re_atomic_fetch_add(_a, _v, re_memory_order_relaxed)
 
 
 /**
- * @def re_atomic_weak_sub(_a, _v)
+ * @def re_atomic_rlx_sub(_a, _v)
  *
  * Replace value from an atomic object with substraction and relaxed order
  *
@@ -766,12 +766,12 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_weak_sub(_a, _v)                                            \
+#define re_atomic_rlx_sub(_a, _v)                                            \
 	re_atomic_fetch_sub(_a, _v, re_memory_order_relaxed)
 
 
 /**
- * @def re_atomic_strong(_a)
+ * @def re_atomic_acq(_a)
  *
  * Load value from an atomic object with acquire order
  *
@@ -779,23 +779,23 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value of the atomic variable
  */
-#define re_atomic_strong(_a) re_atomic_load(_a, re_memory_order_acquire)
+#define re_atomic_acq(_a) re_atomic_load(_a, re_memory_order_acquire)
 
 
 /**
- * @def re_atomic_strong_set(_a, _v)
+ * @def re_atomic_rls_set(_a, _v)
  *
  * Store value in an atomic object with release order
  *
  * @param _a  pointer to the atomic object
  * @param _v  new value
  */
-#define re_atomic_strong_set(_a, _v)                                          \
+#define re_atomic_rls_set(_a, _v)                                          \
 	re_atomic_store(_a, _v, re_memory_order_release)
 
 
 /**
- * @def re_atomic_strong_add(_a, _v)
+ * @def re_atomic_acq_add(_a, _v)
  *
  * Replace value from an atomic object with addition and acquire-release order
  *
@@ -804,12 +804,12 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_strong_add(_a, _v)                                          \
+#define re_atomic_acq_add(_a, _v)                                          \
 	re_atomic_fetch_add(_a, _v, re_memory_order_acq_rel)
 
 
 /**
- * @def re_atomic_strong_sub(_a, _v)
+ * @def re_atomic_acq_sub(_a, _v)
  *
  * Replace value from an atomic object with substraction and acquire-release
  * order
@@ -819,12 +819,12 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_strong_sub(_a, _v)                                          \
+#define re_atomic_acq_sub(_a, _v)                                          \
 	re_atomic_fetch_sub(_a, _v, re_memory_order_acq_rel)
 
 
 /**
- * @def re_atomic_sync(_a)
+ * @def re_atomic_seq(_a)
  *
  * Load value from an atomic object with sequentially-consistent order
  *
@@ -832,23 +832,23 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value of the atomic variable
  */
-#define re_atomic_sync(_a) re_atomic_load(_a, re_memory_order_seq_cst)
+#define re_atomic_seq(_a) re_atomic_load(_a, re_memory_order_seq_cst)
 
 
 /**
- * @def re_atomic_sync_set(_a, _v)
+ * @def re_atomic_seq_set(_a, _v)
  *
  * Store value in an atomic object with sequentially-consistent order
  *
  * @param _a  pointer to the atomic object
  * @param _v  new value
  */
-#define re_atomic_sync_set(_a, _v)                                            \
+#define re_atomic_seq_set(_a, _v)                                            \
 	re_atomic_store(_a, _v, re_memory_order_seq_cst)
 
 
 /**
- * @def re_atomic_sync_add(_a, _v)
+ * @def re_atomic_seq_add(_a, _v)
  *
  * Replace value from an atomic object with addition and
  * sequentially-consistent order
@@ -858,12 +858,12 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_sync_add(_a, _v)                                            \
+#define re_atomic_seq_add(_a, _v)                                            \
 	re_atomic_fetch_add(_a, _v, re_memory_order_seq_cst)
 
 
 /**
- * @def re_atomic_sync_sub(_a, _v)
+ * @def re_atomic_seq_sub(_a, _v)
  *
  * Replace value from an atomic object with substraction and
  * sequentially-consistent order
@@ -873,7 +873,8 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
  *
  * @return value held previously by the atomic variable
  */
-#define re_atomic_sync_sub(_a, _v)                                            \
+#define re_atomic_seq_sub(_a, _v)                                            \
 	re_atomic_fetch_sub(_a, _v, re_memory_order_seq_cst)
+
 
 #endif /* RE_H_ATOMIC__ */
