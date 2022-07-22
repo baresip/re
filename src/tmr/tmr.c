@@ -12,6 +12,10 @@
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#include <sys/times.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 #ifndef WIN32
 #include <time.h>
@@ -111,6 +115,47 @@ void tmr_poll(struct list *tmrl)
 		th(th_arg);
 #endif
 	}
+}
+
+
+/**
+ * Get cpu time
+ *
+ * @param system  Get system/kernel time if true, otherwise user time
+ *
+ * @return cpu time in [s]
+ */
+double tmr_cpu_time(bool system)
+{
+#ifdef WIN32
+	FILETIME tcreation, texit, tkernel, tuser;
+	HANDLE p = GetCurrentProcess();
+	uint64_t t;
+
+	if (GetProcessTimes(p, &tcreation, &texit, &tkernel, &tuser) != 0) {
+		if (system) {
+			t = tkernel.dwLowDateTime;
+			t |= (uint64_t)tkernel.dwHighDateTime << 32;
+		}
+		else {
+			t = tuser.dwLowDateTime;
+			t |= (uint64_t)tuser.dwHighDateTime << 32;
+		}
+
+		return t * 0.0000001;
+	}
+
+	return 0.0;
+#else
+	struct tms t;
+
+	(void)times(&t);
+
+	if (system)
+		return (double)t.tms_stime / sysconf(_SC_CLK_TCK);
+
+	return (double)t.tms_utime / sysconf(_SC_CLK_TCK);
+#endif
 }
 
 
