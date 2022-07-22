@@ -1063,7 +1063,7 @@ int re_main(re_signal_h *signalh)
 	}
 #endif
 
-	if (re_atomic_weak(&re->polling)) {
+	if (re_atomic_rlx(&re->polling)) {
 		DEBUG_WARNING("main loop already polling\n");
 		return EALREADY;
 	}
@@ -1075,7 +1075,7 @@ int re_main(re_signal_h *signalh)
 	DEBUG_INFO("Using async I/O polling method: `%s'\n",
 		   poll_method_name(re->method));
 
-	re_atomic_weak_set(&re->polling, true);
+	re_atomic_rlx_set(&re->polling, true);
 
 	re_lock(re);
 	for (;;) {
@@ -1087,7 +1087,7 @@ int re_main(re_signal_h *signalh)
 			re->sig = 0;
 		}
 
-		if (!re_atomic_weak(&re->polling)) {
+		if (!re_atomic_rlx(&re->polling)) {
 			err = 0;
 			break;
 		}
@@ -1118,7 +1118,7 @@ int re_main(re_signal_h *signalh)
 	re_unlock(re);
 
  out:
-	re_atomic_weak_set(&re->polling, false);
+	re_atomic_rlx_set(&re->polling, false);
 
 	return err;
 }
@@ -1136,7 +1136,7 @@ void re_cancel(void)
 		return;
 	}
 
-	re_atomic_weak_set(&re->polling, false);
+	re_atomic_rlx_set(&re->polling, false);
 }
 
 
@@ -1332,7 +1332,7 @@ void re_thread_enter(void)
 
 	/* set only for non-re threads */
 	if (!thrd_equal(re->tid, thrd_current())) {
-		re_atomic_weak_set(&re->thread_enter, true);
+		re_atomic_rlx_set(&re->thread_enter, true);
 	}
 }
 
@@ -1349,7 +1349,7 @@ void re_thread_leave(void)
 		return;
 	}
 
-	re_atomic_weak_set(&re->thread_enter, false);
+	re_atomic_rlx_set(&re->thread_enter, false);
 	re_unlock(re);
 }
 
@@ -1420,7 +1420,7 @@ int re_thread_check(void)
 	if (!re)
 		return EINVAL;
 
-	if (re_atomic_weak(&re->thread_enter))
+	if (re_atomic_rlx(&re->thread_enter))
 		return 0;
 
 	if (thrd_equal(re->tid, thrd_current()))
