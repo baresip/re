@@ -179,6 +179,7 @@ endif()
 #
 
 set(HEADERS
+  include/re.h
   include/re_aes.h
   include/re_atomic.h
   include/re_av1.h
@@ -192,13 +193,12 @@ set(HEADERS
   include/re_dbg.h
   include/re_dns.h
   include/re_fmt.h
-  include/re.h
   include/re_h264.h
   include/re_h265.h
   include/re_hash.h
   include/re_hmac.h
-  include/re_httpauth.h
   include/re_http.h
+  include/re_httpauth.h
   include/re_ice.h
   include/re_jbuf.h
   include/re_json.h
@@ -212,14 +212,15 @@ set(HEADERS
   include/re_msg.h
   include/re_net.h
   include/re_odict.h
+  include/re_pcp.h
   include/re_rtmp.h
   include/re_rtp.h
   include/re_sa.h
   include/re_sdp.h
   include/re_sha.h
   include/re_shim.h
-  include/re_sipevent.h
   include/re_sip.h
+  include/re_sipevent.h
   include/re_sipreg.h
   include/re_sipsess.h
   include/re_srtp.h
@@ -227,6 +228,7 @@ set(HEADERS
   include/re_sys.h
   include/re_tcp.h
   include/re_telev.h
+  include/re_thread.h
   include/re_tls.h
   include/re_tmr.h
   include/re_trace.h
