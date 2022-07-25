@@ -78,8 +78,9 @@ static void resp_handler(int err, const struct sip_msg *msg, void *arg)
 		goto out;
 
 	sess = sipsess_find(prack->sock, msg);
-	if (!sess)
+	if (!sess || sess->terminated)
 		goto out;
+
 	if (sess->prackh)
 		sess->prackh(msg, sess->arg);
 
