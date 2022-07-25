@@ -185,3 +185,22 @@ uint32_t hash_fast_str(const char *str)
 
 	return h;
 }
+
+
+/**
+ * Calculate hash-value using modified murmur (fast finalize part)
+ *
+ * @param key    Key value
+ *
+ * @return Calculated hash-value
+ */
+uint32_t hash_fast_murmur(uint32_t key)
+{
+	key ^= key >> 16;
+	key *= 0x85ebca6b;
+	key ^= key >> 13;
+	key *= 0xc2b2ae35;
+	key ^= key >> 16;
+
+	return key;
+}
