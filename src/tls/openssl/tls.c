@@ -1195,6 +1195,8 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 	memcpy(cli_key + key_size, p, salt_size); p += salt_size;
 	memcpy(srv_key + key_size, p, salt_size);
 
+	mem_secclean(keymat, sizeof(keymat));
+
 	return 0;
 #else
 	(void)tc;
