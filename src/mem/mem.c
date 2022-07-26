@@ -93,7 +93,7 @@ static inline void mem_unlock(void)
 	memstat.bytes_cur -= (_m)->size; \
 	--memstat.blocks_cur; \
 	mem_unlock(); \
-	memset((_m), 0xb5, sizeof(struct mem) + (_m)->size)
+	memset((_m), 0xb5, (size_t)mem_header_size + (_m)->size)
 
 /** Check magic number in memory object */
 #define MAGIC_CHECK(_m) \
