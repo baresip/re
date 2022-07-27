@@ -525,18 +525,19 @@ int mem_status(struct re_printf *pf, void *unused)
 	c = list_count(&meml);
 	mem_unlock();
 
-	err |= re_hprintf(pf, "Memory status: (%zu bytes overhead pr block)\n",
+	err |= re_hprintf(pf,
+			  "Memory status: (%zu bytes overhead per block)\n",
 			  (size_t)mem_header_size);
 	err |= re_hprintf(pf,
 			  " Cur:  %zu blocks, %zu bytes (total %zu bytes)\n",
 			  stat.blocks_cur, stat.bytes_cur,
 			  stat.bytes_cur
-			  +(stat.blocks_cur*sizeof(struct mem)));
+			  + (stat.blocks_cur * (size_t)mem_header_size));
 	err |= re_hprintf(pf,
 			  " Peak: %zu blocks, %zu bytes (total %zu bytes)\n",
 			  stat.blocks_peak, stat.bytes_peak,
 			  stat.bytes_peak
-			  +(stat.blocks_peak*sizeof(struct mem)));
+			  + (stat.blocks_peak * (size_t)mem_header_size));
 	err |= re_hprintf(pf, " Total %u blocks allocated\n", c);
 
 	return err;
