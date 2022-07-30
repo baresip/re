@@ -4,9 +4,15 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
-
+#if !defined(__GNUC__) && defined(WIN32)
+#if !defined(WIN32_LEAN_AND_MEAN)
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif /* !defined(__GNUC__) && defined(WIN32) */
 
 /**
  * Compare two byte strings in constant time. This function can be used
@@ -34,4 +40,34 @@ int mem_seccmp(const uint8_t *s1, const uint8_t *s2, size_t n)
 		val |= *p1++ ^ *p2++;
 
 	return val;
+}
+
+
+#if !defined(__GNUC__) && !defined(WIN32)
+/* Use a volatile pointer to memset to force the compiler always
+ * call it and not optimize away. */
+typedef void *(memset_t)(void *, int, size_t);
+static memset_t *const volatile memset_ptr = &memset;
+#endif
+
+/**
+ * Securely clean memory. This function is guaranteed not to get optimized
+ * away by compiler.
+ *
+ * @param data Pointer to data buffer
+ * @param size Size of the buffer
+ */
+void mem_secclean(void *data, size_t size)
+{
+#if defined(__GNUC__)
+	memset(data, 0, size);
+	/* Insert an asm statement that may potentially depend
+	 * on the memory contents that were affected by memset.
+	 * This prevents optimizing away the memset. */
+	__asm__ __volatile__("" : : "r" (data), "r" (size) : "memory");
+#elif defined(WIN32)
+	SecureZeroMemory(data, size);
+#else
+	(*memset_ptr)(data, 0, size);
+#endif
 }

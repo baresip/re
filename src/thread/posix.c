@@ -113,6 +113,15 @@ int cnd_signal(cnd_t *cnd)
 }
 
 
+int cnd_broadcast(cnd_t *cnd)
+{
+	if (!cnd)
+		return thrd_error;
+
+	return (pthread_cond_broadcast(cnd) == 0) ? thrd_success : thrd_error;
+}
+
+
 int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
 	if (!cnd || !mtx)

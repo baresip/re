@@ -90,7 +90,7 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 
 	msg->seq = ntohs(mbuf_read_u16(mb));
 	msg->count = ntohs(mbuf_read_u16(mb));
-	if (msg->count == 0)
+	if (msg->count == 0 || msg->count > 32768)
 		return EBADMSG;
 
 	msg->reftime = ntohl(mbuf_read_u32(mb));

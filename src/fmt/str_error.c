@@ -22,30 +22,30 @@
 const char *str_error(int errnum, char *buf, size_t sz)
 {
 	const char *s;
+	char msg[128] = {0};
 
 	if (!buf || !sz)
 		return NULL;
 
-	buf[0] = '\0';
 #ifdef HAVE_STRERROR_R
 
 #ifdef __GLIBC__
-	s = strerror_r(errnum, buf, sz);
+	s = strerror_r(errnum, msg, sizeof(msg));
 #else
-	(void)strerror_r(errnum, buf, sz);
-	s = buf;
+	(void)strerror_r(errnum, msg, sizeof(msg));
+	s = msg;
 #endif
 
 #elif defined (WIN32)
-	(void)strerror_s(buf, sz, errnum);
-	s = buf;
+	(void)strerror_s(msg, sizeof(msg), errnum);
+	s = msg;
 #else
 	/* fallback */
 	(void)errnum;
 	s = "unknown error";
 #endif
 
-	buf[sz - 1] = '\0';
+	re_snprintf(buf, sz, "%s [%d]", s, errnum);
 
-	return s;
+	return buf;
 }

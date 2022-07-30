@@ -165,7 +165,7 @@ static int amf_decode_value(struct odict *dict, const char *key,
 			return ENODATA;
 
 		array_len = ntohl(mbuf_read_u32(mb));
-		if (!array_len)
+		if (!array_len || array_len > 65536)
 			return EPROTO;
 
 		err = odict_alloc(&object, 32);

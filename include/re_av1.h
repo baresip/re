@@ -36,8 +36,8 @@ struct av1_obu_hdr {
 	size_t size;      /**< Payload size   */
 };
 
-int av1_leb128_encode(struct mbuf *mb, size_t value);
-int av1_leb128_decode(struct mbuf *mb, size_t *value);
+int av1_leb128_encode(struct mbuf *mb, uint64_t value);
+int av1_leb128_decode(struct mbuf *mb, uint64_t *value);
 int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 		   size_t len, const uint8_t *payload);
 int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb);

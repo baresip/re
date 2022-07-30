@@ -1063,7 +1063,7 @@ int re_main(re_signal_h *signalh)
 	}
 #endif
 
-	if (re->polling) {
+	if (re_atomic_rlx(&re->polling)) {
 		DEBUG_WARNING("main loop already polling\n");
 		return EALREADY;
 	}
@@ -1075,7 +1075,7 @@ int re_main(re_signal_h *signalh)
 	DEBUG_INFO("Using async I/O polling method: `%s'\n",
 		   poll_method_name(re->method));
 
-	re->polling = true;
+	re_atomic_rlx_set(&re->polling, true);
 
 	re_lock(re);
 	for (;;) {
@@ -1087,7 +1087,7 @@ int re_main(re_signal_h *signalh)
 			re->sig = 0;
 		}
 
-		if (!re->polling) {
+		if (!re_atomic_rlx(&re->polling)) {
 			err = 0;
 			break;
 		}
@@ -1118,7 +1118,7 @@ int re_main(re_signal_h *signalh)
 	re_unlock(re);
 
  out:
-	re->polling = false;
+	re_atomic_rlx_set(&re->polling, false);
 
 	return err;
 }
@@ -1136,7 +1136,7 @@ void re_cancel(void)
 		return;
 	}
 
-	re->polling = false;
+	re_atomic_rlx_set(&re->polling, false);
 }
 
 
@@ -1171,6 +1171,32 @@ int re_debug(struct re_printf *pf, void *unused)
 
 
 /**
+ * Get number of active file descriptors
+ *
+ * @return nfds
+ */
+int re_nfds(void)
+{
+	struct re *re = re_get();
+
+	return re ? re->nfds : 0;
+}
+
+
+/**
+ * Get current async I/O polling method.
+ *
+ * @return enum poll_method
+ */
+enum poll_method poll_method_get(void)
+{
+	struct re *re = re_get();
+
+	return re ? re->method : METHOD_NULL;
+}
+
+
+/**
  * Set async I/O polling method. This function can also be called while the
  * program is running.
  *
@@ -1182,6 +1208,11 @@ int poll_method_set(enum poll_method method)
 {
 	struct re *re = re_get();
 	int err;
+
+	if (!re) {
+		DEBUG_WARNING("poll_method_set: re not ready\n");
+		return EINVAL;
+	}
 
 	err = fd_setsize(DEFAULT_MAXFDS);
 	if (err)
@@ -1300,8 +1331,9 @@ void re_thread_enter(void)
 	re_lock(re);
 
 	/* set only for non-re threads */
-	if (!thrd_equal(re->tid, thrd_current()))
-		re->thread_enter = true;
+	if (!thrd_equal(re->tid, thrd_current())) {
+		re_atomic_rlx_set(&re->thread_enter, true);
+	}
 }
 
 
@@ -1317,7 +1349,7 @@ void re_thread_leave(void)
 		return;
 	}
 
-	re->thread_enter = false;
+	re_atomic_rlx_set(&re->thread_enter, false);
 	re_unlock(re);
 }
 
@@ -1388,7 +1420,7 @@ int re_thread_check(void)
 	if (!re)
 		return EINVAL;
 
-	if (re->thread_enter)
+	if (re_atomic_rlx(&re->thread_enter))
 		return 0;
 
 	if (thrd_equal(re->tid, thrd_current()))

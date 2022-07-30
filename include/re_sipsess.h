@@ -24,6 +24,7 @@ typedef void (sipsess_close_h)(int err, const struct sip_msg *msg, void *arg);
 
 typedef void (sipsess_redirect_h)(const struct sip_msg *msg,
 				  const char *uri, void *arg);
+typedef void (sipsess_prack_h)(const struct sip_msg *msg, void *arg);
 
 int  sipsess_listen(struct sipsess_sock **sockp, struct sip *sip,
 		    int htsize, sipsess_conn_h *connh, void *arg);
@@ -54,6 +55,7 @@ int  sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 
 int  sipsess_set_redirect_handler(struct sipsess *sess,
 				  sipsess_redirect_h *redirecth);
+int  sipsess_set_prack_handler(struct sipsess *sess, sipsess_prack_h *prackh);
 
 int  sipsess_progress(struct sipsess *sess, uint16_t scode,
 		      const char *reason, enum rel100_mode rel100,
