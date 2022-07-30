@@ -205,6 +205,17 @@ int cnd_signal(cnd_t *cnd)
 }
 
 
+int cnd_broadcast(cnd_t *cnd)
+{
+	if (!cnd)
+		return thrd_error;
+
+	WakeAllConditionVariable(cnd);
+
+	return thrd_success;
+}
+
+
 int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 {
 	if (!cnd || !mtx)
