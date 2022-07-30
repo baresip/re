@@ -58,8 +58,7 @@ static int worker_thread(void *arg)
 			continue;
 		}
 		le = list_head(&async->workl);
-		list_unlink(le);
-		list_append(&async->curl, le, le->data);
+		list_move(le, &async->curl);
 		mtx_unlock(&async->mtx);
 
 		work	  = le->data;
