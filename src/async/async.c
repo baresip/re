@@ -27,8 +27,7 @@ struct async_work {
 
 struct re_async {
 	thrd_t *thrd;
-	uint16_t thrds_req;
-	uint16_t thrds_started;
+	uint16_t workers;
 	RE_ATOMIC bool run;
 	cnd_t wait;
 	mtx_t mtx;
@@ -79,7 +78,7 @@ static void async_destructor(void *data)
 	cnd_broadcast(&async->wait);
 	mtx_unlock(&async->mtx);
 
-	for (int i = 0; i < async->thrds_started; i++) {
+	for (int i = 0; i < async->workers; i++) {
 		thrd_join(async->thrd[i], NULL);
 	}
 
@@ -98,7 +97,7 @@ static void worker_check(void *arg)
 
 	mtx_lock(&async->mtx);
 	if (!list_isempty(&async->workl)) {
-		if (async->thrds_started == list_count(&async->curl))
+		if (async->workers == list_count(&async->curl))
 			DEBUG_WARNING("all async workers are busy\n");
 		else
 			cnd_broadcast(&async->wait);
@@ -165,10 +164,9 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 
 	mem_destructor(async, async_destructor);
 
-	async->thrds_req = workers;
 	re_atomic_rlx_set(&async->run, true);
 
-	for (int i = 0; i < async->thrds_req; i++) {
+	for (int i = 0; i < workers; i++) {
 		err = thread_create_name(&async->thrd[i],
 					 "async worker thread", worker_thread,
 					 async);
@@ -177,7 +175,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 			return err;
 		}
 
-		async->thrds_started++;
+		async->workers++;
 	}
 
 	tmr_start(&async->tmr, 10, worker_check, async);
