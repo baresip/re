@@ -19,7 +19,7 @@
 
 struct async_work {
 	struct le le;
-	re_async_work *work;
+	re_async_work_h *work;
 	re_async_h *cb;
 	void *arg;
 	int err;
@@ -93,7 +93,7 @@ static void async_destructor(void *data)
 }
 
 
-static void job_check(void *arg)
+static void worker_check(void *arg)
 {
 	struct re_async *async = arg;
 
@@ -103,7 +103,7 @@ static void job_check(void *arg)
 	}
 	mtx_unlock(&async->mtx);
 
-	tmr_start(&async->tmr, 100, job_check, async);
+	tmr_start(&async->tmr, 100, worker_check, async);
 }
 
 
@@ -167,7 +167,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
 			return err;
 	}
 
-	tmr_start(&async->tmr, 10, job_check, async);
+	tmr_start(&async->tmr, 10, worker_check, async);
 
 	*asyncp = async;
 
@@ -185,7 +185,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_async(struct re_async *async, re_async_work *work, re_async_h *cb,
+int re_async(struct re_async *async, re_async_work_h *work, re_async_h *cb,
 	     void *arg)
 {
 	int err = 0;
