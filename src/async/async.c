@@ -134,12 +134,12 @@ static void queueh(int id, void *data, void *arg)
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
+int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 {
 	int err;
 	struct re_async *async;
 
-	if (!asyncp || !nthrds)
+	if (!asyncp || !workers)
 		return EINVAL;
 
 	async = mem_zalloc(sizeof(struct re_async), NULL);
@@ -152,7 +152,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
 		return err;
 	}
 
-	async->thrd = mem_zalloc(sizeof(thrd_t) * nthrds, NULL);
+	async->thrd = mem_zalloc(sizeof(thrd_t) * workers, NULL);
 	if (!async->thrd) {
 		mem_deref(async->mqueue);
 		mem_deref(async);
@@ -165,7 +165,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
 
 	mem_destructor(async, async_destructor);
 
-	async->thrds_req = nthrds;
+	async->thrds_req = workers;
 	re_atomic_rlx_set(&async->run, true);
 
 	for (int i = 0; i < async->thrds_req; i++) {

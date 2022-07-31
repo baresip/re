@@ -60,7 +60,7 @@
 
 /** Main loop values */
 enum {
-	RE_ASYNC_THREADS = 4,
+	RE_ASYNC_WORKERS = 4,
 	MAX_BLOCKING = 500,    /**< Maximum time spent in handler in [ms] */
 #if defined (FD_SETSIZE)
 	DEFAULT_MAXFDS = FD_SETSIZE
@@ -1465,6 +1465,22 @@ struct list *tmrl_get(void)
 }
 
 
+void re_thread_async_workers(uint16_t workers)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (!re) {
+		DEBUG_WARNING("re_thread_async_workers: re not ready\n");
+		return;
+	}
+
+	err = re_async_alloc(&re->async, workers);
+	if (err)
+		DEBUG_WARNING("re_async_alloc: %m\n", err);
+}
+
+
 /**
  * Get async object for current event loop (creates one if necessary)
  *
@@ -1481,7 +1497,7 @@ struct re_async *re_thread_async(void)
 	}
 
 	if (!re->async) {
-		err = re_async_alloc(&re->async, RE_ASYNC_THREADS);
+		err = re_async_alloc(&re->async, RE_ASYNC_WORKERS);
 		if (err) {
 			DEBUG_WARNING("re_async_alloc: %m\n", err);
 			return NULL;
