@@ -44,10 +44,18 @@ out:
 int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg)
 {
+	int err;
 	(void)name;
 
 	if (!thr || !func)
 		return EINVAL;
 
-	return (thrd_create(thr, func, arg) == thrd_success) ? 0 : EAGAIN;
+	err = thrd_create(thr, func, arg);
+	if (err == thrd_success)
+		return 0;
+
+	if (err == thrd_nomem)
+		return ENOMEM;
+
+	return EAGAIN;
 }
