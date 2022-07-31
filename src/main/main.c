@@ -49,6 +49,7 @@
 #include <re_thread.h>
 #include <re_btrace.h>
 #include <re_atomic.h>
+#include <re_async.h>
 #include "main.h"
 
 
@@ -59,6 +60,7 @@
 
 /** Main loop values */
 enum {
+	RE_ASYNC_THREADS = 4,
 	MAX_BLOCKING = 500,    /**< Maximum time spent in handler in [ms] */
 #if defined (FD_SETSIZE)
 	DEFAULT_MAXFDS = FD_SETSIZE
@@ -103,6 +105,7 @@ struct re {
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
+	struct re_async *async;      /**< Async object                      */
 };
 
 static struct re *re_global = NULL;
@@ -118,6 +121,7 @@ static void re_destructor(void *arg)
 
 	poll_close(re);
 	mem_deref(re->mutex);
+	mem_deref(re->async);
 }
 
 
@@ -153,6 +157,7 @@ int re_alloc(struct re **rep)
 	re->mutexp = re->mutex;
 
 	list_init(&re->tmrl);
+	re->async = NULL;
 	re->tid = thrd_current();
 
 #ifdef HAVE_EPOLL
@@ -1457,4 +1462,45 @@ struct list *tmrl_get(void)
 	}
 
 	return &re->tmrl;
+}
+
+
+/**
+ * Get async object for current event loop (creates one if necessary)
+ *
+ * @return async object
+ */
+struct re_async *re_thread_async(void)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (!re) {
+		DEBUG_WARNING("re_thread_async: re not ready\n");
+		return NULL;
+	}
+
+	if (!re->async) {
+		err = re_async_alloc(&re->async, RE_ASYNC_THREADS);
+		if (err) {
+			DEBUG_WARNING("re_async_alloc: %m\n", err);
+			return NULL;
+		}
+	}
+
+	return re->async;
+}
+
+
+/**
+ * Close/Dereference async object
+ */
+void re_thread_async_close(void)
+{
+	struct re *re = re_get();
+
+	if (!re)
+		DEBUG_WARNING("re_thread_async_close: re not ready\n");
+
+	re->async = mem_deref(re->async);
 }

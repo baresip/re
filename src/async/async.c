@@ -138,6 +138,9 @@ int re_async_alloc(struct re_async **asyncp, uint16_t nthrds)
 	int err;
 	struct re_async *async;
 
+	if (!asyncp || !nthrds)
+		return EINVAL;
+
 	async = mem_zalloc(sizeof(struct re_async), NULL);
 	if (!async)
 		return ENOMEM;
@@ -199,6 +202,9 @@ int re_async(struct re_async *async, re_async_work_h *work, re_async_h *cb,
 {
 	int err = 0;
 	struct async_work *async_work;
+
+	if (!async || !work || !cb)
+		return EINVAL;
 
 	async_work = mem_zalloc(sizeof(struct async_work), NULL);
 	if (!async_work)

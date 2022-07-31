@@ -55,6 +55,8 @@ void re_thread_close(void);
 void re_thread_enter(void);
 void re_thread_leave(void);
 int  re_thread_check(void);
+struct re_async *re_thread_async(void);
+void re_thread_async_close(void);
 
 void re_set_mutex(void *mutexp);
 
