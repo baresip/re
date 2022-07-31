@@ -47,7 +47,8 @@ static int worker_thread(void *arg)
 
 	while (re_atomic_rlx(&async->run)) {
 		mtx_lock(&async->mtx);
-		cnd_wait(&async->wait, &async->mtx);
+		if (list_isempty(&async->workl))
+			cnd_wait(&async->wait, &async->mtx);
 		mtx_unlock(&async->mtx);
 
 		if (!re_atomic_rlx(&async->run))
@@ -100,6 +101,7 @@ static void worker_check(void *arg)
 
 	mtx_lock(&async->mtx);
 	if (!list_isempty(&async->workl)) {
+		DEBUG_WARNING("worker_check fallback signal\n");
 		cnd_signal(&async->wait);
 	}
 	mtx_unlock(&async->mtx);
