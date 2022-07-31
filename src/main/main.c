@@ -1499,8 +1499,10 @@ void re_thread_async_close(void)
 {
 	struct re *re = re_get();
 
-	if (!re)
+	if (!re) {
 		DEBUG_WARNING("re_thread_async_close: re not ready\n");
+		return;
+	}
 
 	re->async = mem_deref(re->async);
 }
