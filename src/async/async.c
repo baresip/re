@@ -41,31 +41,27 @@ struct re_async {
 
 static int worker_thread(void *arg)
 {
-	struct re_async *async = arg;
+	struct re_async *a = arg;
 	struct le *le;
 	struct async_work *work;
 
-	while (re_atomic_rlx(&async->run)) {
-		mtx_lock(&async->mtx);
-		if (list_isempty(&async->workl))
-			cnd_wait(&async->wait, &async->mtx);
-		mtx_unlock(&async->mtx);
+	while (re_atomic_rlx(&a->run)) {
+		mtx_lock(&a->mtx);
+		if (list_isempty(&a->workl))
+			cnd_wait(&a->wait, &a->mtx);
 
-		if (!re_atomic_rlx(&async->run))
-			return 0;
-
-		mtx_lock(&async->mtx);
-		if (list_isempty(&async->workl)) {
-			mtx_unlock(&async->mtx);
+		if (list_isempty(&a->workl) || !re_atomic_rlx(&a->run)) {
+			mtx_unlock(&a->mtx);
 			continue;
 		}
-		le = list_head(&async->workl);
-		list_move(le, &async->curl);
-		mtx_unlock(&async->mtx);
+
+		le = list_head(&a->workl);
+		list_move(le, &a->curl);
+		mtx_unlock(&a->mtx);
 
 		work	  = le->data;
 		work->err = work->work(work->arg);
-		mqueue_push(async->mqueue, 0, work);
+		mqueue_push(a->mqueue, 0, work);
 	}
 
 	return 0;
@@ -77,8 +73,9 @@ static void async_destructor(void *data)
 	struct re_async *async = data;
 
 	tmr_cancel(&async->tmr);
-	re_atomic_rlx_set(&async->run, false);
+
 	mtx_lock(&async->mtx);
+	re_atomic_rlx_set(&async->run, false);
 	cnd_broadcast(&async->wait);
 	mtx_unlock(&async->mtx);
 
@@ -101,8 +98,10 @@ static void worker_check(void *arg)
 
 	mtx_lock(&async->mtx);
 	if (!list_isempty(&async->workl)) {
-		DEBUG_WARNING("worker_check fallback signal\n");
-		cnd_signal(&async->wait);
+		if (async->thrds_started == list_count(&async->curl))
+			DEBUG_WARNING("all async workers are busy\n");
+		else
+			cnd_broadcast(&async->wait);
 	}
 	mtx_unlock(&async->mtx);
 
