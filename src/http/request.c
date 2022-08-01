@@ -55,7 +55,7 @@ struct http_reqconn {
 	uint32_t timeout;        /**< Timeout for DNS and HTTP               */
 	char *user;              /**< Auth user                              */
 	char *pass;              /**< Auth password                          */
-	char *body;              /**< HTTP body for POST/PUT request         */
+	struct mbuf *body;   	 /**< HTTP body for POST/PUT request         */
 	char *token;             /**< Auth token (e.g. bearer token)         */
 	char *tokentype;         /**< Auth token type                        */
 	struct mbuf *custhdr;    /**< Custom HTTP headers                    */
@@ -64,6 +64,9 @@ struct http_reqconn {
 	http_resp_h *resph;      /**< HTTP response handler                  */
 	http_data_h *datah;      /**< HTTP data handler for downloads        */
 	void *arg;               /**< User data pointer for resph and datah  */
+
+	http_req_bodyh *req_bodyh;/**< Handler for the request body          */
+	uint64_t req_body_len;    /**< Size of body if request handler used  */
 
 #ifdef USE_TLS
 	char *tlshn;             /**< TLS host name                          */
@@ -267,6 +270,39 @@ static int data_handler(const uint8_t *buf, size_t size,
 }
 
 
+static size_t req_body_handler(uint8_t **pbuf, void *arg)
+{
+	struct http_reqconn *conn = arg;
+	size_t len = 0;
+
+	if (!pbuf)
+		return -1;
+
+	*pbuf = NULL;
+
+	if (conn->req_bodyh) {
+		len = conn->req_bodyh(pbuf, conn->arg);
+	}
+	else if (conn->body) {
+		len = min(mbuf_get_left(conn->body),
+			http_client_get_bufsize_max(conn->client));
+		if (!len)
+			return len;
+
+		*pbuf = mem_alloc(len, NULL);
+		if (!*pbuf) {
+			DEBUG_WARNING("error allocating %d\n", len);
+			return -2;
+		}
+
+		memcpy(*pbuf, mbuf_buf(conn->body), len);
+		mbuf_advance(conn->body, len);
+	}
+
+	return len;
+}
+
+
 static int send_req(struct http_reqconn *conn, const struct pl *auth)
 {
 	int err;
@@ -275,15 +311,24 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 	struct pl ct = PL_INIT;
 	struct pl cl = PL_INIT;
 	struct pl custh = PL_INIT;
-	size_t len;
 
 	if (!conn)
 		return EINVAL;
 
-	if (conn->body) {
-		len = strlen(conn->body);
+	if (conn->body || conn->req_bodyh) {
 		clbuf = mbuf_alloc(22);
-		mbuf_printf(clbuf, "Content-Length: %lu\r\n", len);
+		if (conn->req_bodyh)
+			mbuf_printf(clbuf, "Content-Length: %llu\r\n",
+				conn->req_body_len);
+		else
+			mbuf_printf(clbuf, "Content-Length: %lu\r\n",
+				mbuf_get_left(conn->body));
+
+		if (conn->req_body_len >
+				(uint64_t)http_client_get_bufsize_max(
+				conn->client))
+			mbuf_printf(clbuf, "Expect: 100-continue\r\n");
+
 		mbuf_set_pos(clbuf, 0);
 		pl_set_mbuf(&cl, clbuf);
 	}
@@ -297,7 +342,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 
 	DEBUG_INFO("send %s uri=%s path=%s len=%lu %s auth.\n",
 			conn->met, conn->uri, conn->path,
-			conn->body ? strlen(conn->body) : 0,
+			mbuf_get_left(conn->body),
 			auth ? "with" : "without");
 
 	if (auth) {
@@ -306,7 +351,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 
 #if (DEBUG_LEVEL >= 7)
 	if (conn->body) {
-		DEBUG_PRINTF("postdata:\n%r\n", &conn->body);
+		DEBUG_PRINTF("postdata:\n%s\n", (char*) mbuf_buf(conn->body));
 	}
 #endif
 
@@ -315,20 +360,19 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 
 	err = http_request(&conn->req, conn->client,
 			conn->met, conn->uri,
-			resp_handler, conn->datah ? data_handler : NULL, conn,
+			resp_handler, conn->datah ? data_handler : NULL,
+			req_body_handler,
+			conn,
 			"%r%s"
 			"User-Agent: re " VERSION "\r\n"
 			"%r"
 			"%r"
 			"%r"
-			"\r\n"
-			"%s",
+			"\r\n",
 			auth, auth ? "\r\n" : "",
 			&ct,
 			&custh,
-			&cl,
-			conn->body ? conn->body : "");
-
+			&cl);
 
 	mem_deref(clbuf);
 	mem_deref(ctbuf);
@@ -475,16 +519,20 @@ int http_reqconn_set_method(struct http_reqconn *conn, const struct pl *met)
 }
 
 
-int http_reqconn_set_body(struct http_reqconn *conn, const struct pl *body)
+int http_reqconn_set_body(struct http_reqconn *conn, struct mbuf *body)
 {
-	if (!conn)
+	if (!conn || !body)
 		return EINVAL;
 
-	conn->body = mem_deref(conn->body);
-	if (!pl_isset(body))
-		return 0;
+	conn->body = mbuf_alloc_ref(body);
 
-	return pl_strdup(&conn->body, body);
+	if (!conn->body)
+		return ENOMEM;
+
+	mbuf_set_pos(conn->body, 0);
+	conn->req_body_len = mbuf_get_left(conn->body);
+
+	return 0;
 }
 
 
@@ -599,6 +647,21 @@ int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri)
 		err = send_auth_token(conn);
 	else
 		err = send_req(conn, NULL);
+
+	return err;
+}
+
+
+int http_reqconn_set_req_bodyh(struct http_reqconn *conn,
+		http_req_bodyh cb, uint64_t total_size)
+{
+	int err = 0;
+
+	if (!conn)
+		return EINVAL;
+
+	conn->req_bodyh = cb;
+	conn->req_body_len = total_size;
 
 	return err;
 }

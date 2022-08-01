@@ -47,6 +47,15 @@ typedef void (tcp_recv_h)(struct mbuf *mb, void *arg);
 typedef void (tcp_close_h)(int err, void *arg);
 
 
+/**
+ * Defines the TCP connection data handler
+ * Handler is invoked when more data can be sent.
+ *
+ * @param arg Handler argument
+ */
+typedef void (tcp_data_h)(void *arg);
+
+
 /* TCP Socket */
 int  tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 		    tcp_conn_h *ch, void *arg);
@@ -69,6 +78,7 @@ int  tcp_conn_bind(struct tcp_conn *tc, const struct sa *local);
 int  tcp_conn_connect(struct tcp_conn *tc, const struct sa *peer);
 int  tcp_send(struct tcp_conn *tc, struct mbuf *mb);
 int  tcp_set_send(struct tcp_conn *tc, tcp_send_h *sendh);
+void tcp_set_data(struct tcp_conn *tc, tcp_data_h *dh, void *arg);
 void tcp_set_handlers(struct tcp_conn *tc, tcp_estab_h *eh, tcp_recv_h *rh,
 		      tcp_close_h *ch, void *arg);
 void tcp_conn_rxsz_set(struct tcp_conn *tc, size_t rxsz);

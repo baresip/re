@@ -72,6 +72,7 @@ struct tcp_conn {
 	tcp_send_h *sendh;    /**< Data send handler                 */
 	tcp_recv_h *recvh;    /**< Data receive handler              */
 	tcp_close_h *closeh;  /**< Connection close handler          */
+	tcp_data_h *datah;    /**< More data sendable handler        */
 	void *arg;            /**< Handler argument                  */
 	size_t rxsz;          /**< Maximum receive chunk size        */
 	size_t txqsz;
@@ -217,6 +218,7 @@ static int dequeue(struct tcp_conn *tc)
 	struct tcp_qent *qe = list_ledata(tc->sendq.head);
 	ssize_t n;
 	int err;
+
 #ifdef MSG_NOSIGNAL
 	const int flags = MSG_NOSIGNAL; /* disable SIGPIPE signal */
 #else
@@ -225,6 +227,9 @@ static int dequeue(struct tcp_conn *tc)
 	if (!qe) {
 		if (tc->sendh)
 			tc->sendh(tc->arg);
+
+		if (tc->datah)
+			tc->datah(tc->arg);
 
 		return 0;
 	}
@@ -245,8 +250,12 @@ static int dequeue(struct tcp_conn *tc)
 	tc->txqsz  -= n;
 	qe->mb.pos += n;
 
-	if (qe->mb.pos >= qe->mb.end)
+	if (qe->mb.pos >= qe->mb.end) {
+		if (tc->datah)
+			tc->datah(tc->arg);
+
 		mem_deref(qe);
+	}
 
 	return 0;
 }
@@ -278,6 +287,7 @@ static void tcp_recv_handler(int flags, void *arg)
 	ssize_t n;
 	int err;
 	socklen_t err_len = sizeof(err);
+	bool closed = false;
 
 	if (flags & FD_EXCEPT) {
 		DEBUG_INFO("recv handler: got FD_EXCEPT on fd=%d\n", tc->fdc);
@@ -324,9 +334,9 @@ static void tcp_recv_handler(int flags, void *arg)
 			}
 
 			if (!tc->sendq.head && !tc->sendh) {
-
-				err = fd_listen(tc->fdc, FD_READ,
-						tcp_recv_handler, tc);
+				err = fd_listen(tc->fdc,
+					FD_READ | (tc->datah ? FD_WRITE : 0),
+					tcp_recv_handler, tc);
 				if (err) {
 					conn_close(tc, err);
 					return;
@@ -336,12 +346,13 @@ static void tcp_recv_handler(int flags, void *arg)
 			if (flags & FD_READ)
 				goto read;
 
-			return;
+			goto out;
 		}
 
 		tc->connected = true;
 
-		err = fd_listen(tc->fdc, FD_READ, tcp_recv_handler, tc);
+		err = fd_listen(tc->fdc, FD_READ | (tc->datah ? FD_WRITE : 0),
+			tcp_recv_handler, tc);
 		if (err) {
 			DEBUG_WARNING("recv handler: fd_listen(): %m\n", err);
 			conn_close(tc, err);
@@ -404,6 +415,7 @@ static void tcp_recv_handler(int flags, void *arg)
 
 			hdld |= th->estabh(&err, tc->active, th->arg);
 			if (err) {
+				closed = true;
 				conn_close(tc, err);
 				goto out;
 			}
@@ -413,6 +425,7 @@ static void tcp_recv_handler(int flags, void *arg)
 
 		        hdld |= th->recvh(&err, mb, &hlp_estab, th->arg);
 			if (err) {
+				closed = true;
 				conn_close(tc, err);
 				goto out;
 			}
@@ -445,6 +458,10 @@ static void tcp_recv_handler(int flags, void *arg)
 	}
 
  out:
+	if (tc->connected && tc->datah && (flags & FD_WRITE) && !closed) {
+		tc->datah(tc->arg);
+	}
+
 	mem_deref(mb);
 }
 
@@ -1231,6 +1248,26 @@ int tcp_set_send(struct tcp_conn *tc, tcp_send_h *sendh)
 		return 0;
 
 	return fd_listen(tc->fdc, FD_READ | FD_WRITE, tcp_recv_handler, tc);
+}
+
+
+/**
+ * Set the data handler on a TCP Connection, which will be called
+ * every time no more data is present.
+ *
+ * @param tc    TCP Connection
+ * @param sendh TCP Send handler
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+void tcp_set_data(struct tcp_conn *tc, tcp_data_h *dh, void *arg)
+{
+	(void) arg;
+
+	if (!tc)
+		return;
+
+	tc->datah = dh;
 }
 
 
