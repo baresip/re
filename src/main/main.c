@@ -1465,26 +1465,54 @@ struct list *tmrl_get(void)
 }
 
 
-void re_thread_async_workers(uint16_t workers)
+/**
+ * Initialize re async object
+ *
+ * @param workers  Number of worker threads
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_init(uint16_t workers)
 {
 	struct re *re = re_get();
 	int err;
 
 	if (!re) {
 		DEBUG_WARNING("re_thread_async_workers: re not ready\n");
-		return;
+		return EINVAL;
 	}
+
+	if (re->async)
+		return EEXIST;
 
 	err = re_async_alloc(&re->async, workers);
 	if (err)
 		DEBUG_WARNING("re_async_alloc: %m\n", err);
+
+	return 0;
+}
+
+
+/**
+ * Close/Dereference async object
+ */
+void re_thread_async_close(void)
+{
+	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("re_thread_async_close: re not ready\n");
+		return;
+	}
+
+	re->async = mem_deref(re->async);
 }
 
 
 /**
  * Get async object for current event loop (creates one if necessary)
  *
- * @return async object
+ * @return async object on success, otherwise NULL
  */
 struct re_async *re_thread_async(void)
 {
@@ -1505,20 +1533,4 @@ struct re_async *re_thread_async(void)
 	}
 
 	return re->async;
-}
-
-
-/**
- * Close/Dereference async object
- */
-void re_thread_async_close(void)
-{
-	struct re *re = re_get();
-
-	if (!re) {
-		DEBUG_WARNING("re_thread_async_close: re not ready\n");
-		return;
-	}
-
-	re->async = mem_deref(re->async);
 }
