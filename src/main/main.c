@@ -49,7 +49,6 @@
 #include <re_thread.h>
 #include <re_btrace.h>
 #include <re_atomic.h>
-#include <re_async.h>
 #include "main.h"
 
 
@@ -1510,27 +1509,31 @@ void re_thread_async_close(void)
 
 
 /**
- * Get async object for current event loop (creates one if necessary)
+ * Execute work handler for current event loop
+ *
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe)
  *
  * @return async object on success, otherwise NULL
  */
-struct re_async *re_thread_async(void)
+int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 {
 	struct re *re = re_get();
 	int err;
 
 	if (!re) {
 		DEBUG_WARNING("re_thread_async: re not ready\n");
-		return NULL;
+		return EINVAL;
 	}
 
 	if (!re->async) {
 		err = re_async_alloc(&re->async, RE_ASYNC_WORKERS);
 		if (err) {
 			DEBUG_WARNING("re_async_alloc: %m\n", err);
-			return NULL;
+			return err;
 		}
 	}
 
-	return re->async;
+	return re_async(re->async, work, cb, arg);
 }
