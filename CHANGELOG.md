@@ -9,6 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.6.0] - 2022-08-01
+
+* ice: change one warning to notice by @alfredh in https://github.com/baresip/re/pull/421
+* Fix compilation error on musl: __GNUC_PREREQ macro defined only for libc library by @widgetii in https://github.com/baresip/re/pull/422
+* sip: add RFC 3262 support by @maximilianfridrich in https://github.com/baresip/re/pull/419
+* bfcp: Add support for TCP transport for BFCP by @Lastique in https://github.com/baresip/re/pull/411
+* strans/accept: fix cancel/rejection by @maximilianfridrich in https://github.com/baresip/re/pull/423
+* hash: add hash_list_idx() by @sreimers in https://github.com/baresip/re/pull/427
+* tls: Add a method to set OpenSSL certificate by @Lastique in https://github.com/baresip/re/pull/426
+* sipsess: fix PRACK offer/answer behavior by @maximilianfridrich in https://github.com/baresip/re/pull/430
+* thread: thrd_error fixes by @sreimers in https://github.com/baresip/re/pull/431
+* sipsess: fix coverity warnings by @maximilianfridrich in https://github.com/baresip/re/pull/433
+* main: add re_nfds() and poll_method_get() getters by @sreimers in https://github.com/baresip/re/pull/435
+* fmt/print: fix local_itoa casting by @sreimers in https://github.com/baresip/re/pull/437
+* leb128: switch to uint64_t by @alfredh in https://github.com/baresip/re/pull/436
+* types,mk: remove HAVE_STDBOOL_H by @sreimers in https://github.com/baresip/re/pull/439
+* fmt/print: snprintf restrict declarations by @sreimers in https://github.com/baresip/re/pull/438
+* net: minor cleanup in linux route code by @alfredh in https://github.com/baresip/re/pull/440
+* sip: add RFC 3311 support by @maximilianfridrich in https://github.com/baresip/re/pull/425
+* rtmp: check upper bound for amf array by @alfredh in https://github.com/baresip/re/pull/441
+* rtcp: check TWCC count range (Coverity fix) by @alfredh in https://github.com/baresip/re/pull/442
+* mem: Align data to natural alignment by @Lastique in https://github.com/baresip/re/pull/416
+* ci/misc: bump pr-dependency-action@v0.5 by @sreimers in https://github.com/baresip/re/pull/444
+* net: linux/rt: init gw to correct af by @alfredh in https://github.com/baresip/re/pull/447
+* rtp: Add `rtcp_send` declaration to the public header by @Lastique in https://github.com/baresip/re/pull/448
+* Main method best by @alfredh in https://github.com/baresip/re/pull/449
+* cmake: add explicit /volatile:ms (required for arm) by @sreimers in https://github.com/baresip/re/pull/451
+* mem: Make nrefs atomic by @Lastique in https://github.com/baresip/re/pull/446
+* atomic: add some short atomic alias helpers by @sreimers in https://github.com/baresip/re/pull/452
+* ci/build: replace deprecated macos-10.15 by @sreimers in https://github.com/baresip/re/pull/454
+* Improve RFC 3262 by @maximilianfridrich in https://github.com/baresip/re/pull/450
+* atomic: rename helpers by @sreimers in https://github.com/baresip/re/pull/455
+* cmake,make: add clang atomic-implicit-seq-cst warning by @sreimers in https://github.com/baresip/re/pull/453
+* cmake: add missing includes to install by @paresy in https://github.com/baresip/re/pull/456
+* Fix prack handling by @maximilianfridrich in https://github.com/baresip/re/pull/457
+* mem: Correct memory clobbering size by @Lastique in https://github.com/baresip/re/pull/458
+* mem: Correct calculation of total mem size in mem_status by @Lastique in https://github.com/baresip/re/pull/459
+* tls: Securely clear memory from private key material by @Lastique in https://github.com/baresip/re/pull/460
+* fmt/str_error: always print error number by @sreimers in https://github.com/baresip/re/pull/461
+* thread: add cnd_broadcast posix/win32 fallbacks by @sreimers in https://github.com/baresip/re/pull/463
+* list: add list_move() helper by @sreimers in https://github.com/baresip/re/pull/464
+* thread: fix thread_create_name ENOMEM by @sreimers in https://github.com/baresip/re/pull/465
+
+
 ## [v2.5.0] - 2022-07-01
 
 * av1: add doxygen comments by @alfredh in https://github.com/baresip/re/pull/384
@@ -553,7 +597,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.6.0...HEAD
+[v2.6.0]: https://github.com/baresip/re/compare/v2.5.0...v2.6.0
+[v2.5.0]: https://github.com/baresip/re/compare/v2.4.0...v2.5.0
 [v2.4.0]: https://github.com/baresip/re/compare/v2.3.0...v2.4.0
 [v2.3.0]: https://github.com/baresip/re/compare/v2.2.2...v2.3.0
 [v2.2.2]: https://github.com/baresip/re/compare/v2.2.1...v2.2.2
