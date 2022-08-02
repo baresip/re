@@ -12,7 +12,7 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.6.0 LANGUAGES C)
+project(re VERSION 2.6.1 LANGUAGES C)
 
 set(PROJECT_SOVERSION 8) # bump if ABI breaks
 
