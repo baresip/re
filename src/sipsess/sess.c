@@ -218,6 +218,35 @@ int  sipsess_set_redirect_handler(struct sipsess *sess,
 }
 
 
+int sipsess_set_prack_handler(struct sipsess *sess, sipsess_prack_h *prackh)
+{
+	if (!sess || !prackh)
+		return EINVAL;
+
+	sess->prackh = prackh;
+
+	return 0;
+}
+
+
+static bool cmp_handler(struct le *le, void *arg)
+{
+	struct sipsess *sess = le->data;
+	const struct sip_msg *msg = arg;
+
+	return sip_dialog_cmp(sess->dlg, msg);
+}
+
+
+struct sipsess *sipsess_find(struct sipsess_sock *sock,
+			     const struct sip_msg *msg)
+{
+	return list_ledata(hash_lookup(sock->ht_sess,
+				       hash_joaat_pl(&msg->callid),
+				       cmp_handler, (void *)msg));
+}
+
+
 void sipsess_terminate(struct sipsess *sess, int err,
 		       const struct sip_msg *msg)
 {

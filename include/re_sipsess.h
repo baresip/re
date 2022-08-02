@@ -24,6 +24,7 @@ typedef void (sipsess_close_h)(int err, const struct sip_msg *msg, void *arg);
 
 typedef void (sipsess_redirect_h)(const struct sip_msg *msg,
 				  const char *uri, void *arg);
+typedef void (sipsess_prack_h)(const struct sip_msg *msg, void *arg);
 
 int  sipsess_listen(struct sipsess_sock **sockp, struct sip *sip,
 		    int htsize, sipsess_conn_h *connh, void *arg);
@@ -43,20 +44,22 @@ int  sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 
 int  sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 		    const struct sip_msg *msg, uint16_t scode,
-		    const char *reason, const char *cuser, const char *ctype,
-		    struct mbuf *desc,
-		    sip_auth_h *authh, void *aarg, bool aref,
-		    sipsess_offer_h *offerh, sipsess_answer_h *answerh,
-		    sipsess_estab_h *estabh, sipsess_info_h *infoh,
-		    sipsess_refer_h *referh, sipsess_close_h *closeh,
-		    void *arg, const char *fmt, ...);
+		    const char *reason, enum rel100_mode rel100,
+		    const char *cuser, const char *ctype,
+		    struct mbuf *desc, sip_auth_h *authh, void *aarg,
+		    bool aref, sipsess_offer_h *offerh,
+		    sipsess_answer_h *answerh, sipsess_estab_h *estabh,
+		    sipsess_info_h *infoh, sipsess_refer_h *referh,
+		    sipsess_close_h *closeh, void *arg,
+		    const char *fmt, ...);
 
 int  sipsess_set_redirect_handler(struct sipsess *sess,
 				  sipsess_redirect_h *redirecth);
+int  sipsess_set_prack_handler(struct sipsess *sess, sipsess_prack_h *prackh);
 
 int  sipsess_progress(struct sipsess *sess, uint16_t scode,
-		      const char *reason, struct mbuf *desc,
-		      const char *fmt, ...);
+		      const char *reason, enum rel100_mode rel100,
+		      struct mbuf *desc, const char *fmt, ...);
 int  sipsess_answer(struct sipsess *sess, uint16_t scode, const char *reason,
 		    struct mbuf *desc, const char *fmt, ...);
 int  sipsess_reject(struct sipsess *sess, uint16_t scode, const char *reason,

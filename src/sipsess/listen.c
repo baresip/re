@@ -28,6 +28,8 @@ static void destructor(void *arg)
 	mem_deref(sock->ht_sess);
 	hash_flush(sock->ht_ack);
 	mem_deref(sock->ht_ack);
+	hash_flush(sock->ht_prack);
+	mem_deref(sock->ht_prack);
 }
 
 
@@ -36,24 +38,6 @@ static void internal_connect_handler(const struct sip_msg *msg, void *arg)
 	struct sipsess_sock *sock = arg;
 
 	(void)sip_treply(NULL, sock->sip, msg, 486, "Busy Here");
-}
-
-
-static bool cmp_handler(struct le *le, void *arg)
-{
-	struct sipsess *sess = le->data;
-	const struct sip_msg *msg = arg;
-
-	return sip_dialog_cmp(sess->dlg, msg);
-}
-
-
-static struct sipsess *sipsess_find(struct sipsess_sock *sock,
-				    const struct sip_msg *msg)
-{
-	return list_ledata(hash_lookup(sock->ht_sess,
-				       hash_joaat_pl(&msg->callid),
-				       cmp_handler, (void *)msg));
 }
 
 
@@ -185,12 +169,54 @@ static void ack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 }
 
 
-static void reinvite_handler(struct sipsess_sock *sock,
+static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
+{
+	struct sipsess *sess;
+	struct mbuf *desc = NULL;
+	bool awaiting_answer = false;
+
+	sess = sipsess_find(sock, msg);
+
+	if (!sess || sipsess_reply_ack(sess, msg, &awaiting_answer)) {
+		(void)sip_reply(sock->sip, msg, 481,
+				"Transaction Does Not Exist");
+		return;
+	}
+
+	if (sess->terminated) {
+		if (!sess->replyl.head) {
+			sess->established = true;
+			mem_deref(sess);
+		}
+
+		return;
+	}
+
+	if (sess->prackh)
+		sess->prackh(msg, sess->arg);
+
+	if (awaiting_answer) {
+		sess->awaiting_answer = false;
+		(void)sess->answerh(msg, sess->arg);
+	}
+	else if (msg && mbuf_get_left(msg->mb)) {
+		(void)sess->offerh(&desc, msg, sess->arg);
+	}
+
+	(void)sipsess_reply_2xx(sess, msg, 200, "OK", desc, NULL, NULL);
+
+	mem_deref(desc);
+}
+
+
+static void target_refresh_handler(struct sipsess_sock *sock,
 			     const struct sip_msg *msg)
 {
 	struct sip *sip = sock->sip;
+	bool is_invite;
+	bool got_offer;
 	struct sipsess *sess;
-	struct mbuf *desc;
+	struct mbuf *desc = NULL;
 	char m[256];
 	int err;
 
@@ -200,12 +226,15 @@ static void reinvite_handler(struct sipsess_sock *sock,
 		return;
 	}
 
+	is_invite = !pl_strcmp(&msg->met, "INVITE");
+	got_offer = (mbuf_get_left(msg->mb) > 0);
+
 	if (!sip_dialog_rseq_valid(sess->dlg, msg)) {
 		(void)sip_treply(NULL, sip, msg, 500, "Server Internal Error");
 		return;
 	}
 
-	if (sess->st || sess->awaiting_answer) {
+	if ((is_invite && sess->st) || sess->awaiting_answer) {
 		(void)sip_treplyf(NULL, NULL, sip, msg, false,
 				  500, "Server Internal Error",
 				  "Retry-After: 5\r\n"
@@ -214,15 +243,18 @@ static void reinvite_handler(struct sipsess_sock *sock,
 		return;
 	}
 
-	if (sess->req) {
+	if (is_invite && sess->req) {
 		(void)sip_treply(NULL, sip, msg, 491, "Request Pending");
 		return;
 	}
 
-	err = sess->offerh(&desc, msg, sess->arg);
-	if (err) {
-		(void)sip_reply(sip, msg, 488, str_error(err, m, sizeof(m)));
-		return;
+	if (got_offer || is_invite) {
+		err = sess->offerh(&desc, msg, sess->arg);
+		if (err) {
+			(void)sip_reply(sip, msg, 488,
+					str_error(err, m, sizeof(m)));
+			return;
+		}
 	}
 
 	(void)sip_dialog_update(sess->dlg, msg);
@@ -252,14 +284,22 @@ static bool request_handler(const struct sip_msg *msg, void *arg)
 	if (!pl_strcmp(&msg->met, "INVITE")) {
 
 		if (pl_isset(&msg->to.tag))
-			reinvite_handler(sock, msg);
+			target_refresh_handler(sock, msg);
 		else
 			invite_handler(sock, msg);
 
 		return true;
 	}
+	else if (!pl_strcmp(&msg->met, "UPDATE")) {
+		target_refresh_handler(sock, msg);
+		return true;
+	}
 	else if (!pl_strcmp(&msg->met, "ACK")) {
 		ack_handler(sock, msg);
+		return true;
+	}
+	else if (!pl_strcmp(&msg->met, "PRACK")) {
+		prack_handler(sock, msg);
 		return true;
 	}
 	else if (!pl_strcmp(&msg->met, "BYE")) {
@@ -336,6 +376,10 @@ int sipsess_listen(struct sipsess_sock **sockp, struct sip *sip,
 		goto out;
 
 	err = hash_alloc(&sock->ht_ack, htsize);
+	if (err)
+		goto out;
+
+	err = hash_alloc(&sock->ht_prack, htsize);
 	if (err)
 		goto out;
 

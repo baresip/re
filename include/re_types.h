@@ -6,6 +6,10 @@
 
 #include <sys/types.h>
 
+#ifdef __cplusplus
+#define restrict
+#endif
+
 #ifdef _MSC_VER
 #include <stdlib.h>
 
@@ -15,32 +19,11 @@ typedef SSIZE_T ssize_t;
 #endif
 
 /*
- * Basic integral types from C99
+ * Basic integral types and boolean from C99
  */
-
 #include <inttypes.h>
+#include <stdbool.h>
 
-
-/*
- * Boolean type
- * see http://www.opengroup.org/onlinepubs/000095399/basedefs/stdbool.h.html
- *     www.gnu.org/software/autoconf/manual/html_node/Particular-Headers.html
- */
-#ifdef HAVE_STDBOOL_H
-# include <stdbool.h>
-#else
-# ifndef HAVE__BOOL
-#  ifdef __cplusplus
-typedef bool _Bool;
-#  else
-#   define _Bool signed char
-#  endif
-# endif
-# define bool _Bool
-# define false 0
-# define true 1
-# define __bool_true_false_are_defined 1
-#endif
 
 /* Needed for MS compiler */
 #ifdef _MSC_VER
@@ -66,6 +49,8 @@ typedef bool _Bool;
 /** Align a value to the boundary of mask */
 #define ALIGN_MASK(x, mask)    (((x)+(mask))&~(mask))
 
+/** Check alignment of pointer (p) and byte count (c) **/
+#define is_aligned(p, c) (((uintptr_t)(const void *)(p)) % (c) == 0)
 
 /** Get the minimal value */
 #undef MIN
@@ -260,5 +245,10 @@ typedef bool _Bool;
  * Give the compiler a hint which branch is "likely" or "unlikely" (inspired
  * by linux kernel and C++20/C2X)
  */
+#ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
+#else
+#define likely(x) x
+#define unlikely(x) x
+#endif

@@ -17,8 +17,14 @@ struct bfcp_conn {
 	struct tmr tmr1;
 	struct tmr tmr2;
 	struct udp_sock *us;
+	struct tcp_sock *ts;
+	struct tcp_conn *tc;
+	struct sa sa_peer;
 	struct mbuf *mb;
+	bfcp_conn_h *connh;
+	bfcp_estab_h *estabh;
 	bfcp_recv_h *recvh;
+	bfcp_close_h *closeh;
 	void *arg;
 	enum bfcp_transp tp;
 	unsigned txc;

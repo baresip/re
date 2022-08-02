@@ -26,7 +26,7 @@ void    *mem_zalloc(size_t size, mem_destroy_h *dh);
 void    *mem_realloc(void *data, size_t size);
 void    *mem_reallocarray(void *ptr, size_t nmemb,
 			  size_t membsize, mem_destroy_h *dh);
-void 	mem_destructor(void *data, mem_destroy_h *dh);
+void     mem_destructor(void *data, mem_destroy_h *dh);
 void    *mem_ref(void *data);
 void    *mem_deref(void *data);
 uint32_t mem_nrefs(const void *data);
@@ -40,3 +40,4 @@ int      mem_get_stat(struct memstat *mstat);
 
 /* Secure memory functions */
 int mem_seccmp(const uint8_t *s1, const uint8_t *s2, size_t n);
+void mem_secclean(void *data, size_t size);

@@ -67,7 +67,7 @@ typedef int (*thrd_start_t)(void *);
  * @param func  Function to execute
  * @param arg   Argument to pass to the function
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 
@@ -96,7 +96,7 @@ thrd_t thrd_current(void);
  *
  * @param thr  Thread
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int thrd_detach(thrd_t thr);
 
@@ -108,7 +108,7 @@ int thrd_detach(thrd_t thr);
  * @param thr  Thread
  * @param res  Result code location
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int thrd_join(thrd_t thr, int *res);
 
@@ -139,7 +139,7 @@ void thrd_exit(int res);
  *
  * @param cnd  Pointer to a variable to store condition variable
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int cnd_init(cnd_t *cnd);
 
@@ -149,7 +149,7 @@ int cnd_init(cnd_t *cnd);
  *
  * @param cnd  Pointer to condition variable
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int cnd_signal(cnd_t *cnd);
 
@@ -159,7 +159,7 @@ int cnd_signal(cnd_t *cnd);
  *
  * @param cnd  Pointer to condition variable
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int cnd_broadcast(cnd_t *cnd);
 
@@ -170,7 +170,7 @@ int cnd_broadcast(cnd_t *cnd);
  * @param cnd   Pointer to condition variable
  * @param mtx   Lock mutex pointer
  *
- * @return 0 if success, otherwise errorcode
+ * @return thrd_success on success, otherwise thrd_error
  */
 int cnd_wait(cnd_t *cnd, mtx_t *mtx);
 
@@ -256,9 +256,13 @@ void tss_delete(tss_t key);
 
 /******************************************************************************
  * Extra - non C11 helpers
+ * (We avoid tss_ mtx_ cnd_ prefixes since these reserved for functions with
+ * different return values)
  *****************************************************************************/
-/* int thrd_prio(enum thrd_prio prio) */
-/* void thrd_print(struct re_printf *pf, void *unused); */
+
+/* Ideas: */
+/* int thread_prio(enum thrd_prio prio) */
+/* void thread_print(struct re_printf *pf, void *unused); */
 
 /**
  * Allocates and initializes a new mutex
@@ -267,7 +271,7 @@ void tss_delete(tss_t key);
  *
  * @return 0 if success, otherwise errorcode
  */
-int mtx_alloc(mtx_t **mtx);
+int mutex_alloc(mtx_t **mtx);
 
 
 /**
@@ -280,5 +284,5 @@ int mtx_alloc(mtx_t **mtx);
  *
  * @return 0 if success, otherwise errorcode
  */
-int thrd_create_name(thrd_t *thr, const char *name, thrd_start_t func,
+int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);

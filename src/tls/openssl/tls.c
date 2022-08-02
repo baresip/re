@@ -708,6 +708,55 @@ int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
 	return err;
 }
 
+/**
+ * Set the certificate and private key on a TLS context
+ *
+ * @param tls      TLS Context
+ * @param cert     Certificate
+ * @param pkey     Private key
+ * @param up_ref   If true, increment reference count of the certificate if
+ *                 successfully set.
+ *                 If false, the reference count is not incremented and
+ *                 the ownership of the certificate is passed to the TLS
+ *                 context.
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_certificate_openssl(struct tls *tls, X509* cert, EVP_PKEY* pkey,
+				bool up_ref)
+{
+	int r, err = ENOMEM;
+
+	if (!tls || !cert || !pkey)
+		return EINVAL;
+
+	r = SSL_CTX_use_certificate(tls->ctx, cert);
+	if (r != 1)
+		goto out;
+
+	r = SSL_CTX_use_PrivateKey(tls->ctx, pkey);
+	if (r != 1) {
+		DEBUG_WARNING("set_certificate_openssl: use_PrivateKey"
+			      " failed\n");
+		goto out;
+	}
+
+	if (tls->cert)
+		X509_free(tls->cert);
+
+	tls->cert = cert;
+
+	if (up_ref)
+		X509_up_ref(tls->cert);
+
+	err = 0;
+
+out:
+	if (err)
+		ERR_clear_error();
+
+	return err;
+}
 
 /**
  * Set the certificate and private key on a TLS context
@@ -1146,6 +1195,8 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 	memcpy(cli_key + key_size, p, salt_size); p += salt_size;
 	memcpy(srv_key + key_size, p, salt_size);
 
+	mem_secclean(keymat, sizeof(keymat));
+
 	return 0;
 #else
 	(void)tc;
@@ -1294,7 +1345,7 @@ void tls_flush_error(void)
  *
  * @return OpenSSL context
  */
-struct ssl_ctx_st *tls_openssl_context(const struct tls *tls)
+SSL_CTX *tls_openssl_context(const struct tls *tls)
 {
 	return tls ? tls->ctx : NULL;
 }
@@ -1592,7 +1643,7 @@ static bool remove_handler(struct le *le, void *arg)
 }
 
 
-static void session_remove_cb(struct ssl_ctx_st *ctx, SSL_SESSION *sess)
+static void session_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 {
 	struct tls *tls = SSL_SESSION_get_ex_data(sess, 0);
 	(void) ctx;

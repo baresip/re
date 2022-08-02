@@ -12,20 +12,9 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.5.0 LANGUAGES C)
-
-# Pre-release identifier, comment out on a release
-# Increment for breaking changes (dev2, dev3...)
-# set(PROJECT_VERSION_PRE dev)
+project(re VERSION 2.6.0 LANGUAGES C)
 
 set(PROJECT_SOVERSION 7) # bump if ABI breaks
-
-if(PROJECT_VERSION_PRE)
-  set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
-else()
-  set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
-endif()
-
 
 ##############################################################################
 #
@@ -79,7 +68,7 @@ endif()
 
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
   # Ensure struct mem is aligned (used as fat pointer)
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()
@@ -190,6 +179,7 @@ endif()
 #
 
 set(HEADERS
+  include/re.h
   include/re_aes.h
   include/re_atomic.h
   include/re_av1.h
@@ -203,13 +193,12 @@ set(HEADERS
   include/re_dbg.h
   include/re_dns.h
   include/re_fmt.h
-  include/re.h
   include/re_h264.h
   include/re_h265.h
   include/re_hash.h
   include/re_hmac.h
-  include/re_httpauth.h
   include/re_http.h
+  include/re_httpauth.h
   include/re_ice.h
   include/re_jbuf.h
   include/re_json.h
@@ -223,14 +212,15 @@ set(HEADERS
   include/re_msg.h
   include/re_net.h
   include/re_odict.h
+  include/re_pcp.h
   include/re_rtmp.h
   include/re_rtp.h
   include/re_sa.h
   include/re_sdp.h
   include/re_sha.h
   include/re_shim.h
-  include/re_sipevent.h
   include/re_sip.h
+  include/re_sipevent.h
   include/re_sipreg.h
   include/re_sipsess.h
   include/re_srtp.h
@@ -238,6 +228,7 @@ set(HEADERS
   include/re_sys.h
   include/re_tcp.h
   include/re_telev.h
+  include/re_thread.h
   include/re_tls.h
   include/re_tmr.h
   include/re_trace.h
@@ -491,6 +482,7 @@ if(USE_SIP)
     src/sip/keepalive.c
     src/sip/keepalive_udp.c
     src/sip/msg.c
+    src/sip/rack.c
     src/sip/reply.c
     src/sip/request.c
     src/sip/sip.c
@@ -512,6 +504,7 @@ if(USE_SIP)
     src/sipsess/info.c
     src/sipsess/listen.c
     src/sipsess/modify.c
+    src/sipsess/prack.c
     src/sipsess/reply.c
     src/sipsess/request.c
     src/sipsess/sess.c

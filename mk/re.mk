@@ -155,6 +155,7 @@ CFLAGS	+= -Wold-style-definition
 CFLAGS	+= -Wvla # Avoid insecure variable-length arrays
 ifeq ($(CC_NAME), clang)
 CFLAGS	+= -Wshorten-64-to-32
+CFLAGS  += -Watomic-implicit-seq-cst
 endif
 
 CFLAGS  += -g
@@ -544,8 +545,6 @@ HAVE_SYS_SYSCTL_H := $(shell $(call CC_TEST,sys/sysctl.h))
 ifneq ($(HAVE_SYS_SYSCTL_H),)
 CFLAGS  += -DHAVE_SYS_SYSCTL_H
 endif
-
-CFLAGS  += -DHAVE_STDBOOL_H
 
 HAVE_INET6      := 1
 ifneq ($(HAVE_INET6),)

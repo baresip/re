@@ -237,6 +237,7 @@ void  rtcp_enable_mux(struct rtp_sock *rs, bool enabled);
 void  rtcp_set_srate(struct rtp_sock *rs, uint32_t sr_tx, uint32_t sr_rx);
 void  rtcp_set_srate_tx(struct rtp_sock *rs, uint32_t srate_tx);
 void  rtcp_set_srate_rx(struct rtp_sock *rs, uint32_t srate_rx);
+int   rtcp_send(struct rtp_sock *rs, struct mbuf *mb);
 int   rtcp_send_app(struct rtp_sock *rs, const char name[4],
 		    const uint8_t *data, size_t len);
 int   rtcp_send_fir(struct rtp_sock *rs, uint32_t ssrc);

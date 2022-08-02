@@ -13,6 +13,7 @@
 #include <re_mem.h>
 #include <re_btrace.h>
 #include <re_thread.h>
+#include <re_atomic.h>
 
 
 #define DEBUG_MODULE "mem"
@@ -27,11 +28,11 @@
 
 /** Defines a reference-counting memory object */
 struct mem {
-	size_t nrefs;          /**< Number of references  */
+	RE_ATOMIC uint32_t nrefs; /**< Number of references  */
+	uint32_t size;         /**< Size of memory object */
 	mem_destroy_h *dh;     /**< Destroy handler       */
 #if MEM_DEBUG
 	size_t magic;          /**< Magic number          */
-	size_t size;           /**< Size of memory object */
 	struct le le;          /**< Linked list element   */
 	struct btrace btraces; /**< Backtrace array       */
 #endif
@@ -68,45 +69,74 @@ static inline void mem_unlock(void)
 }
 
 /** Update statistics for mem_zalloc() */
-#define STAT_ALLOC(m, size) \
+#define STAT_ALLOC(_m, _size) \
 	mem_lock(); \
-	memstat.bytes_cur += (size); \
+	memstat.bytes_cur += (_size); \
 	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	++memstat.blocks_cur; \
 	memstat.blocks_peak = max(memstat.blocks_cur, memstat.blocks_peak); \
 	mem_unlock(); \
-	(m)->size = (size); \
-	(m)->magic = mem_magic;
+	(_m)->size = (uint32_t)(_size); \
+	(_m)->magic = mem_magic;
 
 /** Update statistics for mem_realloc() */
-#define STAT_REALLOC(m, size) \
+#define STAT_REALLOC(_m, _size) \
 	mem_lock(); \
-	memstat.bytes_cur += ((size) - (m)->size); \
+	memstat.bytes_cur += ((_size) - (_m)->size); \
 	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	mem_unlock(); \
-	(m)->size = (size)
+	(_m)->size = (uint32_t)(_size)
 
 /** Update statistics for mem_deref() */
-#define STAT_DEREF(m) \
+#define STAT_DEREF(_m) \
 	mem_lock(); \
-	memstat.bytes_cur -= (m)->size; \
+	memstat.bytes_cur -= (_m)->size; \
 	--memstat.blocks_cur; \
 	mem_unlock(); \
-	memset((m), 0xb5, sizeof(struct mem) + (m)->size)
+	memset((_m), 0xb5, (size_t)mem_header_size + (_m)->size)
 
 /** Check magic number in memory object */
-#define MAGIC_CHECK(m) \
-	if (mem_magic != (m)->magic) { \
-		DEBUG_WARNING("%s: magic check failed 0x%08x (%p)\n", \
-			      __REFUNC__, (m)->magic, (m)+1);	      \
+#define MAGIC_CHECK(_m) \
+	if (mem_magic != (_m)->magic) { \
+		DEBUG_WARNING("%s: magic check failed 0x%08zx (%p)\n", \
+			__REFUNC__, (_m)->magic, get_mem_data((_m))); \
 		BREAKPOINT;					      \
 	}
 #else
-#define STAT_ALLOC(m, size)
-#define STAT_REALLOC(m, size)
-#define STAT_DEREF(m)
-#define MAGIC_CHECK(m)
+#define STAT_ALLOC(_m, _size) (_m)->size = (uint32_t)(_size);
+#define STAT_REALLOC(_m, _size) (_m)->size = (uint32_t)(_size);
+#define STAT_DEREF(_m)
+#define MAGIC_CHECK(_m)
 #endif
+
+
+enum {
+#if defined(__x86_64__)
+	/* Use 16-byte alignment on x86-x32 as well */
+	mem_alignment = 16u,
+#else
+	mem_alignment = sizeof(void*) >= 8u ? 16u : 8u,
+#endif
+	alignment_mask = mem_alignment - 1u,
+	mem_header_size = (sizeof(struct mem) + alignment_mask) &
+		(~(size_t)alignment_mask)
+};
+
+#define MEM_SIZE_MAX \
+	(size_t)(sizeof(size_t) > sizeof(uint32_t) ? \
+		(~(uint32_t)0u) : (~(size_t)0u) - mem_header_size)
+
+
+static inline struct mem *get_mem(void *p)
+{
+	return (struct mem *)(void *)(((unsigned char *)p) - mem_header_size);
+}
+
+
+static inline void *get_mem_data(struct mem *m)
+{
+	return (void *)(((unsigned char *)m) + mem_header_size);
+}
 
 
 /**
@@ -121,6 +151,9 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 {
 	struct mem *m;
 
+	if (size > MEM_SIZE_MAX)
+		return NULL;
+
 #if MEM_DEBUG
 	mem_lock();
 	if (-1 != threshold && (memstat.blocks_cur >= (size_t)threshold)) {
@@ -130,7 +163,7 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 	mem_unlock();
 #endif
 
-	m = malloc(sizeof(*m) + size);
+	m = malloc(mem_header_size + size);
 	if (!m)
 		return NULL;
 
@@ -141,13 +174,12 @@ void *mem_alloc(size_t size, mem_destroy_h *dh)
 	list_append(&meml, &m->le, m);
 	mem_unlock();
 #endif
-
-	m->nrefs = 1;
+	re_atomic_rlx_set(&m->nrefs, 1u);
 	m->dh    = dh;
 
 	STAT_ALLOC(m, size);
 
-	return (void *)(m + 1);
+	return get_mem_data(m);
 }
 
 
@@ -190,9 +222,21 @@ void *mem_realloc(void *data, size_t size)
 	if (!data)
 		return NULL;
 
-	m = ((struct mem *)data) - 1;
+	if (size > MEM_SIZE_MAX)
+		return NULL;
+
+	m = get_mem(data);
 
 	MAGIC_CHECK(m);
+
+	if (re_atomic_acq(&m->nrefs) > 1u) {
+		void* p = mem_alloc(size, m->dh);
+		if (p) {
+			memcpy(p, data, m->size);
+			mem_deref(data);
+		}
+		return p;
+	}
 
 #if MEM_DEBUG
 	mem_lock();
@@ -206,10 +250,11 @@ void *mem_realloc(void *data, size_t size)
 	}
 
 	list_unlink(&m->le);
+
 	mem_unlock();
 #endif
 
-	m2 = realloc(m, sizeof(*m2) + size);
+	m2 = realloc(m, mem_header_size + size);
 
 #if MEM_DEBUG
 	mem_lock();
@@ -223,13 +268,8 @@ void *mem_realloc(void *data, size_t size)
 
 	STAT_REALLOC(m2, size);
 
-	return (void *)(m2 + 1);
+	return get_mem_data(m2);
 }
-
-
-#ifndef SIZE_MAX
-#define SIZE_MAX    (~((size_t)0))
-#endif
 
 
 /**
@@ -247,7 +287,7 @@ void *mem_reallocarray(void *ptr, size_t nmemb, size_t membsize,
 {
 	size_t tsize;
 
-	if (membsize && nmemb > SIZE_MAX / membsize) {
+	if (membsize && nmemb > MEM_SIZE_MAX / membsize) {
 		return NULL;
 	}
 
@@ -275,7 +315,7 @@ void mem_destructor(void *data, mem_destroy_h *dh)
 	if (!data)
 		return;
 
-	m = ((struct mem *)data) - 1;
+	m = get_mem(data);
 
 	MAGIC_CHECK(m);
 
@@ -297,11 +337,11 @@ void *mem_ref(void *data)
 	if (!data)
 		return NULL;
 
-	m = ((struct mem *)data) - 1;
+	m = get_mem(data);
 
 	MAGIC_CHECK(m);
 
-	++m->nrefs;
+	re_atomic_rlx_add(&m->nrefs, 1u);
 
 	return data;
 }
@@ -324,18 +364,19 @@ void *mem_deref(void *data)
 	if (!data)
 		return NULL;
 
-	m = ((struct mem *)data) - 1;
+	m = get_mem(data);
 
 	MAGIC_CHECK(m);
 
-	if (--m->nrefs > 0)
+	if (re_atomic_acq_sub(&m->nrefs, 1u) > 1u) {
 		return NULL;
+	}
 
 	if (m->dh)
 		m->dh(data);
 
 	/* NOTE: check if the destructor called mem_ref() */
-	if (m->nrefs > 0)
+	if (re_atomic_rlx(&m->nrefs) > 0u)
 		return NULL;
 
 #if MEM_DEBUG
@@ -366,11 +407,11 @@ uint32_t mem_nrefs(const void *data)
 	if (!data)
 		return 0;
 
-	m = ((struct mem *)data) - 1;
+	m = get_mem((void*)data);
 
 	MAGIC_CHECK(m);
 
-	return (uint32_t)m->nrefs;
+	return (uint32_t)re_atomic_acq(&m->nrefs);
 }
 
 
@@ -378,14 +419,15 @@ uint32_t mem_nrefs(const void *data)
 static bool debug_handler(struct le *le, void *arg)
 {
 	struct mem *m = le->data;
-	const uint8_t *p = (const uint8_t *)(m + 1);
+	const uint8_t *p = get_mem_data(m);
 	size_t i;
 
 	(void)arg;
 
-	(void)re_fprintf(stderr, "  %p: nrefs=%-2zu", p, m->nrefs);
+	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p,
+		(uint32_t)re_atomic_rlx(&m->nrefs));
 
-	(void)re_fprintf(stderr, " size=%-7zu", m->size);
+	(void)re_fprintf(stderr, " size=%-7u", m->size);
 
 	(void)re_fprintf(stderr, " [");
 
@@ -483,16 +525,19 @@ int mem_status(struct re_printf *pf, void *unused)
 	c = list_count(&meml);
 	mem_unlock();
 
-	err |= re_hprintf(pf, "Memory status: (%u bytes overhead pr block)\n",
-			  sizeof(struct mem));
-	err |= re_hprintf(pf, " Cur:  %u blocks, %u bytes (total %u bytes)\n",
+	err |= re_hprintf(pf,
+			  "Memory status: (%zu bytes overhead per block)\n",
+			  (size_t)mem_header_size);
+	err |= re_hprintf(pf,
+			  " Cur:  %zu blocks, %zu bytes (total %zu bytes)\n",
 			  stat.blocks_cur, stat.bytes_cur,
 			  stat.bytes_cur
-			  +(stat.blocks_cur*sizeof(struct mem)));
-	err |= re_hprintf(pf, " Peak: %u blocks, %u bytes (total %u bytes)\n",
+			  + (stat.blocks_cur * (size_t)mem_header_size));
+	err |= re_hprintf(pf,
+			  " Peak: %zu blocks, %zu bytes (total %zu bytes)\n",
 			  stat.blocks_peak, stat.bytes_peak,
 			  stat.bytes_peak
-			  +(stat.blocks_peak*sizeof(struct mem)));
+			  + (stat.blocks_peak * (size_t)mem_header_size));
 	err |= re_hprintf(pf, " Total %u blocks allocated\n", c);
 
 	return err;
