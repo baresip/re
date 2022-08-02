@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-          ref: 'v2.6.0'
+          ref: 'v2.6.1'
           path: old
 
     - uses: actions/checkout@v2
