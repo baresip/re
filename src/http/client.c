@@ -896,6 +896,11 @@ int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc)
 	err = tls_set_verify_purpose(cli->tls, "sslserver");
 	if (err)
 		goto out;
+
+	err = tls_activate_retry(cli->tls);
+	if (err)
+		goto out;
+
 #else
 	err = 0;
 #endif

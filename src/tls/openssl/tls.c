@@ -1805,3 +1805,23 @@ SSL_CTX *tls_ssl_ctx(const struct tls *tls)
 
 	return tls->ctx;
 }
+
+
+/**
+ * Set tls mode retry option
+ *
+ * @param tls  tls connection object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_activate_retry(const struct tls *tls)
+{
+	if (!tls || !tls->ctx)
+		return EINVAL;
+
+	if ((SSL_CTX_set_mode(tls->ctx, SSL_MODE_AUTO_RETRY) &
+		 SSL_MODE_AUTO_RETRY)== SSL_MODE_AUTO_RETRY)
+		return 0;
+	else
+		return ENOTSUP;
+}
