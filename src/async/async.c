@@ -48,7 +48,7 @@ static int worker_thread(void *arg)
 		mtx_lock(&a->mtx);
 		if (!a->run) {
 			mtx_unlock(&a->mtx);
-			return 0;
+			break;
 		}
 
 		if (list_isempty(&a->workl)) {
