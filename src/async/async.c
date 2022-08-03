@@ -9,7 +9,6 @@
 #include <re_list.h>
 #include <re_thread.h>
 #include <re_async.h>
-#include <re_atomic.h>
 #include <re_tmr.h>
 #include <re_mqueue.h>
 
@@ -28,7 +27,7 @@ struct async_work {
 struct re_async {
 	thrd_t *thrd;
 	uint16_t workers;
-	RE_ATOMIC bool run;
+	volatile bool run;
 	cnd_t wait;
 	mtx_t mtx;
 	struct list freel;
@@ -45,12 +44,17 @@ static int worker_thread(void *arg)
 	struct le *le;
 	struct async_work *work;
 
-	while (re_atomic_rlx(&a->run)) {
+	for (;;) {
 		mtx_lock(&a->mtx);
+		if (!a->run) {
+			mtx_unlock(&a->mtx);
+			return 0;
+		}
+
 		if (list_isempty(&a->workl))
 			cnd_wait(&a->wait, &a->mtx);
 
-		if (list_isempty(&a->workl) || !re_atomic_rlx(&a->run)) {
+		if (list_isempty(&a->workl) || !a->run) {
 			mtx_unlock(&a->mtx);
 			continue;
 		}
@@ -75,7 +79,7 @@ static void async_destructor(void *data)
 	tmr_cancel(&async->tmr);
 
 	mtx_lock(&async->mtx);
-	re_atomic_rlx_set(&async->run, false);
+	async->run = false;
 	cnd_broadcast(&async->wait);
 	mtx_unlock(&async->mtx);
 
@@ -163,7 +167,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 
 	mem_destructor(async, async_destructor);
 
-	re_atomic_rlx_set(&async->run, true);
+	async->run = true;
 
 	for (int i = 0; i < workers; i++) {
 		err = thread_create_name(&async->thrd[i],
