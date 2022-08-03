@@ -66,7 +66,10 @@ static int worker_thread(void *arg)
 
 		work	  = le->data;
 		work->err = work->work(work->arg);
+
+		mtx_lock(&a->mtx);
 		mqueue_push(a->mqueue, 0, work);
+		mtx_unlock(&a->mtx);
 	}
 
 	return 0;
