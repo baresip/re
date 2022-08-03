@@ -59,6 +59,7 @@
 
 /** Main loop values */
 enum {
+	RE_THREAD_WORKERS = 4,
 	MAX_BLOCKING = 500,    /**< Maximum time spent in handler in [ms] */
 #if defined (FD_SETSIZE)
 	DEFAULT_MAXFDS = FD_SETSIZE
@@ -103,6 +104,7 @@ struct re {
 	mtx_t *mutexp;               /**< Pointer to active mutex           */
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
+	struct re_async *async;      /**< Async object                      */
 };
 
 static struct re *re_global = NULL;
@@ -118,6 +120,7 @@ static void re_destructor(void *arg)
 
 	poll_close(re);
 	mem_deref(re->mutex);
+	mem_deref(re->async);
 }
 
 
@@ -153,6 +156,7 @@ int re_alloc(struct re **rep)
 	re->mutexp = re->mutex;
 
 	list_init(&re->tmrl);
+	re->async = NULL;
 	re->tid = thrd_current();
 
 #ifdef HAVE_EPOLL
@@ -1457,4 +1461,84 @@ struct list *tmrl_get(void)
 	}
 
 	return &re->tmrl;
+}
+
+
+/**
+ * Initialize re async object
+ *
+ * @param workers  Number of async worker threads
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_init(uint16_t workers)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (!re) {
+		DEBUG_WARNING("re_thread_async_workers: re not ready\n");
+		return EINVAL;
+	}
+
+	if (re->async)
+		return EALREADY;
+
+	err = re_async_alloc(&re->async, workers);
+	if (err)
+		DEBUG_WARNING("re_async_alloc: %m\n", err);
+
+	return err;
+}
+
+
+/**
+ * Close/Dereference async object
+ */
+void re_thread_async_close(void)
+{
+	struct re *re = re_get();
+
+	if (!re) {
+		DEBUG_WARNING("re_thread_async_close: re not ready\n");
+		return;
+	}
+
+	re->async = mem_deref(re->async);
+}
+
+
+/**
+ * Execute work handler for current event loop
+ *
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe)
+ *
+ * @return async object on success, otherwise NULL
+ */
+int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async: re not ready\n");
+		return EAGAIN;
+	}
+
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
+#ifndef RELEASE
+	err = re_thread_check();
+	if (err)
+		return err;
+#endif
+
+	return re_async(re->async, work, cb, arg);
 }
