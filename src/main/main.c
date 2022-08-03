@@ -59,6 +59,7 @@
 
 /** Main loop values */
 enum {
+	RE_THREAD_WORKERS = 4,
 	MAX_BLOCKING = 500,    /**< Maximum time spent in handler in [ms] */
 #if defined (FD_SETSIZE)
 	DEFAULT_MAXFDS = FD_SETSIZE
@@ -1519,14 +1520,22 @@ void re_thread_async_close(void)
 int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 {
 	struct re *re = re_get();
+	int err;
 
-	if (unlikely(!re || !re->async)) {
-		DEBUG_WARNING("re_thread_async: re or async not ready\n");
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async: re not ready\n");
 		return EAGAIN;
 	}
 
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
 #ifndef RELEASE
-	int err = re_thread_check();
+	err = re_thread_check();
 	if (err)
 		return err;
 #endif
