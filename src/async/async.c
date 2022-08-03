@@ -51,12 +51,13 @@ static int worker_thread(void *arg)
 			return 0;
 		}
 
-		if (list_isempty(&a->workl))
+		if (list_isempty(&a->workl)) {
 			cnd_wait(&a->wait, &a->mtx);
 
-		if (list_isempty(&a->workl) || !a->run) {
-			mtx_unlock(&a->mtx);
-			continue;
+			if (list_isempty(&a->workl) || !a->run) {
+				mtx_unlock(&a->mtx);
+				continue;
+			}
 		}
 
 		le = list_head(&a->workl);
