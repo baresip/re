@@ -1481,7 +1481,7 @@ int re_thread_async_init(uint16_t workers)
 	}
 
 	if (re->async)
-		re->async = mem_deref(re->async);
+		return EALREADY;
 
 	err = re_async_alloc(&re->async, workers);
 	if (err)
@@ -1522,7 +1522,7 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 
 	if (unlikely(!re || !re->async)) {
 		DEBUG_WARNING("re_thread_async: re or async not ready\n");
-		return EINVAL;
+		return EAGAIN;
 	}
 
 #ifndef RELEASE
