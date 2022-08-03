@@ -172,7 +172,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 		if (err) {
 			goto err;
 		}
-		
+
 		/* preallocate */
 		async_work = mem_zalloc(sizeof(struct async_work), NULL);
 		if (!async_work) {
