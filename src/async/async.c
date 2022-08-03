@@ -169,9 +169,10 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 		err = thread_create_name(&async->thrd[i],
 					 "async worker thread", worker_thread,
 					 async);
-		if (err) {
+		if (err)
 			goto err;
-		}
+
+		async->workers++;
 
 		/* preallocate */
 		async_work = mem_zalloc(sizeof(struct async_work), NULL);
@@ -181,8 +182,6 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 		}
 
 		list_append(&async->freel, &async_work->le, async_work);
-
-		async->workers++;
 	}
 
 	tmr_start(&async->tmr, 10, worker_check, async);
@@ -192,7 +191,6 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 	return 0;
 
 err:
-
 	mem_deref(async);
 	return err;
 }
