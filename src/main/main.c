@@ -59,7 +59,6 @@
 
 /** Main loop values */
 enum {
-	RE_ASYNC_WORKERS = 4,
 	MAX_BLOCKING = 500,    /**< Maximum time spent in handler in [ms] */
 #if defined (FD_SETSIZE)
 	DEFAULT_MAXFDS = FD_SETSIZE
@@ -1467,7 +1466,7 @@ struct list *tmrl_get(void)
 /**
  * Initialize re async object
  *
- * @param workers  Number of worker threads
+ * @param workers  Number of async worker threads
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -1482,13 +1481,13 @@ int re_thread_async_init(uint16_t workers)
 	}
 
 	if (re->async)
-		return EEXIST;
+		re->async = mem_deref(re->async);
 
 	err = re_async_alloc(&re->async, workers);
 	if (err)
 		DEBUG_WARNING("re_async_alloc: %m\n", err);
 
-	return 0;
+	return err;
 }
 
 
@@ -1520,19 +1519,10 @@ void re_thread_async_close(void)
 int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 {
 	struct re *re = re_get();
-	int err;
 
-	if (!re) {
-		DEBUG_WARNING("re_thread_async: re not ready\n");
+	if (unlikely(!re || !re->async)) {
+		DEBUG_WARNING("re_thread_async: re or async not ready\n");
 		return EINVAL;
-	}
-
-	if (!re->async) {
-		err = re_async_alloc(&re->async, RE_ASYNC_WORKERS);
-		if (err) {
-			DEBUG_WARNING("re_async_alloc: %m\n", err);
-			return err;
-		}
 	}
 
 	return re_async(re->async, work, cb, arg);
