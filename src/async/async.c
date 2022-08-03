@@ -31,6 +31,7 @@ struct re_async {
 	RE_ATOMIC bool run;
 	cnd_t wait;
 	mtx_t mtx;
+	struct list freel;
 	struct list workl;
 	struct list curl;
 	struct tmr tmr;
@@ -84,6 +85,7 @@ static void async_destructor(void *data)
 
 	list_flush(&async->workl);
 	list_flush(&async->curl);
+	list_flush(&async->freel);
 	cnd_destroy(&async->wait);
 	mtx_destroy(&async->mtx);
 	mem_deref(async->mqueue);
@@ -118,10 +120,8 @@ static void queueh(int id, void *data, void *arg)
 	work->cb(work->err, work->arg);
 
 	mtx_lock(&async->mtx);
-	list_unlink(&work->le);
+	list_move(&work->le, &async->freel);
 	mtx_unlock(&async->mtx);
-
-	mem_deref(work);
 }
 
 
@@ -137,6 +137,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 {
 	int err;
 	struct re_async *async;
+	struct async_work *async_work;
 
 	if (!asyncp || !workers)
 		return EINVAL;
@@ -146,16 +147,14 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 		return ENOMEM;
 
 	err = mqueue_alloc(&async->mqueue, queueh, async);
-	if (err) {
-		mem_deref(async);
-		return err;
-	}
+	if (err)
+		goto err;
 
 	async->thrd = mem_zalloc(sizeof(thrd_t) * workers, NULL);
 	if (!async->thrd) {
+		err = ENOMEM;
 		mem_deref(async->mqueue);
-		mem_deref(async);
-		return ENOMEM;
+		goto err;
 	}
 
 	mtx_init(&async->mtx, mtx_plain);
@@ -171,9 +170,17 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 					 "async worker thread", worker_thread,
 					 async);
 		if (err) {
-			mem_deref(async);
-			return err;
+			goto err;
 		}
+		
+		/* preallocate */
+		async_work = mem_zalloc(sizeof(struct async_work), NULL);
+		if (!async_work) {
+			err = ENOMEM;
+			goto err;
+		}
+
+		list_append(&async->freel, &async_work->le, async_work);
 
 		async->workers++;
 	}
@@ -183,6 +190,11 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 	*asyncp = async;
 
 	return 0;
+
+err:
+
+	mem_deref(async);
+	return err;
 }
 
 
@@ -202,12 +214,18 @@ int re_async(struct re_async *async, re_async_work_h *work, re_async_h *cb,
 	int err = 0;
 	struct async_work *async_work;
 
-	if (!async || !work || !cb)
+	if (unlikely(!async || !work || !cb))
 		return EINVAL;
 
-	async_work = mem_zalloc(sizeof(struct async_work), NULL);
-	if (!async_work)
-		return ENOMEM;
+	if (unlikely(list_isempty(&async->freel))) {
+		async_work = mem_zalloc(sizeof(struct async_work), NULL);
+		if (!async_work)
+			return ENOMEM;
+	}
+	else {
+		async_work = list_head(&async->freel)->data;
+		list_unlink(&async_work->le);
+	}
 
 	async_work->work = work;
 	async_work->cb	 = cb;
