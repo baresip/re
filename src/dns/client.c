@@ -833,10 +833,11 @@ static void getaddrinfo_h(int err, void *arg)
 	bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
 	DEBUG_INFO("--- ANSWER SECTION (system) id: %d ---\n", q->id);
-	if (!err)
+	if (!err) {
 		DEBUG_INFO("%H %s\n", dns_rr_print,
 			   list_ledata(list_head(&q->rrlv[0])),
 			   cache ? "(caching)" : "");
+	}
 
 	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
