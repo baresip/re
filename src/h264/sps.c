@@ -22,7 +22,7 @@ enum {
 
 
 static int scaling_list(struct getbit *gb,
-			unsigned *scaling_list, size_t sizeofscalinglist,
+			unsigned *scalingl, size_t sizeofscalinglist,
 			bool *usedefaultscalingmatrix)
 {
 	unsigned lastscale = 8;
@@ -45,9 +45,9 @@ static int scaling_list(struct getbit *gb,
 			*usedefaultscalingmatrix = (j==0 && nextscale==0);
 		}
 
-		scaling_list[j] = (nextscale==0) ? lastscale : nextscale;
+		scalingl[j] = (nextscale==0) ? lastscale : nextscale;
 
-		lastscale = scaling_list[j];
+		lastscale = scalingl[j];
 	}
 
 	return 0;
