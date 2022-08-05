@@ -42,6 +42,7 @@ enum {
 	SRVC_MAX = 32,
 	RR_MAX = 32,
 	CACHE_TTL_MAX = 1800,
+	GETADDRINFO_TTL = 60
 };
 
 
@@ -795,30 +796,30 @@ static int async_getaddrinfo(void *arg)
 	if (err)
 		return EADDRNOTAVAIL;
 
-	struct dnsrr *r = dns_rr_alloc();
-	if (!r)
+	struct dnsrr *rr = dns_rr_alloc();
+	if (!rr)
 		return ENOMEM;
 
-	str_dup(&r->name, q->name);
+	str_dup(&rr->name, q->name);
 
-	r->dnsclass = DNS_CLASS_IN;
-	r->ttl	    = 0;
+	rr->dnsclass = DNS_CLASS_IN;
+	rr->ttl	     = GETADDRINFO_TTL;
 
 	sa_set_sa(&sa, res->ai_addr);
 
 	if (sa_af(&sa) == AF_INET) {
-		r->type		= DNS_TYPE_A;
-		r->rdlen	= 4;
-		r->rdata.a.addr = sa_in(&sa);
+		rr->type	 = DNS_TYPE_A;
+		rr->rdlen	 = 4;
+		rr->rdata.a.addr = sa_in(&sa);
 	}
 
 	if (sa_af(&sa) == AF_INET6) {
-		r->type	 = DNS_TYPE_AAAA;
-		r->rdlen = 16;
-		sa_in6(&sa, r->rdata.aaaa.addr);
+		rr->type  = DNS_TYPE_AAAA;
+		rr->rdlen = 16;
+		sa_in6(&sa, rr->rdata.aaaa.addr);
 	}
 
-	list_append(&q->rrlv[0], &r->le_priv, r);
+	list_append(&q->rrlv[0], &rr->le_priv, rr);
 
 	freeaddrinfo(res);
 
@@ -829,9 +830,24 @@ static int async_getaddrinfo(void *arg)
 static void getaddrinfo_h(int err, void *arg)
 {
 	struct dns_query *q = arg;
+	bool cache = q->dnsc->conf.cache_ttl_max > 0;
+
+	DEBUG_INFO("--- ANSWER SECTION (system) id: %d ---\n", q->id);
+	if (!err)
+		DEBUG_INFO("%H %s\n", dns_rr_print,
+			   list_ledata(list_head(&q->rrlv[0])),
+			   cache ? "(caching)" : "");
 
 	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
-	mem_deref(q);
+
+	if (!cache) {
+		mem_deref(q);
+		return;
+	}
+
+	hash_append(q->dnsc->ht_query_cache, hash_joaat_str_ci(q->name),
+		    &q->le, q);
+	tmr_start(&q->tmr_ttl, GETADDRINFO_TTL * 1000, ttl_timeout_handler, q);
 }
 
 
@@ -905,6 +921,9 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	DEBUG_INFO("%s.\t%s\t%s\n", q->name, dns_rr_classname(q->dnsclass),
 		   dns_rr_typename(q->type));
 
+	if (query_cache_handler(q))
+		goto out;
+
 	if (dnsc->conf.system &&
 	    (q->type == DNS_TYPE_A || q->type == DNS_TYPE_AAAA)) {
 		err = query_getaddrinfo(q);
@@ -913,9 +932,6 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 		goto out;
 	}
-
-	if (query_cache_handler(q))
-		goto out;
 
 	if (proto == IPPROTO_TCP)
 		q->mb.pos += 2;
