@@ -9,25 +9,25 @@ struct btrace {
 	size_t len;
 };
 
-int btrace_print(struct re_printf *pf, struct btrace *btrace);
-int btrace_println(struct re_printf *pf, struct btrace *btrace);
-int btrace_print_json(struct re_printf *pf, struct btrace *btrace);
+int btrace_print(struct re_printf *pf, struct btrace *bt);
+int btrace_println(struct re_printf *pf, struct btrace *bt);
+int btrace_print_json(struct re_printf *pf, struct btrace *bt);
 
 #if defined(HAVE_EXECINFO) && !defined(RELEASE)
 #include <execinfo.h>
-static inline int btrace(struct btrace *btrace)
+static inline int btrace(struct btrace *bt)
 {
-	if (!btrace)
+	if (!bt)
 		return EINVAL;
 
-	btrace->len = backtrace(btrace->stack, BTRACE_SZ);
+	bt->len = backtrace(bt->stack, BTRACE_SZ);
 
 	return 0;
 }
 #else
-static inline int btrace(struct btrace *btrace)
+static inline int btrace(struct btrace *bt)
 {
-	(void)btrace;
+	(void)bt;
 	return 0;
 }
 #endif
