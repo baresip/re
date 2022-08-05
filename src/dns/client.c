@@ -4,6 +4,13 @@
  * Copyright (C) 2010 Creytiv.com
  * Copyright (C) 2022 Sebastian Reimers
  */
+#define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
+
+#ifndef WIN32
+#include <netdb.h>
+#endif
+
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -17,6 +24,8 @@
 #include <re_tcp.h>
 #include <re_sys.h>
 #include <re_dns.h>
+#include <re_net.h>
+#include <re_main.h>
 
 
 #define DEBUG_MODULE "dnsc"
@@ -103,6 +112,7 @@ static const struct dnsc_conf default_conf = {
 	CONN_TIMEOUT,
 	IDLE_TIMEOUT,
 	CACHE_TTL_MAX,
+	false
 };
 
 
@@ -765,6 +775,78 @@ static bool query_cache_handler(struct dns_query *q)
 }
 
 
+static int async_getaddrinfo(void *arg)
+{
+	struct dns_query *q = arg;
+	int err;
+	struct addrinfo *res = NULL;
+	struct addrinfo hints;
+	struct sa sa;
+
+	memset(&hints, 0, sizeof(hints));
+
+	if (q->type == DNS_TYPE_A)
+		hints.ai_family = AF_INET;
+	if (q->type == DNS_TYPE_AAAA)
+		hints.ai_family = AF_INET6;
+	hints.ai_flags = AI_ADDRCONFIG;
+
+	err = getaddrinfo(q->name, NULL, &hints, &res);
+	if (err)
+		return EADDRNOTAVAIL;
+
+	struct dnsrr *r = dns_rr_alloc();
+	if (!r)
+		return ENOMEM;
+
+	str_dup(&r->name, q->name);
+
+	r->dnsclass = DNS_CLASS_IN;
+	r->ttl	    = 0;
+
+	sa_set_sa(&sa, res->ai_addr);
+
+	if (sa_af(&sa) == AF_INET) {
+		r->type		= DNS_TYPE_A;
+		r->rdlen	= 4;
+		r->rdata.a.addr = sa_in(&sa);
+	}
+
+	if (sa_af(&sa) == AF_INET6) {
+		r->type	 = DNS_TYPE_AAAA;
+		r->rdlen = 16;
+		sa_in6(&sa, r->rdata.aaaa.addr);
+	}
+
+	list_append(&q->rrlv[0], &r->le_priv, r);
+
+	freeaddrinfo(res);
+
+	return 0;
+}
+
+
+static void getaddrinfo_h(int err, void *arg)
+{
+	struct dns_query *q = arg;
+
+	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
+	mem_deref(q);
+}
+
+
+static int query_getaddrinfo(struct dns_query *q)
+{
+	int err;
+
+	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, q);
+	if (err)
+		DEBUG_WARNING("re_thread_async: %m\n", err);
+
+	return err;
+}
+
+
 static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		 const char *name, uint16_t type, uint16_t dnsclass,
 		 const struct dnsrr *ans_rr, int proto,
@@ -822,6 +904,15 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	DEBUG_INFO("--- QUESTION SECTION id: %d ---\n", q->id);
 	DEBUG_INFO("%s.\t%s\t%s\n", q->name, dns_rr_classname(q->dnsclass),
 		   dns_rr_typename(q->type));
+
+	if (dnsc->conf.system &&
+	    (q->type == DNS_TYPE_A || q->type == DNS_TYPE_AAAA)) {
+		err = query_getaddrinfo(q);
+		if (err)
+			goto error;
+
+		goto out;
+	}
 
 	if (query_cache_handler(q))
 		goto out;
@@ -1149,4 +1240,19 @@ void dnsc_cache_max(struct dnsc *dnsc, uint32_t max)
 
 	if (!max)
 		dnsc_cache_flush(dnsc);
+}
+
+
+/**
+ * Enable/Disable system dns usage (getaddrinfo)
+ *
+ * @param dnsc  DNS Client
+ * @param max   true for enabled, otherwise disabled (default)
+ */
+void dnsc_system(struct dnsc *dnsc, bool active)
+{
+	if (!dnsc)
+		return;
+
+	dnsc->conf.system = active;
 }
