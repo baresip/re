@@ -201,7 +201,7 @@ struct dnsc_conf {
 	uint32_t conn_timeout;  /* in [ms] */
 	uint32_t idle_timeout;  /* in [ms] */
 	uint32_t cache_ttl_max; /* in [s] 0 for disabled */
-	bool     system;        /* use getaddrinfo (by default disabled) */
+	bool     getaddrinfo;   /* use getaddrinfo (by default disabled) */
 };
 
 int  dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
@@ -221,7 +221,7 @@ int  dnsc_notify(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 		 dns_query_h *qh, void *arg);
 void dnsc_cache_flush(struct dnsc *dnsc);
 void dnsc_cache_max(struct dnsc *dnsc, uint32_t max);
-void dnsc_system(struct dnsc *dnsc, bool active);
+void dnsc_getaddrinfo(struct dnsc *dnsc, bool active);
 
 
 /* DNS System functions */

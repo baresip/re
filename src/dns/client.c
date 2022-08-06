@@ -780,7 +780,8 @@ static int async_getaddrinfo(void *arg)
 {
 	struct dns_query *q = arg;
 	int err;
-	struct addrinfo *res = NULL;
+	struct addrinfo *res0 = NULL;
+	struct addrinfo *res;
 	struct addrinfo hints;
 	struct sa sa;
 
@@ -792,38 +793,50 @@ static int async_getaddrinfo(void *arg)
 		hints.ai_family = AF_INET6;
 	hints.ai_flags = AI_ADDRCONFIG;
 
-	err = getaddrinfo(q->name, NULL, &hints, &res);
+	err = getaddrinfo(q->name, NULL, &hints, &res0);
 	if (err)
 		return EADDRNOTAVAIL;
 
-	struct dnsrr *rr = dns_rr_alloc();
-	if (!rr)
-		return ENOMEM;
+	for (res = res0; res; res = res->ai_next) {
+		struct dnsrr *rr = dns_rr_alloc();
+		if (!rr) {
+			err =  ENOMEM;
+			goto out;
+		}
 
-	str_dup(&rr->name, q->name);
+		str_dup(&rr->name, q->name);
 
-	rr->dnsclass = DNS_CLASS_IN;
-	rr->ttl	     = GETADDRINFO_TTL;
+		rr->dnsclass = DNS_CLASS_IN;
+		rr->ttl	     = GETADDRINFO_TTL;
 
-	sa_set_sa(&sa, res->ai_addr);
+		err = sa_set_sa(&sa, res->ai_addr);
+		if (err) {
+			mem_deref(rr);
+			continue;
+		}
 
-	if (sa_af(&sa) == AF_INET) {
-		rr->type	 = DNS_TYPE_A;
-		rr->rdlen	 = 4;
-		rr->rdata.a.addr = sa_in(&sa);
+		if (sa_af(&sa) == AF_INET) {
+			rr->type	 = DNS_TYPE_A;
+			rr->rdlen	 = 4;
+			rr->rdata.a.addr = sa_in(&sa);
+		}
+
+		if (sa_af(&sa) == AF_INET6) {
+			rr->type  = DNS_TYPE_AAAA;
+			rr->rdlen = 16;
+			sa_in6(&sa, rr->rdata.aaaa.addr);
+		}
+
+		list_append(&q->rrlv[0], &rr->le_priv, rr);
 	}
 
-	if (sa_af(&sa) == AF_INET6) {
-		rr->type  = DNS_TYPE_AAAA;
-		rr->rdlen = 16;
-		sa_in6(&sa, rr->rdata.aaaa.addr);
-	}
+out:
+	if (err)
+		list_flush(&q->rrlv[0]);
 
-	list_append(&q->rrlv[0], &rr->le_priv, rr);
+	freeaddrinfo(res0);
 
-	freeaddrinfo(res);
-
-	return 0;
+	return err;
 }
 
 
@@ -832,7 +845,8 @@ static void getaddrinfo_h(int err, void *arg)
 	struct dns_query *q = arg;
 	bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
-	DEBUG_INFO("--- ANSWER SECTION (system) id: %d ---\n", q->id);
+	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d ---\n", q->id);
+
 	if (!err) {
 		DEBUG_INFO("%H %s\n", dns_rr_print,
 			   list_ledata(list_head(&q->rrlv[0])),
@@ -841,7 +855,7 @@ static void getaddrinfo_h(int err, void *arg)
 
 	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
 
-	if (!cache) {
+	if (err || !cache) {
 		mem_deref(q);
 		return;
 	}
@@ -925,7 +939,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	if (query_cache_handler(q))
 		goto out;
 
-	if (dnsc->conf.system &&
+	if (dnsc->conf.getaddrinfo &&
 	    (q->type == DNS_TYPE_A || q->type == DNS_TYPE_AAAA)) {
 		err = query_getaddrinfo(q);
 		if (err)
@@ -1261,15 +1275,15 @@ void dnsc_cache_max(struct dnsc *dnsc, uint32_t max)
 
 
 /**
- * Enable/Disable system dns usage (getaddrinfo)
+ * Enable/Disable getaddrinfo usage
  *
  * @param dnsc  DNS Client
  * @param max   true for enabled, otherwise disabled (default)
  */
-void dnsc_system(struct dnsc *dnsc, bool active)
+void dnsc_getaddrinfo(struct dnsc *dnsc, bool active)
 {
 	if (!dnsc)
 		return;
 
-	dnsc->conf.system = active;
+	dnsc->conf.getaddrinfo = active;
 }
