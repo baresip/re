@@ -6,7 +6,7 @@
 
 #include <sys/types.h>
 
-#ifdef __cplusplus
+#if defined(__cplusplus) || __STDC_VERSION__ < 199901L
 #define restrict
 #endif
 

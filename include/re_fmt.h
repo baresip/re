@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include <re_types.h>
 
 struct mbuf;
 
