@@ -182,8 +182,8 @@ static void re_once(void)
 {
 	int err;
 
-	err = tss_create(&key, thread_destructor);
-	if (err != thrd_success) {
+	err = tss_create(&key, thread_destructor) != thrd_success;
+	if (err) {
 		DEBUG_WARNING("tss_create failed\n");
 		exit(ENOMEM);
 	}
@@ -214,8 +214,8 @@ static inline void re_lock(struct re *re)
 {
 	int err;
 
-	err = mtx_lock(re->mutexp);
-	if (err != thrd_success)
+	err = mtx_lock(re->mutexp) != thrd_success;
+	if (err)
 		DEBUG_WARNING("re_lock err\n");
 }
 
@@ -224,8 +224,8 @@ static inline void re_unlock(struct re *re)
 {
 	int err;
 
-	err = mtx_unlock(re->mutexp);
-	if (err != thrd_success)
+	err = mtx_unlock(re->mutexp) != thrd_success;
+	if (err)
 		DEBUG_WARNING("re_unlock err\n");
 }
 
@@ -1291,8 +1291,8 @@ int re_thread_init(void)
 	if (!re_global)
 		re_global = re;
 
-	err = tss_set(key, re);
-	if (err != thrd_success) {
+	err = tss_set(key, re) != thrd_success;
+	if (err) {
 		err = ENOMEM;
 		DEBUG_WARNING("thread_init: tss_set error\n");
 	}
