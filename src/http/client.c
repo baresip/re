@@ -82,8 +82,6 @@ struct http_req {
 	bool chunked;
 	bool secure;
 	bool close;
-	struct mbuf *body;
-	bool send_body;
 	int proto_retries;
 	http_req_bodyh *req_bodyh;
 };
@@ -98,7 +96,8 @@ static const struct http_conf default_conf = {
 
 struct conn {
 	struct tmr tmr;
-	struct tmr body_tmr;
+	struct tmr send_req_tmr;
+	bool send_req_tmr_active;
 	struct sa addr;
 	struct le he;
 	struct http_req *req;
@@ -148,7 +147,6 @@ static void req_destructor(void *arg)
 	mem_deref(req->mbreq);
 	mem_deref(req->mb);
 	mem_deref(req->host);
-	mem_deref(req->body);
 }
 
 
@@ -157,7 +155,7 @@ static void conn_destructor(void *arg)
 	struct conn *conn = arg;
 
 	tmr_cancel(&conn->tmr);
-	tmr_cancel(&conn->body_tmr);
+	tmr_cancel(&conn->send_req_tmr);
 	hash_unlink(&conn->he);
 	mem_deref(conn->sc);
 	mem_deref(conn->tc);
@@ -231,7 +229,6 @@ static void try_next(struct conn *conn, int err)
 	struct http_req *req = conn->req;
 	bool retry = conn->usec > 1;
 
-	tmr_cancel(&conn->body_tmr);
 	mem_deref(conn);
 
 	if (!req)
@@ -337,19 +334,30 @@ static void timeout_handler(void *arg)
 }
 
 
-static int req_more_body(struct http_req *req)
+static int read_req_data(struct http_req *req)
 {
 	int err = 0;
 	uint8_t *buf = NULL;
 	int rlen = 0;
 
-	req->body = mem_deref(req->body);
 	if (!req->req_bodyh)
 		return 0;
 
+	if (!req->mbreq) {
+		req->mbreq = mbuf_alloc(http_client_get_bufsize_max(req->cli));
+		if (!req->mbreq) {
+			DEBUG_WARNING("%s:%d out of memory during "
+				"allocating body: %d", __func__,
+				__LINE__, err,
+				http_client_get_bufsize_max(req->cli));
+			goto out;
+		}
+	}
+
 	rlen = req->req_bodyh(&buf, req->arg);
-	if (!rlen)
+	if (!rlen) {
 		goto out;
+	}
 
 	if (rlen < 0 || !buf) {
 		DEBUG_WARNING("%s:%d error req_bodyh returned: %d\n",
@@ -357,66 +365,102 @@ static int req_more_body(struct http_req *req)
 		goto out;
 	}
 
-	req->body = mbuf_alloc(rlen+4+8);
-	if (!req->body) {
-		DEBUG_WARNING("%s:%d out of memory during allocating body: %d",
-			__func__, __LINE__, err, rlen);
-		goto out;
-	}
-
-	err = mbuf_write_mem(req->body, buf, rlen);
+	err = mbuf_write_mem(req->mbreq, buf, rlen);
 	if (err) {
 		DEBUG_WARNING("%s:%d mbuf write mem failed. (%m), len: %d",
 			__func__, __LINE__, err, rlen);
 		goto out;
 	}
 
-	mbuf_set_pos(req->body, 0);
 out:
 	mem_deref(buf);
 	return err;
 }
 
 
-static void more_data(void *arg)
+static int send_buf(struct tcp_conn *tc, struct mbuf *large, size_t max_size)
 {
-	int err;
-	struct conn *conn = arg;
-	struct http_req *req = conn->req;
-	struct http_cli *cli;
 	struct mbuf *mb = NULL;
-	int len;
+	size_t len;
+	int err = 0;
 
-	if (!conn || !req || !req->cli) {
-		DEBUG_WARNING("%s:%d client not initialized\n", __func__, __LINE__);
-		return;
+	if (!tc || !large)
+		return EINVAL;
+
+	if (!mbuf_get_left(large)) {
+		DEBUG_WARNING("%s:%d mbuf_get_left is null\n",
+			__func__, __LINE__);
+		return 0;
 	}
 
-	if (!mbuf_get_left(req->body)) {
-		return;
-	}
-
-	cli = req->cli;
-
-	mb = mbuf_alloc_ref(req->body);
+	mb = mbuf_alloc_ref(large);
 	if (!mb) {
 		err = ENOMEM;
-		DEBUG_WARNING("%s:%d dup body failed (%m)\n",
+		DEBUG_WARNING("%s:%d mbuf_alloc_ref failed (%m)\n",
 			__func__, __LINE__, err);
 		goto out;
 	}
-	len = min(mbuf_get_left(req->body), cli->bufsize_max);
-	mb->end = req->body->pos + len;
 
-	err = tcp_send(conn->tc, mb);
+	len = min(mbuf_get_left(large), max_size);
+	mb->end = large->pos + len;
+
+	err = tcp_send(tc, mb);
+	if (err)
+		goto out;
+
+	mbuf_advance(large, len);
+
+out:
 	mem_deref(mb);
 
+	return err;
+}
+
+
+static int send_req_buf(struct conn *conn);
+
+
+static void send_req_buf_tmrh(void *arg)
+{
+	(void) send_req_buf((struct conn *)arg);
+}
+
+
+static void send_req_handler(void *arg)
+{
+	struct conn *conn = arg;
+
+	if (!conn || !conn->req)
+		return;
+
+	if (mbuf_get_left(conn->req->mbreq) && !conn->send_req_tmr_active) {
+		conn->send_req_tmr_active = true;
+		tmr_start(&conn->send_req_tmr, PROTO_RETRY_MS,
+			send_req_buf_tmrh, conn);
+	}
+}
+
+
+static int send_req_buf(struct conn *conn)
+{
+	int err;
+	struct http_req *req = conn->req;
+
+	if (!conn || !req || !req->cli) {
+		return EINVAL;
+	}
+
+	if (!mbuf_get_left(req->mbreq))
+		return 0;
+
+	err = send_buf(conn->tc, req->mbreq, req->cli->bufsize_max);
 	if (err == EPROTO && req->proto_retries < MAX_PROTO_RETRIES) {
 		DEBUG_WARNING("%s:%d tcp_send failed: (%m) retrying ...\n",
 			__func__, __LINE__, err);
 		++req->proto_retries;
-		tmr_start(&conn->body_tmr, PROTO_RETRY_MS, more_data, conn);
-		return;
+		tmr_start(&conn->send_req_tmr, PROTO_RETRY_MS,
+			send_req_buf_tmrh, conn);
+		return 0;
 	}
 	else if (err) {
 		DEBUG_WARNING("%s:%d tcp_send failed: (%m)\n",
@@ -424,44 +468,35 @@ static void more_data(void *arg)
 		goto out;
 	}
 
-	req->proto_retries = 0;
-	req->send_body = false;
-	mbuf_advance(req->body, len);
+	if (!mbuf_get_left(req->mbreq))
+		req->mbreq = mem_deref(req->mbreq);
 
-	if (!mbuf_get_left(req->body)) {
-		err = req_more_body(req);
+	req->proto_retries = 0;
+	conn->send_req_tmr_active = false;
+
+	if (!mbuf_get_left(req->mbreq)) {
+		err = read_req_data(req);
 		if (err) {
-			DEBUG_WARNING("%s:%d req_more_body failed: (%m)",
+			DEBUG_WARNING("%s:%d read_req_data failed: (%m)",
 				__func__, __LINE__, err);
 			goto out;
 		}
+
+		if (req->mbreq)
+			mbuf_set_pos(req->mbreq, 0);
+
+		if (mbuf_get_left(req->mbreq))
+			send_req_handler(conn);
 	}
 
-	tmr_start(&conn->tmr, cli->conf.recv_timeout, timeout_handler,
+	tmr_start(&conn->tmr, req->cli->conf.recv_timeout, timeout_handler,
 		conn);
 
-	return;
+	return err;
 
 out:
-	req_close(req, err, req->msg);
-}
-
-
-static void more_data_handler(void *arg)
-{
-	struct conn *conn = arg;
-	struct http_req *req;
-
-	if (conn)
-		req = conn->req;
-
-	if (!conn || !req)
-		return;
-
-	if (mbuf_get_left(req->body) && !req->send_body) {
-		req->send_body = true;
-		tmr_start(&conn->body_tmr, PROTO_RETRY_MS, more_data, conn);
-	}
+	DEBUG_WARNING("%s:%d error: (%m)", __func__, __LINE__, err);
+	return err;
 }
 
 
@@ -469,21 +504,18 @@ static void estab_handler(void *arg)
 {
 	struct conn *conn = arg;
 	struct http_req *req = conn->req;
-	struct http_cli *cli;
 	int err;
-
-	if (!req)
+	if (!req || !req->cli)
 		return;
 
-	err = tcp_send(conn->tc, req->mbreq);
+	err = send_req_buf(conn);
 	if (err) {
 		try_next(conn, err);
 		return;
 	}
 
-	cli = req->cli;
-	if (!cli)
-		return;
+	if (mbuf_get_left(req->mbreq))
+		tcp_set_data(conn->tc, send_req_handler, conn);
 
 	tmr_start(&conn->tmr, req->cli->conf.recv_timeout,
 		timeout_handler, conn);
@@ -595,19 +627,17 @@ static int conn_connect(struct http_req *req)
 	const struct sa *addr = &req->srvv[req->srvc];
 	struct conn *conn;
 	struct sa *laddr = NULL;
-	struct http_cli *cli;
-	int err;
+	int err = 0;
 
 	conn = list_ledata(hash_lookup(req->cli->ht_conn,
 				       sa_hash(addr, SA_ALL), conn_cmp, req));
 	if (conn) {
-		err = tcp_send(conn->tc, req->mbreq);
-		if (!err) {
-			cli = req->cli;
-			if (!cli)
-				return EINVAL;
+		if (!req->cli)
+			return EINVAL;
 
-			tmr_start(&conn->tmr, cli->conf.recv_timeout,
+		err = send_req_buf(conn);
+		if (!err) {
+			tmr_start(&conn->tmr, req->cli->conf.recv_timeout,
 				  timeout_handler, conn);
 
 			req->conn = conn;
@@ -615,10 +645,8 @@ static int conn_connect(struct http_req *req)
 
 			++conn->usec;
 
-			if (mbuf_get_left(req->body)) {
-				tcp_set_data(conn->tc, more_data_handler, conn);
-				more_data_handler(conn);
-			}
+			if (mbuf_get_left(req->mbreq))
+				tcp_set_data(conn->tc, send_req_handler, conn);
 
 			return 0;
 		}
@@ -651,11 +679,6 @@ static int conn_connect(struct http_req *req)
 	if (err)
 		goto out;
 
-	if (mbuf_get_left(req->body)) {
-		tcp_set_data(conn->tc, more_data_handler, conn);
-		more_data_handler(conn);
-	}
-
 #ifdef USE_TLS
 	if (req->secure) {
 
@@ -677,10 +700,12 @@ static int conn_connect(struct http_req *req)
 	tmr_start(&conn->tmr, req->cli->conf.conn_timeout, timeout_handler,
 		  conn);
 
-	req->conn = conn;
-	conn->req = req;
+	if (!err) {
+		req->conn = conn;
+		conn->req = req;
+	}
 
- out:
+out:
 	if (err)
 		mem_deref(conn);
 
@@ -860,7 +885,6 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 	struct sa sa;
 	bool ipv6;
 	bool secure;
-	int body_len = 0;
 	va_list ap;
 	int err;
 
@@ -901,13 +925,6 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 	req->req_bodyh = req_bodyh;
 	req->arg    = arg;
 
-	err = req_more_body(req);
-	if (err) {
-		DEBUG_WARNING("%s:%d req_more_body failed: (%m)",
-			__func__, __LINE__, err);
-		goto out;
-	}
-
 	err = pl_strdup(&req->host, &http_uri.host);
 	if (err)
 		goto out;
@@ -925,9 +942,6 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			  met, &http_uri.path,
 			  ipv6 ? "[" : "", &http_uri.host, ipv6 ? "]" : "");
 
-	if (mbuf_get_left(req->body) > req->cli->bufsize_max)
-		mbuf_printf(req->mbreq, "Expect: 100-continue\r\n");
-
 	if (fmt) {
 		va_start(ap, fmt);
 		err |= mbuf_vprintf(req->mbreq, fmt, ap);
@@ -937,19 +951,11 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		err |= mbuf_write_str(req->mbreq, "\r\n");
 	}
 
-	if (mbuf_get_left(req->body)) {
-		body_len = min(mbuf_get_left(req->body), req->cli->bufsize_max);
-		mbuf_write_mem(req->mbreq, mbuf_buf(req->body), body_len);
-		mbuf_advance(req->body, body_len);
-
-		if (!mbuf_get_left(req->body)) {
-			err = req_more_body(req);
-			if (err) {
-				DEBUG_WARNING("%s:%d req_more_body failed: (%m)",
-					__func__, __LINE__, err);
-				goto out;
-			}
-		}
+	err = read_req_data(req);
+	if (err) {
+		DEBUG_WARNING("%s:%d read_req_data failed: (%m)",
+			__func__, __LINE__, err);
+		goto out;
 	}
 
 	mbuf_set_pos(req->mbreq, 0);
