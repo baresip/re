@@ -105,7 +105,7 @@ struct re {
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
 	struct re_async *async;      /**< Async object                      */
-	re_sock_t fd_refresh[2];	 /**< Refresh the thread state          */
+	re_sock_t fd_refresh[2];     /**< Refresh the thread state          */
 };
 
 static struct re *re_global = NULL;
@@ -1079,7 +1079,7 @@ int re_main(re_signal_h *signalh)
 	err = poll_setup(re);
 	if (err)
 		goto out;
-	
+
 	err = init_refreshing(re);
 	if (err)
 		goto out;
