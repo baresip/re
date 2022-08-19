@@ -1554,24 +1554,24 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 	return re_async(re->async, work, cb, arg);
 }
 
-static void refreshing_handler(int id, void *data, void *arg) 
+static void refreshing_handler(int id, void *data, void *arg)
 {
 	(void)id;
 	(void)data;
 	(void)arg;
 }
 
-static int init_refreshing(struct re *re) 
+static int init_refreshing(struct re *re)
 {
 	return mqueue_alloc(&re->mq_refresh, refreshing_handler, 0);
 }
 
-static void close_refreshing(struct re *re) 
+static void close_refreshing(struct re *re)
 {
 	mem_deref(re->mq_refresh);
 }
 
-static void refresh(struct re *re) 
+static void refresh(struct re *re)
 {
 	if (re)
 		mqueue_push(re->mq_refresh, 0, NULL);
