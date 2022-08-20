@@ -49,7 +49,6 @@
 #include <re_thread.h>
 #include <re_btrace.h>
 #include <re_atomic.h>
-#include <re_mqueue.h>
 #include "main.h"
 
 
@@ -106,7 +105,7 @@ struct re {
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
 	struct re_async *async;      /**< Async object                      */
-	struct mqueue *mq_refresh;   /**< Refresh the thread state          */
+	re_sock_t fd_refresh[2];     /**< Refresh the thread state          */
 };
 
 static struct re *re_global = NULL;
@@ -1554,25 +1553,52 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 	return re_async(re->async, work, cb, arg);
 }
 
-static void refreshing_handler(int id, void *data, void *arg) 
-{
-	(void)id;
-	(void)data;
-	(void)arg;
+static void refreshing_handler(int flags, void *arg) {
+	struct re *re = arg;
+	int msg = 0;
+
+	if (!(flags & FD_READ))
+		return;
+
+	read(re->fd_refresh[0], &msg, sizeof(msg));
 }
 
-static int init_refreshing(struct re *re) 
+static int init_refreshing(struct re *re)
 {
-	return mqueue_alloc(&re->mq_refresh, refreshing_handler, 0);
+	int err;
+	re->fd_refresh[0] = re->fd_refresh[1] = BAD_SOCK;
+	if (pipe(re->fd_refresh) < 0)
+		return ERRNO_SOCK;
+
+	err = net_sockopt_blocking_set(re->fd_refresh[0], false);
+	if (err)
+		goto out;
+
+	err = net_sockopt_blocking_set(re->fd_refresh[1], false);
+	if (err)
+		goto out;
+
+	err = fd_listen(re->fd_refresh[0], FD_READ, refreshing_handler, re);
+	if (err)
+		goto out;
+	return 0;
+out:
+	(void)close(re->fd_refresh[0]);
+	(void)close(re->fd_refresh[1]);
+	return err;
 }
 
-static void close_refreshing(struct re *re) 
+static void close_refreshing(struct re *re)
 {
-	mem_deref(re->mq_refresh);
+	fd_close(re->fd_refresh[0]);
+	(void)close(re->fd_refresh[0]);
+	(void)close(re->fd_refresh[1]);
 }
 
-static void refresh(struct re *re) 
+static void refresh(struct re *re)
 {
+	int msg = 0;
+
 	if (re)
-		mqueue_push(re->mq_refresh, 0, NULL);
+		write(re->fd_refresh[1], &msg, sizeof(msg));
 }
