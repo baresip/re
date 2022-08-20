@@ -18,7 +18,7 @@
 
 struct async_work {
 	struct le le;
-	re_async_work_h *work;
+	re_async_work_h *workh;
 	re_async_h *cb;
 	void *arg;
 	int err;
@@ -64,8 +64,9 @@ static int worker_thread(void *arg)
 		list_move(le, &a->curl);
 		mtx_unlock(&a->mtx);
 
-		work	  = le->data;
-		work->err = work->work(work->arg);
+		work = le->data;
+		if (work->workh)
+			work->err = work->workh(work->arg);
 
 		mtx_lock(&a->mtx);
 		mqueue_push(a->mqueue, 0, work);
@@ -125,7 +126,8 @@ static void queueh(int id, void *data, void *arg)
 	struct re_async *async	= arg;
 	(void)id;
 
-	work->cb(work->err, work->arg);
+	if (work->cb)
+		work->cb(work->err, work->arg);
 
 	mtx_lock(&async->mtx);
 	list_move(&work->le, &async->freel);
@@ -214,13 +216,13 @@ err:
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_async(struct re_async *async, re_async_work_h *work, re_async_h *cb,
+int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 	     void *arg)
 {
 	int err = 0;
 	struct async_work *async_work;
 
-	if (unlikely(!async || !work || !cb))
+	if (unlikely(!async))
 		return EINVAL;
 
 	if (unlikely(list_isempty(&async->freel))) {
@@ -233,9 +235,9 @@ int re_async(struct re_async *async, re_async_work_h *work, re_async_h *cb,
 		list_unlink(&async_work->le);
 	}
 
-	async_work->work = work;
-	async_work->cb	 = cb;
-	async_work->arg	 = arg;
+	async_work->workh = workh;
+	async_work->cb	  = cb;
+	async_work->arg	  = arg;
 
 	mtx_lock(&async->mtx);
 	list_append(&async->workl, &async_work->le, async_work);
