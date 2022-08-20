@@ -105,7 +105,6 @@ struct re {
 	thrd_t tid;                  /**< Thread id                         */
 	RE_ATOMIC bool thread_enter; /**< Thread enter is called            */
 	struct re_async *async;      /**< Async object                      */
-	re_sock_t fd_refresh[2];	 /**< Refresh the thread state          */
 };
 
 static struct re *re_global = NULL;
@@ -113,9 +112,6 @@ static tss_t key;
 static once_flag flag = ONCE_FLAG_INIT;
 
 static void poll_close(struct re *re);
-static int init_refreshing(struct re *re);
-static void close_refreshing(struct re *re);
-static void refresh(struct re *re);
 
 
 static void re_destructor(void *arg)
@@ -1079,10 +1075,6 @@ int re_main(re_signal_h *signalh)
 	err = poll_setup(re);
 	if (err)
 		goto out;
-	
-	err = init_refreshing(re);
-	if (err)
-		goto out;
 
 	DEBUG_INFO("Using async I/O polling method: `%s'\n",
 		   poll_method_name(re->method));
@@ -1131,7 +1123,6 @@ int re_main(re_signal_h *signalh)
 
  out:
 	re_atomic_rlx_set(&re->polling, false);
-	close_refreshing(re);
 
 	return err;
 }
@@ -1364,7 +1355,6 @@ void re_thread_leave(void)
 
 	re_atomic_rlx_set(&re->thread_enter, false);
 	re_unlock(re);
-	refresh(re);
 }
 
 
@@ -1551,54 +1541,4 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 #endif
 
 	return re_async(re->async, work, cb, arg);
-}
-
-static void refreshing_handler(int flags, void *arg) {
-	struct re *re = arg;
-	int msg = 0;
-
-	if (!(flags & FD_READ))
-		return;
-
-	read(re->fd_refresh[0], &msg, sizeof(msg));
-}
-
-static int init_refreshing(struct re *re)
-{
-	int err;
-	re->fd_refresh[0] = re->fd_refresh[1] = BAD_SOCK;
-	if (pipe(re->fd_refresh) < 0)
-		return ERRNO_SOCK;
-
-	err = net_sockopt_blocking_set(re->fd_refresh[0], false);
-	if (err)
-		goto out;
-
-	err = net_sockopt_blocking_set(re->fd_refresh[1], false);
-	if (err)
-		goto out;
-
-	err = fd_listen(re->fd_refresh[0], FD_READ, refreshing_handler, re);
-	if (err)
-		goto out;
-	return 0;
-out:
-	(void)close(re->fd_refresh[0]);
-	(void)close(re->fd_refresh[1]);
-	return err;
-}
-
-static void close_refreshing(struct re *re)
-{
-	fd_close(re->fd_refresh[0]);
-	(void)close(re->fd_refresh[0]);
-	(void)close(re->fd_refresh[1]);
-}
-
-static void refresh(struct re *re)
-{
-	int msg = 0;
-
-	if (re)
-		write(re->fd_refresh[1], &msg, sizeof(msg));
 }
