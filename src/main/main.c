@@ -1352,7 +1352,9 @@ void re_thread_leave(void)
 		DEBUG_WARNING("re_thread_leave: re not ready\n");
 		return;
 	}
-
+	/* Dummy async event, to ensure timers are properly handled */
+	if (re->async)
+		re_thread_async(NULL, NULL, NULL);
 	re_atomic_rlx_set(&re->thread_enter, false);
 	re_unlock(re);
 }
