@@ -8,6 +8,8 @@
 #define _DEFAULT_SOURCE 1
 
 #ifndef WIN32
+#include <arpa/inet.h>
+#define __USE_POSIX 1  /**< Use POSIX flag */
 #include <netdb.h>
 #endif
 
