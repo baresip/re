@@ -778,6 +778,25 @@ static bool query_cache_handler(struct dns_query *q)
 }
 
 
+static bool getaddr_dup(struct le *le, void *arg)
+{
+	struct dnsrr *r1 = list_ledata(le);
+	struct dnsrr *r2 = arg;
+
+	if (r1->type == DNS_TYPE_A && r2->type == DNS_TYPE_A) {
+		if (r1->rdata.a.addr == r2->rdata.a.addr)
+			return true;
+	}
+
+	if (r1->type == DNS_TYPE_AAAA && r2->type == DNS_TYPE_AAAA) {
+		if (r1->rdata.aaaa.addr == r2->rdata.aaaa.addr)
+			return true;
+	}
+
+	return false;
+}
+
+
 static int async_getaddrinfo(void *arg)
 {
 	struct dns_query *q = arg;
@@ -801,8 +820,10 @@ static int async_getaddrinfo(void *arg)
 
 	for (res = res0; res; res = res->ai_next) {
 		struct dnsrr *rr = dns_rr_alloc();
+		struct le *le;
+
 		if (!rr) {
-			err =  ENOMEM;
+			err = ENOMEM;
 			goto out;
 		}
 
@@ -829,6 +850,12 @@ static int async_getaddrinfo(void *arg)
 			sa_in6(&sa, rr->rdata.aaaa.addr);
 		}
 
+		le = list_apply(&q->rrlv[0], false, getaddr_dup, rr);
+		if (le) {
+			mem_deref(rr);
+			continue;
+		}
+
 		list_append(&q->rrlv[0], &rr->le_priv, rr);
 	}
 
@@ -845,14 +872,17 @@ out:
 static void getaddrinfo_h(int err, void *arg)
 {
 	struct dns_query *q = arg;
-	bool cache = q->dnsc->conf.cache_ttl_max > 0;
+	const bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
-	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d ---\n", q->id);
+	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d %s ---\n", q->id,
+		   cache ? "(caching)" : "");
 
 	if (!err) {
-		DEBUG_INFO("%H %s\n", dns_rr_print,
-			   list_ledata(list_head(&q->rrlv[0])),
-			   cache ? "(caching)" : "");
+		struct le *le;
+		LIST_FOREACH(&q->rrlv[0], le)
+		{
+			DEBUG_INFO("%H%s\n", dns_rr_print, le->data);
+		}
 	}
 
 	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
