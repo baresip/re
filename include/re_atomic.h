@@ -127,6 +127,323 @@
 #define re_atomic_fetch_and(_a, _v, _mo) \
 	__atomic_fetch_and(_a, _v, _mo)
 
+/* gcc-style __sync* intrinsics. */
+#elif defined(__GNUC__) && \
+	(defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1) || \
+	defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2) || \
+	defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || \
+	defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
+
+#if !defined(__SIZEOF_SHORT__) || !defined(__SIZEOF_INT__) || \
+	!defined(__SIZEOF_LONG__) || !defined(__SIZEOF_LONG_LONG__)
+#include <limits.h>
+#endif
+#if !defined(__SIZEOF_POINTER__)
+#include <stdint.h>
+#endif
+#if !defined(__SIZEOF_WCHAR_T__)
+#include <wchar.h>
+#endif
+
+#if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1)
+#define RE_ATOMIC_CHAR_LOCK_FREE 2
+#endif
+
+#if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2)
+#if (defined(__SIZEOF_SHORT__) && __SIZEOF_SHORT__ == 2) || \
+	(defined(USHRT_MAX) && USHRT_MAX == 0xffffu)
+#define RE_ATOMIC_SHORT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_INT__) && __SIZEOF_INT__ == 2) || \
+	(defined(UINT_MAX) && UINT_MAX == 0xffffu)
+#define RE_ATOMIC_INT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 2) || \
+	(defined(ULONG_MAX) && ULONG_MAX == 0xffffu)
+#define RE_ATOMIC_LONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG_LONG__) && __SIZEOF_LONG_LONG__ == 2) || \
+	(defined(ULLONG_MAX) && ULLONG_MAX == 0xffffu)
+#define RE_ATOMIC_LLONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 2) || \
+	(defined(UINTPTR_MAX) && UINTPTR_MAX == 0xffffu)
+#define RE_ATOMIC_POINTER_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_WCHAR_T__) && __SIZEOF_WCHAR_T__ == 2) || \
+	(defined(WCHAR_MAX) && (WCHAR_MAX == 0xffff || WCHAR_MAX == 0x7fff))
+#define RE_ATOMIC_WCHAR_T_LOCK_FREE 2
+#endif
+#endif
+
+#if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
+#if (defined(__SIZEOF_SHORT__) && __SIZEOF_SHORT__ == 4) || \
+	(defined(USHRT_MAX) && USHRT_MAX == 0xffffffffu)
+#define RE_ATOMIC_SHORT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_INT__) && __SIZEOF_INT__ == 4) || \
+	(defined(UINT_MAX) && UINT_MAX == 0xffffffffu)
+#define RE_ATOMIC_INT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 4) || \
+	(defined(ULONG_MAX) && ULONG_MAX == 0xffffffffu)
+#define RE_ATOMIC_LONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG_LONG__) && __SIZEOF_LONG_LONG__ == 4) || \
+	(defined(ULLONG_MAX) && ULLONG_MAX == 0xffffffffu)
+#define RE_ATOMIC_LLONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 4) || \
+	(defined(UINTPTR_MAX) && UINTPTR_MAX == 0xffffffffu)
+#define RE_ATOMIC_POINTER_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_WCHAR_T__) && __SIZEOF_WCHAR_T__ == 4) || \
+	(defined(WCHAR_MAX) && (WCHAR_MAX == 0xffffffff || \
+		WCHAR_MAX == 0x7fffffff))
+#define RE_ATOMIC_WCHAR_T_LOCK_FREE 2
+#endif
+#endif
+
+#if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8)
+#if (defined(__SIZEOF_SHORT__) && __SIZEOF_SHORT__ == 8) || \
+	(defined(USHRT_MAX) && USHRT_MAX == 0xffffffffffffffffu)
+#define RE_ATOMIC_SHORT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_INT__) && __SIZEOF_INT__ == 8) || \
+	(defined(UINT_MAX) && UINT_MAX == 0xffffffffffffffffu)
+#define RE_ATOMIC_INT_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 8) || \
+	(defined(ULONG_MAX) && ULONG_MAX == 0xffffffffffffffffu)
+#define RE_ATOMIC_LONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_LONG_LONG__) && __SIZEOF_LONG_LONG__ == 8) || \
+	(defined(ULLONG_MAX) && ULLONG_MAX == 0xffffffffffffffffu)
+#define RE_ATOMIC_LLONG_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8) || \
+	(defined(UINTPTR_MAX) && UINTPTR_MAX == 0xffffffffffffffffu)
+#define RE_ATOMIC_POINTER_LOCK_FREE 2
+#endif
+#if (defined(__SIZEOF_WCHAR_T__) && __SIZEOF_WCHAR_T__ == 8) || \
+	(defined(WCHAR_MAX) && (WCHAR_MAX == 0xffffffffffffffff || \
+		WCHAR_MAX == 0x7fffffffffffffff))
+#define RE_ATOMIC_WCHAR_T_LOCK_FREE 2
+#endif
+#endif
+
+#if !defined(RE_ATOMIC_CHAR_LOCK_FREE)
+#define RE_ATOMIC_CHAR_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_SHORT_LOCK_FREE)
+#define RE_ATOMIC_SHORT_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_INT_LOCK_FREE)
+#define RE_ATOMIC_INT_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_LONG_LOCK_FREE)
+#define RE_ATOMIC_LONG_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_LLONG_LOCK_FREE)
+#define RE_ATOMIC_LLONG_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_POINTER_LOCK_FREE)
+#define RE_ATOMIC_POINTER_LOCK_FREE 0
+#endif
+#if !defined(RE_ATOMIC_WCHAR_T_LOCK_FREE)
+#define RE_ATOMIC_WCHAR_T_LOCK_FREE 0
+#endif
+
+/* Assume bool is always 1 byte. Add platform-specific exceptions,
+ * if needed. */
+#define RE_ATOMIC_BOOL_LOCK_FREE RE_ATOMIC_CHAR_LOCK_FREE
+
+/* These constants match __ATOMIC_* predefined macros on
+ * gcc versions that support __atomic intrinsics. */
+#define re_memory_order_relaxed 0
+#define re_memory_order_acquire 2
+#define re_memory_order_release 3
+#define re_memory_order_acq_rel 4
+#define re_memory_order_seq_cst 5
+
+#if defined(__x86_64__)
+
+#define re_atomic_store(_a, _v, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val = (_v);\
+		if ((_mo) != re_memory_order_seq_cst) {\
+			__asm__ __volatile__ ("mov %1, %0"\
+				: "=m" (*(_a))\
+				: "q" (_val)\
+				: "memory");\
+		}\
+		else {\
+			__asm__ __volatile__ ("xchg %1, %0"\
+				: "=m" (*(_a)), "+q" (_val)\
+				: \
+				: "memory");\
+		}\
+	})
+
+#define re_atomic_load(_a, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val;\
+		__asm__ __volatile__ ("mov %1, %0"\
+			: "=q" (_val)\
+			: "m" (*(_a))\
+			: "memory");\
+		_val;\
+	})
+
+#define re_atomic_exchange(_a, _v, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val = (_v);\
+		__asm__ __volatile__ ("xchg %1, %0"\
+			: "+m" (*(_a)), "+q" (_val)\
+			: \
+			: "memory");\
+		_val;\
+	})
+
+#elif defined(__i386__)
+
+#define re_atomic_store(_a, _v, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val = (_v);\
+		if (sizeof(_val) < 8) {\
+			if ((_mo) != re_memory_order_seq_cst) {\
+				__asm__ __volatile__ ("mov %1, %0"\
+					: "=m" (*(_a))\
+					: "q" (_val)\
+					: "memory");\
+			}\
+			else {\
+				__asm__ __volatile__ ("xchg %1, %0"\
+					: "=m" (*(_a)), "+q" (_val)\
+					: \
+					: "memory");\
+			}\
+		}\
+		else {\
+			__typeof__(*(_a)) _expected = *(_a);\
+			while (1) {\
+				__typeof__(*(_a)) _prev_val =\
+					__sync_val_compare_and_swap(\
+						_a, _expected, _val);\
+				if (_prev_val == _expected)\
+					break;\
+				_expected = _prev_val;\
+			}\
+		}\
+	})
+
+#define re_atomic_load(_a, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val;\
+		if (sizeof(_val) < 8) {\
+			__asm__ __volatile__ ("mov %1, %0"\
+				: "=q" (_val)\
+				: "m" (*(_a))\
+				: "memory");\
+		}\
+		else {\
+			_val = __sync_val_compare_and_swap(\
+				_a,\
+				(__typeof__(*(_a)))0,\
+				(__typeof__(*(_a)))0);\
+		}\
+		_val;\
+	})
+
+#define re_atomic_exchange(_a, _v, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val = (_v);\
+		if (sizeof(_val) < 8) {\
+			__asm__ __volatile__ ("xchg %1, %0"\
+				: "+m" (*(_a)), "+q" (_val)\
+				: \
+				: "memory");\
+		}\
+		else {\
+			__typeof__(*(_a)) _expected = *(_a);\
+			while (1) {\
+				__typeof__(*(_a)) _prev_val =\
+					__sync_val_compare_and_swap(\
+						_a, _expected, _val);\
+				if (_prev_val == _expected)\
+					break;\
+				_expected = _prev_val;\
+			}\
+			_val = _expected;\
+		}\
+		_val;\
+	})
+
+#else
+
+#define re_atomic_store(_a, _v, _mo) \
+	(void)re_atomic_exchange(_a, _v, _mo)
+
+#define re_atomic_load(_a, _mo) \
+	__sync_val_compare_and_swap(\
+		_a, (__typeof__(*(_a)))0, (__typeof__(*(_a)))0)
+
+#define re_atomic_exchange(_a, _v, _mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _val = (_v);\
+		__typeof__(*(_a)) _expected = *(_a);\
+		while (1) {\
+			__typeof__(*(_a)) _prev_val =\
+				__sync_val_compare_and_swap(\
+					_a, _expected, _val);\
+			if (_prev_val == _expected)\
+				break;\
+			_expected = _prev_val;\
+		}\
+		_expected;\
+	})
+
+#endif
+
+#define re_atomic_compare_exchange_strong(\
+	_a, _expected, _desired, _success_mo, _fail_mo) \
+	__extension__\
+	({\
+		__typeof__(*(_a)) _exp_val = *(_expected);\
+		__typeof__(*(_a)) _prev_val =\
+			__sync_val_compare_and_swap(_a, _exp_val,\
+				(__typeof__(*(_a)))(_desired));\
+		*(_expected) = _prev_val;\
+		_prev_val == _exp_val;\
+	})
+
+#define re_atomic_compare_exchange_weak(\
+	_a, _expected, _desired, _success_mo, _fail_mo) \
+	re_atomic_compare_exchange_strong(\
+		_a, _expected, _desired, _success_mo, _fail_mo)
+
+#define re_atomic_fetch_add(_a, _v, _mo) \
+	__sync_fetch_and_add(_a, (__typeof__(*(_a)))(_v))
+
+#define re_atomic_fetch_sub(_a, _v, _mo) \
+	__sync_fetch_and_sub(_a, (__typeof__(*(_a)))(_v))
+
+#define re_atomic_fetch_or(_a, _v, _mo) \
+	__sync_fetch_and_or(_a, (__typeof__(*(_a)))(_v))
+
+#define re_atomic_fetch_xor(_a, _v, _mo) \
+	__sync_fetch_and_xor(_a, (__typeof__(*(_a)))(_v))
+
+#define re_atomic_fetch_and(_a, _v, _mo) \
+	__sync_fetch_and_and(_a, (__typeof__(*(_a)))(_v))
+
 /* MSVC Interlocked* intrinsics. This needs to go after clang to let clang-cl
  * get handled above. */
 #elif defined(_MSC_VER)

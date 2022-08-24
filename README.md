@@ -101,6 +101,7 @@ Patches can sent via Github
 | Name     | Status   | Description                                    |
 |----------|----------|------------------------------------------------|
 | aes      | stable   | AES (Advanced Encryption Standard)             |
+| async    | testing  | Async module                                   |
 | base64   | stable   | Base-64 encoding/decoding functions            |
 | bfcp     | stable   | The Binary Floor Control Protocol (BFCP)       |
 | conf     | stable   | Configuration file parser                      |
@@ -144,10 +145,10 @@ Patches can sent via Github
 | tls      | stable   | Transport Layer Security                       |
 | tmr      | stable   | Timer handling                                 |
 | turn     | stable   | Obtaining Relay Addresses from STUN (TURN)     |
+| trace    | testing  | Trace Helpers JSON traces (chrome://tracing)   |
 | udp      | stable   | UDP transport                                  |
 | uri      | stable   | Generic URI library                            |
 | websock  | stable   | WebSocket Client and Server                    |
-| trace    | testing  | Trace Helpers JSON traces (chrome://tracing)   |
 
 legend:
 * *stable* - code complete; stable code and stable API

@@ -96,3 +96,16 @@ static inline bool list_isempty(const struct list *list)
 
 #define LIST_FOREACH(list, le)					\
 	for ((le) = list_head((list)); (le); (le) = (le)->next)
+
+
+/**
+ * Move element to another linked list
+ *
+ * @param le    List element to move
+ * @param list  Destination list
+ */
+static inline void list_move(struct le *le, struct list *list)
+{
+	list_unlink(le);
+	list_append(list, le, le->data);
+}

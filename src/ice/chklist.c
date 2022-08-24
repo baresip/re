@@ -16,7 +16,7 @@
 #include "ice.h"
 
 
-#define DEBUG_MODULE "chklist"
+#define DEBUG_MODULE "ice"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
@@ -262,7 +262,8 @@ void icem_checklist_update(struct icem *icem)
 		struct icem_comp *comp = le->data;
 
 		if (!icem_candpair_find_compid(&icem->validl, comp->id)) {
-			DEBUG_WARNING("{%s.%u} no valid candidate pair"
+			DEBUG_WARNING("{%s.%u} checklist update:"
+				      " no valid candidate pair"
 				      " (validlist=%u)\n",
 				      icem->name, comp->id,
 				      list_count(&icem->validl));

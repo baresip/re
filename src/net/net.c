@@ -10,6 +10,7 @@
 #if !defined(WIN32)
 #define __USE_BSD 1  /**< Use BSD code */
 #include <unistd.h>
+#define __USE_POSIX 1  /**< Use POSIX flag */
 #include <netdb.h>
 #endif
 #include <re_types.h>
