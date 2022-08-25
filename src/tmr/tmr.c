@@ -249,7 +249,7 @@ void tmr_init(struct tmr *tmr)
 
 
 void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
-		   char *file, int line)
+		   const char *file, int line)
 {
 	struct list *tmrl = tmrl_get();
 	struct le *le;

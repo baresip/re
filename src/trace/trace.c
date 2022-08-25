@@ -115,8 +115,8 @@ int re_trace_init(const char *json_file)
 		return ENOMEM;
 	}
 
-	err = mtx_init(&trace.lock, mtx_plain);
-	if (err != thrd_success) {
+	err = mtx_init(&trace.lock, mtx_plain) != thrd_success;
+	if (err) {
 		err = ENOMEM;
 		goto out;
 	}
