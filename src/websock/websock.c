@@ -484,7 +484,7 @@ int websock_connect(struct websock_conn **connp, struct websock *sock,
 	/* Protocol Handshake */
 	va_start(ap, fmt);
 	err = http_request(&conn->req, cli, "GET", uri,
-			   http_resp_handler, NULL, conn,
+			   http_resp_handler, NULL, NULL, conn,
 			   "Upgrade: websocket\r\n"
 			   "Connection: upgrade\r\n"
 			   "Sec-WebSocket-Key: %b\r\n"

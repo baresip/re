@@ -104,4 +104,4 @@ int tcp_register_helper(struct tcp_helper **thp, struct tcp_conn *tc,
 			tcp_helper_recv_h *rh, void *arg);
 int tcp_send_helper(struct tcp_conn *tc, struct mbuf *mb,
 		    struct tcp_helper *th);
-bool tcp_send_queued(struct tcp_conn *tc);
+bool tcp_sendq_used(struct tcp_conn *tc);

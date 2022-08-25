@@ -228,7 +228,7 @@ static uint32_t nc = 1;
 int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 		const struct httpauth_digest_chall *chall,
 		const char *path, const char *method, const char *user,
-		const char *pwd, const char *body)
+		const char *pwd, struct mbuf *body)
 {
 	struct httpauth_digest_resp *resp;
 	size_t p1, p2;
@@ -296,9 +296,9 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 
 	/* HA2 */
 	p2 = mb->pos;
-	if (0 == pl_strcmp(&resp->qop, "auth-int") && str_isset(body)) {
+	if (0 == pl_strcmp(&resp->qop, "auth-int") && mbuf_get_left(body)) {
 		/* HA2 = MD5(method:digestURI:MD5(entityBody)) */
-		err = mbuf_printf(mb, "%s", body);
+		err = mbuf_write_mem(mb, mbuf_buf(body), mbuf_get_left(body));
 		if (err)
 			goto out;
 
