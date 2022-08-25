@@ -51,6 +51,7 @@ struct http_cli {
 #ifdef HAVE_INET6
 	struct sa laddr6;
 #endif
+	size_t bufsize_max;
 };
 
 struct conn;
@@ -241,9 +242,10 @@ static void try_next(struct conn *conn, int err)
 }
 
 
-static int write_body_buf(struct http_msg *msg, const uint8_t *buf, size_t sz)
+static int write_body_buf(struct http_msg *msg, const uint8_t *buf,
+	size_t sz, size_t max_size)
 {
-	if ((msg->mb->pos + sz) > BUFSIZE_MAX)
+	if ((msg->mb->pos + sz) > max_size)
 		return EOVERFLOW;
 
 	return mbuf_write_mem(msg->mb, buf, sz);
@@ -261,7 +263,8 @@ static int write_body(struct http_req *req, struct mbuf *mb)
 	if (req->datah)
 		err = req->datah(mbuf_buf(mb), size, req->msg, req->arg);
 	else
-		err = write_body_buf(req->msg, mbuf_buf(mb), size);
+		err = write_body_buf(req->msg, mbuf_buf(mb), size,
+			req->cli->bufsize_max);
 
 	if (err)
 		return err;
@@ -371,7 +374,7 @@ static void recv_handler(struct mbuf *mb, void *arg)
 
 		const size_t len = mbuf_get_left(mb);
 
-		if ((mbuf_get_left(req->mb) + len) > BUFSIZE_MAX) {
+		if ((mbuf_get_left(req->mb) + len) > req->cli->bufsize_max) {
 			err = EOVERFLOW;
 			goto out;
 		}
@@ -904,6 +907,7 @@ int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc)
 
 	cli->dnsc = mem_ref(dnsc);
 	cli->conf = default_conf;
+	cli->bufsize_max = BUFSIZE_MAX;
 
  out:
 	if (err)
@@ -1192,4 +1196,22 @@ void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr)
 	(void)cli;
 	(void)addr;
 #endif
+}
+
+
+void http_client_set_bufsize_max(struct http_cli *cli, size_t max_size)
+{
+	if (!cli)
+		return;
+
+	cli->bufsize_max = max_size;
+}
+
+
+size_t http_client_get_bufsize_max(struct http_cli *cli)
+{
+	if (!cli)
+		return BUFSIZE_MAX;
+
+	return cli->bufsize_max;
 }
