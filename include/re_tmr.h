@@ -18,7 +18,7 @@ struct tmr {
 	tmr_h *th;          /**< Timeout handler     */
 	void *arg;          /**< Handler argument    */
 	uint64_t jfs;       /**< Jiffies for timeout */
-	char *file;
+	const char *file;
 	int line;
 };
 
@@ -32,7 +32,7 @@ int      tmr_status(struct re_printf *pf, void *unused);
 
 void     tmr_init(struct tmr *tmr);
 void     tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
-		   char *file, int line);
+		   const char *file, int line);
 
 /**
  * @def tmr_start(tmr, delay, th, arg)
