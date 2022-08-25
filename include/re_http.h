@@ -153,6 +153,8 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 void http_req_set_conn_handler(struct http_req *req, http_conn_h *connh);
 void http_client_set_laddr(struct http_cli *cli, const struct sa *addr);
 void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr);
+void http_client_set_bufsize_max(struct http_cli *cli, size_t max_size);
+size_t http_client_get_bufsize_max(struct http_cli *cli);
 
 #ifdef USE_TLS
 int http_client_set_tls(struct http_cli *cli, struct tls *tls);
