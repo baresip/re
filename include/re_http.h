@@ -144,12 +144,13 @@ typedef int  (http_data_h)(const uint8_t *buf, size_t size,
 			   const struct http_msg *msg, void *arg);
 typedef void (http_conn_h)(struct tcp_conn *tc, struct tls_conn *sc,
 			   void *arg);
+typedef size_t (http_bodyh)(struct mbuf *mb, void *arg);
 
 int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc);
 int http_client_set_config(struct http_cli *cli, struct http_conf *conf);
 int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		 const char *uri, http_resp_h *resph, http_data_h *datah,
-		 void *arg, const char *fmt, ...);
+		 http_bodyh *bodyh, void *arg, const char *fmt, ...);
 void http_req_set_conn_handler(struct http_req *req, http_conn_h *connh);
 void http_client_set_laddr(struct http_cli *cli, const struct sa *addr);
 void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr);
@@ -228,7 +229,7 @@ int http_reqconn_set_authtoken(struct http_reqconn *conn,
 int http_reqconn_set_tokentype(struct http_reqconn *conn,
 		const struct pl *tokentype);
 int http_reqconn_set_method(struct http_reqconn *conn, const struct pl *met);
-int http_reqconn_set_body(struct http_reqconn *conn, const struct pl *body);
+int http_reqconn_set_body(struct http_reqconn *conn, struct mbuf *body);
 int http_reqconn_set_ctype(struct http_reqconn *conn, const struct pl *ctype);
 int http_reqconn_add_header(struct http_reqconn *conn,
 		const struct pl *header);
@@ -238,3 +239,6 @@ int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri);
 int http_reqconn_set_tls_hostname(struct http_reqconn *conn,
 		const struct pl *hostname);
 #endif
+
+int http_reqconn_set_req_bodyh(struct http_reqconn *conn,
+		http_bodyh cb, uint64_t len);

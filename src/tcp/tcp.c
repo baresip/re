@@ -1469,7 +1469,7 @@ int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
 }
 
 
-bool tcp_send_queued(struct tcp_conn *tc)
+bool tcp_sendq_used(struct tcp_conn *tc)
 {
-	return tc->sendq.head;
+	return tc->sendq.head != NULL;
 }
