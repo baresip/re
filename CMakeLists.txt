@@ -125,8 +125,6 @@ set(SRCS
 
   src/conf/conf.c
 
-  src/crc32/crc32.c
-
   src/dbg/dbg.c
 
   src/dns/client.c
@@ -416,6 +414,11 @@ elseif(UNIX)
   endif()
 endif()
 
+if(NOT ZLIB_FOUND)
+  list(APPEND SRCS
+    src/crc32/crc32.c
+  )
+endif()
 
 if(HAVE_THREADS)
   #Do nothing
@@ -486,6 +489,7 @@ else()
     ${OPENSSL_LIBRARIES}
     ${Backtrace_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
+    ${ZLIB_LIBRARIES}
   )
 endif()
 

@@ -1,6 +1,7 @@
 find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(OpenSSL)
+find_package(ZLIB)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 
@@ -12,6 +13,7 @@ if(MSVC)
   add_compile_options("/W3")
 else()
   add_compile_options(
+    -pedantic
     -Wall
     -Wbad-function-cast
     -Wcast-align
@@ -19,9 +21,11 @@ else()
     -Wmissing-declarations
     -Wmissing-prototypes
     -Wnested-externs
+    -Wno-strict-aliasing
     -Wold-style-definition
     -Wshadow -Waggregate-return
     -Wstrict-prototypes
+    -Wuninitialized
     -Wvla
   )
 endif()
@@ -33,6 +37,20 @@ endif()
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
   add_definitions(-DHAVE_ARC4RANDOM)
+endif()
+
+if(ZLIB_FOUND)
+  add_definitions(-DUSE_ZLIB)
+endif()
+
+check_include_file(syslog.h HAVE_SYSLOG_H)
+if(HAVE_SYSLOG_H)
+  add_definitions(-DHAVE_SYSLOG)
+endif()
+
+check_include_file(getopt.h HAVE_GETOPT_H)
+if(HAVE_GETOPT_H)
+  add_definitions(-DHAVE_GETOPT)
 endif()
 
 check_include_file(unistd.h HAVE_UNISTD_H)
@@ -74,6 +92,7 @@ if(UNIX)
     -DHAVE_UNAME
     -DHAVE_SELECT_H
     -DHAVE_SIGNAL
+    -DHAVE_FORK
     )
   if(NOT ANDROID)
     add_definitions(-DHAVE_GETIFADDRS)
