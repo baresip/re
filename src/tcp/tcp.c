@@ -489,16 +489,21 @@ static int tcp_setsockopt(re_sock_t fd, int level, int optname,
 
 static void tcp_sockopt_set(re_sock_t fd)
 {
-#ifdef SO_LINGER
-	const struct linger dl = {0, 0};
 	int err;
 
+#ifdef TCP_NODELAY
+	int on = 1;
+
+	err = tcp_setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
+	if (err)
+		DEBUG_WARNING("sockopt: TCP_NODELAY (%m)\n", err);
+#endif
+#ifdef SO_LINGER
+	const struct linger dl = {0, 0};
+
 	err = tcp_setsockopt(fd, SOL_SOCKET, SO_LINGER, &dl, sizeof(dl));
-	if (err) {
+	if (err)
 		DEBUG_WARNING("sockopt: SO_LINGER (%m)\n", err);
-	}
-#else
-	(void)fd;
 #endif
 }
 
