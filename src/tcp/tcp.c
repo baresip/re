@@ -472,43 +472,34 @@ static struct tcp_conn *conn_alloc(tcp_estab_h *eh, tcp_recv_h *rh,
 }
 
 
+static int tcp_setsockopt(re_sock_t fd, int level, int optname,
+		    const void *optval, uint32_t optlen)
+{
+	int err = 0;
+
+	if (fd == BAD_SOCK)
+		return EINVAL;
+
+	if (0 != setsockopt(fd, level, optname, BUF_CAST optval, optlen))
+		err = ERRNO_SOCK;
+
+	return err;
+}
+
+
 static void tcp_sockopt_set(re_sock_t fd)
 {
 #ifdef SO_LINGER
 	const struct linger dl = {0, 0};
 	int err;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_LINGER, BUF_CAST &dl, sizeof(dl));
+	err = tcp_setsockopt(fd, SOL_SOCKET, SO_LINGER, &dl, sizeof(dl));
 	if (err) {
 		DEBUG_WARNING("sockopt: SO_LINGER (%m)\n", err);
 	}
 #else
 	(void)fd;
 #endif
-}
-
-
-static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
-		    const void *optval, uint32_t optlen)
-{
-	int err = 0;
-
-	if (!ts)
-		return EINVAL;
-
-	if (ts->fdc != BAD_SOCK) {
-		if (0 != setsockopt(ts->fdc, level, optname,
-				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
-	}
-
-	if (ts->fd != BAD_SOCK) {
-		if (0 != setsockopt(ts->fd, level, optname,
-				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
-	}
-
-	return err;
 }
 
 
@@ -1442,7 +1433,8 @@ int tcp_settos(struct tcp_sock *ts, uint32_t tos)
 		return EINVAL;
 
 	ts->tos = tos;
-	err = tcp_sock_setopt(ts, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	err = tcp_setsockopt(ts->fd, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	err |= tcp_setsockopt(ts->fdc, IPPROTO_IP, IP_TOS, &v, sizeof(v));
 
 	return err;
 }
@@ -1457,11 +1449,7 @@ int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
 		return EINVAL;
 
 	tc->tos = tos;
-	if (tc->fdc != BAD_SOCK) {
-		if (0 != setsockopt(tc->fdc, IPPROTO_IP, IP_TOS,
-					BUF_CAST &v, sizeof(v)))
-			err = ERRNO_SOCK;
-	}
+	err = tcp_setsockopt(tc->fdc, IPPROTO_IP, IP_TOS, &v, sizeof(v));
 
 	return err;
 }
