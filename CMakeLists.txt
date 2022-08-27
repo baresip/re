@@ -501,6 +501,9 @@ target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
 target_include_directories(re-objs PRIVATE include)
+if(USE_OPENSSL)
+  target_include_directories(re-objs PUBLIC ${OPENSSL_INCLUDE_DIR})
+endif()
 
 
 ##############################################################################
