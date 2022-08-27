@@ -11,6 +11,7 @@
 #elif defined (__APPLE__)
 #include <CommonCrypto/CommonDigest.h>
 #elif defined (USE_MBEDTLS)
+#include <mbedtls/md.h>
 #endif
 #include <re_sha.h>
 
@@ -29,6 +30,7 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 #elif defined (__APPLE__)
 	CC_SHA1(d, (uint32_t)n, md);
 #elif defined (USE_MBEDTLS)
+	mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), d, n, md);
 #else
 	(void)d;
 	(void)n;
@@ -52,6 +54,7 @@ void sha256(const uint8_t *d, size_t n, uint8_t *md)
 #elif defined (__APPLE__)
 	CC_SHA256(d, (uint32_t)n, md);
 #elif defined (USE_MBEDTLS)
+	mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), d, n, md);
 #else
 	(void)d;
 	(void)n;
