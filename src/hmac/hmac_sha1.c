@@ -48,7 +48,8 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 #elif defined (__APPLE__)
 	CCHmac(kCCHmacAlgSHA1, k, lk, d, ld, out);
 #elif defined (USE_MBEDTLS)
-	mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), k, lk, d, ld, out);
+	mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1),
+			k, lk, d, ld, out);
 #else
 	(void)k;
 	(void)lk;
