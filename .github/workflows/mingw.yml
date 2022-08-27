@@ -64,8 +64,8 @@ jobs:
     needs: MinGW-w64-build
 
     steps:
-    - uses: actions/download-artifact@v2
     - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
     - uses: sreimers/pr-dependency-action@v0.5
       with:
         name: retest
@@ -73,5 +73,5 @@ jobs:
         secret: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "run retest.exe"
-      run: mv retest-exe/retest.exe retest/ && cd retest && ./retest.exe
+      run: ls -lha && mv retest-exe/retest.exe retest/ && cd retest && ./retest.exe
       shell: bash
