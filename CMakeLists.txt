@@ -33,8 +33,6 @@ option(USE_BFCP "Enable BFCP" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
-option(USE_OPENSSL "Enable OpenSSL" ON)
-option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
@@ -422,11 +420,13 @@ if(USE_OPENSSL)
     src/hmac/openssl/hmac.c
   )
   add_compile_definitions(USE_OPENSSL)
+  set(CRYPTO_LIBS OpenSSL::SSL OpenSSL::Crypto)
 elseif(USE_MBEDTLS)
   list(APPEND SRCS
     src/main/mbedtls.c
   )
   add_compile_definitions(USE_MBEDTLS)
+  set(CRYPTO_LIBS MbedTLS MbedCrypto MbedX509)
 endif()
 
 
@@ -495,7 +495,7 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
-target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
+target_include_directories(re-objs PRIVATE include)
 
 
 ##############################################################################
@@ -513,7 +513,7 @@ endif()
 
 if(WIN32)
   target_link_libraries(re-shared PRIVATE
-    ${OPENSSL_LIBRARIES}
+    ${CRYPTO_LIBS}
     qwave
     iphlpapi
     wsock32
@@ -523,7 +523,7 @@ if(WIN32)
 else()
   target_link_libraries(re-shared PRIVATE
     -L/opt/local/lib
-    ${OPENSSL_LIBRARIES}
+    ${CRYPTO_LIBS}
     ${Backtrace_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${ZLIB_LIBRARIES}
@@ -549,7 +549,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 target_link_libraries(re
-  PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+  PUBLIC ${CRYPTO_LIBS} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE -L/opt/local/lib
 )
 

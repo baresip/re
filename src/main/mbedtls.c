@@ -19,8 +19,6 @@ static void sigpipe_handler(int x)
 
 int mbedtls_init(void)
 {
-	int err;
-
 #ifdef SIGPIPE
 	(void)signal(SIGPIPE, sigpipe_handler);
 #endif
