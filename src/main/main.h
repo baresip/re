@@ -9,8 +9,10 @@
 extern "C" {
 #endif
 
-#ifdef USE_OPENSSL
+#if defined(USE_OPENSSL)
 int  openssl_init(void);
+#elif defined(USE_MBEDTLS)
+int  mbedtls_init(void);
 #endif
 
 #ifdef __cplusplus

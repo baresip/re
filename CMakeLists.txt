@@ -38,6 +38,8 @@ option(USE_BFCP "Enable BFCP" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
+option(USE_OPENSSL "Enable OpenSSL" ON)
+option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
@@ -424,6 +426,12 @@ if(USE_OPENSSL)
     src/tls/openssl/tls.c
     src/hmac/openssl/hmac.c
   )
+  add_compile_definitions(USE_OPENSSL)
+elseif(USE_MBEDTLS)
+  list(APPEND SRCS
+    src/main/mbedtls.c
+  )
+  add_compile_definitions(USE_MBEDTLS)
 endif()
 
 
