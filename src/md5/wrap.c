@@ -8,6 +8,10 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #elif defined(USE_MBEDTLS)
+#include <mbedtls/md5.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/version.h>
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -37,6 +41,7 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	(void)MD5(d, n, md);
 #endif
 #elif defined(USE_MBEDTLS)
+	mbedtls_md5(d, n, md);
 #else
 #error missing MD5 backend
 #endif
