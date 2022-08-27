@@ -5,8 +5,10 @@ find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(ZLIB)
 find_package(OpenSSL)
+find_package(MbedTLS)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+option(USE_MBEDTLS "Enable MbedTLS" ${MBEDTLS_LIBRARY_FOUND})
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
