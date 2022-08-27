@@ -21,8 +21,12 @@ int libre_init(void)
 {
 	int err;
 
-#ifdef USE_OPENSSL
+#if defined(USE_OPENSSL)
 	err = openssl_init();
+	if (err)
+		return err;
+#elif defined (USE_MBEDTLS)
+	err = mbedtls_init();
 	if (err)
 		return err;
 #endif

@@ -5,12 +5,13 @@
  */
 #include <string.h>
 #include <re_types.h>
-#ifdef USE_OPENSSL
+#if defined(USE_OPENSSL)
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 #elif defined (__APPLE__)
 #include <CommonCrypto/CommonHMAC.h>
+#elif defined (USE_MBEDTLS)
 #endif
 #include <re_hmac.h>
 
@@ -38,7 +39,7 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	       uint8_t *out,      /* output buffer, at least "t" bytes */
 	       size_t   t)
 {
-#ifdef USE_OPENSSL
+#if defined (USE_OPENSSL)
 	(void)t;
 
 	if (!HMAC(EVP_sha1(), k, (int)lk, d, ld, out, NULL))
@@ -47,6 +48,7 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	(void)t;
 
 	CCHmac(kCCHmacAlgSHA1, k, lk, d, ld, out);
+#elif defined (USE_MBEDTLS)
 #else
 	(void)k;
 	(void)lk;

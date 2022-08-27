@@ -3,10 +3,11 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#ifdef USE_OPENSSL
+#if defined(USE_OPENSSL)
 #include <stddef.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#elif defined(USE_MBEDTLS)
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -24,7 +25,7 @@
  */
 void md5(const uint8_t *d, size_t n, uint8_t *md)
 {
-#ifdef USE_OPENSSL
+#if defined(USE_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
@@ -35,6 +36,7 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 #else
 	(void)MD5(d, n, md);
 #endif
+#elif defined(USE_MBEDTLS)
 #else
 #error missing MD5 backend
 #endif
