@@ -1,0 +1,126 @@
+include(CheckIncludeFile)
+include(CheckFunctionExists)
+
+find_package(Backtrace)
+find_package(Threads REQUIRED)
+find_package(ZLIB)
+find_package(OpenSSL)
+
+option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+
+check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
+if(HAVE_ARC4RANDOM)
+  list(APPEND RE_DEFINITIONS -DHAVE_ARC4RANDOM)
+endif()
+
+if(ZLIB_FOUND)
+  list(APPEND RE_DEFINITIONS -DUSE_ZLIB)
+endif()
+
+check_include_file(syslog.h HAVE_SYSLOG_H)
+if(HAVE_SYSLOG_H)
+  list(APPEND RE_DEFINITIONS -DHAVE_SYSLOG)
+endif()
+
+check_include_file(getopt.h HAVE_GETOPT_H)
+if(HAVE_GETOPT_H)
+  list(APPEND RE_DEFINITIONS -DHAVE_GETOPT)
+endif()
+
+check_include_file(unistd.h HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+  list(APPEND RE_DEFINITIONS -DHAVE_UNISTD_H)
+endif()
+
+if(Backtrace_FOUND)
+  list(APPEND RE_DEFINITIONS -DHAVE_EXECINFO)
+else()
+  set(Backtrace_LIBRARIES)
+endif()
+
+check_function_exists(thrd_create HAVE_THREADS)
+if(HAVE_THREADS)
+  list(APPEND RE_DEFINITIONS -DHAVE_THREADS)
+endif()
+
+if(CMAKE_USE_PTHREADS_INIT)
+  list(APPEND RE_DEFINITIONS -DHAVE_PTHREAD)
+  set(HAVE_PTHREAD ON)
+endif()
+
+list(APPEND RE_DEFINITIONS 
+  -DHAVE_ATOMIC
+  -DHAVE_INET6
+  -DHAVE_SELECT
+  )
+
+if(UNIX)
+  list(APPEND RE_DEFINITIONS
+    -DHAVE_POLL
+    -DHAVE_PWD_H
+    -DHAVE_ROUTE_LIST
+    -DHAVE_SETRLIMIT
+    -DHAVE_STRERROR_R
+    -DHAVE_STRINGS_H
+    -DHAVE_SYS_TIME_H
+    -DHAVE_UNAME
+    -DHAVE_SELECT_H
+    -DHAVE_SIGNAL
+    -DHAVE_FORK
+    )
+  if(NOT ANDROID)
+    list(APPEND RE_DEFINITIONS -DHAVE_GETIFADDRS)
+  endif()
+endif()
+
+
+if(MSVC)
+  list(APPEND RE_DEFINITIONS
+    -DHAVE_IO_H
+    -D_CRT_SECURE_NO_WARNINGS
+  )
+endif()
+
+if(WIN32)
+  list(APPEND RE_DEFINITIONS
+    -DWIN32 -D_WIN32_WINNT=0x0600
+  )
+endif()
+
+if(USE_OPENSSL)
+  list(APPEND RE_DEFINITIONS
+    -DUSE_DTLS
+    -DUSE_OPENSSL
+    -DUSE_OPENSSL_AES
+    -DUSE_OPENSSL_DTLS
+    -DUSE_OPENSSL_HMAC
+    -DUSE_OPENSSL_SRTP
+    -DUSE_TLS
+  )
+endif()
+
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DDARWIN)
+  include_directories(/opt/local/include)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DFREEBSD)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DOPENBSD)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  list(APPEND RE_DEFINITIONS -DHAVE_EPOLL -DLINUX)
+endif()
+
+
+list(APPEND RE_DEFINITIONS 
+  -DARCH="${CMAKE_SYSTEM_PROCESSOR}"
+  -DOS="${CMAKE_SYSTEM_NAME}"
+  -DVERSION="${PROJECT_VERSION}"
+  -DVER_MAJOR=${PROJECT_VERSION_MAJOR}
+  -DVER_MINOR=${PROJECT_VERSION_MINOR}
+  -DVER_PATCH=${PROJECT_VERSION_PATCH}
+)
+
+if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
+  list(APPEND RE_DEFINITIONS -DRELEASE)
+endif()
