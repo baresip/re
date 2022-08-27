@@ -12,7 +12,12 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(re VERSION 2.6.1 LANGUAGES C)
+project(re
+  VERSION 2.6.1
+  LANGUAGES C
+  HOMEPAGE_URL https://github.com/baresip/re
+  DESCRIPTION "Generic library for real-time communications"
+)
 
 set(PROJECT_SOVERSION 8) # bump if ABI breaks
 
@@ -556,6 +561,18 @@ endif()
 
 ##############################################################################
 #
+# Packaging section
+#
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  add_subdirectory(packaging)
+endif()
+
+configure_file(packaging/libre.pc.in libre.pc @ONLY)
+
+
+##############################################################################
+#
 # Install section
 #
 
@@ -582,11 +599,6 @@ install(FILES cmake/re-config.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
 )
 
-##############################################################################
-#
-# Packaging section
-#
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  add_subdirectory(packaging)
-endif()
+install(FILES libre.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
