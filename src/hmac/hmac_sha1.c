@@ -50,6 +50,12 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 #elif defined (USE_MBEDTLS)
 	mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), k, lk, d, ld, out);
 #else
-	sha1_hmac(k, lk, d, ld, out);
+	(void)k;
+	(void)lk;
+	(void)d;
+	(void)ld;
+	(void)out;
+
+#error missing HMAC-SHA1 backend
 #endif
 }
