@@ -3,6 +3,10 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
