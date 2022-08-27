@@ -1,87 +1,61 @@
+include(CheckIncludeFile)
+include(CheckFunctionExists)
+
 find_package(Backtrace)
 find_package(Threads REQUIRED)
-find_package(OpenSSL)
 find_package(ZLIB)
+find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_EXTENSIONS OFF)
-
-if(MSVC)
-  add_compile_options("/W3")
-else()
-  add_compile_options(
-    -pedantic
-    -Wall
-    -Wbad-function-cast
-    -Wcast-align
-    -Wextra
-    -Wmissing-declarations
-    -Wmissing-prototypes
-    -Wnested-externs
-    -Wno-strict-aliasing
-    -Wold-style-definition
-    -Wshadow -Waggregate-return
-    -Wstrict-prototypes
-    -Wuninitialized
-    -Wvla
-  )
-endif()
-
-if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
-endif()
-
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
-  add_definitions(-DHAVE_ARC4RANDOM)
+  list(APPEND RE_DEFINITIONS -DHAVE_ARC4RANDOM)
 endif()
 
 if(ZLIB_FOUND)
-  add_definitions(-DUSE_ZLIB)
+  list(APPEND RE_DEFINITIONS -DUSE_ZLIB)
 endif()
 
 check_include_file(syslog.h HAVE_SYSLOG_H)
 if(HAVE_SYSLOG_H)
-  add_definitions(-DHAVE_SYSLOG)
+  list(APPEND RE_DEFINITIONS -DHAVE_SYSLOG)
 endif()
 
 check_include_file(getopt.h HAVE_GETOPT_H)
 if(HAVE_GETOPT_H)
-  add_definitions(-DHAVE_GETOPT)
+  list(APPEND RE_DEFINITIONS -DHAVE_GETOPT)
 endif()
 
 check_include_file(unistd.h HAVE_UNISTD_H)
 if(HAVE_UNISTD_H)
-  add_definitions(-DHAVE_UNISTD_H)
+  list(APPEND RE_DEFINITIONS -DHAVE_UNISTD_H)
 endif()
 
 if(Backtrace_FOUND)
-  add_definitions(-DHAVE_EXECINFO)
+  list(APPEND RE_DEFINITIONS -DHAVE_EXECINFO)
 else()
   set(Backtrace_LIBRARIES)
 endif()
 
 check_function_exists(thrd_create HAVE_THREADS)
 if(HAVE_THREADS)
-  add_definitions(-DHAVE_THREADS)
+  list(APPEND RE_DEFINITIONS -DHAVE_THREADS)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
-  add_definitions(-DHAVE_PTHREAD)
+  list(APPEND RE_DEFINITIONS -DHAVE_PTHREAD)
   set(HAVE_PTHREAD ON)
 endif()
 
-add_definitions(
+list(APPEND RE_DEFINITIONS 
   -DHAVE_ATOMIC
   -DHAVE_INET6
   -DHAVE_SELECT
   )
 
 if(UNIX)
-  add_definitions(
+  list(APPEND RE_DEFINITIONS
     -DHAVE_POLL
     -DHAVE_PWD_H
     -DHAVE_ROUTE_LIST
@@ -95,26 +69,26 @@ if(UNIX)
     -DHAVE_FORK
     )
   if(NOT ANDROID)
-    add_definitions(-DHAVE_GETIFADDRS)
+    list(APPEND RE_DEFINITIONS -DHAVE_GETIFADDRS)
   endif()
 endif()
 
 
 if(MSVC)
-  add_definitions(
+  list(APPEND RE_DEFINITIONS
     -DHAVE_IO_H
     -D_CRT_SECURE_NO_WARNINGS
   )
 endif()
 
 if(WIN32)
-  add_definitions(
+  list(APPEND RE_DEFINITIONS
     -DWIN32 -D_WIN32_WINNT=0x0600
   )
 endif()
 
 if(USE_OPENSSL)
-  add_definitions(
+  list(APPEND RE_DEFINITIONS
     -DUSE_DTLS
     -DUSE_OPENSSL
     -DUSE_OPENSSL_AES
@@ -127,18 +101,18 @@ endif()
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions(-DHAVE_KQUEUE -DDARWIN)
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DDARWIN)
   include_directories(/opt/local/include)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  add_definitions(-DHAVE_KQUEUE -DFREEBSD)
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DFREEBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
-  add_definitions(-DHAVE_KQUEUE -DOPENBSD)
+  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DOPENBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_definitions(-DHAVE_EPOLL -DLINUX)
+  list(APPEND RE_DEFINITIONS -DHAVE_EPOLL -DLINUX)
 endif()
 
 
-add_definitions(
+list(APPEND RE_DEFINITIONS 
   -DARCH="${CMAKE_SYSTEM_PROCESSOR}"
   -DOS="${CMAKE_SYSTEM_NAME}"
   -DVERSION="${PROJECT_VERSION}"
@@ -148,5 +122,5 @@ add_definitions(
 )
 
 if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
-  add_definitions(-DRELEASE)
+  list(APPEND RE_DEFINITIONS -DRELEASE)
 endif()

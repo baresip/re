@@ -23,8 +23,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # Module/Package Includes
 #
 include(GNUInstallDirs)
-include(CheckIncludeFile)
-include(CheckFunctionExists)
 
 ##############################################################################
 #
@@ -36,13 +34,42 @@ option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
+
+if(MSVC)
+  add_compile_options("/W3")
+else()
+  add_compile_options(
+    -pedantic
+    -Wall
+    -Wbad-function-cast
+    -Wcast-align
+    -Wextra
+    -Wmissing-declarations
+    -Wmissing-prototypes
+    -Wnested-externs
+    -Wno-strict-aliasing
+    -Wold-style-definition
+    -Wshadow -Waggregate-return
+    -Wstrict-prototypes
+    -Wuninitialized
+    -Wvla
+  )
+endif()
+
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
+endif()
+
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   # Ensure struct mem is aligned (used as fat pointer)
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()
 
-include(re)
-
+set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
+find_package(re CONFIG REQUIRED)
 ##############################################################################
 #
 # Source/Header section
@@ -457,6 +484,8 @@ add_library(re-objs OBJECT ${SRCS} ${HEADERS})
 
 set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
+
 target_include_directories(re-objs PRIVATE .)
 target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
@@ -549,6 +578,9 @@ install(TARGETS re-shared
     COMPONENT re_dev
 )
 
+install(FILES cmake/re-config.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
+)
 
 ##############################################################################
 #
