@@ -317,20 +317,6 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 		}
 	}
 
-	if (offer) {
-
-		for (lle=m->lfmtl.tail; lle; ) {
-
-			lfmt = lle->data;
-
-			lle = lle->prev;
-
-			if (lfmt && !lfmt->sup) {
-				list_unlink(&lfmt->le);
-				list_append(&m->lfmtl, &lfmt->le, lfmt);
-			}
-		}
-	}
 }
 
 
