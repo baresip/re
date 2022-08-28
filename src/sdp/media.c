@@ -306,15 +306,6 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 			rfmt->data = lfmt->data;
 
 		rfmt->ref = lfmt->ref;
-
-		if (offer) {
-			mem_deref(lfmt->id);
-			lfmt->id = mem_ref(rfmt->id);
-			lfmt->pt = atoi(lfmt->id ? lfmt->id : "");
-
-			list_unlink(&lfmt->le);
-			list_append(&m->lfmtl, &lfmt->le, lfmt);
-		}
 	}
 
 	if (offer) {
