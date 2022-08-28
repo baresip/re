@@ -73,6 +73,8 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()
 
+find_package(MbedTLS)
+
 set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(re CONFIG REQUIRED)
 ##############################################################################
