@@ -26,7 +26,7 @@ build-stamp: configure-stamp
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) RELEASE=1 \
+	$(MAKE) RELEASE=1 PREFIX=/usr \
 		EXTRA_CFLAGS=$(EXTRA_CFLAGS) \
 		EXTRA_LFLAGS=$(EXTRA_LFLAGS)
 
