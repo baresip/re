@@ -45,24 +45,6 @@ struct aes {
 };
 
 
-static inline bool set_crypt_dir(struct aes *aes, enum crypt_mode encr,
-		enum options opts)
-{
-	if (opts & FORCE && aes->gcm.encr != encr) {
-
-		/* update the encrypt/decrypt direction */
-		int mode = encr ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT;
-		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
-				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
-			return false;
-		}
-
-		aes->gcm.encr = encr;
-	}
-
-	return true;
-}
-
 static void destructor(void *arg)
 {
 	struct aes *st = arg;
@@ -164,12 +146,20 @@ static int add_aad(struct aes *aes, const uint8_t *in, size_t len) {
 		if (new_alloc == NULL)
 			return ENOMEM;
 		aes->gcm.aad = new_alloc;
-	} else
+	}
+	else {
 		aes->gcm.aad = mem_alloc(len, NULL);
-	if (!aes->gcm.aad)
-		return ENOMEM;
+		if (!aes->gcm.aad)
+			return ENOMEM;
+	}
 	memcpy(aes->gcm.aad + aes->gcm.aad_len, in, len);
 	aes->gcm.aad_len += len;
+
+	int mode = aes->gcm.encr ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT;
+	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
+		return false;
+	}
 
 	return 0;
 }
@@ -195,13 +185,8 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 				ret = add_aad(aes, in, len);
 				if (ret)
 					return ret;
-				if (!set_crypt_dir(aes, ENCRYPT, FORCE))
-					return EPROTO;
 				return 0;
 			}
-
-			if (!set_crypt_dir(aes, ENCRYPT, 0))
-				return EPROTO;
 
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
 				return EPROTO;
@@ -231,13 +216,8 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 				ret = add_aad(aes, in, len);
 				if (ret)
 					return ret;
-				if (!set_crypt_dir(aes, DECRYPT, FORCE))
-					return EPROTO;
 				return 0;
 			}
-
-			if (!set_crypt_dir(aes, DECRYPT, 0))
-				return EPROTO;
 
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
 				return EPROTO;
