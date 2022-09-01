@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.7.0] - 2022-09-01
+
+* async: add re_thread_async by @sreimers in https://github.com/baresip/re/pull/462
+* atomic: Add support for gcc __sync intrinsics by @Lastique in https://github.com/baresip/re/pull/467
+* btrace: fix gcc 4.3.5 warnings by @cspiel1 in https://github.com/baresip/re/pull/468
+* h264: fix gcc 4.3.5 warnings by @cspiel1 in https://github.com/baresip/re/pull/469
+* async: add guard by @sreimers in https://github.com/baresip/re/pull/474
+* dns/client: add async getaddrinfo usage by @sreimers in https://github.com/baresip/re/pull/470
+* async: make work handler and callback optional by @sreimers in https://github.com/baresip/re/pull/481
+* BareSip. Add a state update action to the main loop to unblock pollin… by @viordash in https://github.com/baresip/re/pull/480
+* dns,net: fix build of asyn_getaddrinfo on gcc 4.3.5 (#482) by @cspiel1 in https://github.com/baresip/re/pull/483
+* dns/client: fix getaddrinfo duplicates by @sreimers in https://github.com/baresip/re/pull/486
+* http/client: fix dnsc_conf initialization by @sreimers in https://github.com/baresip/re/pull/487
+* tmr: tmr_start_dbg use const char for file arg by @sreimers in https://github.com/baresip/re/pull/488
+* base64: Encoding/Decoding with URL and Filename Safe Alphabet by @sreimers in https://github.com/baresip/re/pull/471
+* misc: fix c11 err handling by @sreimers in https://github.com/baresip/re/pull/476
+* cmake: move definitions to re-config.cmake by @sreimers in https://github.com/baresip/re/pull/491
+* ci/mingw: fix make retest by @sreimers in https://github.com/baresip/re/pull/492
+* cmake: add pkgconfig by @sreimers in https://github.com/baresip/re/pull/493
+* Fix error: ‘NI_MAXSERV’ undeclared by @widgetii in https://github.com/baresip/re/pull/495
+* Fix error: storage size of ‘ifrr’ isn’t known by @widgetii in https://github.com/baresip/re/pull/496
+* ci/musl: add alpine/musl build by @sreimers in https://github.com/baresip/re/pull/499
+* Correctly update local media format ids to match those in the offer by @juha-h in https://github.com/baresip/re/pull/498
+* debian: fix prefix by @juha-h in https://github.com/baresip/re/pull/501
+
+---
+
 ## [v2.6.0] - 2022-08-01
 
 * ice: change one warning to notice by @alfredh in https://github.com/baresip/re/pull/421
@@ -52,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * list: add list_move() helper by @sreimers in https://github.com/baresip/re/pull/464
 * thread: fix thread_create_name ENOMEM by @sreimers in https://github.com/baresip/re/pull/465
 
+---
 
 ## [v2.5.0] - 2022-07-01
 
@@ -597,7 +625,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2]: https://github.com/baresip/re/pull/2
 [#1]: https://github.com/baresip/re/pull/1
 
-[Unreleased]: https://github.com/baresip/re/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/baresip/re/compare/v2.7.0...HEAD
+[v2.7.0]: https://github.com/baresip/re/compare/v2.6.0...v2.7.0
 [v2.6.0]: https://github.com/baresip/re/compare/v2.5.0...v2.6.0
 [v2.5.0]: https://github.com/baresip/re/compare/v2.4.0...v2.5.0
 [v2.4.0]: https://github.com/baresip/re/compare/v2.3.0...v2.4.0
