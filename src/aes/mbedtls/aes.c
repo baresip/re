@@ -12,7 +12,7 @@
 #include <re_aes.h>
 
 /* only 96-bits IV for now */
-#define IV_LEN  12
+#define GCM_IV_LEN  12
 
 enum crypt_mode {
 	ENCRYPT = 0,
@@ -37,7 +37,7 @@ struct aes {
 		struct {
 			mbedtls_gcm_context ctx;
 			enum crypt_mode encr;
-			uint8_t iv[IV_LEN];
+			uint8_t iv[GCM_IV_LEN];
 			uint8_t* aad;
 			size_t aad_len;
 		} gcm;
@@ -45,14 +45,15 @@ struct aes {
 };
 
 
-static inline bool set_crypt_dir(struct aes *aes, enum crypt_mode encr, enum options opts)
+static inline bool set_crypt_dir(struct aes *aes, enum crypt_mode encr,
+		enum options opts)
 {
 	if (opts & FORCE && aes->gcm.encr != encr) {
 
 		/* update the encrypt/decrypt direction */
 		int mode = encr ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT;
-		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode,
-				aes->gcm.iv, IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
+		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
 			return false;
 		}
 
@@ -99,10 +100,12 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 	switch (mode) {
 		case AES_MODE_CTR:
 			mbedtls_aes_init(&st->ctr.ctx);
-			err = mbedtls_aes_setkey_enc(&st->ctr.ctx, key,
-				key_bits);
-			if (err)
+			if (mbedtls_aes_setkey_enc(&st->ctr.ctx, key,
+				key_bits))
 				goto out;
+			if (iv)
+				memcpy(st->ctr.nonce_counter, iv,
+						sizeof(st->ctr.nonce_counter));
 			break;
 		case AES_MODE_GCM:
 			st->gcm.encr = true;
@@ -112,11 +115,12 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 			if (err)
 				goto out;
 			if (iv != NULL) {
-				memcpy(st->gcm.iv, iv, IV_LEN);
+				memcpy(st->gcm.iv, iv, GCM_IV_LEN);
 			}
 			if (mbedtls_gcm_starts(&st->gcm.ctx,
 					MBEDTLS_GCM_ENCRYPT,
-					st->gcm.iv, IV_LEN, st->gcm.aad, st->gcm.aad_len))
+					st->gcm.iv, GCM_IV_LEN, st->gcm.aad,
+					st->gcm.aad_len))
 				goto out;
 			break;
 	}
@@ -141,10 +145,11 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 	switch (aes->mode) {
 		case AES_MODE_GCM:
 			if (iv != NULL) {
-				memcpy(aes->gcm.iv, iv, IV_LEN);
+				memcpy(aes->gcm.iv, iv, GCM_IV_LEN);
 			}
 			mbedtls_gcm_starts(&aes->gcm.ctx, mode,
-					aes->gcm.iv, IV_LEN, aes->gcm.aad, aes->gcm.aad_len);
+					aes->gcm.iv, GCM_IV_LEN,
+					aes->gcm.aad, aes->gcm.aad_len);
 		default:
 			;
 	}
