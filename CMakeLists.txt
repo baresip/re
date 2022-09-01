@@ -431,6 +431,7 @@ if(USE_OPENSSL)
 elseif(USE_MBEDTLS)
   list(APPEND SRCS
     src/main/mbedtls.c
+    src/aes/mbedtls/aes.c
   )
   add_compile_definitions(USE_MBEDTLS)
   set(CRYPTO_LIBS MbedTLS MbedCrypto MbedX509)
