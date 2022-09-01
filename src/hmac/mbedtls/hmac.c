@@ -83,7 +83,7 @@ int hmac_digest(struct hmac *hmac, uint8_t *md, size_t md_len,
 
 	ret = mbedtls_md_hmac(hmac->type, hmac->key, hmac->key_len,
 			data, data_len, md);
-	if (!ret) {
+	if (ret != 0) {
 		return EPROTO;
 	}
 
