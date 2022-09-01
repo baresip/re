@@ -13,13 +13,13 @@
 cmake_minimum_required(VERSION 3.7)
 
 project(re
-  VERSION 2.6.1
+  VERSION 2.7.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 8) # bump if ABI breaks
+set(PROJECT_SOVERSION 9) # bump if ABI breaks
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
