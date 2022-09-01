@@ -123,6 +123,7 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 
 	switch (aes->mode) {
 		case AES_MODE_GCM:
+		memcpy(&aes->gcm.iv, iv, sizeof(aes->gcm.iv));
 		mbedtls_gcm_starts(&aes->gcm.ctx, mode,
 				(const unsigned char*)&aes->gcm.iv,
 				sizeof(aes->gcm.iv), NULL, 0);
