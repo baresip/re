@@ -11,6 +11,9 @@
 #include <re_mem.h>
 #include <re_aes.h>
 
+/* only 96-bits IV for now */
+#define IV_LEN  12
+
 struct aes {
 	enum aes_mode mode;
 
@@ -25,7 +28,7 @@ struct aes {
 		struct {
 			mbedtls_gcm_context ctx;
 			bool encr;
-			uint8_t iv[16];
+			uint8_t iv[IV_LEN];
 		} gcm;
 	};
 };
@@ -38,8 +41,7 @@ static inline bool set_crypt_dir(struct aes *aes, bool encr)
 		/* update the encrypt/decrypt direction */
 		int mode = encr ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT;
 		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode,
-				(const unsigned char*)&aes->gcm.iv,
-				sizeof(aes->gcm.iv), NULL, 0)) {
+				aes->gcm.iv, IV_LEN, NULL, 0)) {
 			return false;
 		}
 
@@ -95,11 +97,12 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 				MBEDTLS_CIPHER_ID_AES, key, key_bits);
 			if (err)
 				goto out;
-			memcpy(&st->gcm.iv, iv, sizeof(st->gcm.iv));
+			if (iv != NULL) {
+				memcpy(st->gcm.iv, iv, IV_LEN);
+			}
 			if (mbedtls_gcm_starts(&st->gcm.ctx,
 					MBEDTLS_GCM_ENCRYPT,
-					(const unsigned char*)&st->gcm.iv,
-					sizeof(st->gcm.iv), NULL, 0))
+					st->gcm.iv, IV_LEN, NULL, 0))
 				goto out;
 			break;
 	}
@@ -123,10 +126,11 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 
 	switch (aes->mode) {
 		case AES_MODE_GCM:
-		memcpy(&aes->gcm.iv, iv, sizeof(aes->gcm.iv));
-		mbedtls_gcm_starts(&aes->gcm.ctx, mode,
-				(const unsigned char*)&aes->gcm.iv,
-				sizeof(aes->gcm.iv), NULL, 0);
+			if (iv != NULL) {
+				memcpy(aes->gcm.iv, iv, IV_LEN);
+			}
+			mbedtls_gcm_starts(&aes->gcm.ctx, mode,
+					aes->gcm.iv, IV_LEN, NULL, 0);
 		default:
 			;
 	}
