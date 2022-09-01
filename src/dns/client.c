@@ -4,6 +4,15 @@
  * Copyright (C) 2010 Creytiv.com
  * Copyright (C) 2022 Sebastian Reimers
  */
+#define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#define __USE_POSIX 1  /**< Use POSIX flag */
+#include <netdb.h>
+#endif
+
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -17,6 +26,8 @@
 #include <re_tcp.h>
 #include <re_sys.h>
 #include <re_dns.h>
+#include <re_net.h>
+#include <re_main.h>
 
 
 #define DEBUG_MODULE "dnsc"
@@ -33,6 +44,7 @@ enum {
 	SRVC_MAX = 32,
 	RR_MAX = 32,
 	CACHE_TTL_MAX = 1800,
+	GETADDRINFO_TTL = 60
 };
 
 
@@ -103,6 +115,7 @@ static const struct dnsc_conf default_conf = {
 	CONN_TIMEOUT,
 	IDLE_TIMEOUT,
 	CACHE_TTL_MAX,
+	false
 };
 
 
@@ -765,6 +778,138 @@ static bool query_cache_handler(struct dns_query *q)
 }
 
 
+static bool getaddr_dup(struct le *le, void *arg)
+{
+	struct dnsrr *r1 = list_ledata(le);
+	struct dnsrr *r2 = arg;
+
+	if (r1->type == DNS_TYPE_A && r2->type == DNS_TYPE_A) {
+		if (r1->rdata.a.addr == r2->rdata.a.addr)
+			return true;
+	}
+
+	if (r1->type == DNS_TYPE_AAAA && r2->type == DNS_TYPE_AAAA) {
+		if (r1->rdata.aaaa.addr == r2->rdata.aaaa.addr)
+			return true;
+	}
+
+	return false;
+}
+
+
+static int async_getaddrinfo(void *arg)
+{
+	struct dns_query *q = arg;
+	int err;
+	struct addrinfo *res0 = NULL;
+	struct addrinfo *res;
+	struct addrinfo hints;
+	struct sa sa;
+
+	memset(&hints, 0, sizeof(hints));
+
+	if (q->type == DNS_TYPE_A)
+		hints.ai_family = AF_INET;
+	if (q->type == DNS_TYPE_AAAA)
+		hints.ai_family = AF_INET6;
+	hints.ai_flags = AI_ADDRCONFIG;
+
+	err = getaddrinfo(q->name, NULL, &hints, &res0);
+	if (err)
+		return EADDRNOTAVAIL;
+
+	for (res = res0; res; res = res->ai_next) {
+		struct dnsrr *rr = dns_rr_alloc();
+		struct le *le;
+
+		if (!rr) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		str_dup(&rr->name, q->name);
+
+		rr->dnsclass = DNS_CLASS_IN;
+		rr->ttl	     = GETADDRINFO_TTL;
+
+		err = sa_set_sa(&sa, res->ai_addr);
+		if (err) {
+			mem_deref(rr);
+			continue;
+		}
+
+		if (sa_af(&sa) == AF_INET) {
+			rr->type	 = DNS_TYPE_A;
+			rr->rdlen	 = 4;
+			rr->rdata.a.addr = sa_in(&sa);
+		}
+
+		if (sa_af(&sa) == AF_INET6) {
+			rr->type  = DNS_TYPE_AAAA;
+			rr->rdlen = 16;
+			sa_in6(&sa, rr->rdata.aaaa.addr);
+		}
+
+		le = list_apply(&q->rrlv[0], false, getaddr_dup, rr);
+		if (le) {
+			mem_deref(rr);
+			continue;
+		}
+
+		list_append(&q->rrlv[0], &rr->le_priv, rr);
+	}
+
+out:
+	if (err)
+		list_flush(&q->rrlv[0]);
+
+	freeaddrinfo(res0);
+
+	return err;
+}
+
+
+static void getaddrinfo_h(int err, void *arg)
+{
+	struct dns_query *q = arg;
+	const bool cache = q->dnsc->conf.cache_ttl_max > 0;
+
+	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d %s ---\n", q->id,
+		   cache ? "(caching)" : "");
+
+	if (!err) {
+		struct le *le;
+		LIST_FOREACH(&q->rrlv[0], le)
+		{
+			DEBUG_INFO("%H%s\n", dns_rr_print, le->data);
+		}
+	}
+
+	query_handler(q, err, &q->rrlv[0], &q->rrlv[1], &q->rrlv[2]);
+
+	if (err || !cache) {
+		mem_deref(q);
+		return;
+	}
+
+	hash_append(q->dnsc->ht_query_cache, hash_joaat_str_ci(q->name),
+		    &q->le, q);
+	tmr_start(&q->tmr_ttl, GETADDRINFO_TTL * 1000, ttl_timeout_handler, q);
+}
+
+
+static int query_getaddrinfo(struct dns_query *q)
+{
+	int err;
+
+	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, q);
+	if (err)
+		DEBUG_WARNING("re_thread_async: %m\n", err);
+
+	return err;
+}
+
+
 static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		 const char *name, uint16_t type, uint16_t dnsclass,
 		 const struct dnsrr *ans_rr, int proto,
@@ -825,6 +970,15 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 
 	if (query_cache_handler(q))
 		goto out;
+
+	if (dnsc->conf.getaddrinfo &&
+	    (q->type == DNS_TYPE_A || q->type == DNS_TYPE_AAAA)) {
+		err = query_getaddrinfo(q);
+		if (err)
+			goto error;
+
+		goto out;
+	}
 
 	if (proto == IPPROTO_TCP)
 		q->mb.pos += 2;
@@ -1149,4 +1303,19 @@ void dnsc_cache_max(struct dnsc *dnsc, uint32_t max)
 
 	if (!max)
 		dnsc_cache_flush(dnsc);
+}
+
+
+/**
+ * Enable/Disable getaddrinfo usage
+ *
+ * @param dnsc  DNS Client
+ * @param max   true for enabled, otherwise disabled (default)
+ */
+void dnsc_getaddrinfo(struct dnsc *dnsc, bool active)
+{
+	if (!dnsc)
+		return;
+
+	dnsc->conf.getaddrinfo = active;
 }

@@ -188,8 +188,8 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
 	jb->pt = -1;
-	err = mtx_init(&jb->lock, mtx_plain);
-	if (err != thrd_success) {
+	err = mtx_init(&jb->lock, mtx_plain) != thrd_success;
+	if (err) {
 		err = ENOMEM;
 		goto out;
 	}

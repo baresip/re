@@ -1,0 +1,25 @@
+name: Alpine (musl)
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: alpine
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install devel tools
+      run: |
+        apk add musl-dev git cmake gcc make binutils openssl-dev linux-headers zlib-dev 
+
+    - name: make
+      run: |
+        cmake -B build -DCMAKE_C_FLAGS="-Werror"
+        cmake --build build -j

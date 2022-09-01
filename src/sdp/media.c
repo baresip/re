@@ -260,6 +260,7 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 {
 	struct sdp_format *rfmt, *lfmt = NULL;
 	struct le *rle, *lle;
+	int pt_offer = RTP_DYNPT_START;
 
 	if (!m || m->disabled || !sa_port(&m->raddr) || m->fmt_ignore)
 		return;
@@ -307,28 +308,29 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 
 		rfmt->ref = lfmt->ref;
 
+		/* Use payload type from offer - RFC3264 - 6.1 */
 		if (offer) {
 			mem_deref(lfmt->id);
 			lfmt->id = mem_ref(rfmt->id);
 			lfmt->pt = atoi(lfmt->id ? lfmt->id : "");
-
-			list_unlink(&lfmt->le);
-			list_append(&m->lfmtl, &lfmt->le, lfmt);
+			if (lfmt->pt > pt_offer)
+				pt_offer = lfmt->pt;
 		}
 	}
 
+	/* Recalculate pt of unsupported codecs */
 	if (offer) {
 
-		for (lle=m->lfmtl.tail; lle; ) {
+		for (lle=m->lfmtl.head; lle; lle=lle->next) {
 
 			lfmt = lle->data;
 
-			lle = lle->prev;
-
-			if (lfmt && !lfmt->sup) {
-				list_unlink(&lfmt->le);
-				list_append(&m->lfmtl, &lfmt->le, lfmt);
-			}
+			if (lfmt && !lfmt->sup)
+				if (lfmt->pt >= RTP_DYNPT_START) {
+					mem_deref(lfmt->id);
+					lfmt->pt = ++pt_offer;
+					re_sdprintf(&lfmt->id, "%i", lfmt->pt);
+				}
 		}
 	}
 }

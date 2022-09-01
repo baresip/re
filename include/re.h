@@ -21,6 +21,7 @@ extern "C" {
 
 /* Library modules */
 #include "re_aes.h"
+#include "re_async.h"
 #include "re_base64.h"
 #include "re_bfcp.h"
 #include "re_btrace.h"
