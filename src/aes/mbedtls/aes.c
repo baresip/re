@@ -37,8 +37,9 @@ static inline bool set_crypt_dir(struct aes *aes, bool encr)
 
 		/* update the encrypt/decrypt direction */
 		int mode = encr ? MBEDTLS_GCM_ENCRYPT : MBEDTLS_GCM_DECRYPT;
-		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, (const unsigned char*)&aes->gcm.iv,
-					sizeof(aes->gcm.iv), NULL, 0)) {
+		if (mbedtls_gcm_starts(&aes->gcm.ctx, mode,
+				(const unsigned char*)&aes->gcm.iv,
+				sizeof(aes->gcm.iv), NULL, 0)) {
 			return false;
 		}
 
@@ -82,18 +83,22 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 	switch (mode) {
 		case AES_MODE_CTR:
 			mbedtls_aes_init(&st->ctr.ctx);
-			err = mbedtls_aes_setkey_enc(&st->ctr.ctx, key, key_bits);
+			err = mbedtls_aes_setkey_enc(&st->ctr.ctx, key,
+				key_bits);
 			if (err)
 				goto out;
 			break;
 		case AES_MODE_GCM:
 			st->gcm.encr = true;
 			mbedtls_gcm_init(&st->gcm.ctx);
-			err = mbedtls_gcm_setkey(&st->gcm.ctx, MBEDTLS_CIPHER_ID_AES, key, key_bits);
+			err = mbedtls_gcm_setkey(&st->gcm.ctx,
+				MBEDTLS_CIPHER_ID_AES, key, key_bits);
 			if (err)
 				goto out;
 			memcpy(&st->gcm.iv, iv, sizeof(st->gcm.iv));
-			if (mbedtls_gcm_starts(&st->gcm.ctx, MBEDTLS_GCM_ENCRYPT, (const unsigned char*)&st->gcm.iv,
+			if (mbedtls_gcm_starts(&st->gcm.ctx,
+					MBEDTLS_GCM_ENCRYPT,
+					(const unsigned char*)&st->gcm.iv,
 					sizeof(st->gcm.iv), NULL, 0))
 				goto out;
 			break;
@@ -118,9 +123,11 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 
 	switch (aes->mode) {
 		case AES_MODE_GCM:
-		mbedtls_gcm_starts(&aes->gcm.ctx, mode, (const unsigned char*)&aes->gcm.iv,
-					sizeof(aes->gcm.iv), NULL, 0);
-		default: ;
+		mbedtls_gcm_starts(&aes->gcm.ctx, mode,
+				(const unsigned char*)&aes->gcm.iv,
+				sizeof(aes->gcm.iv), NULL, 0);
+		default:
+			;
 	}
 }
 
@@ -133,8 +140,9 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 
 	switch (aes->mode) {
 		case AES_MODE_CTR:
-			mbedtls_aes_crypt_ctr(&aes->ctr.ctx, len, &aes->ctr.nc_off,
-				aes->ctr.nonce_counter, aes->ctr.stream_block, in, out);
+			mbedtls_aes_crypt_ctr(&aes->ctr.ctx, len,
+				&aes->ctr.nc_off, aes->ctr.nonce_counter,
+				aes->ctr.stream_block, in, out);
 			break;
 		case AES_MODE_GCM:
 			if (!set_crypt_dir(aes, true))
@@ -155,8 +163,9 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 
 	switch (aes->mode) {
 		case AES_MODE_CTR:
-			mbedtls_aes_crypt_ctr(&aes->ctr.ctx, len, &aes->ctr.nc_off,
-				aes->ctr.nonce_counter, aes->ctr.stream_block, in, out);
+			mbedtls_aes_crypt_ctr(&aes->ctr.ctx, len,
+				&aes->ctr.nc_off, aes->ctr.nonce_counter,
+				aes->ctr.stream_block, in, out);
 			break;
 		case AES_MODE_GCM:
 			if (!set_crypt_dir(aes, false))
