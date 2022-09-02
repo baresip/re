@@ -27,7 +27,7 @@ struct aes {
 
 		struct {
 			mbedtls_gcm_context ctx;
-			int cr_dir;
+			bool started;
 			uint8_t iv[GCM_IV_LEN];
 			uint8_t* aad;
 			size_t aad_len;
@@ -51,22 +51,6 @@ static void destructor(void *arg)
 			mbedtls_gcm_free(&st->gcm.ctx);
 			break;
 	}
-}
-
-static inline bool set_crypt_dir(struct aes *aes, int new_dir)
-{
-	if (aes->gcm.cr_dir != new_dir) {
-
-		/* update the encrypt/decrypt direction */
-		if (mbedtls_gcm_starts(&aes->gcm.ctx, new_dir, aes->gcm.iv,
-				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
-			return false;
-		}
-
-		aes->gcm.cr_dir = new_dir;
-	}
-
-	return true;
 }
 
 
@@ -97,7 +81,6 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 						sizeof(st->ctr.nonce_counter));
 			break;
 		case AES_MODE_GCM:
-			st->gcm.cr_dir = MBEDTLS_GCM_ENCRYPT;
 			mbedtls_gcm_init(&st->gcm.ctx);
 			err = mbedtls_gcm_setkey(&st->gcm.ctx,
 				MBEDTLS_CIPHER_ID_AES, key, key_bits);
@@ -106,11 +89,6 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 			if (iv != NULL) {
 				memcpy(st->gcm.iv, iv, GCM_IV_LEN);
 			}
-			if (mbedtls_gcm_starts(&st->gcm.ctx,
-					st->gcm.cr_dir,
-					st->gcm.iv, GCM_IV_LEN, st->gcm.aad,
-					st->gcm.aad_len))
-				goto out;
 			break;
 	}
 
@@ -134,16 +112,14 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 			if (iv != NULL) {
 				memcpy(aes->gcm.iv, iv, GCM_IV_LEN);
 			}
-			mbedtls_gcm_starts(&aes->gcm.ctx, aes->gcm.cr_dir,
-					aes->gcm.iv, GCM_IV_LEN,
-					aes->gcm.aad, aes->gcm.aad_len);
 		default:
 			;
 	}
 }
 
 
-static int add_aad(struct aes *aes, const uint8_t *in, size_t len) {
+static int add_aad(struct aes *aes, const uint8_t *in, size_t len)
+{
 	void* new_alloc;
 
 	if (aes->gcm.aad) {
@@ -160,14 +136,22 @@ static int add_aad(struct aes *aes, const uint8_t *in, size_t len) {
 	memcpy(aes->gcm.aad + aes->gcm.aad_len, in, len);
 	aes->gcm.aad_len += len;
 
-	if (mbedtls_gcm_starts(&aes->gcm.ctx, aes->gcm.cr_dir, aes->gcm.iv,
-				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len)) {
-		return false;
-	}
-
 	return 0;
 }
 
+
+static int check_started(struct aes *aes, int mode)
+{
+	if (aes->gcm.started)
+		return 0;
+
+	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+			GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len))
+		return EPROTO;
+	aes->gcm.started = true;
+
+	return 0;
+}
 
 int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 {
@@ -192,7 +176,7 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 				return 0;
 			}
 
-			if (!set_crypt_dir(aes, MBEDTLS_GCM_ENCRYPT))
+			if (check_started(aes, MBEDTLS_GCM_ENCRYPT))
 				return EPROTO;
 
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
@@ -226,7 +210,7 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 				return 0;
 			}
 
-			if (!set_crypt_dir(aes, MBEDTLS_GCM_DECRYPT))
+			if (check_started(aes, MBEDTLS_GCM_DECRYPT))
 				return EPROTO;
 
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
@@ -255,6 +239,9 @@ int aes_get_authtag(struct aes *aes, uint8_t *tag, size_t taglen)
 	switch (aes->mode) {
 
 	case AES_MODE_GCM:
+		if (check_started(aes, MBEDTLS_GCM_ENCRYPT))
+			return EPROTO;
+
 		mbedtls_gcm_finish(&aes->gcm.ctx, tag, taglen);
 		return 0;
 
