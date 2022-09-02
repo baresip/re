@@ -4,6 +4,7 @@
  * Copyright (C) 2022 Dmitry Ilyin
  */
 #include <string.h>
+#include <mbedtls/version.h>
 #include <mbedtls/aes.h>
 #include <mbedtls/gcm.h>
 #include <re_types.h>
@@ -74,7 +75,7 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 		case AES_MODE_CTR:
 			mbedtls_aes_init(&st->ctr.ctx);
 			if (mbedtls_aes_setkey_enc(&st->ctr.ctx, key,
-				key_bits))
+				(unsigned)key_bits))
 				goto out;
 			if (iv)
 				memcpy(st->ctr.nonce_counter, iv,
@@ -82,9 +83,9 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 			break;
 		case AES_MODE_GCM:
 			mbedtls_gcm_init(&st->gcm.ctx);
-			err = mbedtls_gcm_setkey(&st->gcm.ctx,
-				MBEDTLS_CIPHER_ID_AES, key, key_bits);
-			if (err)
+			if (mbedtls_gcm_setkey(&st->gcm.ctx,
+				MBEDTLS_CIPHER_ID_AES, key,
+				(unsigned)key_bits))
 				goto out;
 			if (iv)
 				memcpy(st->gcm.iv, iv, GCM_IV_LEN);
@@ -145,9 +146,18 @@ static int check_started(struct aes *aes, int mode)
 	if (aes->gcm.started)
 		return 0;
 
+#if MBEDTLS_VERSION_MAJOR >= 3
+	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+			GCM_IV_LEN))
+		return EPROTO;
+	if (mbedtls_gcm_update_ad(&aes->gcm.ctx, aes->gcm.aad,
+			aes->gcm.aad_len))
+		return EPROTO;
+#else
 	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
 			GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len))
 		return EPROTO;
+#endif
 	aes->gcm.started = true;
 
 	return 0;
@@ -156,6 +166,7 @@ static int check_started(struct aes *aes, int mode)
 int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 {
 	int ret;
+	size_t output_length;
 
 	if (!aes || !in)
 		return EINVAL;
@@ -179,7 +190,12 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 			if (check_started(aes, MBEDTLS_GCM_ENCRYPT))
 				return EPROTO;
 
+#if MBEDTLS_VERSION_MAJOR >= 3
+			if (mbedtls_gcm_update(&aes->gcm.ctx, in, len, out,
+						len, &output_length))
+#else
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
+#endif
 				return EPROTO;
 			break;
 	}
@@ -191,6 +207,7 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 {
 	int ret;
+	size_t output_length;
 
 	if (!aes || !in)
 		return EINVAL;
@@ -213,7 +230,12 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 			if (check_started(aes, MBEDTLS_GCM_DECRYPT))
 				return EPROTO;
 
+#if MBEDTLS_VERSION_MAJOR >= 3
+			if (mbedtls_gcm_update(&aes->gcm.ctx, in, len, out,
+						len, &output_length))
+#else
 			if (mbedtls_gcm_update(&aes->gcm.ctx, len, in, out))
+#endif
 				return EPROTO;
 			break;
 	}
@@ -233,6 +255,8 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
  */
 int aes_get_authtag(struct aes *aes, uint8_t *tag, size_t taglen)
 {
+	size_t output_length;
+
 	if (!aes || !tag || !taglen)
 		return EINVAL;
 
@@ -242,7 +266,13 @@ int aes_get_authtag(struct aes *aes, uint8_t *tag, size_t taglen)
 		if (check_started(aes, MBEDTLS_GCM_ENCRYPT))
 			return EPROTO;
 
-		mbedtls_gcm_finish(&aes->gcm.ctx, tag, taglen);
+#if MBEDTLS_VERSION_MAJOR >= 3
+		if (mbedtls_gcm_finish(&aes->gcm.ctx, NULL, 0, &output_length,
+					tag, taglen))
+#else
+		if (mbedtls_gcm_finish(&aes->gcm.ctx, tag, taglen))
+#endif
+			return EPROTO;
 		return 0;
 
 	default:
@@ -264,6 +294,7 @@ int aes_get_authtag(struct aes *aes, uint8_t *tag, size_t taglen)
 int aes_authenticate(struct aes *aes, const uint8_t *tag, size_t taglen)
 {
 	unsigned char check_tag[16];
+	size_t output_length;
 
 	if (!aes || !tag || !taglen)
 		return EINVAL;
@@ -271,7 +302,12 @@ int aes_authenticate(struct aes *aes, const uint8_t *tag, size_t taglen)
 	switch (aes->mode) {
 
 	case AES_MODE_GCM:
+#if MBEDTLS_VERSION_MAJOR >= 3
+		if (mbedtls_gcm_finish(&aes->gcm.ctx, NULL, 0, &output_length,
+			check_tag, taglen))
+#else
 		if (mbedtls_gcm_finish(&aes->gcm.ctx, check_tag, taglen))
+#endif
 			return EPROTO;
 		if (memcmp(check_tag, tag, taglen) != 0)
 			return EAUTH;
