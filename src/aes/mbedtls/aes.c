@@ -29,6 +29,7 @@ struct aes {
 		struct {
 			mbedtls_gcm_context ctx;
 			bool started;
+			int direction;
 			uint8_t iv[GCM_IV_LEN];
 			uint8_t* aad;
 			size_t aad_len;
@@ -82,6 +83,7 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 						sizeof(st->ctr.nonce_counter));
 			break;
 		case AES_MODE_GCM:
+			st->gcm.direction = -1;
 			mbedtls_gcm_init(&st->gcm.ctx);
 			if (mbedtls_gcm_setkey(&st->gcm.ctx,
 				MBEDTLS_CIPHER_ID_AES, key,
@@ -119,9 +121,19 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 }
 
 
-static int add_aad(struct aes *aes, const uint8_t *in, size_t len)
+static int add_aad(struct aes *aes, const uint8_t *in, size_t len,
+	int direction)
 {
 	void* new_alloc;
+
+	if (aes->gcm.started && aes->gcm.direction != direction) {
+		if (aes->gcm.aad) {
+			mem_deref(aes->gcm.aad);
+			aes->gcm.aad = NULL;
+			aes->gcm.aad_len = 0;
+		}
+		aes->gcm.started = false;
+	}
 
 	if (aes->gcm.aad) {
 		new_alloc = mem_realloc(aes->gcm.aad, aes->gcm.aad_len + len);
@@ -140,14 +152,12 @@ static int add_aad(struct aes *aes, const uint8_t *in, size_t len)
 	return 0;
 }
 
-
-static int check_started(struct aes *aes, int mode)
-{
+static int check_started(struct aes *aes, int direction) {
 	if (aes->gcm.started)
 		return 0;
 
 #if MBEDTLS_VERSION_MAJOR >= 3
-	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+	if (mbedtls_gcm_starts(&aes->gcm.ctx, direction, aes->gcm.iv,
 			GCM_IV_LEN))
 		return EPROTO;
 	if (mbedtls_gcm_update_ad(&aes->gcm.ctx, aes->gcm.aad,
@@ -155,10 +165,11 @@ static int check_started(struct aes *aes, int mode)
 		return EPROTO;
 #else
 	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
-			GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len))
+				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len))
 		return EPROTO;
 #endif
 	aes->gcm.started = true;
+	aes->gcm.direction = direction;
 
 	return 0;
 }
@@ -181,7 +192,8 @@ int aes_encr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 			break;
 		case AES_MODE_GCM:
 			if (out == NULL) {
-				ret = add_aad(aes, in, len);
+				ret = add_aad(aes, in, len,
+					MBEDTLS_GCM_ENCRYPT);
 				if (ret)
 					return ret;
 				return 0;
@@ -221,7 +233,8 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
 			break;
 		case AES_MODE_GCM:
 			if (out == NULL) {
-				ret = add_aad(aes, in, len);
+				ret = add_aad(aes, in, len,
+					MBEDTLS_GCM_DECRYPT);
 				if (ret)
 					return ret;
 				return 0;
