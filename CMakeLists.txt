@@ -505,7 +505,11 @@ target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
 target_include_directories(re-objs PRIVATE include)
-target_link_libraries(re-objs PRIVATE ${CRYPTO_LIBS})
+if(USE_OPENSSL)
+  target_include_directories(re-objs PUBLIC ${OPENSSL_INCLUDE_DIR})
+elseif(USE_MBEDTLS)
+  target_include_directories(re-objs PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+endif()
 
 
 ##############################################################################
