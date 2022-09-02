@@ -86,9 +86,8 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 				MBEDTLS_CIPHER_ID_AES, key, key_bits);
 			if (err)
 				goto out;
-			if (iv != NULL) {
+			if (iv)
 				memcpy(st->gcm.iv, iv, GCM_IV_LEN);
-			}
 			break;
 	}
 
@@ -108,12 +107,13 @@ void aes_set_iv(struct aes *aes, const uint8_t *iv)
 		return;
 
 	switch (aes->mode) {
+		case AES_MODE_CTR:
+			memcpy(aes->ctr.nonce_counter, iv,
+				sizeof(aes->ctr.nonce_counter));
+			break;
 		case AES_MODE_GCM:
-			if (iv != NULL) {
-				memcpy(aes->gcm.iv, iv, GCM_IV_LEN);
-			}
-		default:
-			;
+			memcpy(aes->gcm.iv, iv, GCM_IV_LEN);
+			break;
 	}
 }
 
