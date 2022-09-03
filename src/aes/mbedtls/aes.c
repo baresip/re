@@ -164,7 +164,7 @@ static int check_started(struct aes *aes, int direction) {
 			aes->gcm.aad_len))
 		return EPROTO;
 #else
-	if (mbedtls_gcm_starts(&aes->gcm.ctx, mode, aes->gcm.iv,
+	if (mbedtls_gcm_starts(&aes->gcm.ctx, direction, aes->gcm.iv,
 				GCM_IV_LEN, aes->gcm.aad, aes->gcm.aad_len))
 		return EPROTO;
 #endif
