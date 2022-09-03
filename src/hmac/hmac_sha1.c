@@ -9,10 +9,10 @@
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
-#elif defined (__APPLE__)
-#include <CommonCrypto/CommonHMAC.h>
 #elif defined (USE_MBEDTLS)
 #include <mbedtls/md.h>
+#elif defined (__APPLE__)
+#include <CommonCrypto/CommonHMAC.h>
 #endif
 #include <re_hmac.h>
 
@@ -45,11 +45,11 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 #if defined (USE_OPENSSL)
 	if (!HMAC(EVP_sha1(), k, (int)lk, d, ld, out, NULL))
 		ERR_clear_error();
-#elif defined (__APPLE__)
-	CCHmac(kCCHmacAlgSHA1, k, lk, d, ld, out);
 #elif defined (USE_MBEDTLS)
 	mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1),
 			k, lk, d, ld, out);
+#elif defined (__APPLE__)
+	CCHmac(kCCHmacAlgSHA1, k, lk, d, ld, out);
 #else
 	(void)k;
 	(void)lk;

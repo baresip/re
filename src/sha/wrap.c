@@ -8,10 +8,10 @@
 #include <re_types.h>
 #if defined(USE_OPENSSL)
 #include <openssl/sha.h>
-#elif defined (__APPLE__)
-#include <CommonCrypto/CommonDigest.h>
 #elif defined (USE_MBEDTLS)
 #include <mbedtls/md.h>
+#elif defined (__APPLE__)
+#include <CommonCrypto/CommonDigest.h>
 #endif
 #include <re_sha.h>
 
@@ -27,10 +27,10 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 {
 #if defined(USE_OPENSSL)
 	(void)SHA1(d, n, md);
-#elif defined (__APPLE__)
-	CC_SHA1(d, (uint32_t)n, md);
 #elif defined (USE_MBEDTLS)
 	mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), d, n, md);
+#elif defined (__APPLE__)
+	CC_SHA1(d, (uint32_t)n, md);
 #else
 	(void)d;
 	(void)n;
