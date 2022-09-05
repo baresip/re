@@ -35,6 +35,7 @@ include(GNUInstallDirs)
 #
 
 option(USE_BFCP "Enable BFCP" ON)
+option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
@@ -210,8 +211,6 @@ set(SRCS
   src/ice/stunsrv.c
   src/ice/util.c
 
-  src/jbuf/jbuf.c
-
   src/json/decode.c
   src/json/decode_odict.c
   src/json/encode.c
@@ -342,6 +341,13 @@ if(USE_BFCP)
     src/bfcp/msg.c
     src/bfcp/reply.c
     src/bfcp/request.c
+  )
+endif()
+
+
+if(USE_JBUF)
+  list(APPEND SRCS
+    src/jbuf/jbuf.c
   )
 endif()
 
