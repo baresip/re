@@ -366,8 +366,9 @@ static int check_nonce(const struct pl *nonce, const struct sa *src,
 {
 	struct pl pl;
 	time_t ts;
-	char *comp;
+	char *comp = NULL;
 	bool eq;
+	int err;
 
 	if (!nonce || !nonce->p || nonce->l < NONCE_MIN_SIZE)
 		return EINVAL;
@@ -380,9 +381,11 @@ static int check_nonce(const struct pl *nonce, const struct sa *src,
 	if (time(NULL) - ts > NONCE_EXPIRES)
 		return ETIME;
 
-	gen_nonce(&comp, ts, src, realm);
-	eq = !pl_strcmp(nonce, comp);
+	err = gen_nonce(&comp, ts, src, realm);
+	if (err)
+		return err;
 
+	eq = !pl_strcmp(nonce, comp);
 	mem_deref(comp);
 	return eq ? 0 : EAUTH;
 }
@@ -437,6 +440,7 @@ int sip_uas_auth_check(struct sip_uas_auth *auth, const struct sip_msg *msg,
 	struct httpauth_digest_resp resp;
 	const struct sip_hdr *hdr;
 	uint8_t ha1[MD5_SIZE];
+	int err;
 
 	if (!msg || !auth || !authh)
 		return EINVAL;
@@ -451,9 +455,13 @@ int sip_uas_auth_check(struct sip_uas_auth *auth, const struct sip_msg *msg,
 	if (pl_strcasecmp(&resp.realm, auth->realm))
 		return EINVAL;
 
-	if (check_nonce(&resp.nonce, &msg->src, auth->realm)) {
+	err = check_nonce(&resp.nonce, &msg->src, auth->realm);
+	if (err == ETIME || err == EAUTH) {
 		auth->stale = true;
 		return EAUTH;
+	}
+	else if (err) {
+		return err;
 	}
 
 	if (authh(ha1, &resp.username, auth->realm, arg))
