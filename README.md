@@ -117,7 +117,6 @@ Patches can sent via Github
 | jbuf     | stable   | Jitter buffer                                  |
 | json     | stable   | JavaScript Object Notation (JSON)              |
 | list     | stable   | Sortable doubly-linked list handling           |
-| lock     | stable   | Resource locking functions                     |
 | main     | stable   | Main poll loop                                 |
 | mbuf     | stable   | Linear memory buffers                          |
 | md5      | stable   | The MD5 Message-Digest Algorithm (RFC 1321)    |

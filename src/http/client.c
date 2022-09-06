@@ -51,6 +51,7 @@ struct http_cli {
 #ifdef HAVE_INET6
 	struct sa laddr6;
 #endif
+	size_t bufsize_max;
 };
 
 struct conn;
@@ -78,6 +79,7 @@ struct http_req {
 	bool chunked;
 	bool secure;
 	bool close;
+	http_bodyh *bodyh;
 };
 
 
@@ -241,9 +243,10 @@ static void try_next(struct conn *conn, int err)
 }
 
 
-static int write_body_buf(struct http_msg *msg, const uint8_t *buf, size_t sz)
+static int write_body_buf(struct http_msg *msg, const uint8_t *buf,
+	size_t sz, size_t max_size)
 {
-	if ((msg->mb->pos + sz) > BUFSIZE_MAX)
+	if ((msg->mb->pos + sz) > max_size)
 		return EOVERFLOW;
 
 	return mbuf_write_mem(msg->mb, buf, sz);
@@ -261,7 +264,8 @@ static int write_body(struct http_req *req, struct mbuf *mb)
 	if (req->datah)
 		err = req->datah(mbuf_buf(mb), size, req->msg, req->arg);
 	else
-		err = write_body_buf(req->msg, mbuf_buf(mb), size);
+		err = write_body_buf(req->msg, mbuf_buf(mb), size,
+			req->cli->bufsize_max);
 
 	if (err)
 		return err;
@@ -323,27 +327,130 @@ static void timeout_handler(void *arg)
 }
 
 
+static int read_req_data(struct http_req *req)
+{
+	int err = 0;
+	struct mbuf *mb;
+	size_t rlen = 0;
+
+	if (!req->bodyh)
+		return 0;
+
+	mb = mbuf_alloc(1);
+	if (!mb)
+		return ENOMEM;
+
+	rlen = req->bodyh(mb, req->arg);
+	if (!rlen)
+		goto out;
+
+	err = mbuf_write_mem(req->mbreq, mb->buf, mb->end);
+	if (err)
+		goto out;
+
+out:
+	mem_deref(mb);
+	return err;
+}
+
+
+static int send_buf(struct tcp_conn *tc, struct mbuf *large, size_t max_size)
+{
+	struct mbuf *mb = NULL;
+	size_t len;
+	int err = 0;
+
+	if (!tc || !large)
+		return EINVAL;
+
+	if (!mbuf_get_left(large))
+		return 0;
+
+	mb = mbuf_alloc_ref(large);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	len = min(mbuf_get_left(large), max_size);
+	mb->end = large->pos + len;
+
+	err = tcp_send(tc, mb);
+	if (err)
+		goto out;
+
+	mbuf_advance(large, len);
+
+out:
+	mem_deref(mb);
+
+	return err;
+}
+
+
+static int send_req_buf(struct conn *conn)
+{
+	int err;
+	struct http_req *req = conn->req;
+
+	if (!conn || !req || !req->cli)
+		return EINVAL;
+
+	if (!mbuf_get_left(req->mbreq))
+		return 0;
+
+	err = send_buf(conn->tc, req->mbreq, req->cli->bufsize_max);
+	if (err)
+		goto out;
+
+	if (!mbuf_get_left(req->mbreq)) {
+		if (req->mbreq)
+			mbuf_rewind(req->mbreq);
+
+		err = read_req_data(req);
+		if (err)
+			goto out;
+
+		if (req->mbreq)
+			mbuf_set_pos(req->mbreq, 0);
+
+		if (mbuf_get_left(req->mbreq) && !tcp_sendq_used(conn->tc))
+			(void) send_req_buf(conn);
+	}
+
+	tmr_start(&conn->tmr, req->cli->conf.recv_timeout, timeout_handler,
+		  conn);
+
+out:
+	return err;
+}
+
+
+static void send_req_handler(void *arg)
+{
+	(void) send_req_buf((struct conn *)arg);
+}
+
+
 static void estab_handler(void *arg)
 {
 	struct conn *conn = arg;
 	struct http_req *req = conn->req;
-	struct http_cli *cli;
 	int err;
-
-	if (!req)
+	if (!req || !req->cli)
 		return;
 
-	err = tcp_send(conn->tc, req->mbreq);
+	err = send_req_buf(conn);
 	if (err) {
 		try_next(conn, err);
 		return;
 	}
 
-	cli = req->cli;
-	if (!cli)
-		return;
+	if (mbuf_get_left(req->mbreq))
+		tcp_set_send(conn->tc, send_req_handler);
 
-	tmr_start(&conn->tmr, cli->conf.recv_timeout, timeout_handler, conn);
+	tmr_start(&conn->tmr, req->cli->conf.recv_timeout,
+		  timeout_handler, conn);
 }
 
 
@@ -371,7 +478,7 @@ static void recv_handler(struct mbuf *mb, void *arg)
 
 		const size_t len = mbuf_get_left(mb);
 
-		if ((mbuf_get_left(req->mb) + len) > BUFSIZE_MAX) {
+		if ((mbuf_get_left(req->mb) + len) > req->cli->bufsize_max) {
 			err = EOVERFLOW;
 			goto out;
 		}
@@ -452,25 +559,26 @@ static int conn_connect(struct http_req *req)
 	const struct sa *addr = &req->srvv[req->srvc];
 	struct conn *conn;
 	struct sa *laddr = NULL;
-	struct http_cli *cli;
-	int err;
+	int err = 0;
 
 	conn = list_ledata(hash_lookup(req->cli->ht_conn,
 				       sa_hash(addr, SA_ALL), conn_cmp, req));
 	if (conn) {
-		err = tcp_send(conn->tc, req->mbreq);
-		if (!err) {
-			cli = req->cli;
-			if (!cli)
-				return EINVAL;
+		if (!req->cli)
+			return EINVAL;
 
-			tmr_start(&conn->tmr, cli->conf.recv_timeout,
+		err = send_req_buf(conn);
+		if (!err) {
+			tmr_start(&conn->tmr, req->cli->conf.recv_timeout,
 				  timeout_handler, conn);
 
 			req->conn = conn;
 			conn->req = req;
 
 			++conn->usec;
+
+			if (mbuf_get_left(req->mbreq))
+				tcp_set_send(conn->tc, send_req_handler);
 
 			return 0;
 		}
@@ -524,10 +632,12 @@ static int conn_connect(struct http_req *req)
 	tmr_start(&conn->tmr, req->cli->conf.conn_timeout, timeout_handler,
 		  conn);
 
-	req->conn = conn;
-	conn->req = req;
+	if (!err) {
+		req->conn = conn;
+		conn->req = req;
+	}
 
- out:
+out:
 	if (err)
 		mem_deref(conn);
 
@@ -698,7 +808,7 @@ out:
  */
 int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		 const char *uri, http_resp_h *resph, http_data_h *datah,
-		 void *arg, const char *fmt, ...)
+		 http_bodyh *bodyh, void *arg, const char *fmt, ...)
 {
 	struct http_uri http_uri;
 	struct pl pl;
@@ -744,6 +854,7 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			defport;
 	req->resph  = resph;
 	req->datah  = datah;
+	req->bodyh  = bodyh;
 	req->arg    = arg;
 
 	err = pl_strdup(&req->host, &http_uri.host);
@@ -762,6 +873,7 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			  "Host: %s%r%s\r\n",
 			  met, &http_uri.path,
 			  ipv6 ? "[" : "", &http_uri.host, ipv6 ? "]" : "");
+
 	if (fmt) {
 		va_start(ap, fmt);
 		err |= mbuf_vprintf(req->mbreq, fmt, ap);
@@ -770,10 +882,15 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 	else {
 		err |= mbuf_write_str(req->mbreq, "\r\n");
 	}
+
 	if (err)
 		goto out;
 
-	req->mbreq->pos = 0;
+	err = read_req_data(req);
+	if (err)
+		goto out;
+
+	mbuf_set_pos(req->mbreq, 0);
 
 #ifdef USE_TLS
 	if (cli->cert && cli->key) {
@@ -904,6 +1021,7 @@ int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc)
 
 	cli->dnsc = mem_ref(dnsc);
 	cli->conf = default_conf;
+	cli->bufsize_max = BUFSIZE_MAX;
 
  out:
 	if (err)
@@ -1192,4 +1310,22 @@ void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr)
 	(void)cli;
 	(void)addr;
 #endif
+}
+
+
+void http_client_set_bufsize_max(struct http_cli *cli, size_t max_size)
+{
+	if (!cli)
+		return;
+
+	cli->bufsize_max = max_size;
+}
+
+
+size_t http_client_get_bufsize_max(struct http_cli *cli)
+{
+	if (!cli)
+		return BUFSIZE_MAX;
+
+	return cli->bufsize_max;
 }

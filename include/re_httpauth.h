@@ -51,7 +51,7 @@ int httpauth_digest_response_auth(const struct httpauth_digest_resp *resp,
 int httpauth_digest_make_response(struct httpauth_digest_resp **resp,
 		const struct httpauth_digest_chall *chall,
 		const char *path, const char *method, const char *user,
-		const char *pwd, const char *body);
+		const char *pwd, struct mbuf *body);
 int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 				  struct mbuf *mb);
 
