@@ -391,9 +391,14 @@ out:
 static int send_req_buf(struct conn *conn)
 {
 	int err;
-	struct http_req *req = conn->req;
+	struct http_req *req;
 
-	if (!conn || !req || !req->cli)
+	if (!conn)
+		return EINVAL;
+
+	req = conn->req;
+
+	if (!req || !req->cli)
 		return EINVAL;
 
 	if (!mbuf_get_left(req->mbreq))
