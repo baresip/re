@@ -28,7 +28,7 @@ jobs:
 
       - name: Install deps
         run: |
-          choco install openssl
+          choco install --no-progress openssl.light
 
       - name: Build
         shell: cmd
