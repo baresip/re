@@ -88,7 +88,6 @@ FILE_PATTERNS          = *.c \
                          *.dox
 RECURSIVE              = YES
 EXCLUDE                = test.c \
-			 include/re_bitv.h \
 			 src/md5/md5.h src/md5/md5.c
 
 EXCLUDE_SYMLINKS       = NO
