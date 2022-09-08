@@ -87,15 +87,15 @@ typedef int(re_printf_h)(struct re_printf *pf, void *arg);
 int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg);
 int re_vfprintf(FILE *stream, const char *fmt, va_list ap);
 int re_vprintf(const char *fmt, va_list ap);
-int re_vsnprintf(char *restrict str, size_t size, const char *restrict fmt,
-		 va_list ap);
+int re_vsnprintf(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, va_list ap);
 int re_vsdprintf(char **strp, const char *fmt, va_list ap);
 
 int re_hprintf(struct re_printf *pf, const char *fmt, ...);
 int re_fprintf(FILE *stream, const char *fmt, ...);
 int re_printf(const char *fmt, ...);
-int re_snprintf(char *restrict str, size_t size, const char *restrict fmt,
-		...);
+int re_snprintf(char *re_restrict str, size_t size,
+		const char *re_restrict fmt, ...);
 int re_sdprintf(char **strp, const char *fmt, ...);
 
 
