@@ -88,7 +88,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 	if (msg->scode < 200) {
 		sess->progrh(msg, sess->arg);
-		sdp = mbuf_get_left(msg->mb);
+		sdp = mbuf_get_left(msg->mb) > 0;
 
 		if (sdp && sess->sent_offer) {
 			sess->awaiting_answer = false;
