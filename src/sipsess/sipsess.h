@@ -65,6 +65,7 @@ struct sipsess_request {
 	char *ctype;
 	struct mbuf *body;
 	sip_resp_h *resph;
+	struct tmr tmr;
 	void *arg;
 };
 
@@ -95,7 +96,7 @@ int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
 int  sipsess_reinvite(struct sipsess *sess, bool reset_ls);
-int  sipsess_update(struct sipsess *sess, bool reset_ls);
+int  sipsess_update(struct sipsess *sess, sip_resp_h resph, void *arg);
 int  sipsess_bye(struct sipsess *sess, bool reset_ls);
 int  sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 			   const char *ctype, struct mbuf *body,

@@ -15,3 +15,4 @@ SRCS	+= sipsess/modify.c
 SRCS	+= sipsess/prack.c
 SRCS	+= sipsess/reply.c
 SRCS	+= sipsess/request.c
+SRCS	+= sipsess/update.c
