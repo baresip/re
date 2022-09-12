@@ -167,14 +167,12 @@ int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 	mem_deref(sess->desc);
 	sess->desc = mem_ref(desc);
 
-	if (sess->tmr.th || sess->replyl.head ||
-	    (sess->req && sess->established)) {
+	if (!sess->established)
+		return sipsess_update(sess);
+
+	if (sess->req || sess->tmr.th || sess->replyl.head) {
 		sess->modify_pending = true;
 		return 0;
 	}
-
-	if (sess->established)
-		return sipsess_reinvite(sess, true);
-	else
-		return sipsess_update(sess, NULL, NULL);
+	return sipsess_reinvite(sess, true);
 }

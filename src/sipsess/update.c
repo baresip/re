@@ -126,12 +126,10 @@ static int update_request(struct sipsess_request *req)
  * Send UPDATE request (RFC 3311)
  *
  * @param sess      SIP Session
- * @param resph     Response handler
- * @param arg       Handler argument
  *
  * @return 0 if success, otherwise errorcode
  */
-int sipsess_update(struct sipsess *sess, sip_resp_h resph, void *arg)
+int sipsess_update(struct sipsess *sess)
 {
 	struct sipsess_request *req;
 	int err;
@@ -142,8 +140,8 @@ int sipsess_update(struct sipsess *sess, sip_resp_h resph, void *arg)
 	sess->sent_offer = sess->desc ? true : false;
 	sess->modify_pending = false;
 
-	err = sipsess_request_alloc(&req, sess, sess->ctype, sess->desc, resph,
-				    arg);
+	err = sipsess_request_alloc(&req, sess, sess->ctype, sess->desc, NULL,
+				    NULL);
 	if (err)
 		return err;
 
