@@ -250,6 +250,13 @@ struct sip_conncfg {
 	uint16_t srcport;
 };
 
+/** SIP UAS Authentication */
+struct sip_uas_auth {
+	const char *realm;
+	char *nonce;
+	bool stale;
+};
+
 struct sip;
 struct sip_lsnr;
 struct sip_request;
@@ -257,6 +264,7 @@ struct sip_strans;
 struct sip_auth;
 struct sip_dialog;
 struct sip_keepalive;
+struct sip_uas_auth;
 struct dnsc;
 
 typedef bool(sip_msg_h)(const struct sip_msg *msg, void *arg);
@@ -276,6 +284,8 @@ typedef void(sip_keepalive_h)(int err, void *arg);
 typedef void(sip_trace_h)(bool tx, enum sip_transp tp,
 			  const struct sa *src, const struct sa *dst,
 			  const uint8_t *pkt, size_t len, void *arg);
+typedef int (sip_uas_auth_h)(uint8_t *ha1, const struct pl *user,
+			     const char *realm, void *arg);
 
 
 /* sip */
@@ -424,3 +434,12 @@ int sip_keepalive_start(struct sip_keepalive **kap, struct sip *sip,
 /* sip_conncfg */
 int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
 		    const struct sip_conncfg conncfg);
+
+
+/* sip_uas_auth */
+int sip_uas_auth_gen(struct sip_uas_auth **authp, const struct sip_msg *msg,
+		     const char *realm);
+int sip_uas_auth_print(struct re_printf *pf,
+		       const struct sip_uas_auth *auth);
+int sip_uas_auth_check(struct sip_uas_auth *auth, const struct sip_msg *msg,
+		       sip_uas_auth_h *authh, void *arg);
