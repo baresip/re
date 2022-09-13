@@ -213,15 +213,14 @@ legend:
 
 |  System | Support type | Supported versions | Notes |
 |---|---|---|---|
-| Linux | Tier 1 | glibc >= 2.17 (CentOS 7) | |
+| Linux | Tier 1 | glibc >= 2.27 (Ubuntu 18.04) | |
 | macOS | Tier 1 | macOS >= 10.10 | |
-| Windows | Tier 1 | >= Windows 8 | MinGW-w64 |
+| Windows | Tier 1 | >= Windows 8 | MinGW-w64, >= VS 2019 |
 | Android | Tier 2 | | |
 | iOS | Tier 2 | | |
 | FreeBSD | Tier 2 | >= 11 | |
 | OpenBSD | Tier 2 | >= 6.7 | |
 | Linux | Tier 2 | uClibc | |
-| Windows | Tier 3 | | e.g. VS 2015 |
 
 
 ### Support types
