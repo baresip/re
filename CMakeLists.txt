@@ -89,7 +89,6 @@ set(HEADERS
   include/re_av1.h
   include/re_base64.h
   include/re_bfcp.h
-  include/re_bitv.h
   include/re_btrace.h
   include/re_conf.h
   include/re_convert.h
@@ -417,6 +416,7 @@ if(USE_SIP)
     src/sipsess/reply.c
     src/sipsess/request.c
     src/sipsess/sess.c
+    src/sipsess/update.c
   )
 endif()
 

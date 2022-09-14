@@ -252,3 +252,9 @@ typedef SSIZE_T ssize_t;
 #define likely(x) x
 #define unlikely(x) x
 #endif
+
+#ifdef WIN32
+#define re_restrict __restrict
+#else
+#define re_restrict restrict
+#endif

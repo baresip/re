@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#include <time.h>
 #include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
@@ -19,6 +20,10 @@
 #include <re_sip.h>
 #include "sip.h"
 
+enum {
+	NONCE_EXPIRES  = 300,
+	NONCE_MIN_SIZE = 33,
+};
 
 struct sip_auth {
 	struct list realml;
@@ -323,4 +328,147 @@ void sip_auth_reset(struct sip_auth *auth)
 		return;
 
 	list_flush(&auth->realml);
+}
+
+
+static int gen_nonce(char **noncep, time_t ts, const struct sa *src,
+		     const char *realm)
+{
+	uint8_t key[MD5_SIZE];
+	struct mbuf *mb;
+	int err;
+
+	mb = mbuf_alloc(40);
+	if (!mb)
+		return ENOMEM;
+
+	err = mbuf_printf(mb,"%lu%j%s", ts, src, realm);
+	if (err)
+		goto out;
+
+	md5(mb->buf, mb->end, key);
+	mbuf_rewind(mb);
+	err = mbuf_printf(mb,"%w%016lx", key, sizeof(key), ts);
+	if (err)
+		goto out;
+
+	mbuf_set_pos(mb, 0);
+	err = mbuf_strdup(mb, noncep, mbuf_get_left(mb));
+
+out:
+	mem_deref(mb);
+	return err;
+}
+
+
+static int check_nonce(const struct pl *nonce, const struct sa *src,
+		       const char *realm)
+{
+	struct pl pl;
+	time_t ts;
+	char *comp = NULL;
+	bool eq;
+	int err;
+
+	if (!nonce || !nonce->p || nonce->l < NONCE_MIN_SIZE)
+		return EINVAL;
+
+	pl = *nonce;
+	pl.p = pl.p + (pl.l - 16);
+	pl.l = 16;
+	ts = (time_t) pl_x64(&pl);
+
+	if (time(NULL) - ts > NONCE_EXPIRES)
+		return ETIME;
+
+	err = gen_nonce(&comp, ts, src, realm);
+	if (err)
+		return err;
+
+	eq = !pl_strcmp(nonce, comp);
+	mem_deref(comp);
+	return eq ? 0 : EAUTH;
+}
+
+
+int sip_uas_auth_print(struct re_printf *pf,
+		       const struct sip_uas_auth *auth)
+{
+	return re_hprintf(pf, "WWW-Authenticate: "
+			      "Digest realm=\"%s\", nonce=\"%s\", "
+			      "algorithm=MD5, "
+			      "qop=\"auth\"%s"
+			      "\r\n",
+			      auth->realm, auth->nonce,
+			      auth->stale ? ", stale=true" : "");
+}
+
+
+static void sip_uas_destructor(void *arg)
+{
+	struct sip_uas_auth *auth = arg;
+
+	mem_deref(auth->nonce);
+}
+
+
+int sip_uas_auth_gen(struct sip_uas_auth **authp, const struct sip_msg *msg,
+		     const char *realm)
+{
+	struct sip_uas_auth *auth;
+	int err;
+
+	if (!authp || !msg)
+		return EINVAL;
+
+	auth = mem_zalloc(sizeof(*auth), sip_uas_destructor);
+	auth->realm = realm;
+	err  = gen_nonce(&auth->nonce, time(NULL), &msg->src, realm);
+
+	if (err)
+		mem_deref(auth);
+	else
+		*authp = auth;
+
+	return err;
+}
+
+
+int sip_uas_auth_check(struct sip_uas_auth *auth, const struct sip_msg *msg,
+		       sip_uas_auth_h *authh, void *arg)
+{
+	struct httpauth_digest_resp resp;
+	const struct sip_hdr *hdr;
+	uint8_t ha1[MD5_SIZE];
+	int err;
+
+	if (!msg || !auth || !authh)
+		return EINVAL;
+
+	hdr = sip_msg_hdr_apply(msg, true, SIP_HDR_AUTHORIZATION, NULL, NULL);
+	if (!hdr)
+		return EAUTH;
+
+	if (httpauth_digest_response_decode(&resp, &hdr->val))
+		return EINVAL;
+
+	if (pl_strcasecmp(&resp.realm, auth->realm))
+		return EINVAL;
+
+	err = check_nonce(&resp.nonce, &msg->src, auth->realm);
+	if (err == ETIME || err == EAUTH) {
+		auth->stale = true;
+		return EAUTH;
+	}
+	else if (err) {
+		return err;
+	}
+
+	if (authh(ha1, &resp.username, auth->realm, arg))
+		return EINVAL;
+
+	if (httpauth_digest_response_auth(&resp, &msg->met, ha1))
+		return EACCES;
+
+	return 0;
 }
