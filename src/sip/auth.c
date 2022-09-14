@@ -422,6 +422,9 @@ int sip_uas_auth_gen(struct sip_uas_auth **authp, const struct sip_msg *msg,
 		return EINVAL;
 
 	auth = mem_zalloc(sizeof(*auth), sip_uas_destructor);
+	if (!auth)
+		return ENOMEM;
+
 	auth->realm = realm;
 	err  = gen_nonce(&auth->nonce, time(NULL), &msg->src, realm);
 
