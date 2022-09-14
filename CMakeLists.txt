@@ -416,6 +416,7 @@ if(USE_SIP)
     src/sipsess/reply.c
     src/sipsess/request.c
     src/sipsess/sess.c
+    src/sipsess/update.c
   )
 endif()
 

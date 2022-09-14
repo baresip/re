@@ -22,6 +22,7 @@ static void destructor(void *arg)
 {
 	struct sipsess_request *req = arg;
 
+	tmr_cancel(&req->tmr);
 	list_unlink(&req->le);
 	mem_deref(req->ctype);
 	mem_deref(req->body);
@@ -68,6 +69,7 @@ int sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 	req->body  = mem_ref(body);
 	req->resph = resph ? resph : internal_resp_handler;
 	req->arg   = arg;
+	tmr_init(&req->tmr);
 
  out:
 	if (err)

@@ -167,10 +167,10 @@ legend:
 * [RFC 2915](https://tools.ietf.org/html/rfc2915) - The Naming Authority Pointer (NAPTR) DNS Resource Record
 * [RFC 3261](https://tools.ietf.org/html/rfc3261) - SIP: Session Initiation Protocol
 * [RFC 3262](https://tools.ietf.org/html/rfc3262) - SIP Reliability of Provisional Responses
-* [RFC 3311](https://tools.ietf.org/html/rfc3311) - The SIP UPDATE Method
 * [RFC 3263](https://tools.ietf.org/html/rfc3263) - Locating SIP Servers
 * [RFC 3264](https://tools.ietf.org/html/rfc3264) - An Offer/Answer Model with SDP
 * [RFC 3265](https://tools.ietf.org/html/rfc3265) - SIP-Specific Event Notification
+* [RFC 3311](https://tools.ietf.org/html/rfc3311) - The SIP UPDATE Method
 * [RFC 3327](https://tools.ietf.org/html/rfc3327) - SIP Extension Header Field for Registering Non-Adjacent Contacts
 * [RFC 3428](https://tools.ietf.org/html/rfc3428) - SIP Extension for Instant Messaging
 * [RFC 3489](https://tools.ietf.org/html/rfc3489) - STUN - Simple Traversal of UDP Through NATs
