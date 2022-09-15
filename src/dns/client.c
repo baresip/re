@@ -1319,3 +1319,19 @@ void dnsc_getaddrinfo(struct dnsc *dnsc, bool active)
 
 	dnsc->conf.getaddrinfo = active;
 }
+
+
+/**
+ * Return if getaddrinfo usage is enabled
+ *
+ * @param dnsc  DNS Client
+ *
+ * @return true if getaddrinfo is used, false otherwise
+ */
+bool dnsc_getaddrinfo_enabled(struct dnsc *dnsc)
+{
+	if (!dnsc)
+		return false;
+
+	return dnsc->conf.getaddrinfo;
+}
