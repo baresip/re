@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: install devel tools
       run: |
-        yum -y install gcc clang cmake make openssl-devel
+        yum -y install gcc clang cmake make openssl-devel zlib-devel
 
     - name: make info
       run: |
