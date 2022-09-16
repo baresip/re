@@ -19,9 +19,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
-#ifdef __APPLE__
-#include "TargetConditionals.h"
-#endif
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
@@ -176,46 +173,6 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 #if defined (EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
 		if (EWOULDBLOCK == err)
 			goto out;
-#endif
-
-#if TARGET_OS_IPHONE
-		if (ENOTCONN == err) {
-
-			struct udp_sock *us_new;
-			struct sa laddr;
-
-			err = udp_local_get(us, &laddr);
-			if (err)
-				goto out;
-
-			if (BAD_SOCK != us->fd) {
-				fd_close(us->fd);
-				(void)close(us->fd);
-				us->fd = -1;
-			}
-
-			if (BAD_SOCK != us->fd6) {
-				fd_close(us->fd6);
-				(void)close(us->fd6);
-				us->fd6 = -1;
-			}
-
-			err = udp_listen(&us_new, &laddr, NULL, NULL);
-			if (err)
-				goto out;
-
-			us->fd  = us_new->fd;
-			us->fd6 = us_new->fd6;
-
-			us_new->fd  = BAD_SOCK;
-			us_new->fd6 = BAD_SOCK;
-
-			mem_deref(us_new);
-
-			udp_thread_attach(us);
-
-			goto out;
-		}
 #endif
 		if (us->eh)
 			us->eh(err, us->arg);
