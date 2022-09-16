@@ -2,9 +2,9 @@ Source: libre
 Section: comm
 Priority: optional
 Maintainer: Alfred E. Heggestad <aeh@db.org>
-Standards-Version: 3.9.5
-Build-Depends: debhelper (>= 9.20120311)
-Homepage: http://www.creytiv.com/
+Standards-Version: 4.1.5
+Build-Depends: cmake, dh-cmake, dh-cmake-compat (= 1), dh-sequence-cmake, debhelper-compat (= 12)
+Homepage: https://github.com/baresip/re
 
 Package: libre
 Architecture: any
