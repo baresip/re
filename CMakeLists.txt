@@ -452,11 +452,9 @@ elseif(UNIX)
   endif()
 endif()
 
-if(NOT ZLIB_FOUND)
-  list(APPEND SRCS
-    src/crc32/crc32.c
-  )
-endif()
+list(APPEND SRCS
+  src/crc32/crc32.c
+)
 
 if(HAVE_THREADS)
   #Do nothing
