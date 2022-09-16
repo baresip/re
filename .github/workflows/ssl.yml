@@ -17,4 +17,4 @@ jobs:
         wget "https://github.com/baresip/ci/releases/download/v0.1/assets.tar.gz"
         tar -xf assets.tar.gz
     - name: make
-      run: make EXTRA_CFLAGS="-Iassets/${{ matrix.ssl }}/include -Werror" EXTRA_LFLAGS="-Lassets/${{ matrix.ssl }}" CCACHE=;
+      run: cmake -B build -DCMAKE_C_FLAGS="-Iassets/${{ matrix.ssl }}/include -Werror" -DCMAKE_EXE_LINKER_FLAGS="-Lassets/${{ matrix.ssl }}" && cmake --build build -j

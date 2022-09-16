@@ -21,10 +21,11 @@ jobs:
 
     - name: make shared lib
       run: |
-        make -C old libre.so
+        cmake -S old -B old/build && cmake --build old/build
 
     - name: make current shared lib
-      run: make -C current libre.so
+      run: |
+        cmake -S current -B current/build && cmake --build current/build
 
     - name: abidiff compare
       id: abidiff

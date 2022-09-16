@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         compiler: [gcc, clang]
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
         exclude:
           - os: macos-11
             compiler: gcc
@@ -37,14 +37,6 @@ jobs:
         echo "OS: ${{ matrix.os }}"
         echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
         ${{ matrix.compiler }} - --version
-        echo "--- make info ---"
-        make info
-
-    - name: test re.mk
-      run: make -C mk -f test.mk
-
-    - name: make
-      run: make EXTRA_CFLAGS=-Werror CCACHE=
 
     - name: cmake
       run: |
