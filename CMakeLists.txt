@@ -595,13 +595,6 @@ install(TARGETS re-shared re
     COMPONENT Development
 )
 
-install(TARGETS re-shared
-  LIBRARY
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    NAMELINK_ONLY
-    COMPONENT Development
-)
-
 install(FILES cmake/re-config.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
   COMPONENT Development
