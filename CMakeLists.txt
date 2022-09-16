@@ -530,6 +530,7 @@ else()
     ${Backtrace_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${ZLIB_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   )
 endif()
 
@@ -585,26 +586,29 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 install(TARGETS re-shared re
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    COMPONENT re_run
+    COMPONENT Libraries
+    NAMELINK_SKIP
   ARCHIVE
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    COMPONENT re_dev
+    COMPONENT Development
   PUBLIC_HEADER
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
-    COMPONENT re_dev
+    COMPONENT Development
 )
 
 install(TARGETS re-shared
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     NAMELINK_ONLY
-    COMPONENT re_dev
+    COMPONENT Development
 )
 
 install(FILES cmake/re-config.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
+  COMPONENT Development
 )
 
-install(FILES libre.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  COMPONENT Development
 )
