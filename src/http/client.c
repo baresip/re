@@ -981,7 +981,7 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf)
 		.conn_timeout	 = conf->conn_timeout,
 		.idle_timeout	 = conf->idle_timeout,
 		.cache_ttl_max	 = 1800,
-		.getaddrinfo	 = false,
+		.getaddrinfo	 = dnsc_getaddrinfo_enabled(cli->dnsc)
 	};
 
 	return dnsc_conf_set(cli->dnsc, &dconf);

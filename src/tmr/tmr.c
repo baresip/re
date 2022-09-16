@@ -29,6 +29,13 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+#ifdef WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 
 /** Timer values */
 enum {
@@ -168,6 +175,37 @@ uint64_t tmr_jiffies_usec(void)
 uint64_t tmr_jiffies(void)
 {
 	return tmr_jiffies_usec() / 1000;
+}
+
+
+/**
+ * Obtain the current realtime wallclock time in microseconds since UNIX epoch
+ *
+ * @return realtime wallclock time in microseconds since UNIX epoch
+ */
+uint64_t tmr_jiffies_rt_usec(void)
+{
+	uint64_t jfs_rt;
+#if defined(WIN32)
+	FILETIME now;
+	GetSystemTimeAsFileTime(&now);
+	jfs_rt = (((uint64_t)now.dwHighDateTime) << 32u) |
+		(uint64_t)now.dwLowDateTime;
+	jfs_rt -= 116444736000000000ull;
+	jfs_rt /= 10u;
+#else
+	struct timespec now;
+	if (0 != clock_gettime(CLOCK_REALTIME, &now)) {
+		DEBUG_WARNING("jiffies_rt: clock_gettime() failed (%m)\n",
+			      errno);
+		return 0;
+	}
+
+	jfs_rt  = (uint64_t)now.tv_sec * (uint64_t)1000000u;
+	jfs_rt += now.tv_nsec / 1000;
+#endif
+
+	return jfs_rt;
 }
 
 

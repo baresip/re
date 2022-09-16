@@ -452,12 +452,14 @@ int rtp_decode(struct rtp_sock *rs, struct mbuf *mb,
  * @param marker Marker bit
  * @param pt     Payload type
  * @param ts     Timestamp
+ * @param jfs_rt Realtime time point in microseconds that correspond to @a ts
  * @param mb     Payload buffer
  *
  * @return 0 for success, otherwise errorcode
  */
 int rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
-	     bool marker, uint8_t pt, uint32_t ts, struct mbuf *mb)
+	     bool marker, uint8_t pt, uint32_t ts, uint64_t jfs_rt,
+	     struct mbuf *mb)
 {
 	size_t pos;
 	int err;
@@ -480,8 +482,10 @@ int rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 	if (err)
 		return err;
 
-	if (rs->rtcp)
-		rtcp_sess_tx_rtp(rs->rtcp, ts, mbuf_get_left(mb));
+	if (rs->rtcp) {
+		rtcp_sess_tx_rtp(rs->rtcp, ts, jfs_rt,
+				 mbuf_get_left(mb));
+	}
 
 	mb->pos = pos;
 

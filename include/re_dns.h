@@ -222,6 +222,7 @@ int  dnsc_notify(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 void dnsc_cache_flush(struct dnsc *dnsc);
 void dnsc_cache_max(struct dnsc *dnsc, uint32_t max);
 void dnsc_getaddrinfo(struct dnsc *dnsc, bool active);
+bool dnsc_getaddrinfo_enabled(struct dnsc *dnsc);
 
 
 /* DNS System functions */
