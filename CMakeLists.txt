@@ -530,6 +530,7 @@ else()
     ${Backtrace_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${ZLIB_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   )
 endif()
 
