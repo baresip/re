@@ -603,8 +603,10 @@ install(TARGETS re-shared
 
 install(FILES cmake/re-config.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
+  COMPONENT re_dev
 )
 
-install(FILES libre.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  COMPONENT re_dev
 )
