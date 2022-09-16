@@ -30,7 +30,6 @@ enum tls_method {
 };
 
 enum tls_fingerprint {
-	TLS_FINGERPRINT_SHA1,
 	TLS_FINGERPRINT_SHA256,
 };
 
