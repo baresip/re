@@ -40,7 +40,7 @@ jobs:
 
     - name: cmake
       run: |
-        make cmake
+        cmake . && make
         cmake --install build --prefix dist
     
     - uses: sreimers/pr-dependency-action@v0.5

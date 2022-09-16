@@ -17,7 +17,7 @@ jobs:
 
     - name: make
       run: | 
-        make EXTRA_CFLAGS="--coverage" CCACHE=
+        cmake -B build -DCMAKE_C_FLAGS="--coverage" && cmake --build build -j
 
     - uses: sreimers/pr-dependency-action@v0.5
       with:

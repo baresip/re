@@ -23,7 +23,7 @@ jobs:
         languages: cpp
         queries: security-extended
 
-    - run: make
+    - run: cmake . && make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
