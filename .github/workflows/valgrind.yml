@@ -37,5 +37,5 @@ jobs:
         rm re/libre.dylib || true
         make -C rem librem.a
         cd retest
-        cmake . && make
+        cmake -B build && cmake --build build -j
         valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./retest -r
