@@ -40,7 +40,7 @@ jobs:
         rm re/libre.dylib || true
         make -C rem librem.a
         cd retest; cmake -B build -DCMAKE_EXE_LINKER_FLAGS="--coverage" && \
-          cmake --build build -j && ./build/retest -a
+          cmake --build build -j && ./build/retest -v -a
 
     - name: gcov
       run: | 
