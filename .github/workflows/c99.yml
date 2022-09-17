@@ -17,4 +17,4 @@ jobs:
 
     - name: make
       run: | 
-        cmake -DCMAKE_C_STANDARD=99 -DCMAKE_C_FLAGS="-Werror" . && make
+        cmake -DCMAKE_C_STANDARD=99 -DCMAKE_C_FLAGS="-Werror" -B build && cmake --build build
