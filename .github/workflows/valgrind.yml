@@ -14,7 +14,8 @@ jobs:
         sudo apt-get update && sudo apt-get install -y libssl-dev valgrind
 
     - name: make
-      run: cmake . && make
+      run: |
+        cmake -B build && cmake --build build -j
 
     - uses: sreimers/pr-dependency-action@v0.5
       with:
@@ -38,4 +39,4 @@ jobs:
         make -C rem librem.a
         cd retest
         cmake -B build && cmake --build build -j
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./retest -r
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/retest -r
