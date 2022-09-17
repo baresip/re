@@ -5,8 +5,4 @@
  */
 
 
-#ifdef USE_ZLIB
-#include <zlib.h>
-#else
-uint32_t crc32(uint32_t crc, const void *buf, uint32_t size);
-#endif
+uint32_t re_crc32(uint32_t crc, const void *buf, uint32_t size);

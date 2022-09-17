@@ -52,7 +52,7 @@ struct stun_msg {
 
 static uint32_t fingerprint(const uint8_t *buf, size_t len)
 {
-	return (uint32_t)crc32(0, buf, (unsigned int)len) ^ 0x5354554e;
+	return re_crc32(0, buf, (unsigned int)len) ^ 0x5354554e;
 }
 
 
