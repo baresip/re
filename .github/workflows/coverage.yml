@@ -38,7 +38,7 @@ jobs:
         cd ..
         cmake -S rem -B rem/build && cmake --build rem/build
         cd retest; cmake -B build -DCMAKE_EXE_LINKER_FLAGS="--coverage" && \
-          cmake --build build -j && ./build/retest -a
+          cmake --build build -j && ./build/retest -v -a
 
     - name: gcov
       run: | 
