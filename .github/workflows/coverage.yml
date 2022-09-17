@@ -17,7 +17,7 @@ jobs:
 
     - name: make
       run: | 
-        make EXTRA_CFLAGS="--coverage" CCACHE=
+        cmake -B build -DCMAKE_C_FLAGS="--coverage" && cmake --build build -j
 
     - uses: sreimers/pr-dependency-action@v0.5
       with:
@@ -36,16 +36,14 @@ jobs:
     - name: retest
       run: |
         cd ..
-        rm re/libre.so || true
-        rm re/libre.dylib || true
-        make -C rem librem.a
+        cmake -S rem -B rem/build && cmake --build rem/build
         cd retest; cmake -B build -DCMAKE_EXE_LINKER_FLAGS="--coverage" && \
           cmake --build build -j && ./build/retest -v -a
 
     - name: gcov
       run: | 
         cd ../re
-        gcov build-x86_64/**/*.o
+        gcov build/**/*.o
 
     - name: install gcovr
       run: |
