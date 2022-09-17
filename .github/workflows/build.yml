@@ -41,7 +41,6 @@ jobs:
     - name: cmake
       run: |
         cmake . && make
-        cmake --install build --prefix dist
     
     - uses: sreimers/pr-dependency-action@v0.5
       with:
