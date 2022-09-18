@@ -23,5 +23,5 @@ jobs:
 
     - name: make
       run: | 
-        cmake .
-        scan-build-14 --status-bugs make
+        scan-build-14 cmake -B build
+        scan-build-14 --status-bugs cmake --build build -j
