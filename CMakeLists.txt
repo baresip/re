@@ -486,6 +486,47 @@ endif()
 
 ##############################################################################
 #
+# Linking LIBS
+#
+
+set(LINKLIBS Threads::Threads)
+
+if(BACKTRACE_FOUND)
+  list(APPEND LINKLIBS ${Backtrace_LIBRARIES})
+endif()
+
+if(ZLIB_FOUND)
+  list(APPEND LINKLIBS ZLIB::ZLIB)
+endif()
+
+if(USE_OPENSSL)
+  list(APPEND LINKLIBS OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  list(APPEND LINKLIBS
+    PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation"
+  )
+endif()
+
+if(WIN32)
+  list(APPEND LINKLIBS
+    qwave
+    iphlpapi
+    wsock32
+    ws2_32
+  )
+endif()
+
+if(UNIX)
+  list(APPEND LINKLIBS
+    ${CMAKE_DL_LIBS}
+  )
+endif()
+
+
+##############################################################################
+#
 # Main target object
 #
 
@@ -505,33 +546,7 @@ target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 #
 
 add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(re-shared
-    PRIVATE "-framework SystemConfiguration" "-framework CoreFoundation"
-  )
-endif()
-
-if(WIN32)
-  target_link_libraries(re-shared PRIVATE
-    ${OPENSSL_LIBRARIES}
-    qwave
-    iphlpapi
-    wsock32
-    ws2_32
-    ${CMAKE_THREAD_LIBS_INIT}
-  )
-else()
-  target_link_libraries(re-shared PRIVATE
-    -L/opt/local/lib
-    ${OPENSSL_LIBRARIES}
-    ${Backtrace_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${ZLIB_LIBRARIES}
-    ${CMAKE_DL_LIBS}
-  )
-endif()
-
+target_link_libraries(re-shared PRIVATE ${LINKLIBS})
 set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
@@ -550,13 +565,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
 endif()
 
-target_link_libraries(re
-  PUBLIC ${OPENSSL_LIBRARIES} ${Backtrace_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
-  PRIVATE -L/opt/local/lib
-)
-
+target_link_libraries(re PUBLIC ${LINKLIBS})
 target_include_directories(re PUBLIC include)
-
 set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 if(MSVC)
