@@ -23,5 +23,5 @@ jobs:
 
     - name: make
       run: | 
-        make info EXTRA_CFLAGS="-Werror" CCACHE=
-        scan-build-14 --status-bugs make EXTRA_CFLAGS="-Werror" CCACHE=
+        scan-build-14 cmake -B build
+        scan-build-14 --status-bugs cmake --build build -j
