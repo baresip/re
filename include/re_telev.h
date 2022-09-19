@@ -18,6 +18,7 @@ int telev_set_srate(struct telev *tel, uint32_t srate);
 int telev_send(struct telev *tel, int event, bool end);
 int telev_recv(struct telev *tel, struct mbuf *mb, int *event, bool *end);
 int telev_poll(struct telev *tel, bool *marker, struct mbuf *mb);
+bool telev_is_empty(struct telev *tel);
 
 int telev_digit2code(int digit);
 int telev_code2digit(int code);
