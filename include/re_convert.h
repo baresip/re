@@ -55,6 +55,7 @@ static inline int try_into_err(void *dest, ...)
 }
 
 
+#if __STDC_VERSION__ >= 201112L /* Needs C11 support */
 /**
  * Try to convert safely from one type (src) into another (dest).
  * Types are auto detected.
@@ -77,3 +78,4 @@ static inline int try_into_err(void *dest, ...)
 			)						      \
 		)							      \
 	(&(dest), (src))
+#endif
