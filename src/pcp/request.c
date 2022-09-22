@@ -112,7 +112,7 @@ static void completed(struct pcp_request *req, int err, struct pcp_msg *msg)
 
 	/* if the request failed, we only called the
 	   response handler once and never again */
-	if (err || msg->hdr.result != PCP_SUCCESS ) {
+	if (err || !msg || msg->hdr.result != PCP_SUCCESS ) {
 		req->resph = NULL;
 	}
 
