@@ -32,6 +32,7 @@ int  uri_params_apply(const struct pl *pl, uri_apply_h *ah, void *arg);
 int  uri_header_get(const struct pl *pl, const struct pl *hname,
 		    struct pl *hvalue);
 int  uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg);
+int  uri_complete(const char *uri, const char *hostport, struct mbuf *buf);
 
 
 /* Special URI escaping/unescaping */

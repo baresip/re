@@ -4,12 +4,14 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+#include <ctype.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_uri.h>
+#include <re_mbuf.h>
 
 
 /**
@@ -271,3 +273,75 @@ int uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg)
 
 	return err;
 }
+
+
+/**
+ * Auto complete a SIP uri, add scheme and domain if missing
+ *
+ * @param uri Input SIP uri
+ * @param hostport host[:port] of SIP URI
+ * @param buf Target buffer to print SIP uri
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_complete(const char *uri, const char *hostport, struct mbuf *buf)
+{
+	struct sa sa_addr;
+	size_t len;
+	bool uri_is_ip;
+	char *uridup;
+	char *host;
+	char *c;
+	int err = 0;
+
+	if (!buf || !uri)
+		return EINVAL;
+
+	/* Skip initial whitespace */
+	while (isspace(*uri))
+		++uri;
+
+	len = str_len(uri);
+
+	/* Append sip: scheme if missing */
+	if (0 != re_regex(uri, len, "sip:"))
+		err |= mbuf_printf(buf, "sip:");
+
+	err |= mbuf_write_str(buf, uri);
+
+	if (err)
+		return err;
+
+	/* Append domain if missing and uri is not IP address */
+	/* check if uri is valid IP address */
+	err = str_dup(&uridup, uri);
+	if (err)
+		return err;
+
+	if (!strncmp(uridup, "sip:", 4))
+		host = uridup + 4;
+	else
+		host = uridup;
+
+	c = strchr(host, ';');
+	if (c)
+		*c = 0;
+
+	uri_is_ip =
+		!sa_decode(&sa_addr, host, strlen(host)) ||
+		!sa_set_str(&sa_addr, host, 0);
+	if (!uri_is_ip && host[0] == '[' && (c = strchr(host, ']'))) {
+		*c = 0;
+		uri_is_ip = !sa_set_str(&sa_addr, host+1, 0);
+	}
+
+	mem_deref(uridup);
+
+	if (0 != re_regex(uri, len, "[^@]+@[^]+", NULL, NULL) && !uri_is_ip &&
+		hostport != NULL) {
+		err |= mbuf_printf(buf, "@%s", hostport);
+	}
+
+	return err;
+}
+
