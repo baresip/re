@@ -101,13 +101,28 @@ out:
 }
 
 
+static int send_handler(enum sip_transp tp, struct sa *src,
+			const struct sa *dst, struct mbuf *mb,
+			struct mbuf **contp, void *arg)
+{
+	struct sip_contact contact;
+	struct sipsess_request *req = arg;
+	(void)dst;
+	(void)contp;
+
+	sip_contact_set(&contact, req->sess->cuser, src, tp);
+
+	return mbuf_printf(mb, "%H", sip_contact_print, &contact);
+}
+
+
 static int update_request(struct sipsess_request *req)
 {
 	if (!req || req->tmr.th)
 		return -1;
 
 	return sip_drequestf(&req->req, req->sess->sip, true, "UPDATE",
-			    req->sess->dlg, 0, req->sess->auth, NULL,
+			    req->sess->dlg, 0, req->sess->auth, send_handler,
 			    update_resp_handler, req,
 			    "%s%s%s"
 			    "Content-Length: %zu\r\n"
