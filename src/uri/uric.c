@@ -304,3 +304,27 @@ int uri_header_unescape(struct re_printf *pf, const struct pl *pl)
 {
 	return comp_unescape(pf, pl, is_hvalue);
 }
+
+
+/**
+ * Prepend "sip:" to given URI if missing
+ *
+ * @param pf  Print function
+ * @param uri URI string
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uristr_prepend_sip(struct re_printf *pf, const char *uri)
+{
+	int err;
+
+	if (!pf || !str_isset(uri))
+		return EINVAL;
+
+	if (str_len(uri) < 4 || re_regex(uri, 4, "sip:"))
+		err = re_hprintf(pf, "sip:%s", uri);
+	else
+		err = re_hprintf(pf, "%s", uri);
+
+	return err;
+}

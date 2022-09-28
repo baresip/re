@@ -43,3 +43,6 @@ int uri_param_escape(struct re_printf *pf, const struct pl *pl);
 int uri_param_unescape(struct re_printf *pf, const struct pl *pl);
 int uri_header_escape(struct re_printf *pf, const struct pl *pl);
 int uri_header_unescape(struct re_printf *pf, const struct pl *pl);
+
+/* URI completion */
+int uristr_prepend_sip(struct re_printf *pf, const char *uri);
