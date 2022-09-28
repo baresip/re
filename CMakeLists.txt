@@ -559,7 +559,8 @@ target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
 target_link_libraries(re-shared PRIVATE ${LINKLIBS})
-set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION_FULL})
+set_target_properties(re-shared PROPERTIES VERSION
+  ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
