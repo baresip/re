@@ -13,11 +13,15 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(re
-  VERSION 2.7.0
+  VERSION 2.8.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
+
+# Pre-release identifier, comment out on a release
+# Increment for breaking changes (dev2, dev3...)
+set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-dev)
 
 set(PROJECT_SOVERSION 9) # bump if ABI breaks
 
@@ -76,6 +80,14 @@ endif()
 
 set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(re CONFIG REQUIRED)
+
+list(APPEND RE_DEFINITIONS
+  -DVERSION="${PROJECT_VERSION_FULL}"
+  -DVER_MAJOR=${PROJECT_VERSION_MAJOR}
+  -DVER_MINOR=${PROJECT_VERSION_MINOR}
+  -DVER_PATCH=${PROJECT_VERSION_PATCH}
+)
+
 ##############################################################################
 #
 # Source/Header section
@@ -547,7 +559,7 @@ target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
 
 add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
 target_link_libraries(re-shared PRIVATE ${LINKLIBS})
-set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(re-shared PROPERTIES VERSION ${PROJECT_VERSION_FULL})
 set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
 set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 
