@@ -3,7 +3,7 @@ exec_prefix=${prefix}
 libdir={$prefix}/lib
 includedir=${prefix}/include/re
 
-Name: @PROJECT_NAME@
+Name: libre
 Description: @CMAKE_PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 URL: @CMAKE_PROJECT_HOMEPAGE_URL@
