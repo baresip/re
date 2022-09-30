@@ -514,33 +514,6 @@ int udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb)
 
 
 /**
- * Send an anonymous UDP Datagram to a peer
- *
- * @param dst Destination network address
- * @param mb  Buffer to send
- *
- * @return 0 if success, otherwise errorcode
- */
-int udp_send_anon(const struct sa *dst, struct mbuf *mb)
-{
-	struct udp_sock *us;
-	int err;
-
-	if (!dst || !mb)
-		return EINVAL;
-
-	err = udp_listen(&us, NULL, NULL, NULL);
-	if (err)
-		return err;
-
-	err = udp_send_internal(us, dst, mb, NULL);
-	mem_deref(us);
-
-	return err;
-}
-
-
-/**
  * Get the local network address on the UDP Socket
  *
  * @param us    UDP Socket
