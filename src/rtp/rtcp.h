@@ -91,7 +91,7 @@ int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
 struct timeval;
 void unix2ntp(struct ntp_time *ntp, const struct timeval *tv);
 void ntp2unix(struct timeval *tv, const struct ntp_time *ntp);
-int  ntp_time_get(struct ntp_time *ntp);
+void ntp_time_get(struct ntp_time *ntp, uint64_t* jfs_rt);
 uint32_t ntp_compact(const struct ntp_time *ntp);
 uint64_t ntp_compact2us(uint32_t ntpc);
 
@@ -114,7 +114,7 @@ int  rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs);
 int  rtcp_enable(struct rtcp_sess *sess, bool enabled, const char *cname);
 int  rtcp_send(struct rtp_sock *rs, struct mbuf *mb);
 void rtcp_handler(struct rtcp_sess *sess, struct rtcp_msg *msg);
-void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts,
+void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
 		      size_t payload_size);
 void rtcp_sess_rx_rtp(struct rtcp_sess *sess, uint16_t seq, uint32_t ts,
 		      uint32_t src, size_t payload_size,

@@ -254,6 +254,8 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 		if (reg->fbregint)
 			tmr_start(&reg->tmr, reg->fbregint * 1000,
 					  tmr_handler, reg);
+		else
+			tmr_cancel(&reg->tmr);
 
 		reg->resph(err, msg, reg->arg);
 

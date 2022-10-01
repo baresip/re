@@ -74,11 +74,11 @@ static int write_padded(const char *p, size_t sz, size_t pad, char pch,
 
 static uint32_t local_itoa(char *buf, uint64_t n, uint8_t base, bool uc)
 {
-	char c, *p = buf + NUM_SIZE;
+	char c, *p = buf + (NUM_SIZE - 1);
 	uint32_t len = 1;
 	const char a = uc ? 'A' : 'a';
 
-	*--p = '\0';
+	*p = '\0';
 	do {
 		const uint64_t dv  = n / base;
 		const uint64_t mul = dv * base;
@@ -622,8 +622,8 @@ int re_vprintf(const char *fmt, va_list ap)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_vsnprintf(char *restrict str, size_t size, const char *restrict fmt,
-		 va_list ap)
+int re_vsnprintf(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, va_list ap)
 {
 	struct pl pl;
 	int err;
@@ -757,7 +757,8 @@ int re_printf(const char *fmt, ...)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_snprintf(char *restrict str, size_t size, const char *restrict fmt, ...)
+int re_snprintf(char *re_restrict str, size_t size,
+		const char *re_restrict fmt, ...)
 {
 	va_list ap;
 	int n;

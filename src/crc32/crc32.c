@@ -47,6 +47,11 @@
 #include <re_crc32.h>
 
 
+#ifdef USE_ZLIB
+#include <zlib.h>
+#else
+
+
 static const uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -94,6 +99,9 @@ static const uint32_t crc32_tab[] = {
 };
 
 
+#endif
+
+
 /**
  * A function that calculates the CRC-32 based on the table above is
  * given below for documentation purposes. An equivalent implementation
@@ -106,12 +114,17 @@ static const uint32_t crc32_tab[] = {
  *
  * @return CRC value
  */
-uint32_t crc32(uint32_t crc, const void *buf, uint32_t size)
+uint32_t re_crc32(uint32_t crc, const void *buf, uint32_t size)
 {
+
+#ifdef USE_ZLIB
+	return (uint32_t)crc32(crc, buf, size);
+#else
 	const uint8_t *p = buf;
 
 	crc = ~crc;
 	while (size--)
 		crc = crc32_tab[(crc ^ *p++) & 0xff] ^ (crc >> 8);
 	return crc ^ ~0U;
+#endif
 }

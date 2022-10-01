@@ -47,7 +47,7 @@ static bool shim_send_handler(int *err, struct mbuf *mb, void *arg)
 		return true;
 	}
 
-	err_len = try_into(len, mbuf_get_left(mb));
+	err_len = try_into_u16_from_size(&len, mbuf_get_left(mb));
 	if (err_len) {
 		DEBUG_WARNING("send: mbuf to big\n");
 		*err = err_len;

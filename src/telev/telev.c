@@ -341,6 +341,15 @@ int telev_poll(struct telev *tel, bool *marker, struct mbuf *mb)
 }
 
 
+bool telev_is_empty(const struct telev *tel)
+{
+	if (!tel)
+		return true;
+
+	return tel->state == IDLE && !mbuf_get_left(tel->mb);
+}
+
+
 /**
  * Convert DTMF digit to Event code
  *

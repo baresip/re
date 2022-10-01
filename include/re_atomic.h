@@ -8,7 +8,8 @@
 #define RE_H_ATOMIC__
 
 /* C11 */
-#if defined(HAVE_ATOMIC) && !defined(__STDC_NO_ATOMICS__)
+#if defined(HAVE_ATOMIC) && __STDC_VERSION__ >= 201112L &&                    \
+	!defined(__STDC_NO_ATOMICS__)
 
 #include <stdatomic.h>
 
