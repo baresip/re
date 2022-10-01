@@ -13,7 +13,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(re
-  VERSION 2.8.0
+  VERSION 2.9.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
@@ -21,10 +21,10 @@ project(re
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-#set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-dev)
+set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-dev)
 
 # comment in on a release
-set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
+#set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
 
 set(PROJECT_SOVERSION 10) # bump if ABI breaks
 
