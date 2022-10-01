@@ -345,6 +345,31 @@ set(SRCS
   src/uri/uric.c
 
   src/websock/websock.c
+
+  src/aac/aac.c
+  src/au/fmt.c
+  src/au/util.c
+  src/aubuf/aubuf.c
+  src/aubuf/ajb.c
+  src/auconv/auconv.c
+  src/aufile/aufile.c
+  src/aufile/wave.c
+  src/auframe/auframe.c
+  src/aulevel/aulevel.c
+  src/aumix/aumix.c
+  src/auresamp/resamp.c
+  src/autone/tone.c
+  src/avc/config.c
+  src/dtmf/dec.c
+  src/fir/fir.c
+  src/g711/g711.c
+  src/goertzel/goertzel.c
+  src/vid/draw.c
+  src/vid/fmt.c
+  src/vid/frame.c
+  src/vidconv/vconv.c
+  src/vidmix/vidmix.c
+
 )
 
 
