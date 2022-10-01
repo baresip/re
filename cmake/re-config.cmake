@@ -119,4 +119,8 @@ list(APPEND RE_DEFINITIONS
 
 if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
   list(APPEND RE_DEFINITIONS -DRELEASE)
+else()
+  if(Backtrace_FOUND)
+    set(CMAKE_ENABLE_EXPORTS ON)
+  endif()
 endif()
