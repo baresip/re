@@ -17,5 +17,4 @@ jobs:
 
     - name: make
       run: | 
-        make info EXTRA_CFLAGS="-Werror" CC_C11= CCACHE=
-        make EXTRA_CFLAGS="-Werror" CC_C11= CCACHE=
+        cmake -DCMAKE_C_STANDARD=99 -DCMAKE_C_FLAGS="-Werror" -B build && cmake --build build

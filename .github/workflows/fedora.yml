@@ -25,15 +25,15 @@ jobs:
     - uses: actions/checkout@v2
     - name: install devel tools
       run: |
-        yum -y install gcc clang make openssl-devel
+        yum -y install gcc clang cmake make openssl-devel zlib-devel
 
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
         echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
         ${{ matrix.compiler }} - --version
-        echo "--- make info ---"
-        make info
+        cmake --version
 
     - name: make
-      run: make EXTRA_CFLAGS=-Werror CCACHE=
+      run: |
+        cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j

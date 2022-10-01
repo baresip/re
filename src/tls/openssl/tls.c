@@ -979,13 +979,6 @@ static int cert_fingerprint(X509 *cert, enum tls_fingerprint type,
 
 	switch (type) {
 
-	case TLS_FINGERPRINT_SHA1:
-		if (size < 20)
-			return EOVERFLOW;
-
-		n = X509_digest(cert, EVP_sha1(), md, &len);
-		break;
-
 	case TLS_FINGERPRINT_SHA256:
 		if (size < 32)
 			return EOVERFLOW;

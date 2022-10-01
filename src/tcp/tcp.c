@@ -18,9 +18,6 @@
 #define _GNU_SOURCE 1
 #include <netdb.h>
 #endif
-#ifdef __APPLE__
-#include "TargetConditionals.h"
-#endif
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -535,36 +532,6 @@ static void tcp_conn_handler(int flags, void *arg)
 
 	ts->fdc = accept(ts->fd, &peer.u.sa, &peer.len);
 	if (ts->fdc == BAD_SOCK) {
-
-#if TARGET_OS_IPHONE
-		if (EAGAIN == errno) {
-
-			struct tcp_sock *ts_new;
-			struct sa laddr;
-
-			err = tcp_sock_local_get(ts, &laddr);
-			if (err)
-				return;
-
-			if (ts->fd >= 0) {
-				fd_close(ts->fd);
-				(void)close(ts->fd);
-				ts->fd = BAD_SOCK;
-			}
-
-			err = tcp_listen(&ts_new, &laddr, NULL, NULL);
-			if (err)
-				return;
-
-			ts->fd = ts_new->fd;
-			ts_new->fd = BAD_SOCK;
-
-			mem_deref(ts_new);
-
-			fd_listen(ts->fd, FD_READ, tcp_conn_handler, ts);
-		}
-#endif
-
 		return;
 	}
 
