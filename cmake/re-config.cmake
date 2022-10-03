@@ -1,5 +1,6 @@
 include(CheckIncludeFile)
 include(CheckFunctionExists)
+include(CheckSymbolExists)
 
 find_package(Backtrace)
 find_package(Threads REQUIRED)
@@ -47,6 +48,18 @@ if(CMAKE_USE_PTHREADS_INIT)
   list(APPEND RE_DEFINITIONS -DHAVE_PTHREAD)
   set(HAVE_PTHREAD ON)
 endif()
+
+if(UNIX)
+  check_symbol_exists(epoll_create "sys/epoll.h" HAVE_EPOLL)
+  if(HAVE_EPOLL)
+    list(APPEND RE_DEFINITIONS -DHAVE_EPOLL)
+  endif()
+  check_symbol_exists(kqueue "sys/event.h" HAVE_KQUEUE)
+  if(HAVE_KQUEUE)
+    list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE)
+  endif()
+endif()
+
 
 list(APPEND RE_DEFINITIONS
   -DHAVE_ATOMIC
@@ -101,14 +114,14 @@ endif()
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DDARWIN)
+  list(APPEND RE_DEFINITIONS -DDARWIN)
   include_directories(/opt/local/include)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DFREEBSD)
+  list(APPEND RE_DEFINITIONS -DFREEBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
-  list(APPEND RE_DEFINITIONS -DHAVE_KQUEUE -DOPENBSD)
+  list(APPEND RE_DEFINITIONS -DOPENBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  list(APPEND RE_DEFINITIONS -DHAVE_EPOLL -DLINUX)
+  list(APPEND RE_DEFINITIONS -DLINUX)
 endif()
 
 
