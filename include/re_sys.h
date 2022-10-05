@@ -71,3 +71,6 @@ int  fs_gethome(char *path, size_t sz);
 bool fs_isdir(const char *path);
 bool fs_isfile(const char *file);
 int  fs_fopen(FILE **fp, const char *file, const char *mode);
+
+void fs_stdio_hide(void);
+void fs_stdio_restore(void);
