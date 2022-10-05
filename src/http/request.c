@@ -371,7 +371,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 	mem_deref(clbuf);
 	mem_deref(ctbuf);
 	if (err) {
-		DEBUG_WARNING("Could not send %s request. (%m)\n", conn->met);
+		DEBUG_WARNING("Could not send %s request. (%m)\n", conn->met, err);
 		return err;
 	}
 
