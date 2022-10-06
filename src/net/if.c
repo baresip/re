@@ -214,7 +214,7 @@ int net_if_getlinklocal(const char *ifname, int af, struct sa *ip)
 	if (!ip)
 		return EINVAL;
 
-	sa_init(&addr, sa_af(ip));
+	sa_init(&addr, af);
 
 	argv[0] = (void *)ifname;
 	argv[1] = &af;
