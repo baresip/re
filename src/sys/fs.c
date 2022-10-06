@@ -208,3 +208,28 @@ fopen:
 	return 0;
 #endif
 }
+
+
+/**
+ * Hide/Close stdout and stderr output
+ */
+void fs_stdio_hide(void)
+{
+	(void)fclose(stdout);
+	(void)fclose(stderr);
+}
+
+
+/**
+ * Restore stdout and stderr output
+ */
+void fs_stdio_restore(void)
+{
+#ifdef WIN32
+	(void)freopen("CON", "w", stdout);
+	(void)freopen("CON", "w", stderr);
+#else
+	(void)freopen("/dev/tty", "w", stdout);
+	(void)freopen("/dev/tty", "w", stderr);
+#endif
+}

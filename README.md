@@ -39,8 +39,9 @@ installed before building.
 ### Build with debug enabled
 
 ```
-$ make
-$ sudo make install
+$ cmake -B build
+$ cmake --build build -j
+$ sudo cmake --install build
 $ sudo ldconfig
 ```
 
@@ -57,16 +58,18 @@ $ sudo ldconfig
 ### Build with release
 
 ```
-$ make RELEASE=1
-$ sudo make RELEASE=1 install
+$ cmake -B build -DCMAKE_BUILD_TYPE=Release 
+$ cmake --build build -j
+$ sudo cmake --install build
 $ sudo ldconfig
 ```
 
 ### Build with clang compiler
 
 ```
-$ make CC=clang
-$ sudo make CC=clang install
+$ cmake -B build -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+$ cmake --build build -j
+$ sudo cmake --install build
 $ sudo ldconfig
 ```
 

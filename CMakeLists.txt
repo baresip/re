@@ -19,14 +19,17 @@ project(re
   DESCRIPTION "Generic library for real-time communications"
 )
 
+set(PROJECT_SOVERSION 10) # bump if ABI breaks
+
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-dev)
+set(PROJECT_VERSION_PRE dev)
 
-# comment in on a release
-#set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
-
-set(PROJECT_SOVERSION 10) # bump if ABI breaks
+if(PROJECT_VERSION_PRE)
+  set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
+else()
+  set(PROJECT_VERSION_FULL ${PROJECT_VERSION})
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
