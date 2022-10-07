@@ -32,9 +32,9 @@ int str_hex(uint8_t *hex, size_t len, const char *str)
 	if (!hex || !str || (strlen(str) != (2 * len)))
 		return EINVAL;
 
-	for (i=0; i<len*2; i+=2) {
-		hex[i/2]  = ch_hex(str[i]) << 4;
-		hex[i/2] += ch_hex(str[i+1]);
+	for (i = 0; i < len * 2; i += 2) {
+		hex[i / 2] = ch_hex(str[i]) << 4;
+		hex[i / 2] += ch_hex(str[i + 1]);
 	}
 
 	return 0;
@@ -53,8 +53,8 @@ void str_ncpy(char *dst, const char *src, size_t n)
 	if (!dst || !src || !n)
 		return;
 
-	(void)strncpy(dst, src, n-1);
-	dst[n-1] = '\0'; /* strncpy does not null terminate if overflow */
+	(void)strncpy(dst, src, n - 1);
+	dst[n - 1] = '\0'; /* strncpy does not null terminate if overflow */
 }
 
 
@@ -218,4 +218,31 @@ int str_bool(bool *val, const char *str)
 	}
 
 	return err;
+}
+
+
+/**
+ * Converts unsigned integer to string
+ *
+ * @param val  Number to be converted
+ * @param buf  Buffer[ITOA_BUFSZ] that holds the result of the conversion
+ * @param base Base to use for conversion
+ *
+ * @return Pointer to buffer
+ */
+char *str_itoa(uint32_t val, char *buf, int base)
+{
+	int i = ITOA_BUFSZ - 2;
+
+	buf[ITOA_BUFSZ - 1] = '\0';
+
+	if (!val) {
+		buf[i] = '0';
+		return &buf[i];
+	}
+
+	for (; val && i; --i, val /= base)
+		buf[i] = "0123456789abcdef"[val % base];
+
+	return &buf[i + 1];
 }
