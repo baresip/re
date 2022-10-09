@@ -219,3 +219,31 @@ int str_bool(bool *val, const char *str)
 
 	return err;
 }
+
+
+/**
+ * Converts unsigned integer to string
+ *
+ * @param val  Number to be converted
+ * @param buf  Buffer[ITOA_BUFSZ] that holds the result of the conversion
+ * @param base Base to use for conversion
+ *
+ * @return Pointer to buffer
+ */
+char *str_itoa(uint32_t val, char *buf, int base)
+{
+	int i = ITOA_BUFSZ - 2;
+
+	buf[ITOA_BUFSZ - 1] = '\0';
+
+	if (!val) {
+		buf[i] = '0';
+		return &buf[i];
+	}
+
+	for (; val && i; --i, val /= base)
+		buf[i] = "0123456789abcdef"[val % base];
+
+	return &buf[i + 1];
+}
+
