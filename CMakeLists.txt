@@ -353,7 +353,7 @@ set(SRCS
 )
 
 
-if (USE_REM)
+if(USE_REM)
   list(APPEND SRCS
     src/aac/aac.c
     src/au/fmt.c
