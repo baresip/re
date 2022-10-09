@@ -71,14 +71,8 @@ static void destructor(void *arg)
 {
 	struct aes *st = arg;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	if (st->ctx)
 		EVP_CIPHER_CTX_free(st->ctx);
-#else
-	if (st->ctx)
-		EVP_CIPHER_CTX_cleanup(st->ctx);
-	mem_deref(st->ctx);
-#endif
 }
 
 
@@ -104,23 +98,12 @@ int aes_alloc(struct aes **aesp, enum aes_mode mode,
 	st->mode = mode;
 	st->encr = true;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	st->ctx = EVP_CIPHER_CTX_new();
 	if (!st->ctx) {
 		ERR_clear_error();
 		err = ENOMEM;
 		goto out;
 	}
-
-#else
-	st->ctx = mem_zalloc(sizeof(*st->ctx), NULL);
-	if (!st->ctx) {
-		err = ENOMEM;
-		goto out;
-	}
-
-	EVP_CIPHER_CTX_init(st->ctx);
-#endif
 
 	r = EVP_EncryptInit_ex(st->ctx, cipher, NULL, key, iv);
 	if (!r) {
