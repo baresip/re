@@ -200,7 +200,7 @@ int aes_decr(struct aes *aes, uint8_t *out, const uint8_t *in, size_t len)
  */
 int aes_get_authtag(struct aes *aes, uint8_t *tag, size_t taglen)
 {
-	int tmplen;
+	int tmplen = 0;
 
 	if (!aes || !tag || !taglen)
 		return EINVAL;
