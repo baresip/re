@@ -49,6 +49,7 @@ option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
+option(USE_REM "Enable REM modules" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
@@ -349,31 +350,36 @@ set(SRCS
 
   src/websock/websock.c
 
-  src/aac/aac.c
-  src/au/fmt.c
-  src/au/util.c
-  src/aubuf/aubuf.c
-  src/aubuf/ajb.c
-  src/auconv/auconv.c
-  src/aufile/aufile.c
-  src/aufile/wave.c
-  src/auframe/auframe.c
-  src/aulevel/aulevel.c
-  src/aumix/aumix.c
-  src/auresamp/resamp.c
-  src/autone/tone.c
-  src/avc/config.c
-  src/dtmf/dec.c
-  src/fir/fir.c
-  src/g711/g711.c
-  src/goertzel/goertzel.c
-  src/vid/draw.c
-  src/vid/fmt.c
-  src/vid/frame.c
-  src/vidconv/vconv.c
-  src/vidmix/vidmix.c
-
 )
+
+
+if (USE_REM)
+  list(APPEND SRCS
+    src/aac/aac.c
+    src/au/fmt.c
+    src/au/util.c
+    src/aubuf/aubuf.c
+    src/aubuf/ajb.c
+    src/auconv/auconv.c
+    src/aufile/aufile.c
+    src/aufile/wave.c
+    src/auframe/auframe.c
+    src/aulevel/aulevel.c
+    src/aumix/aumix.c
+    src/auresamp/resamp.c
+    src/autone/tone.c
+    src/avc/config.c
+    src/dtmf/dec.c
+    src/fir/fir.c
+    src/g711/g711.c
+    src/goertzel/goertzel.c
+    src/vid/draw.c
+    src/vid/fmt.c
+    src/vid/frame.c
+    src/vidconv/vconv.c
+    src/vidmix/vidmix.c
+  )
+endif()
 
 
 if(USE_BFCP)
