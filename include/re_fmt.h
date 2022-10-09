@@ -8,6 +8,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+enum {
+	ITOA_BUFSZ = 34,
+};
 
 struct mbuf;
 
@@ -117,6 +120,7 @@ int  str_cmp(const char *s1, const char *s2);
 int  str_casecmp(const char *s1, const char *s2);
 size_t str_len(const char *s);
 const char *str_error(int errnum, char *buf, size_t sz);
+char *str_itoa(uint32_t val, char *buf, int base);
 
 
 /**
