@@ -338,7 +338,7 @@ int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 #endif
 	if (r <= 0) {
 		ERR_clear_error();
-		return EINVAL;
+		return ENOENT;
 	}
 
 	r = SSL_use_PrivateKey_file(tc->ssl, file, SSL_FILETYPE_PEM);
