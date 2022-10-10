@@ -49,6 +49,9 @@ int      pl_cmp(const struct pl *pl1, const struct pl *pl2);
 int      pl_casecmp(const struct pl *pl1, const struct pl *pl2);
 const char *pl_strchr(const struct pl *pl, char c);
 const char *pl_strrchr(const struct pl *pl, char c);
+int      pl_trim(struct pl *pl);
+int      pl_ltrim(struct pl *pl);
+int      pl_rtrim(struct pl *pl);
 
 /** Advance pl position/length by +/- N bytes */
 static inline void pl_advance(struct pl *pl, ssize_t n)
