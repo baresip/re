@@ -140,14 +140,16 @@ static int tls_connect(struct tls_conn *tc)
 
 	ERR_clear_error();
 
-	if (tls_get_session_reuse(tc))
+       if (tls_get_session_reuse(tc)) {
+               DEBUG_NOTICE("tls_reuse_session\n");
 		(void) tls_reuse_session(tc);
+       }
+
+       ERR_clear_error();
 
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
-
-		ERR_clear_error();
 
 		switch (ssl_err) {
 
@@ -157,9 +159,12 @@ static int tls_connect(struct tls_conn *tc)
 		default:
 			DEBUG_WARNING("connect: error (r=%d, ssl_err=%d)\n",
 				      r, ssl_err);
+                       tls_flush_error();
 			err = EPROTO;
 			break;
 		}
+
+               ERR_clear_error();
 	}
 
 	return err;
