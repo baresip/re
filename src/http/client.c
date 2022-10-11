@@ -1168,12 +1168,8 @@ int http_client_set_certpem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->cert = mem_deref(cli->cert);
-	cli->cert = mem_zalloc(strlen(pem) + 1, NULL);
-	if (!cli->cert)
-		return ENOMEM;
 
-	strcpy(cli->cert, pem);
-	return 0;
+	return str_dup(&cli->cert, pem);
 }
 
 
@@ -1201,12 +1197,8 @@ int http_client_set_keypem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->key = mem_deref(cli->key);
-	cli->key = mem_zalloc(strlen(pem) + 1, NULL);
-	if (!cli->key)
-		return ENOMEM;
 
-	strcpy(cli->key, pem);
-	return 0;
+	return str_dup(&cli->key, pem);
 }
 
 
