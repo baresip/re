@@ -157,7 +157,7 @@ static int tls_connect(struct tls_conn *tc)
 			break;
 
 		default:
-			DEBUG_WARNING("connect: error (r=%d, ssl_err=%d)\n",
+			DEBUG_WARNING("connect: ALF (r=%d, ssl_err=%d)\n",
 				      r, ssl_err);
 			tls_flush_error();
 			err = EPROTO;
