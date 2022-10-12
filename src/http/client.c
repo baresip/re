@@ -975,17 +975,9 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf)
 		return EINVAL;
 
 	cli->conf = *conf;
-
-	struct dnsc_conf dconf = {
-		.query_hash_size = QUERY_HASH_SIZE,
-		.tcp_hash_size	 = TCP_HASH_SIZE,
-		.conn_timeout	 = conf->conn_timeout,
-		.idle_timeout	 = conf->idle_timeout,
-		.cache_ttl_max	 = 1800,
-		.getaddrinfo	 = dnsc_getaddrinfo_enabled(cli->dnsc)
-	};
-
-	return dnsc_conf_set(cli->dnsc, &dconf);
+	dnsc_conf_set_timeout(cli->dnsc, conf->conn_timeout,
+						  conf->idle_timeout);
+	return 0;
 }
 
 
