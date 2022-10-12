@@ -140,12 +140,8 @@ static int tls_connect(struct tls_conn *tc)
 
 	ERR_clear_error();
 
-	if (tls_get_session_reuse(tc)) {
-		DEBUG_NOTICE("tls_reuse_session\n");
+	if (tls_get_session_reuse(tc))
 		(void) tls_reuse_session(tc);
-	}
-
-	ERR_clear_error();
 
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
@@ -157,7 +153,7 @@ static int tls_connect(struct tls_conn *tc)
 			break;
 
 		default:
-			DEBUG_WARNING("connect: ALF (r=%d, ssl_err=%d)\n",
+			DEBUG_WARNING("connect: error (r=%d, ssl_err=%d)\n",
 				      r, ssl_err);
 			tls_flush_error();
 			err = EPROTO;
