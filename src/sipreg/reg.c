@@ -278,7 +278,6 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 	struct sipreg *reg = arg;
 	int err;
 
-	(void)dst;
 	(void)contp;
 
 	reg->tp = tp;
