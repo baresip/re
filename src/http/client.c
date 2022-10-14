@@ -806,6 +806,7 @@ out:
  * @param uri       Request URI
  * @param resph     Response handler
  * @param datah     Content handler (optional)
+ * @param bodyh     Body handler (optional)
  * @param arg       Handler argument
  * @param fmt       Formatted HTTP headers and body (optional)
  *
