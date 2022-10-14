@@ -134,6 +134,7 @@ int str_cmp(const char *s1, const char *s2)
  *
  * @param s1 First string
  * @param s2 Second string
+ * @param n  Number of characters to compare
  *
  * @return an integer less than, equal to, or greater than zero if s1 is found
  *         respectively, to be less than, to match, or be greater than s2 in

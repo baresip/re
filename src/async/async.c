@@ -138,8 +138,8 @@ static void queueh(int id, void *data, void *arg)
 /**
  * Allocate a new async object
  *
- * @param asyncp Pointer to allocated async object
- * @param nthrds Number of worker threads
+ * @param asyncp  Pointer to allocated async object
+ * @param workers Number of worker threads
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -210,7 +210,7 @@ err:
  * Execute work handler async and get a callback from re main thread
  *
  * @param async Pointer to async object
- * @param work  Work handler
+ * @param workh Work handler
  * @param cb    Callback handler (called by re main thread)
  * @param arg   Handler argument (has to be thread-safe)
  *
