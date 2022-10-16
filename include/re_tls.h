@@ -4,20 +4,10 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
-#ifdef USE_OPENSSL
-#include <openssl/ossl_typ.h>
-#endif
-
 struct tls;
 struct tls_conn;
 struct tcp_conn;
 struct udp_sock;
-
-#ifndef USE_OPENSSL
-struct ssl_ctx_st;
-
-typedef struct ssl_ctx_st SSL_CTX;
-#endif
 
 
 /** Defines the TLS method */
@@ -79,7 +69,6 @@ void tls_disable_verify_server(struct tls *tls);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
-SSL_CTX *tls_ssl_ctx(const struct tls *tls);
 
 int tls_set_session_reuse(struct tls *tls, int enabled);
 bool tls_get_session_reuse(const struct tls_conn *tc);
@@ -127,8 +116,8 @@ void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 		      struct mbuf *mb);
 
 
-#ifdef USE_OPENSSL
-SSL_CTX *tls_openssl_context(const struct tls *tls);
-int tls_set_certificate_openssl(struct tls *tls, X509* cert, EVP_PKEY* pkey,
-				bool up_ref);
-#endif
+struct x509_st;
+struct evp_pkey_st;
+
+int tls_set_certificate_openssl(struct tls *tls, struct x509_st *cert,
+				struct evp_pkey_st *pkey, bool up_ref);

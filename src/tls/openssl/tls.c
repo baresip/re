@@ -1329,19 +1329,6 @@ void tls_flush_error(void)
 
 
 /**
- * Get the backend-specific (OpenSSL) context
- *
- * @param tls  Generic TLS Context
- *
- * @return OpenSSL context
- */
-SSL_CTX *tls_openssl_context(const struct tls *tls)
-{
-	return tls ? tls->ctx : NULL;
-}
-
-
-/**
  * Convert a X509_NAME object into a human-readable form placed in an mbuf
  *
  * @param field  X509_NAME of Cert field

@@ -31,3 +31,4 @@ typedef X509_NAME*(tls_get_certfield_h)(X509 *);
 struct tls;
 
 void tls_flush_error(void);
+SSL_CTX *tls_ssl_ctx(const struct tls *tls);
