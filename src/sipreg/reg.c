@@ -164,7 +164,7 @@ static bool contact_handler(const struct sip_hdr *hdr,
 	if (err)
 		return false;
 
-	if (!sa_cmp(&host, &reg->laddr, SA_ALL))
+	if (!sa_cmp(&host, &reg->laddr, SA_ADDR))
 		return false;
 
 	err = uri_param_get(&c.auri, &transp, &pval);
