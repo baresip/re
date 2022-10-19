@@ -1873,7 +1873,7 @@ void sip_transp_rmladdr(struct sip *sip, const struct sa *laddr)
  * @return 0 if success, otherwise errorcode
  */
 int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
-		    const struct sip_conncfg conncfg)
+		    const struct sip_conncfg *conncfg)
 {
 	struct sip_conncfg *cfg;
 
@@ -1882,7 +1882,7 @@ int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
 
 	cfg = sip_conncfg_find(sip, paddr);
 	if (cfg) {
-		cfg->srcport = conncfg.srcport;
+		cfg->srcport = conncfg->srcport;
 		return 0;
 	}
 	else {
@@ -1892,9 +1892,10 @@ int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
 	if (!cfg)
 		return ENOMEM;
 
-	memcpy(cfg, &conncfg, sizeof(*cfg));
+	memcpy(cfg, conncfg, sizeof(*cfg));
 	memset(&cfg->he, 0, sizeof(cfg->he));
 	sa_cpy(&cfg->paddr, paddr);
 	hash_append(sip->ht_conncfg, sa_hash(paddr, SA_ALL), &cfg->he, cfg);
+
 	return 0;
 }

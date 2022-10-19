@@ -433,7 +433,7 @@ int sip_keepalive_start(struct sip_keepalive **kap, struct sip *sip,
 
 /* sip_conncfg */
 int sip_conncfg_set(struct sip *sip, const struct sa *paddr,
-		    const struct sip_conncfg conncfg);
+		    const struct sip_conncfg *conncfg);
 
 
 /* sip_uas_auth */

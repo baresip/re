@@ -300,7 +300,7 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 		struct sip_conncfg cfg;
 		memset(&cfg, 0, sizeof(cfg));
 		cfg.srcport = reg->srcport;
-		err = sip_conncfg_set(reg->sip, dst, cfg);
+		err = sip_conncfg_set(reg->sip, dst, &cfg);
 	}
 
 	return err;
