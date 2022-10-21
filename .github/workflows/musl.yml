@@ -14,7 +14,7 @@ jobs:
     container: alpine
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install devel tools
       run: |
         apk add musl-dev git cmake gcc make binutils openssl-dev linux-headers zlib-dev 

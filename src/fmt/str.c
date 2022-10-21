@@ -130,6 +130,44 @@ int str_cmp(const char *s1, const char *s2)
 
 
 /**
+ * Compare two 0-terminated strings up to n positions
+ *
+ * @param s1 First string
+ * @param s2 Second string
+ * @param n  Number of characters to compare
+ *
+ * @return an integer less than, equal to, or greater than zero if s1 is found
+ *         respectively, to be less than, to match, or be greater than s2 in
+ *         the first n positions
+ */
+int str_ncmp(const char *s1, const char *s2, size_t n)
+{
+	if (!s1 || !s2)
+		return 1;
+
+	return strncmp(s1, s2, n);
+}
+
+
+/**
+ * Check if one 0-terminated string contains another
+ *
+ * @param s1 First string
+ * @param s2 Second string
+ *
+ * @return a position in s1 where it contains s2 as a substring, or NULL
+ *         if s2 does not occur inside s1
+ */
+const char *str_str(const char *s1, const char *s2)
+{
+	if (!s1 || !s2)
+		return NULL;
+
+	return strstr(s1, s2);
+}
+
+
+/**
  * Compare two 0-terminated strings, ignoring case
  *
  * @param s1 First string

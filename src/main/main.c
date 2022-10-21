@@ -1362,6 +1362,10 @@ void re_thread_leave(void)
 
 /**
  * Attach the current thread to re context
+ *
+ * @param context Re context
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int re_thread_attach(struct re *context)
 {

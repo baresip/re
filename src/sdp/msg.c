@@ -430,13 +430,18 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 		if (!fmt->sup && !offer)
 			continue;
 
-		err |= mbuf_printf(mb, "a=rtpmap:%s %s/%u",
-				   fmt->id, fmt->name, fmt->srate);
+		if ((str_ncmp(m->proto, "RTP/", 4) == 0) ||
+				(str_str(m->proto, "/RTP/") != NULL)) {
 
-		if (fmt->ch > 1)
-			err |= mbuf_printf(mb, "/%u", fmt->ch);
+			err |= mbuf_printf(mb, "a=rtpmap:%s %s/%u",
+					   fmt->id, fmt->name, fmt->srate);
 
-		err |= mbuf_printf(mb, "\r\n");
+			if (fmt->ch > 1)
+				err |= mbuf_printf(mb, "/%u", fmt->ch);
+
+			err |= mbuf_printf(mb, "\r\n");
+
+		}
 
 		if (str_isset(fmt->params))
 			err |= mbuf_printf(mb, "a=fmtp:%s %s\r\n",

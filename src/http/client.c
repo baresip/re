@@ -806,6 +806,7 @@ out:
  * @param uri       Request URI
  * @param resph     Response handler
  * @param datah     Content handler (optional)
+ * @param bodyh     Body handler (optional)
  * @param arg       Handler argument
  * @param fmt       Formatted HTTP headers and body (optional)
  *
@@ -974,17 +975,9 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf)
 		return EINVAL;
 
 	cli->conf = *conf;
-
-	struct dnsc_conf dconf = {
-		.query_hash_size = QUERY_HASH_SIZE,
-		.tcp_hash_size	 = TCP_HASH_SIZE,
-		.conn_timeout	 = conf->conn_timeout,
-		.idle_timeout	 = conf->idle_timeout,
-		.cache_ttl_max	 = 1800,
-		.getaddrinfo	 = dnsc_getaddrinfo_enabled(cli->dnsc)
-	};
-
-	return dnsc_conf_set(cli->dnsc, &dconf);
+	dnsc_conf_set_timeout(cli->dnsc, conf->conn_timeout,
+						  conf->idle_timeout);
+	return 0;
 }
 
 
@@ -1168,12 +1161,8 @@ int http_client_set_certpem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->cert = mem_deref(cli->cert);
-	cli->cert = mem_zalloc(strlen(pem) + 1, NULL);
-	if (!cli->cert)
-		return ENOMEM;
 
-	strcpy(cli->cert, pem);
-	return 0;
+	return str_dup(&cli->cert, pem);
 }
 
 
@@ -1201,12 +1190,8 @@ int http_client_set_keypem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->key = mem_deref(cli->key);
-	cli->key = mem_zalloc(strlen(pem) + 1, NULL);
-	if (!cli->key)
-		return ENOMEM;
 
-	strcpy(cli->key, pem);
-	return 0;
+	return str_dup(&cli->key, pem);
 }
 
 
