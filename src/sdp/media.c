@@ -313,24 +313,32 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 			mem_deref(lfmt->id);
 			lfmt->id = mem_ref(rfmt->id);
 			lfmt->pt = atoi(lfmt->id ? lfmt->id : "");
+
+			list_unlink(&lfmt->le);
+			list_append(&m->lfmtl, &lfmt->le, lfmt);
 			if (lfmt->pt > pt_offer)
 				pt_offer = lfmt->pt;
 		}
 	}
 
-	/* Recalculate pt of unsupported codecs */
+	/* Recalculate pt and reorder unsupported codecs */
 	if (offer) {
 
-		for (lle=m->lfmtl.head; lle; lle=lle->next) {
+		for (lle = m->lfmtl.tail; lle;) {
 
 			lfmt = lle->data;
 
-			if (lfmt && !lfmt->sup)
+			lle = lle->prev;
+
+			if (lfmt && !lfmt->sup) {
 				if (lfmt->pt >= RTP_DYNPT_START) {
 					mem_deref(lfmt->id);
 					lfmt->pt = ++pt_offer;
 					re_sdprintf(&lfmt->id, "%i", lfmt->pt);
 				}
+				list_unlink(&lfmt->le);
+				list_append(&m->lfmtl, &lfmt->le, lfmt);
+			}
 		}
 	}
 }
