@@ -16,12 +16,10 @@ enum {
 };
 
 
-static int h264_nal_header_encode_val(struct mbuf *mb,
-				      uint8_t nri, enum h264_nalu type)
+static int nal_header_encode_val(struct mbuf *mb,
+				 uint8_t nri, enum h264_nalu type)
 {
-	uint8_t v;
-
-	v = nri<<5 | type;
+	uint8_t v = nri<<5 | type;
 
 	return mbuf_write_u8(mb, v);
 }
@@ -288,8 +286,14 @@ bool h264_is_keyframe(int type)
 }
 
 
-/*
+/**
  * Encode STAP-A header and payload
+ *
+ * @param mb       Target mbuffer for STAP-A NAL unit
+ * @param frame    Input frame in Annex-B format
+ * @param frame_sz Number of bytes in input frame
+ *
+ * @return 0 if success, otherwise errorcode
  *
  * NOTE: The value of NRI MUST be the maximum of all the
  *       NAL units carried in the aggregation packet.
@@ -309,7 +313,7 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
 
 	start = mb->pos;
 
-	err = h264_nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
+	err = nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
 	if (err)
 		return err;
 
@@ -346,8 +350,13 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
 }
 
 
-/*
+/**
  * Decode STAP-A payload and convert to Annex-B NAL units
+ *
+ * @param mb_frame Target mbuffer for frame with multiple NAL units
+ * @param mb_pkt   Input packet with STAP-A payload
+ *
+ * @return 0 if success, otherwise errorcode
  *
  * NOTE: The NAL header must be decoded outside
  */
