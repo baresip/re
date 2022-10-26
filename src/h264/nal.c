@@ -301,8 +301,13 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
 {
 	const uint8_t *end = frame + frame_sz;
 	uint8_t nri_max = 0;
-	size_t start = mb->pos;
+	size_t start;
 	int err;
+
+	if (!mb || !frame || !frame_sz)
+		return EINVAL;
+
+	start = mb->pos;
 
 	err = h264_nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
 	if (err)
@@ -323,7 +328,7 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
 		if (len > UINT16_MAX)
 			return ERANGE;
 
-		err  = mbuf_write_u16(mb, htons(len));
+		err  = mbuf_write_u16(mb, htons((uint16_t)len));
 		err |= mbuf_write_mem(mb, r, len);
 		if (err)
 			return err;
@@ -349,6 +354,9 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
 int h264_stapa_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
 {
 	int err;
+
+	if (!mb_frame || !mb_pkt)
+		return EINVAL;
 
 	while (mbuf_get_left(mb_pkt) >= H264_STAP_A_MIN_LENGTH) {
 
