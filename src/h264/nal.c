@@ -6,7 +6,35 @@
 
 #include <re_types.h>
 #include <re_mbuf.h>
+#include <re_fmt.h>
 #include <re_h264.h>
+
+
+enum {
+	H264_STAP_A_MIN_LENGTH = 2
+};
+
+
+static int h264_nal_header_encode_val(struct mbuf *mb,
+				      uint8_t nri, enum h264_nalu type)
+{
+	uint8_t v;
+
+	v = nri<<5 | type;
+
+	return mbuf_write_u8(mb, v);
+}
+
+
+void h264_nal_header_decode_buf(struct h264_nal_header *hdr,
+				const uint8_t *buf)
+{
+	uint8_t v = buf[0];
+
+	hdr->f    = v>>7 & 0x1;
+	hdr->nri  = v>>5 & 0x3;
+	hdr->type = v    & 0x1f;
+}
 
 
 /**
@@ -256,4 +284,104 @@ int h264_packetize(uint64_t rtp_ts, const uint8_t *buf, size_t len,
 bool h264_is_keyframe(int type)
 {
 	return type == H264_NALU_IDR_SLICE;
+}
+
+
+/*
+ * Encode STAP-A header and payload
+ *
+ * NOTE: The value of NRI MUST be the maximum of all the
+ *       NAL units carried in the aggregation packet.
+ *
+ * NOTE: The input must be in Annex-B format (3-4 byte Startcode)
+ */
+int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
+		       size_t frame_sz)
+{
+	const uint8_t *end = frame + frame_sz;
+	uint8_t nri_max = 0;
+	size_t start = mb->pos;
+	int err;
+
+	err = h264_nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
+	if (err)
+		return err;
+
+	const uint8_t *r = h264_find_startcode(frame, end);
+
+	while (r < end) {
+
+		struct h264_nal_header hdr;
+
+		while (!*(r++))
+			;
+
+		const uint8_t *r1 = h264_find_startcode(r, end);
+		size_t len = r1 - r;
+
+		if (len > UINT16_MAX)
+			return ERANGE;
+
+		err  = mbuf_write_u16(mb, htons(len));
+		err |= mbuf_write_mem(mb, r, len);
+		if (err)
+			return err;
+
+		h264_nal_header_decode_buf(&hdr, r);
+		nri_max = max(hdr.nri, nri_max);
+
+		r = r1;
+	}
+
+	/* update NAL header */
+	mb->buf[start] |= nri_max<<5;
+
+	return 0;
+}
+
+
+/*
+ * Decode STAP-A payload and convert to Annex-B NAL units
+ *
+ * NOTE: The NAL header must be decoded outside
+ */
+int h264_stapa_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
+{
+	int err;
+
+	while (mbuf_get_left(mb_pkt) >= H264_STAP_A_MIN_LENGTH) {
+
+		uint16_t len = ntohs(mbuf_read_u16(mb_pkt));
+
+		if (len > mbuf_get_left(mb_pkt)) {
+			re_printf("h264: STAP-A: short read (%zu > %zu)\n",
+				  len, mbuf_get_left(mb_pkt));
+			return EBADMSG;
+		}
+
+		if (len == 0) {
+			re_printf("skipping empty nal\n");
+			continue;
+		}
+#if 1
+		struct h264_nal_header hdr;
+
+		h264_nal_header_decode_buf(&hdr, mbuf_buf(mb_pkt));
+
+		re_printf("STAP-A decode:  len=%u  nri=%u  type=%u(%s)\n",
+			  len,
+			  hdr.nri, hdr.type, h264_nal_unit_name(hdr.type));
+#endif
+
+		static const uint8_t startcode[] = {0,0,1};
+
+		err  = mbuf_write_mem(mb_frame, startcode, sizeof(startcode));
+		err |= mbuf_write_mem(mb_frame, mbuf_buf(mb_pkt), len);
+		if (err)
+			return err;
+
+		mbuf_advance(mb_pkt, len);
+	}
+
+	return 0;
 }
