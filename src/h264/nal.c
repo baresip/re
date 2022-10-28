@@ -29,12 +29,10 @@ static int nal_header_encode_val(struct mbuf *mb,
 void h264_nal_header_decode_buf(struct h264_nal_header *hdr,
 				const uint8_t *buf)
 {
-	uint8_t v;
-
 	if (!hdr || !buf)
 		return;
 
-	v = buf[0];
+	uint8_t v = buf[0];
 
 	hdr->f    = v>>7 & 0x1;
 	hdr->nri  = v>>5 & 0x3;
