@@ -44,8 +44,8 @@ void list_flush(struct list *list)
 	while (le) {
 		struct le *next = le->next;
 		void *data = le->data;
-		le->list = NULL;
-		le->prev = le->next = NULL;
+
+		list_unlink(le);
 		le->data = NULL;
 		le = next;
 		mem_deref(data);
