@@ -386,9 +386,9 @@ int h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
 			  hdr.nri, hdr.type, h264_nal_unit_name(hdr.type));
 #endif
 
-		static const uint8_t startcode[] = {0,0,1};
+		static const uint8_t sc3[] = {0, 0, 1};
 
-		int err = mbuf_write_mem(mb_frame, startcode, sizeof(startcode));
+		int err = mbuf_write_mem(mb_frame, sc3, sizeof(sc3));
 		err |= mbuf_write_mem(mb_frame, mbuf_buf(mb_pkt), len);
 		if (err)
 			return err;
