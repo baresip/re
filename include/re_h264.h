@@ -101,6 +101,6 @@ int h264_nal_send(bool first, bool last,
 		  const uint8_t *buf, size_t size, size_t maxsz,
 		  h264_packet_h *pkth, void *arg);
 bool h264_is_keyframe(int type);
-int  h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
-		       size_t frame_sz);
-int  h264_stapa_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt);
+int  h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
+		      size_t frame_sz);
+int  h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt);

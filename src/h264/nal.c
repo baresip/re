@@ -12,7 +12,8 @@
 
 
 enum {
-	H264_STAP_A_MIN_LENGTH = 2
+	H264_HEADER_LENGTH   = 1,
+	H264_STAP_MIN_LENGTH = sizeof(uint16_t)
 };
 
 
@@ -28,7 +29,12 @@ static int nal_header_encode_val(struct mbuf *mb,
 void h264_nal_header_decode_buf(struct h264_nal_header *hdr,
 				const uint8_t *buf)
 {
-	uint8_t v = buf[0];
+	uint8_t v;
+
+	if (!hdr || !buf)
+		return;
+
+	v = buf[0];
 
 	hdr->f    = v>>7 & 0x1;
 	hdr->nri  = v>>5 & 0x3;
@@ -300,8 +306,8 @@ bool h264_is_keyframe(int type)
  *
  * NOTE: The input must be in Annex-B format (3-4 byte Startcode)
  */
-int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
-		       size_t frame_sz)
+int h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
+		     size_t frame_sz)
 {
 	const uint8_t *end = frame + frame_sz;
 	uint8_t nri_max = 0;
@@ -360,28 +366,21 @@ int h264_stap_a_encode(struct mbuf *mb, const uint8_t *frame,
  *
  * NOTE: The NAL header must be decoded outside
  */
-int h264_stapa_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
+int h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
 {
 	int err;
 
 	if (!mb_frame || !mb_pkt)
 		return EINVAL;
 
-	while (mbuf_get_left(mb_pkt) >= H264_STAP_A_MIN_LENGTH) {
+	while (mbuf_get_left(mb_pkt) >= H264_STAP_MIN_LENGTH) {
 
 		uint16_t len = ntohs(mbuf_read_u16(mb_pkt));
 
-		if (len > mbuf_get_left(mb_pkt)) {
-			re_printf("h264: STAP-A: short read (%zu > %zu)\n",
-				  len, mbuf_get_left(mb_pkt));
+		if (len < H264_HEADER_LENGTH || len > mbuf_get_left(mb_pkt))
 			return EBADMSG;
-		}
 
-		if (len == 0) {
-			re_printf("skipping empty nal\n");
-			continue;
-		}
-#if 1
+#if 0
 		struct h264_nal_header hdr;
 
 		h264_nal_header_decode_buf(&hdr, mbuf_buf(mb_pkt));
