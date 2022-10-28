@@ -309,17 +309,15 @@ bool h264_is_keyframe(int type)
 int h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
 		     size_t frame_sz)
 {
-	const uint8_t *end = frame + frame_sz;
 	uint8_t nri_max = 0;
-	size_t start;
-	int err;
 
 	if (!mb || !frame || !frame_sz)
 		return EINVAL;
 
-	start = mb->pos;
+	size_t start = mb->pos;
+	const uint8_t *end = frame + frame_sz;
 
-	err = nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
+	int err = nal_header_encode_val(mb, 0, H264_NALU_STAP_A);
 	if (err)
 		return err;
 
@@ -368,8 +366,6 @@ int h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
  */
 int h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
 {
-	int err;
-
 	if (!mb_frame || !mb_pkt)
 		return EINVAL;
 
@@ -392,7 +388,7 @@ int h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt)
 
 		static const uint8_t startcode[] = {0,0,1};
 
-		err  = mbuf_write_mem(mb_frame, startcode, sizeof(startcode));
+		int err = mbuf_write_mem(mb_frame, startcode, sizeof(startcode));
 		err |= mbuf_write_mem(mb_frame, mbuf_buf(mb_pkt), len);
 		if (err)
 			return err;
