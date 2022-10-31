@@ -120,3 +120,4 @@ struct evp_pkey_st;
 
 int tls_set_certificate_openssl(struct tls *tls, struct x509_st *cert,
 				struct evp_pkey_st *pkey, bool up_ref);
+int tls_add_certf(struct tls *tls, const char *certf, const struct pl *host);

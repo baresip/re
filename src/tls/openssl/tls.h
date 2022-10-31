@@ -27,8 +27,17 @@ typedef X509_NAME*(tls_get_certfield_h)(const X509 *);
 typedef X509_NAME*(tls_get_certfield_h)(X509 *);
 #endif
 
-
 struct tls;
+struct tls_cert;
 
 void tls_flush_error(void);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
+X509 *tls_cert_x509(struct tls_cert *hc);
+EVP_PKEY *tls_cert_pkey(struct tls_cert *hc);
+STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc);
+const char *tls_cert_host(struct tls_cert *hc);
+const struct list *tls_certs(const struct tls *tls);
+
+SSL *tls_conn_ssl(struct tls_conn *tc);
+struct tls *tls_conn_tls(struct tls_conn *tc);
+

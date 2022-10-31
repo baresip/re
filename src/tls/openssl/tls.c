@@ -24,6 +24,7 @@
 #include <re_tcp.h>
 #include <re_tls.h>
 #include "tls.h"
+#include "sni.h"
 
 
 #define DEBUG_MODULE "tls"
@@ -45,6 +46,15 @@ struct tls {
 	char *pass;          /**< password for private key             */
 	bool verify_server;  /**< Enable SIP TLS server verification   */
 	struct session_reuse reuse;
+	struct list certs;   /**< Certificates for SNI selection       */
+};
+
+struct tls_cert {
+	struct le le;
+	X509 *x509;
+	EVP_PKEY *pkey;
+	STACK_OF(X509) *chain;
+	char *host;
 };
 
 #if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
@@ -110,6 +120,7 @@ static void destructor(void *data)
 	hash_flush(tls->reuse.ht_sessions);
 	mem_deref(tls->reuse.ht_sessions);
 	mem_deref(tls->pass);
+	list_flush(&tls->certs);
 }
 
 
@@ -146,7 +157,7 @@ static int keytype2int(enum tls_keytype type)
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
 	!defined(LIBRESSL_VERSION_NUMBER)
-static int verify_handler(int ok, X509_STORE_CTX *ctx)
+static int tls_verify_handler(int ok, X509_STORE_CTX *ctx)
 {
 	int err, depth;
 
@@ -266,6 +277,9 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 		}
 	}
 
+	SSL_CTX_set_tlsext_servername_callback(tls->ctx,
+					       ssl_servername_handler);
+	SSL_CTX_set_tlsext_servername_arg(tls->ctx, tls);
 	err = hash_alloc(&tls->reuse.ht_sessions, 256);
 	if (err)
 		goto out;
@@ -1298,7 +1312,39 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 		}
 	}
 
-	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, verify_handler);
+	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, tls_verify_handler);
+
+	return 0;
+#else
+	(void)tc;
+	(void)host;
+
+	return ENOSYS;
+#endif
+}
+
+
+int ssl_set_verify_client(SSL *ssl, const char *host)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
+	struct sa sa;
+
+	if (!ssl || !host)
+		return EINVAL;
+
+	if (sa_set_str(&sa, host, 0)) {
+		SSL_set_hostflags(ssl,
+				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+
+		if (!SSL_set1_host(ssl, host)) {
+			DEBUG_WARNING("SSL_set1_host error\n");
+			ERR_clear_error();
+			return EPROTO;
+		}
+	}
+
+	SSL_set_verify(ssl, SSL_VERIFY_PEER, tls_verify_handler);
 
 	return 0;
 #else
@@ -1778,4 +1824,132 @@ SSL_CTX *tls_ssl_ctx(const struct tls *tls)
 		return NULL;
 
 	return tls->ctx;
+}
+
+
+static void tls_cert_destructor(void *arg)
+{
+	struct tls_cert *uc = arg;
+
+	mem_deref(uc->host);
+	X509_free(uc->x509);
+	EVP_PKEY_free(uc->pkey);
+	sk_X509_pop_free(uc->chain, X509_free);
+}
+
+
+int tls_add_certf(struct tls *tls, const char *certf, const struct pl *host)
+{
+	struct tls_cert *uc;
+	BIO *bio = NULL;
+	int err = 0;
+
+	if (!tls || !certf)
+		return EINVAL;
+
+	uc = mem_zalloc(sizeof(*uc), tls_cert_destructor);
+	if (pl_isset(host)) {
+		err = pl_strdup(&uc->host, host);
+		if (err)
+			goto out;
+	}
+
+	bio = BIO_new_file(certf, "r");
+	if (!bio) {
+		err = EIO;
+		goto out;
+	}
+
+	uc->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+	if (!uc->x509) {
+		ERR_clear_error();
+		DEBUG_WARNING("Can't read certificate from file: %s\n", certf);
+		err = ENOTSUP;
+		goto out;
+	}
+
+	while (1) {
+		X509 *ca = PEM_read_bio_X509(bio, NULL, 0, NULL);
+		if (!ca)
+			break;
+
+		if (!uc->chain)
+			uc->chain = sk_X509_new_null();
+
+		if (!uc->chain) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		if (!sk_X509_push(uc->chain, ca)) {
+			err = ENOMEM;
+			goto out;
+		}
+	}
+
+	BIO_free(bio);
+	bio = BIO_new_file(certf, "r");
+	if (!bio) {
+		err = EIO;
+		goto out;
+	}
+
+	uc->pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+	if (!uc->pkey) {
+		ERR_clear_error();
+		DEBUG_WARNING("Can't read private key from file: %s\n", certf);
+		err = ENOTSUP;
+		goto out;
+	}
+
+out:
+	BIO_free(bio);
+	if (err)
+		mem_deref(uc);
+	else
+		list_append(&tls->certs, &uc->le, uc);
+
+	return err;
+}
+
+
+X509 *tls_cert_x509(struct tls_cert *hc)
+{
+	return hc ? hc->x509 : NULL;
+}
+
+
+EVP_PKEY *tls_cert_pkey(struct tls_cert *hc)
+{
+	return hc ? hc->pkey : NULL;
+}
+
+
+STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc)
+{
+	return hc ? hc->chain : NULL;
+}
+
+
+const char *tls_cert_host(struct tls_cert *hc)
+{
+	return hc ? hc->host : NULL;
+}
+
+
+const struct list *tls_certs(const struct tls *tls)
+{
+	return tls ? &tls->certs : NULL;
+}
+
+
+SSL *tls_conn_ssl(struct tls_conn *tc)
+{
+	return tc ? tc->ssl : NULL;
+}
+
+
+struct tls *tls_conn_tls(struct tls_conn *tc)
+{
+	return tc ? tc->tls : NULL;
 }
