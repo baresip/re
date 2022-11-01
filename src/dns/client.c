@@ -1215,6 +1215,16 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 }
 
 
+void  dnsc_conf_set_timeout(struct dnsc *dnsc, uint32_t connect, uint32_t idle)
+{
+	if (!dnsc)
+		return;
+
+	dnsc->conf.conn_timeout = connect;
+	dnsc->conf.idle_timeout = idle;
+}
+
+
 int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 {
 	int err;
@@ -1309,8 +1319,8 @@ void dnsc_cache_max(struct dnsc *dnsc, uint32_t max)
 /**
  * Enable/Disable getaddrinfo usage
  *
- * @param dnsc  DNS Client
- * @param max   true for enabled, otherwise disabled (default)
+ * @param dnsc   DNS Client
+ * @param active true for enabled, otherwise disabled (default)
  */
 void dnsc_getaddrinfo(struct dnsc *dnsc, bool active)
 {

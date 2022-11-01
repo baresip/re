@@ -25,7 +25,6 @@ int  udp_listen(struct udp_sock **usp, const struct sa *local,
 int  udp_connect(struct udp_sock *us, const struct sa *peer);
 int  udp_open(struct udp_sock **usp, int af);
 int  udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb);
-int  udp_send_anon(const struct sa *dst, struct mbuf *mb);
 int  udp_local_get(const struct udp_sock *us, struct sa *local);
 int  udp_setsockopt(struct udp_sock *us, int level, int optname,
 		    const void *optval, uint32_t optlen);

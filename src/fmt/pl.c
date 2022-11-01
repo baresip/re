@@ -653,3 +653,66 @@ const char *pl_strrchr(const struct pl *pl, char c)
 
 	return NULL;
 }
+
+
+/**
+ * Trim white space characters at start of pointer-length string
+ *
+ * @param pl Pointer-length string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int pl_ltrim(struct pl *pl)
+{
+	if (!pl_isset(pl))
+		return EINVAL;
+
+	while (!re_regex(pl->p, 1, "[ \t\r\n]")) {
+		++pl->p;
+		--pl->l;
+		if (!pl->l)
+			return EINVAL;
+	}
+
+	return 0;
+}
+
+
+/**
+ * Trim white space characters at end of pointer-length string
+ *
+ * @param pl Pointer-length string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int pl_rtrim(struct pl *pl)
+{
+	if (!pl_isset(pl))
+		return EINVAL;
+
+	while (!re_regex(pl->p + pl->l - 1, 1, "[ \t\r\n]")) {
+		--pl->l;
+		if (!pl->l)
+			return EINVAL;
+	}
+
+	return 0;
+}
+
+
+/**
+ * Trim a pointer-length string on both ends
+ *
+ * @param pl Pointer-length string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int pl_trim(struct pl *pl)
+{
+	int err;
+
+	err  = pl_ltrim(pl);
+	err |= pl_rtrim(pl);
+
+	return err;
+}

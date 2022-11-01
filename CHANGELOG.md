@@ -5,7 +5,84 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+---
+
+## [v2.9.0] - 2022-11-01
+
+## What's Changed
+* cmake,make: bump version and set dev identifier by @cspiel1 in https://github.com/baresip/re/pull/553
+* udp: remove udp_send_anon() by @alfredh in https://github.com/baresip/re/pull/550
+* cmake: enable export symbols for backtrace by @sreimers in https://github.com/baresip/re/pull/554
+* README.md: Update build instructions for cmake by @robert-scheck in https://github.com/baresip/re/pull/556
+* cmake: improve kqueue and epoll detection by @sreimers in https://github.com/baresip/re/pull/558
+* fs: add fs_stdio_hide() and fs_stdio_restore() helpers by @sreimers in https://github.com/baresip/re/pull/559
+* json: remove unknown type warning by @alfredh in https://github.com/baresip/re/pull/560
+* http: fix warning arguments by @alfredh in https://github.com/baresip/re/pull/561
+* net_if_getlinklocal: use AF from input parameter by @alfredh in https://github.com/baresip/re/pull/565
+* fmt: add str_itoa by @sreimers in https://github.com/baresip/re/pull/569
+* SDP support for <proto> udp by @vanrein in https://github.com/baresip/re/pull/538
+* tls: remove some warnings by @alfredh in https://github.com/baresip/re/pull/567
+* fmt: add pl_trim functions by @cspiel1 in https://github.com/baresip/re/pull/557
+* aes/openssl: remove obsolete version check by @alfredh in https://github.com/baresip/re/pull/572
+* http: use str_dup() instead of unsafe strcpy() by @alfredh in https://github.com/baresip/re/pull/574
+* doxygen: update comments by @alfredh in https://github.com/baresip/re/pull/577
+* reg: remove obsolete void cast by @cspiel1 in https://github.com/baresip/re/pull/576
+* Tls connect debug by @alfredh in https://github.com/baresip/re/pull/573
+* mk: update doxygen file by @alfredh in https://github.com/baresip/re/pull/578
+* ci: use actions/checkout@v3 by @sreimers in https://github.com/baresip/re/pull/579
+* tls: remove ifdef from public API by @alfredh in https://github.com/baresip/re/pull/580
+* sip: sip_conncfg_set pass by reference by @alfredh in https://github.com/baresip/re/pull/582
+* dnsc get conf and skip hash alloc without hash size changes by @fAuernigg in https://github.com/baresip/re/pull/575
+* sdp/media: fix reorder codecs (restore old behavior) by @juha-h in https://github.com/baresip/re/pull/583
+* list: fix list_flush head and tail by @sreimers in https://github.com/baresip/re/pull/586
+* prepare 2.9.0 by @alfredh in https://github.com/baresip/re/pull/587
+
+## New Contributors
+* @vanrein made their first contribution in https://github.com/baresip/re/pull/538
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.8.0...v2.9.0
+
+
+---
+
+## [v2.8.0] - 2022-10-01
+
+* Update README.md by @alfredh in https://github.com/baresip/re/pull/503
+* thread: fix win32 thrd\_create return values by @sreimers in https://github.com/baresip/re/pull/506
+* cmake: bump min. version 3.10 by @sreimers in https://github.com/baresip/re/pull/504
+* cmake: add USE\_JBUF option by @alfredh in https://github.com/baresip/re/pull/507
+* http/https requests with large body by @fAuernigg in https://github.com/baresip/re/pull/485
+* http/client: fix possible null pointer dereference by @sreimers in https://github.com/baresip/re/pull/509
+* ci: test choco install no-progress by @alfredh in https://github.com/baresip/re/pull/510
+* bitv: remove deprecated module by @alfredh in https://github.com/baresip/re/pull/513
+* types,fmt: use re\_restrict by @sreimers in https://github.com/baresip/re/pull/514
+* refer out of dialog by @cspiel1 in https://github.com/baresip/re/pull/508
+* UPDATE bugfix by @maximilianfridrich in https://github.com/baresip/re/pull/516
+* sip/auth: fix mem\_zalloc return check by @sreimers in https://github.com/baresip/re/pull/518
+* Update media fixes by @cspiel1 in https://github.com/baresip/re/pull/515
+* dns, http: add dnsc\_getaddrinfo\_enabled. prevent reset of getaddrinfo enabled by @fAuernigg in https://github.com/baresip/re/pull/519
+* rtp: Improve media synchronization by @Lastique in https://github.com/baresip/re/pull/418
+* conf: check if returned size is larger than buffer by @alfredh in https://github.com/baresip/re/pull/523
+* udp: remove very old iOS hack by @alfredh in https://github.com/baresip/re/pull/524
+* tcp: remove very old iOS hack by @alfredh in https://github.com/baresip/re/pull/525
+* Use CMake for debian packages by @sreimers in https://github.com/baresip/re/pull/522
+* crc32: add re wrapper by @alfredh in https://github.com/baresip/re/pull/526
+* ci: convert valgrind to cmake by @alfredh in https://github.com/baresip/re/pull/529
+* ci: convert ssl build to cmake by @alfredh in https://github.com/baresip/re/pull/530
+* ci: convert fedora to cmake by @alfredh in https://github.com/baresip/re/pull/531
+* ci: convert coverage to cmake by @alfredh in https://github.com/baresip/re/pull/532
+* ci: migrate to cmake by @alfredh in https://github.com/baresip/re/pull/533
+* cmake: add LINKLIBS and make backtrace and zlib optional by @sreimers in https://github.com/baresip/re/pull/534
+* C99 compatibility by @sreimers in https://github.com/baresip/re/pull/536
+* pcp: fix cppcheck warning by @alfredh in https://github.com/baresip/re/pull/540
+* fmt/print: fix cppcheck overflow warning by @sreimers in https://github.com/baresip/re/pull/542
+* tls: remove SHA1 fingerprint (deprecated) by @alfredh in https://github.com/baresip/re/pull/527
+* send DTMF via hidden call by @cspiel1 in https://github.com/baresip/re/pull/537
+* sipreg: avoid sending un-REGISTER periodically by @cspiel1 in https://github.com/baresip/re/pull/543
+* cmake,mk: bump the tentative next release with pre-release identifier by @sreimers in https://github.com/baresip/re/pull/546
+* sipsess/update: Add Contact header to UPDATE by @maximilianfridrich in https://github.com/baresip/re/pull/545
+* cmake: fix shared API soversion (aligned with make) by @sreimers in https://github.com/baresip/re/pull/549
 
 ---
 

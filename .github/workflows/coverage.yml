@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: make
       run: | 
@@ -51,7 +51,7 @@ jobs:
 
     - name: coverage check
       run: |
-        min_cov="59.0"
+        min_cov="59.5"
         cov=$(~/.local/bin/gcovr -r . -s | grep lines | awk '{ print $2 }' | sed 's/%//')
         echo "Coverage: ${cov}% (min $min_cov%)"
         exit $(echo "$cov < $min_cov" | bc -l)

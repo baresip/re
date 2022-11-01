@@ -147,8 +147,6 @@ static int tls_connect(struct tls_conn *tc)
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
 
-		ERR_clear_error();
-
 		switch (ssl_err) {
 
 		case SSL_ERROR_WANT_READ:
@@ -157,9 +155,12 @@ static int tls_connect(struct tls_conn *tc)
 		default:
 			DEBUG_WARNING("connect: error (r=%d, ssl_err=%d)\n",
 				      r, ssl_err);
+			tls_flush_error();
 			err = EPROTO;
 			break;
 		}
+
+		ERR_clear_error();
 	}
 
 	return err;
@@ -337,15 +338,12 @@ int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 	r = SSL_use_certificate_file(tc->ssl, file, SSL_FILETYPE_PEM);
 #endif
 	if (r <= 0) {
-		DEBUG_WARNING("change cert: "
-			"cant't read certificate file: %s\n", file);
 		ERR_clear_error();
-		return EINVAL;
+		return ENOENT;
 	}
 
 	r = SSL_use_PrivateKey_file(tc->ssl, file, SSL_FILETYPE_PEM);
 	if (r <= 0) {
-		DEBUG_WARNING("change cert: key missmatch in %s\n", file);
 		ERR_clear_error();
 		return EKEYREJECTED;
 	}

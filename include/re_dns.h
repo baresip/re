@@ -207,6 +207,7 @@ struct dnsc_conf {
 int  dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 		const struct sa *srvv, uint32_t srvc);
 int  dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf);
+void dnsc_conf_set_timeout(struct dnsc *dnsc, uint32_t connect, uint32_t idle);
 int  dnsc_srv_set(struct dnsc *dnsc, const struct sa *srvv, uint32_t srvc);
 int  dnsc_query(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 		uint16_t type, uint16_t dnsclass,

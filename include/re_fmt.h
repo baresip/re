@@ -8,6 +8,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+enum {
+	ITOA_BUFSZ = 34,
+};
 
 struct mbuf;
 
@@ -46,6 +49,9 @@ int      pl_cmp(const struct pl *pl1, const struct pl *pl2);
 int      pl_casecmp(const struct pl *pl1, const struct pl *pl2);
 const char *pl_strchr(const struct pl *pl, char c);
 const char *pl_strrchr(const struct pl *pl, char c);
+int      pl_trim(struct pl *pl);
+int      pl_ltrim(struct pl *pl);
+int      pl_rtrim(struct pl *pl);
 
 /** Advance pl position/length by +/- N bytes */
 static inline void pl_advance(struct pl *pl, ssize_t n)
@@ -114,9 +120,12 @@ void str_ncpy(char *dst, const char *src, size_t n);
 int  str_dup(char **dst, const char *src);
 int  str_x64dup(char **dst, uint64_t val);
 int  str_cmp(const char *s1, const char *s2);
+int  str_ncmp(const char *s1, const char *s2, size_t n);
+const char *str_str(const char *s1, const char *s2);
 int  str_casecmp(const char *s1, const char *s2);
 size_t str_len(const char *s);
 const char *str_error(int errnum, char *buf, size_t sz);
+char *str_itoa(uint32_t val, char *buf, int base);
 
 
 /**

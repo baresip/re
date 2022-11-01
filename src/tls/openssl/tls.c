@@ -308,14 +308,11 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 		return EINVAL;
 
 	if (capath && !fs_isdir(capath)) {
-		DEBUG_WARNING("capath is not a directory\n");
 		return ENOTDIR;
 	}
 
 	/* Load the CAs we trust */
 	if (!(SSL_CTX_load_verify_locations(tls->ctx, cafile, capath))) {
-		if (str_isset(cafile))
-			DEBUG_WARNING("Can't read CA file: %s\n", cafile);
 
 		ERR_clear_error();
 		return ENOENT;
@@ -1328,19 +1325,6 @@ static int print_error(const char *str, size_t len, void *unused)
 void tls_flush_error(void)
 {
 	ERR_print_errors_cb(print_error, NULL);
-}
-
-
-/**
- * Get the backend-specific (OpenSSL) context
- *
- * @param tls  Generic TLS Context
- *
- * @return OpenSSL context
- */
-SSL_CTX *tls_openssl_context(const struct tls *tls)
-{
-	return tls ? tls->ctx : NULL;
 }
 
 

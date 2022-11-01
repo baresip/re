@@ -130,6 +130,44 @@ int str_cmp(const char *s1, const char *s2)
 
 
 /**
+ * Compare two 0-terminated strings up to n positions
+ *
+ * @param s1 First string
+ * @param s2 Second string
+ * @param n  Number of characters to compare
+ *
+ * @return an integer less than, equal to, or greater than zero if s1 is found
+ *         respectively, to be less than, to match, or be greater than s2 in
+ *         the first n positions
+ */
+int str_ncmp(const char *s1, const char *s2, size_t n)
+{
+	if (!s1 || !s2)
+		return 1;
+
+	return strncmp(s1, s2, n);
+}
+
+
+/**
+ * Check if one 0-terminated string contains another
+ *
+ * @param s1 First string
+ * @param s2 Second string
+ *
+ * @return a position in s1 where it contains s2 as a substring, or NULL
+ *         if s2 does not occur inside s1
+ */
+const char *str_str(const char *s1, const char *s2)
+{
+	if (!s1 || !s2)
+		return NULL;
+
+	return strstr(s1, s2);
+}
+
+
+/**
  * Compare two 0-terminated strings, ignoring case
  *
  * @param s1 First string
@@ -219,3 +257,31 @@ int str_bool(bool *val, const char *str)
 
 	return err;
 }
+
+
+/**
+ * Converts unsigned integer to string
+ *
+ * @param val  Number to be converted
+ * @param buf  Buffer[ITOA_BUFSZ] that holds the result of the conversion
+ * @param base Base to use for conversion
+ *
+ * @return Pointer to buffer
+ */
+char *str_itoa(uint32_t val, char *buf, int base)
+{
+	int i = ITOA_BUFSZ - 2;
+
+	buf[ITOA_BUFSZ - 1] = '\0';
+
+	if (!val) {
+		buf[i] = '0';
+		return &buf[i];
+	}
+
+	for (; val && i; --i, val /= base)
+		buf[i] = "0123456789abcdef"[val % base];
+
+	return &buf[i + 1];
+}
+
