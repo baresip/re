@@ -43,6 +43,8 @@ struct h264_nal_header {
 
 int h264_nal_header_encode(struct mbuf *mb, const struct h264_nal_header *hdr);
 int h264_nal_header_decode(struct h264_nal_header *hdr, struct mbuf *mb);
+void h264_nal_header_decode_buf(struct h264_nal_header *hdr,
+				const uint8_t *buf);
 const char *h264_nal_unit_name(enum h264_nalu nal_type);
 
 
@@ -99,3 +101,6 @@ int h264_nal_send(bool first, bool last,
 		  const uint8_t *buf, size_t size, size_t maxsz,
 		  h264_packet_h *pkth, void *arg);
 bool h264_is_keyframe(int type);
+int  h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
+		      size_t frame_sz);
+int  h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt);

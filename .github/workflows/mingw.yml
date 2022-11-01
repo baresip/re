@@ -73,5 +73,5 @@ jobs:
         secret: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "run retest.exe"
-      run: mv retest-exe/retest.exe retest/ && cd retest && ./retest.exe
+      run: mv retest-exe/retest.exe retest/ && cd retest && ./retest.exe -v
       shell: bash
