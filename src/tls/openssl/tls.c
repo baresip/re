@@ -1035,7 +1035,11 @@ int tls_peer_fingerprint(const struct tls_conn *tc, enum tls_fingerprint type,
 	if (!tc || !md)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	cert = SSL_get1_peer_certificate(tc->ssl);
+#else
 	cert = SSL_get_peer_certificate(tc->ssl);
+#endif
 	if (!cert)
 		return ENOENT;
 
@@ -1064,7 +1068,11 @@ int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 	if (!tc || !cn || !size)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	cert = SSL_get1_peer_certificate(tc->ssl);
+#else
 	cert = SSL_get_peer_certificate(tc->ssl);
+#endif
 	if (!cert)
 		return ENOENT;
 
