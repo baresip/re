@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: ccheck
       run: |
-        wget "https://raw.githubusercontent.com/baresip/baresip/main/test/ccheck.py"
+        wget "https://raw.githubusercontent.com/baresip/baresip/stable/test/ccheck.py"
         python3 ccheck.py
     - name: CMakeLint
       run: |

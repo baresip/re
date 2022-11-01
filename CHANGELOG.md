@@ -86,6 +86,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.8.0] - 2022-10-01
+
+* Update README.md by @alfredh in https://github.com/baresip/re/pull/503
+* thread: fix win32 thrd\_create return values by @sreimers in https://github.com/baresip/re/pull/506
+* cmake: bump min. version 3.10 by @sreimers in https://github.com/baresip/re/pull/504
+* cmake: add USE\_JBUF option by @alfredh in https://github.com/baresip/re/pull/507
+* http/https requests with large body by @fAuernigg in https://github.com/baresip/re/pull/485
+* http/client: fix possible null pointer dereference by @sreimers in https://github.com/baresip/re/pull/509
+* ci: test choco install no-progress by @alfredh in https://github.com/baresip/re/pull/510
+* bitv: remove deprecated module by @alfredh in https://github.com/baresip/re/pull/513
+* types,fmt: use re\_restrict by @sreimers in https://github.com/baresip/re/pull/514
+* refer out of dialog by @cspiel1 in https://github.com/baresip/re/pull/508
+* UPDATE bugfix by @maximilianfridrich in https://github.com/baresip/re/pull/516
+* sip/auth: fix mem\_zalloc return check by @sreimers in https://github.com/baresip/re/pull/518
+* Update media fixes by @cspiel1 in https://github.com/baresip/re/pull/515
+* dns, http: add dnsc\_getaddrinfo\_enabled. prevent reset of getaddrinfo enabled by @fAuernigg in https://github.com/baresip/re/pull/519
+* rtp: Improve media synchronization by @Lastique in https://github.com/baresip/re/pull/418
+* conf: check if returned size is larger than buffer by @alfredh in https://github.com/baresip/re/pull/523
+* udp: remove very old iOS hack by @alfredh in https://github.com/baresip/re/pull/524
+* tcp: remove very old iOS hack by @alfredh in https://github.com/baresip/re/pull/525
+* Use CMake for debian packages by @sreimers in https://github.com/baresip/re/pull/522
+* crc32: add re wrapper by @alfredh in https://github.com/baresip/re/pull/526
+* ci: convert valgrind to cmake by @alfredh in https://github.com/baresip/re/pull/529
+* ci: convert ssl build to cmake by @alfredh in https://github.com/baresip/re/pull/530
+* ci: convert fedora to cmake by @alfredh in https://github.com/baresip/re/pull/531
+* ci: convert coverage to cmake by @alfredh in https://github.com/baresip/re/pull/532
+* ci: migrate to cmake by @alfredh in https://github.com/baresip/re/pull/533
+* cmake: add LINKLIBS and make backtrace and zlib optional by @sreimers in https://github.com/baresip/re/pull/534
+* C99 compatibility by @sreimers in https://github.com/baresip/re/pull/536
+* pcp: fix cppcheck warning by @alfredh in https://github.com/baresip/re/pull/540
+* fmt/print: fix cppcheck overflow warning by @sreimers in https://github.com/baresip/re/pull/542
+* tls: remove SHA1 fingerprint (deprecated) by @alfredh in https://github.com/baresip/re/pull/527
+* send DTMF via hidden call by @cspiel1 in https://github.com/baresip/re/pull/537
+* sipreg: avoid sending un-REGISTER periodically by @cspiel1 in https://github.com/baresip/re/pull/543
+* cmake,mk: bump the tentative next release with pre-release identifier by @sreimers in https://github.com/baresip/re/pull/546
+* sipsess/update: Add Contact header to UPDATE by @maximilianfridrich in https://github.com/baresip/re/pull/545
+* cmake: fix shared API soversion (aligned with make) by @sreimers in https://github.com/baresip/re/pull/549
+
+---
+
 ## [v2.7.0] - 2022-09-01
 
 * async: add re_thread_async by @sreimers in https://github.com/baresip/re/pull/462

@@ -975,6 +975,7 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf)
 		return EINVAL;
 
 	cli->conf = *conf;
+
 	dnsc_conf_set_timeout(cli->dnsc, conf->conn_timeout,
 						  conf->idle_timeout);
 	return 0;
