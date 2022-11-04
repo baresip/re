@@ -236,28 +236,6 @@ int icem_comp_add(struct icem *icem, unsigned compid, void *sock)
 }
 
 
-/**
- * Add a new candidate to the ICE Media object
- *
- * @param icem    ICE Media object
- * @param compid  Component ID
- * @param lprio   Local priority
- * @param ifname  Name of the network interface
- * @param addr    Local network address
- *
- * @return 0 if success, otherwise errorcode
- */
-int icem_cand_add(struct icem *icem, unsigned compid, uint16_t lprio,
-		  const char *ifname, const struct sa *addr)
-{
-	if (!icem_comp_find(icem, compid))
-		return ENOENT;
-
-	return icem_lcand_add_base(icem, compid, lprio, ifname,
-				   ICE_TRANSP_UDP, addr);
-}
-
-
 static void *unique_handler(struct le *le1, struct le *le2)
 {
 	struct ice_cand *c1 = le1->data, *c2 = le2->data;

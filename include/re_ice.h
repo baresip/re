@@ -67,8 +67,6 @@ void icem_set_conf(struct icem *icem, const struct ice_conf *conf);
 void icem_set_role(struct icem *icem, enum ice_role role);
 void icem_set_name(struct icem *icem, const char *name);
 int  icem_comp_add(struct icem *icem, unsigned compid, void *sock);
-int  icem_cand_add(struct icem *icem, unsigned compid, uint16_t lprio,
-		   const char *ifname, const struct sa *addr);
 
 bool icem_verify_support(struct icem *icem, unsigned compid,
 			 const struct sa *raddr);
@@ -103,6 +101,9 @@ int  ice_cand_encode(struct re_printf *pf, const struct ice_cand *cand);
 int  ice_remotecands_encode(struct re_printf *pf, const struct icem *icem);
 struct ice_cand *icem_cand_find(const struct list *lst, unsigned compid,
 				const struct sa *addr);
+int icem_lcand_add_base(struct icem *icem, enum ice_cand_type type,
+			unsigned compid, uint16_t lprio, const char *ifname,
+			enum ice_transp transp, const struct sa *addr);
 int icem_lcand_add(struct icem *icem, struct ice_cand *base,
 		   enum ice_cand_type type,
 		   const struct sa *addr);

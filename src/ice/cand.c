@@ -86,20 +86,23 @@ static int cand_alloc(struct ice_cand **candp, struct icem *icem,
 }
 
 
-int icem_lcand_add_base(struct icem *icem, unsigned compid, uint16_t lprio,
-			const char *ifname, enum ice_transp transp,
-			const struct sa *addr)
+int icem_lcand_add_base(struct icem *icem, enum ice_cand_type type,
+			unsigned compid, uint16_t lprio, const char *ifname,
+			enum ice_transp transp, const struct sa *addr)
 {
 	struct icem_comp *comp;
 	struct ice_cand *cand;
 	int err;
 
+	if (type != ICE_CAND_TYPE_HOST && type != ICE_CAND_TYPE_RELAY)
+		return EINVAL;
+
 	comp = icem_comp_find(icem, compid);
 	if (!comp)
 		return ENOENT;
 
-	err = cand_alloc(&cand, icem, ICE_CAND_TYPE_HOST, compid,
-			 ice_cand_calc_prio(ICE_CAND_TYPE_HOST, lprio, compid),
+	err = cand_alloc(&cand, icem, type, compid,
+			 ice_cand_calc_prio(type, lprio, compid),
 			 ifname, transp, addr);
 	if (err)
 		return err;
