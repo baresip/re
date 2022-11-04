@@ -12,6 +12,12 @@ enum ice_role {
 	ICE_ROLE_CONTROLLED
 };
 
+/** ICE Transport **/
+enum ice_transp {
+	ICE_TRANSP_NONE = -1,
+	ICE_TRANSP_UDP  = IPPROTO_UDP
+};
+
 /** ICE Component ID */
 enum ice_compid {
 	ICE_COMPID_RTP  = 1,
