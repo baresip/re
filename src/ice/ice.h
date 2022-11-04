@@ -111,9 +111,6 @@ struct ice_candpair {
 
 
 /* cand */
-int icem_lcand_add_base(struct icem *icem, unsigned compid, uint16_t lprio,
-			const char *ifname, enum ice_transp transp,
-			const struct sa *addr);
 int icem_rcand_add(struct icem *icem, enum ice_cand_type type, unsigned compid,
 		   uint32_t prio, const struct sa *addr,
 		   const struct sa *rel_addr, const struct pl *foundation);
