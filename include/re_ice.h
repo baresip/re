@@ -48,6 +48,12 @@ enum ice_candpair_state {
 	ICE_CANDPAIR_FAILED      /**< Failed state; check failed             */
 };
 
+/** ICE local candidate policy */
+enum ice_policy {
+	ICE_POLICY_ALL,	  /**< Allow all local candidates */
+	ICE_POLICY_RELAY, /**< Use only RELAY candidates  */
+};
+
 struct ice;
 struct ice_cand;
 struct icem;
@@ -57,6 +63,7 @@ struct turnc;
 struct ice_conf {
 	uint32_t rto;             /**< STUN Retransmission TimeOut */
 	uint32_t rc;              /**< STUN Retransmission Count   */
+	enum ice_policy policy;   /**< ICE Local Candidate Policy  */
 	bool debug;               /**< Enable ICE debugging        */
 };
 

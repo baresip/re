@@ -29,6 +29,7 @@
 static const struct ice_conf conf_default = {
 	ICE_DEFAULT_RTO_RTP,
 	ICE_DEFAULT_RC,
+	ICE_POLICY_ALL,
 	false
 };
 
