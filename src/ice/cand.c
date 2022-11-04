@@ -94,6 +94,10 @@ int icem_lcand_add_base(struct icem *icem, enum ice_cand_type type,
 	struct ice_cand *cand;
 	int err;
 
+	if (icem->conf.policy == ICE_POLICY_RELAY &&
+	    type != ICE_CAND_TYPE_RELAY)
+		return 0;
+
 	if (type != ICE_CAND_TYPE_HOST && type != ICE_CAND_TYPE_RELAY)
 		return EINVAL;
 
@@ -110,7 +114,11 @@ int icem_lcand_add_base(struct icem *icem, enum ice_cand_type type,
 	/* the base is itself */
 	cand->base = cand;
 
-	sa_set_port(&cand->addr, comp->lport);
+	if (type == ICE_CAND_TYPE_RELAY)
+		sa_cpy(&cand->rel, addr);
+
+	if (type == ICE_CAND_TYPE_HOST)
+		sa_set_port(&cand->addr, comp->lport);
 
 	return 0;
 }
@@ -122,6 +130,9 @@ int icem_lcand_add(struct icem *icem, struct ice_cand *base,
 {
 	struct ice_cand *cand;
 	int err;
+
+	if (icem->conf.policy == ICE_POLICY_RELAY)
+		return 0;
 
 	if (!base)
 		return EINVAL;
