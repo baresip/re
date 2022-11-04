@@ -126,6 +126,9 @@ int icem_lcand_add(struct icem *icem, struct ice_cand *base,
 	if (!base)
 		return EINVAL;
 
+	if (type == ICE_CAND_TYPE_HOST || type == ICE_CAND_TYPE_RELAY)
+		return EINVAL;
+
 	err = cand_alloc(&cand, icem, type, base->compid,
 			 ice_cand_calc_prio(type, 0, base->compid),
 			 base->ifname, base->transp, addr);
