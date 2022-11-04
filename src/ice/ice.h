@@ -17,10 +17,6 @@ enum ice_checkl_state {
 	ICE_CHECKLIST_FAILED
 };
 
-enum ice_transp {
-	ICE_TRANSP_NONE = -1,
-	ICE_TRANSP_UDP  = IPPROTO_UDP
-};
 
 /** ICE protocol values */
 enum {
