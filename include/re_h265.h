@@ -18,6 +18,11 @@ enum h265_naltype {
 	H265_NAL_TSA_N           = 2,
 	H265_NAL_TSA_R           = 3,
 
+	H265_NAL_STSA_N          = 4,
+	H265_NAL_STSA_R          = 5,
+	H265_NAL_RADL_N          = 6,
+	H265_NAL_RADL_R          = 7,
+
 	H265_NAL_RASL_N          = 8,
 	H265_NAL_RASL_R          = 9,
 
@@ -32,6 +37,10 @@ enum h265_naltype {
 	H265_NAL_VPS_NUT         = 32,
 	H265_NAL_SPS_NUT         = 33,
 	H265_NAL_PPS_NUT         = 34,
+	H265_NAL_AUD             = 35,
+	H265_NAL_EOS_NUT         = 36,    /* End of sequence */
+	H265_NAL_EOB_NUT         = 37,    /* End of bitstream */
+	H265_NAL_FD_NUT          = 38,    /* Filler data */
 	H265_NAL_PREFIX_SEI_NUT  = 39,
 	H265_NAL_SUFFIX_SEI_NUT  = 40,
 

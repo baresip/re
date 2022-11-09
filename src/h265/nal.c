@@ -80,6 +80,11 @@ const char *h265_nalunit_name(enum h265_naltype type)
 	case H265_NAL_TSA_N:           return "TSA_N";
 	case H265_NAL_TSA_R:           return "TSA_R";
 
+	case H265_NAL_STSA_N:          return "STSA_N";
+	case H265_NAL_STSA_R:          return "STSA_R";
+	case H265_NAL_RADL_N:          return "RADL_N";
+	case H265_NAL_RADL_R:          return "RADL_R";
+
 	case H265_NAL_RASL_N:          return "RASL_N";
 	case H265_NAL_RASL_R:          return "RASL_R";
 
@@ -94,6 +99,10 @@ const char *h265_nalunit_name(enum h265_naltype type)
 	case H265_NAL_VPS_NUT:         return "VPS_NUT";
 	case H265_NAL_SPS_NUT:         return "SPS_NUT";
 	case H265_NAL_PPS_NUT:         return "PPS_NUT";
+	case H265_NAL_AUD:             return "AUD";
+	case H265_NAL_EOS_NUT:         return "EOS_NUT";
+	case H265_NAL_EOB_NUT:         return "EOB_NUT";
+	case H265_NAL_FD_NUT:          return "FD_NUT";
 	case H265_NAL_PREFIX_SEI_NUT:  return "PREFIX_SEI_NUT";
 	case H265_NAL_SUFFIX_SEI_NUT:  return "SUFFIX_SEI_NUT";
 
