@@ -136,6 +136,7 @@ set(HEADERS
   include/re_pcp.h
   include/re_rtmp.h
   include/re_rtp.h
+  include/re_rtpext.h
   include/re_sa.h
   include/re_sdp.h
   include/re_sha.h
