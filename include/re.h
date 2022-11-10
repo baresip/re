@@ -45,6 +45,7 @@ extern "C" {
 #include "re_json.h"
 #include "re_rtmp.h"
 #include "re_rtp.h"
+#include "re_rtpext.h"
 #include "re_sdp.h"
 #include "re_uri.h"
 #include "re_sip.h"

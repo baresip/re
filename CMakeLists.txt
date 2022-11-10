@@ -275,6 +275,8 @@ set(SRCS
   src/rtp/sess.c
   src/rtp/source.c
 
+  src/rtpext/rtpext.c
+
   src/sa/printaddr.c
   src/sa/sa.c
 
