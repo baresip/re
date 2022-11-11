@@ -136,6 +136,7 @@ set(HEADERS
   include/re_pcp.h
   include/re_rtmp.h
   include/re_rtp.h
+  include/re_rtpext.h
   include/re_sa.h
   include/re_sdp.h
   include/re_sha.h
@@ -274,6 +275,8 @@ set(SRCS
   src/rtp/sdes.c
   src/rtp/sess.c
   src/rtp/source.c
+
+  src/rtpext/rtpext.c
 
   src/sa/printaddr.c
   src/sa/sa.c
