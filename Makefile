@@ -4,6 +4,13 @@
 # Copyright (C) 2010 Creytiv.com
 #
 
+$(warning ***************************************************)
+$(warning ***                                             ***)
+$(warning *** Makefile is deprecated and will be replaced ***)
+$(warning *** by a generic CMake wrapper next release     ***)
+$(warning ***                                             ***)
+$(warning ***************************************************)
+
 # Main version number
 VER_MAJOR := 2
 VER_MINOR := 9
