@@ -219,10 +219,15 @@ fopen:
  */
 void fs_stdio_hide(void)
 {
-	dup_stdout = dup(1);
-	dup_stderr = dup(2);
-	(void)close(1);
-	(void)close(2);
+	dup_stdout = dup(STDOUT_FILENO);
+	dup_stderr = dup(STDERR_FILENO);
+#ifdef WIN32
+	int fd = open("nul", O_WRONLY);
+#else
+	int fd = open("/dev/null", O_WRONLY);
+#endif
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
 }
 
 
@@ -234,6 +239,6 @@ void fs_stdio_restore(void)
 	if (dup_stdout < 0 || dup_stderr < 0)
 		return;
 
-	(void)dup2(dup_stdout, 1);
-	(void)dup2(dup_stderr, 2);
+	(void)dup2(dup_stdout, STDOUT_FILENO);
+	(void)dup2(dup_stderr, STDERR_FILENO);
 }
