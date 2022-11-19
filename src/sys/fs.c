@@ -228,8 +228,8 @@ void fs_stdio_hide(void)
 #else
 	int fd = open("/dev/null", O_WRONLY);
 #endif
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
+	dup2(fd, fileno(stdout));
+	dup2(fd, fileno(stderr));
 }
 
 
