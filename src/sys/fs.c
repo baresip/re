@@ -38,8 +38,8 @@
 #define dup2 _dup2
 #endif
 
-static int dup_stdout;
-static int dup_stderr;
+static int dup_stdout = -1;
+static int dup_stderr = -1;
 
 /**
  * Create a directory with full path
@@ -231,6 +231,9 @@ void fs_stdio_hide(void)
  */
 void fs_stdio_restore(void)
 {
+	if (dup_stdout < 0 || dup_stderr < 0)
+		return;
+
 	(void)dup2(dup_stdout, 1);
 	(void)dup2(dup_stderr, 2);
 }
