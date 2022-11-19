@@ -36,7 +36,9 @@
 #define close _close
 #define dup _dup
 #define dup2 _dup2
+#define fileno _fileno
 #endif
+
 
 static int dup_stdout = -1;
 static int dup_stderr = -1;
@@ -219,8 +221,8 @@ fopen:
  */
 void fs_stdio_hide(void)
 {
-	dup_stdout = dup(STDOUT_FILENO);
-	dup_stderr = dup(STDERR_FILENO);
+	dup_stdout = dup(fileno(stdout));
+	dup_stderr = dup(fileno(stderr));
 #ifdef WIN32
 	int fd = open("nul", O_WRONLY);
 #else
@@ -239,6 +241,6 @@ void fs_stdio_restore(void)
 	if (dup_stdout < 0 || dup_stderr < 0)
 		return;
 
-	(void)dup2(dup_stdout, STDOUT_FILENO);
-	(void)dup2(dup_stderr, STDERR_FILENO);
+	(void)dup2(dup_stdout, fileno(stdout));
+	(void)dup2(dup_stderr, fileno(stderr));
 }
