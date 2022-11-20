@@ -34,8 +34,14 @@
 #define open _open
 #define read _read
 #define close _close
+#define dup _dup
+#define dup2 _dup2
+#define fileno _fileno
 #endif
 
+
+static int dup_stdout = -1;
+static int dup_stderr = -1;
 
 /**
  * Create a directory with full path
@@ -211,25 +217,30 @@ fopen:
 
 
 /**
- * Hide/Close stdout and stderr output
+ * Hide/Close stdout and stderr output (no THREAD-SAFETY)
  */
 void fs_stdio_hide(void)
 {
-	(void)fclose(stdout);
-	(void)fclose(stderr);
+	dup_stdout = dup(fileno(stdout));
+	dup_stderr = dup(fileno(stderr));
+#ifdef WIN32
+	int fd = open("nul", O_WRONLY);
+#else
+	int fd = open("/dev/null", O_WRONLY);
+#endif
+	(void)dup2(fd, fileno(stdout));
+	(void)dup2(fd, fileno(stderr));
 }
 
 
 /**
- * Restore stdout and stderr output
+ * Restore stdout and stderr output (no THREAD-SAFETY)
  */
 void fs_stdio_restore(void)
 {
-#ifdef WIN32
-	(void)freopen("CON", "w", stdout);
-	(void)freopen("CON", "w", stderr);
-#else
-	(void)freopen("/dev/tty", "w", stdout);
-	(void)freopen("/dev/tty", "w", stderr);
-#endif
+	if (dup_stdout < 0 || dup_stderr < 0)
+		return;
+
+	(void)dup2(dup_stdout, fileno(stdout));
+	(void)dup2(dup_stderr, fileno(stderr));
 }
