@@ -94,6 +94,11 @@ list(APPEND RE_DEFINITIONS
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
 )
 
+if(DEFINED TRACE_SSL)
+  list(APPEND RE_DEFINITIONS
+    -DTRACE_SSL="${TRACE_SSL}")
+endif()
+
 ##############################################################################
 #
 # Source/Header section
