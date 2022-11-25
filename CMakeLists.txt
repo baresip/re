@@ -563,7 +563,8 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
-target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
+target_include_directories(re-objs PRIVATE include
+  ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 
 
 ##############################################################################
