@@ -108,6 +108,11 @@ int sa_pton(const char *addr, struct sa *sa)
 	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
 		sa->u.in.sin_family = AF_INET;
 	}
+	else if (!strncmp(addr, "unix:", 5)) {
+		sa->u.un.sun_family = AF_UNIX;
+		str_ncpy(sa->u.un.sun_path, addr + 5,
+			 sizeof(sa->u.un.sun_path));
+	}
 #ifdef HAVE_INET6
 	else if (!strncmp(addr, "fe80:", 5) && strrchr(addr, '%')) {
 		err = sa_addrinfo(addr, sa);
@@ -136,7 +141,7 @@ int sa_pton(const char *addr, struct sa *sa)
  * Set a Socket Address from a string
  *
  * @param sa   Socket Address
- * @param addr IP-address
+ * @param addr IP-address or UNIX path
  * @param port Port number
  *
  * @return 0 if success, otherwise errorcode
@@ -153,6 +158,10 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
 		return err;
 
 	switch (sa->u.sa.sa_family) {
+
+	case AF_UNIX:
+		sa->len = sizeof(struct sockaddr_un);
+		break;
 
 	case AF_INET:
 		sa->u.in.sin_port = htons(port);
@@ -404,6 +413,11 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 
 	switch (sa->u.sa.sa_family) {
 
+	case AF_UNIX:
+		str_ncpy(buf, sa->u.un.sun_path, size);
+		ret = buf;
+		break;
+
 	case AF_INET:
 		ret = inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
 		break;
@@ -467,6 +481,10 @@ bool sa_isset(const struct sa *sa, int flag)
 		return false;
 
 	switch (sa->u.sa.sa_family) {
+
+	case AF_UNIX:
+		return str_isset(sa->u.un.sun_path);
+		break;
 
 	case AF_INET:
 		if (flag & SA_ADDR)
@@ -576,6 +594,13 @@ bool sa_cmp(const struct sa *l, const struct sa *r, int flag)
 		return false;
 
 	switch (l->u.sa.sa_family) {
+
+	case AF_UNIX:
+		if (0 == str_cmp(l->u.un.sun_path, r->u.un.sun_path))
+			return true;
+		else
+			return false;
+		break;
 
 	case AF_INET:
 		if (flag & SA_ADDR)
