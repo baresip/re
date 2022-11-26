@@ -552,6 +552,38 @@ static void tcp_conn_handler(int flags, void *arg)
 
 
 /**
+ * Create a TCP Socket with fd
+ *
+ * @param tsp   Pointer to returned TCP Socket
+ * @param fd    File descriptor
+ * @param ch    Incoming connection handler
+ * @param arg   Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tcp_sock_alloc_fd(struct tcp_sock **tsp, re_sock_t fd, tcp_conn_h *ch,
+		      void *arg)
+{
+	struct tcp_sock *ts = NULL;
+
+	if (!tsp || fd == BAD_SOCK)
+		return EINVAL;
+
+	ts = mem_zalloc(sizeof(*ts), sock_destructor);
+	if (!ts)
+		return ENOMEM;
+
+	ts->fd	  = fd;
+	ts->connh = ch;
+	ts->arg	  = arg;
+
+	*tsp = ts;
+
+	return fd_listen(ts->fd, FD_READ, tcp_conn_handler, ts);
+}
+
+
+/**
  * Create a TCP Socket
  *
  * @param tsp   Pointer to returned TCP Socket

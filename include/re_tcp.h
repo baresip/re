@@ -62,6 +62,8 @@ int  tcp_conn_settos(struct tcp_conn *tc, uint32_t tos);
 
 
 /* TCP Connection */
+int tcp_sock_alloc_fd(struct tcp_sock **tsp, re_sock_t fd, tcp_conn_h *ch,
+		      void *arg);
 int  tcp_conn_alloc(struct tcp_conn **tcp, const struct sa *peer,
 		    tcp_estab_h *eh, tcp_recv_h *rh, tcp_close_h *ch,
 		    void *arg);

@@ -182,6 +182,8 @@ struct http_conn;
 typedef void (http_req_h)(struct http_conn *conn, const struct http_msg *msg,
 			  void *arg);
 
+int http_listen_fd(struct http_sock **sockp, re_sock_t fd, http_req_h *reqh,
+		   void *arg);
 int  http_listen(struct http_sock **sockp, const struct sa *laddr,
 		 http_req_h *reqh, void *arg);
 int  https_listen(struct http_sock **sockp, const struct sa *laddr,
