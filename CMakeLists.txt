@@ -361,6 +361,8 @@ set(SRCS
   src/uri/uri.c
   src/uri/uric.c
 
+  src/unixsock/unixsock.c
+
   src/websock/websock.c
 )
 
