@@ -63,6 +63,7 @@ extern "C" {
 #include "re_tls.h"
 #include "re_turn.h"
 #include "re_udp.h"
+#include "re_unixsock.h"
 #include "re_websock.h"
 #include "re_shim.h"
 #include "re_trice.h"
