@@ -8,6 +8,8 @@
 struct sa;
 struct udp_sock;
 
+typedef int (udp_send_h)(const struct sa *dst,
+			 struct mbuf *mb, void *arg);
 
 /**
  * Defines the UDP Receive handler
@@ -40,6 +42,9 @@ int  udp_multicast_join(struct udp_sock *us, const struct sa *group);
 int  udp_multicast_leave(struct udp_sock *us, const struct sa *group);
 int  udp_settos(struct udp_sock *us, uint8_t tos);
 void udp_flush(const struct udp_sock *us);
+void udp_set_send_handler(struct udp_sock *us, udp_send_h *sendh);
+void udp_recv_packet(struct udp_sock *us, const struct sa *src,
+		struct mbuf *mb);
 
 
 /* Helper API */

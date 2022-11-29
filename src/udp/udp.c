@@ -62,6 +62,7 @@ enum {
 /** Defines a UDP socket */
 struct udp_sock {
 	struct list helpers; /**< List of UDP Helpers         */
+	udp_send_h *sendh;
 	udp_recv_h *rh;      /**< Receive handler             */
 	udp_error_h *eh;     /**< Error handler               */
 	void *arg;           /**< Handler argument            */
@@ -476,6 +477,9 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 		if (uh->sendh(&err, &hdst, mb, uh->arg) || err)
 			return err;
 	}
+	/* external send handler */
+	if (us->sendh)
+		return us->sendh(dst, mb, us->arg);
 
 	/* Connected socket? */
 	if (us->conn) {
@@ -924,4 +928,42 @@ void udp_flush(const struct udp_sock *us)
 				0, NULL, 0) > 0)
 			;
 	}
+}
+
+
+void udp_set_send_handler(struct udp_sock *us, udp_send_h *sendh)
+{
+	if (!us)
+		return;
+
+	us->sendh = sendh;
+}
+
+
+void udp_recv_packet(struct udp_sock *us, const struct sa *src,
+		     struct mbuf *mb)
+{
+	struct sa hsrc;
+
+	if (!us || !src || !mb)
+		return;
+
+	struct le *le = us->helpers.head;
+	while (le) {
+		struct udp_helper *uh = le->data;
+		bool hdld;
+
+		le = le->next;
+
+		if (src != &hsrc) {
+			sa_cpy(&hsrc, src);
+			src = &hsrc;
+		}
+
+		hdld = uh->recvh(&hsrc, mb, uh->arg);
+		if (hdld)
+			return;
+	}
+
+	us->rh(src, mb, us->arg);
 }
