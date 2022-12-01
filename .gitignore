@@ -29,3 +29,14 @@ compile_commands.json
 
 # Visual studio config
 mk/win32/*.vcxproj.user
+
+# cmake
+CMakeCache.txt
+CMakeFiles/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+cmake_install.cmake
+install_manifest.txt
+packaging/CMakeFiles/
+packaging/Makefile
+packaging/cmake_install.cmake
