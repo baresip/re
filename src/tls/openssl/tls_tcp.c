@@ -140,9 +140,6 @@ static int tls_connect(struct tls_conn *tc)
 
 	ERR_clear_error();
 
-	if (tls_get_session_reuse(tc))
-		(void) tls_reuse_session(tc);
-
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
@@ -419,6 +416,9 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 	BIO_set_data(tc->sbio_out, tc);
 
 	SSL_set_bio(tc->ssl, tc->sbio_in, tc->sbio_out);
+
+	if (tls_get_session_reuse(tc))
+		(void) tls_reuse_session(tc);
 
 	err = 0;
 
