@@ -419,7 +419,7 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 	}
 
 	if (!ret)
-		return ERRNO_SOCK;
+		return RE_ERRNO_SOCK;
 
 	return 0;
 }
