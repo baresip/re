@@ -285,7 +285,8 @@ static void tcp_recv_handler(int flags, void *arg)
 	/* check for any errors */
 	if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
 			     BUF_CAST &err, &err_len)) {
-		DEBUG_WARNING("recv handler: getsockopt: (%m)\n", RE_ERRNO_SOCK);
+		DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
+			      RE_ERRNO_SOCK);
 		return;
 	}
 
