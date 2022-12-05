@@ -374,6 +374,42 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 }
 
 
+int udp_listen_fd(struct udp_sock **usp, int fd,
+		  udp_recv_h *rh, void *arg)
+{
+	struct udp_sock *us = NULL;
+	int err;
+
+	if (!usp)
+		return EINVAL;
+
+	us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd  = fd;
+	us->fd6 = BAD_SOCK;
+
+	err = udp_thread_attach(us);
+	if (err)
+		goto out;
+
+	us->rh   = rh ? rh : dummy_udp_recv_handler;
+	us->arg  = arg;
+	us->rxsz = UDP_RXSZ_DEFAULT;
+
+ out:
+	if (err)
+		mem_deref(us);
+	else
+		*usp = us;
+
+	return err;
+}
+
+
 /**
  * Create an UDP socket with specified address family.
  *

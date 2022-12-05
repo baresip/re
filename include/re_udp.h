@@ -24,6 +24,8 @@ typedef void (udp_error_h)(int err, void *arg);
 
 int  udp_listen(struct udp_sock **usp, const struct sa *local,
 		udp_recv_h *rh, void *arg);
+int udp_listen_fd(struct udp_sock **usp, int fd,
+		  udp_recv_h *rh, void *arg);
 int  udp_connect(struct udp_sock *us, const struct sa *peer);
 int  udp_open(struct udp_sock **usp, int af);
 int  udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb);
