@@ -28,8 +28,8 @@ int unixsock_listen_fd(re_sock_t *fd, const struct sa *local)
 		return EINVAL;
 
 	*fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (*fd == BAD_SOCK) {
-		err = ERRNO_SOCK;
+	if (*fd == RE_BAD_SOCK) {
+		err = RE_ERRNO_SOCK;
 		goto out;
 	}
 
@@ -42,22 +42,22 @@ int unixsock_listen_fd(re_sock_t *fd, const struct sa *local)
 	(void)unlink(local->u.un.sun_path);
 
 	if (bind(*fd, &local->u.sa, local->len) < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("bind(): %m (%J)\n", err, local);
 		goto out;
 	}
 
 	if (listen(*fd, SOMAXCONN) < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("listen(): %m (%J)\n", err, local);
 		goto out;
 	}
 
 out:
 	if (err) {
-		if (*fd != BAD_SOCK)
+		if (*fd != RE_BAD_SOCK)
 			(void)close(*fd);
-		*fd = BAD_SOCK;
+		*fd = RE_BAD_SOCK;
 	}
 
 	return err;
