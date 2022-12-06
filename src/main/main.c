@@ -624,7 +624,7 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 		return err;
 #endif
 
-	if (fd == BAD_SOCK) {
+	if (fd == RE_BAD_SOCK) {
 		DEBUG_WARNING("fd_listen: corrupt fd %d\n", fd);
 		return EBADF;
 	}
@@ -806,7 +806,7 @@ static int fd_poll(struct re *re)
 	}
 
 	if (n < 0)
-		return ERRNO_SOCK;
+		return RE_ERRNO_SOCK;
 
 	/* Check for events */
 	for (i=0; (n > 0) && (i < re->nfds); i++) {
