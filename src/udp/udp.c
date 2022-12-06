@@ -374,7 +374,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 }
 
 
-int udp_listen_fd(struct udp_sock **usp, int fd,
+int udp_listen_fd(struct udp_sock **usp, re_sock_t fd,
 		  udp_recv_h *rh, void *arg)
 {
 	struct udp_sock *us = NULL;
@@ -390,7 +390,7 @@ int udp_listen_fd(struct udp_sock **usp, int fd,
 	list_init(&us->helpers);
 
 	us->fd  = fd;
-	us->fd6 = BAD_SOCK;
+	us->fd6 = RE_BAD_SOCK;
 
 	err = udp_thread_attach(us);
 	if (err)
@@ -756,18 +756,18 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
  * @param us  UDP Socket
  * @param af  Address Family
  *
- * @return File Descriptor, or BAD_SOCK for errors
+ * @return File Descriptor, or RE_BAD_SOCK for errors
  */
-int udp_sock_fd(const struct udp_sock *us, int af)
+re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
 {
 	if (!us)
-		return BAD_SOCK;
+		return RE_BAD_SOCK;
 
 	switch (af) {
 
 	default:
 	case AF_INET:  return us->fd;
-	case AF_INET6: return (us->fd6 != BAD_SOCK) ? us->fd6 : us->fd;
+	case AF_INET6: return (us->fd6 != RE_BAD_SOCK) ? us->fd6 : us->fd;
 	}
 }
 
