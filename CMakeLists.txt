@@ -14,6 +14,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(re
   VERSION 2.10.0
+
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
@@ -563,6 +564,7 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
+
 target_include_directories(re-objs PRIVATE include
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 

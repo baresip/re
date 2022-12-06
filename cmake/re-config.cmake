@@ -60,7 +60,6 @@ if(UNIX)
   endif()
 endif()
 
-
 list(APPEND RE_DEFINITIONS
   -DHAVE_ATOMIC
   -DHAVE_INET6
