@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v2.10.0] - 2022-12-06
+
+## What's Changed
+* h264: add STAP-A by @alfredh in https://github.com/baresip/re/pull/584
+* tls: SSL_get_peer_certificate is deprecated by @sreimers in https://github.com/baresip/re/pull/585
+* sipreg fix contact handler `expires` evaluation by @cspiel1 in https://github.com/baresip/re/pull/581
+* ice: local candidate policy config by @sreimers in https://github.com/baresip/re/pull/589
+* h265: add missing NAL types by @alfredh in https://github.com/baresip/re/pull/590
+* rtpext: move from baresip to re by @alfredh in https://github.com/baresip/re/pull/591
+* mk: add rtpext to Makefile build by @cspiel1 in https://github.com/baresip/re/pull/594
+* mk: add makefile deprecation warning by @sreimers in https://github.com/baresip/re/pull/595
+* fs: use dup/dup2 for stdio hide and restore by @sreimers in https://github.com/baresip/re/pull/597
+* dns: fix dnsc_conf_set memory leak by @alfredh in https://github.com/baresip/re/pull/598
+* cmake: add TRACE_SSL compile definition by @cspiel1 in https://github.com/baresip/re/pull/599
+* cmake: add ZLIB_INCLUDE_DIRS by @sreimers in https://github.com/baresip/re/pull/601
+* cmake/pkgconfig: fix prefix variable by @cspiel1 in https://github.com/baresip/re/pull/603
+* ci/valgrind: use ubuntu-20.04 by @sreimers in https://github.com/baresip/re/pull/606
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.9.0...v2.10.0
+
 ---
 
 ## [v2.9.0] - 2022-11-01
@@ -42,7 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @vanrein made their first contribution in https://github.com/baresip/re/pull/538
 
 **Full Changelog**: https://github.com/baresip/re/compare/v2.8.0...v2.9.0
-
 
 ---
 

@@ -134,11 +134,11 @@ static void sock_destructor(void *data)
 {
 	struct tcp_sock *ts = data;
 
-	if (ts->fd != BAD_SOCK) {
+	if (ts->fd != RE_BAD_SOCK) {
 		fd_close(ts->fd);
 		(void)close(ts->fd);
 	}
-	if (ts->fdc != BAD_SOCK)
+	if (ts->fdc != RE_BAD_SOCK)
 		(void)close(ts->fdc);
 }
 
@@ -150,7 +150,7 @@ static void conn_destructor(void *data)
 	list_flush(&tc->helpers);
 	list_flush(&tc->sendq);
 
-	if (tc->fdc != BAD_SOCK) {
+	if (tc->fdc != RE_BAD_SOCK) {
 		fd_close(tc->fdc);
 		(void)close(tc->fdc);
 	}
@@ -231,7 +231,7 @@ static int dequeue(struct tcp_conn *tc)
 	n = send(tc->fdc, BUF_CAST mbuf_buf(&qe->mb),
 		 SIZ_CAST (qe->mb.end - qe->mb.pos), flags);
 	if (n < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		if (err == EAGAIN)
 			return 0;
 #ifdef WIN32
@@ -257,10 +257,10 @@ static void conn_close(struct tcp_conn *tc, int err)
 	tc->txqsz = 0;
 
 	/* Stop polling */
-	if (tc->fdc != BAD_SOCK) {
+	if (tc->fdc != RE_BAD_SOCK) {
 		fd_close(tc->fdc);
 		(void)close(tc->fdc);
-		tc->fdc = BAD_SOCK;
+		tc->fdc = RE_BAD_SOCK;
 	}
 
 	if (tc->closeh)
@@ -285,7 +285,8 @@ static void tcp_recv_handler(int flags, void *arg)
 	/* check for any errors */
 	if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
 			     BUF_CAST &err, &err_len)) {
-		DEBUG_WARNING("recv handler: getsockopt: (%m)\n", ERRNO_SOCK);
+		DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
+			      RE_ERRNO_SOCK);
 		return;
 	}
 
@@ -378,7 +379,7 @@ static void tcp_recv_handler(int flags, void *arg)
 		return;
 	}
 	else if (n < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("recv handler: recv(): %m\n", err);
 #ifdef WIN32
 		if (err == WSAECONNRESET || err == WSAECONNABORTED) {
@@ -459,7 +460,7 @@ static struct tcp_conn *conn_alloc(tcp_estab_h *eh, tcp_recv_h *rh,
 
 	list_init(&tc->helpers);
 
-	tc->fdc    = BAD_SOCK;
+	tc->fdc    = RE_BAD_SOCK;
 	tc->rxsz   = TCP_RXSZ_DEFAULT;
 	tc->txqsz_max = TCP_TXQSZ_DEFAULT;
 	tc->estabh = eh;
@@ -495,16 +496,16 @@ static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
 	if (!ts)
 		return EINVAL;
 
-	if (ts->fdc != BAD_SOCK) {
+	if (ts->fdc != RE_BAD_SOCK) {
 		if (0 != setsockopt(ts->fdc, level, optname,
 				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
+			err |= RE_ERRNO_SOCK;
 	}
 
-	if (ts->fd != BAD_SOCK) {
+	if (ts->fd != RE_BAD_SOCK) {
 		if (0 != setsockopt(ts->fd, level, optname,
 				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
+			err |= RE_ERRNO_SOCK;
 	}
 
 	return err;
@@ -527,11 +528,11 @@ static void tcp_conn_handler(int flags, void *arg)
 
 	sa_init(&peer, AF_UNSPEC);
 
-	if (ts->fdc != BAD_SOCK)
+	if (ts->fdc != RE_BAD_SOCK)
 		(void)close(ts->fdc);
 
 	ts->fdc = accept(ts->fd, &peer.u.sa, &peer.len);
-	if (ts->fdc == BAD_SOCK) {
+	if (ts->fdc == RE_BAD_SOCK) {
 		return;
 	}
 
@@ -539,7 +540,7 @@ static void tcp_conn_handler(int flags, void *arg)
 	if (err) {
 		DEBUG_WARNING("conn handler: nonblock set: %m\n", err);
 		(void)close(ts->fdc);
-		ts->fdc = BAD_SOCK;
+		ts->fdc = RE_BAD_SOCK;
 		return;
 	}
 
@@ -576,8 +577,8 @@ int tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 	if (!ts)
 		return ENOMEM;
 
-	ts->fd  = BAD_SOCK;
-	ts->fdc = BAD_SOCK;
+	ts->fd  = RE_BAD_SOCK;
+	ts->fdc = RE_BAD_SOCK;
 
 	if (local) {
 		(void)re_snprintf(addr, sizeof(addr), "%H",
@@ -606,14 +607,14 @@ int tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 
 	err = EINVAL;
 	for (r = res; r; r = r->ai_next) {
-		re_sock_t fd = BAD_SOCK;
+		re_sock_t fd = RE_BAD_SOCK;
 
-		if (ts->fd != BAD_SOCK)
+		if (ts->fd != RE_BAD_SOCK)
 			continue;
 
 		fd = socket(r->ai_family, SOCK_STREAM, IPPROTO_TCP);
-		if (fd == BAD_SOCK) {
-			err = ERRNO_SOCK;
+		if (fd == RE_BAD_SOCK) {
+			err = RE_ERRNO_SOCK;
 			continue;
 		}
 
@@ -636,7 +637,7 @@ int tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 
 	freeaddrinfo(res);
 
-	if (ts->fd == BAD_SOCK)
+	if (ts->fd == RE_BAD_SOCK)
 		goto out;
 
 	ts->connh = ch;
@@ -670,10 +671,10 @@ struct tcp_sock *tcp_sock_dup(struct tcp_sock *tso)
 	if (!ts)
 		return NULL;
 
-	ts->fd  = BAD_SOCK;
+	ts->fd  = RE_BAD_SOCK;
 	ts->fdc = tso->fdc;
 
-	tso->fdc = BAD_SOCK;
+	tso->fdc = RE_BAD_SOCK;
 
 	return ts;
 }
@@ -694,7 +695,7 @@ int tcp_sock_bind(struct tcp_sock *ts, const struct sa *local)
 	char serv[NI_MAXSERV] = "0";
 	int error, err;
 
-	if (!ts || ts->fd == BAD_SOCK)
+	if (!ts || ts->fd == RE_BAD_SOCK)
 		return EINVAL;
 
 	if (local) {
@@ -725,7 +726,7 @@ int tcp_sock_bind(struct tcp_sock *ts, const struct sa *local)
 	for (r = res; r; r = r->ai_next) {
 
 		if (bind(ts->fd, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
-			err = ERRNO_SOCK;
+			err = RE_ERRNO_SOCK;
 			DEBUG_WARNING("sock_bind: bind: %m (af=%d, %J)\n",
 				      err, r->ai_family, local);
 			continue;
@@ -757,13 +758,13 @@ int tcp_sock_listen(struct tcp_sock *ts, int backlog)
 	if (!ts)
 		return EINVAL;
 
-	if (ts->fd == BAD_SOCK) {
+	if (ts->fd == RE_BAD_SOCK) {
 		DEBUG_WARNING("sock_listen: invalid fd\n");
 		return EBADF;
 	}
 
 	if (listen(ts->fd, backlog) < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("sock_listen: listen(): %m\n", err);
 		return err;
 	}
@@ -790,7 +791,7 @@ int tcp_accept(struct tcp_conn **tcp, struct tcp_sock *ts, tcp_estab_h *eh,
 	struct tcp_conn *tc;
 	int err;
 
-	if (!tcp || !ts || ts->fdc == BAD_SOCK)
+	if (!tcp || !ts || ts->fdc == RE_BAD_SOCK)
 		return EINVAL;
 
 	tc = conn_alloc(eh, rh, ch, arg);
@@ -799,7 +800,7 @@ int tcp_accept(struct tcp_conn **tcp, struct tcp_sock *ts, tcp_estab_h *eh,
 
 	/* Transfer ownership to TCP connection */
 	tc->fdc = ts->fdc;
-	ts->fdc = BAD_SOCK;
+	ts->fdc = RE_BAD_SOCK;
 
 	err = fd_listen(tc->fdc, FD_READ | FD_WRITE | FD_EXCEPT,
 			tcp_recv_handler, tc);
@@ -826,9 +827,9 @@ void tcp_reject(struct tcp_sock *ts)
 	if (!ts)
 		return;
 
-	if (ts->fdc != BAD_SOCK) {
+	if (ts->fdc != RE_BAD_SOCK) {
 		(void)close(ts->fdc);
-		ts->fdc = BAD_SOCK;
+		ts->fdc = RE_BAD_SOCK;
 	}
 }
 
@@ -886,8 +887,8 @@ int tcp_conn_alloc(struct tcp_conn **tcp,
 
 		tc->fdc = socket(r->ai_family, SOCK_STREAM,
 					  IPPROTO_TCP);
-		if (tc->fdc == BAD_SOCK) {
-			err = ERRNO_SOCK;
+		if (tc->fdc == RE_BAD_SOCK) {
+			err = RE_ERRNO_SOCK;
 			continue;
 		}
 
@@ -895,7 +896,7 @@ int tcp_conn_alloc(struct tcp_conn **tcp,
 		if (err) {
 			DEBUG_WARNING("connect: nonblock set: %m\n", err);
 			(void)close(tc->fdc);
-			tc->fdc = BAD_SOCK;
+			tc->fdc = RE_BAD_SOCK;
 			continue;
 		}
 
@@ -969,7 +970,7 @@ int tcp_conn_bind(struct tcp_conn *tc, const struct sa *local)
 				goto ok;
 			}
 
-			err = ERRNO_SOCK;
+			err = RE_ERRNO_SOCK;
 			DEBUG_WARNING("conn_bind: bind(): %J: %m\n",
 				      local, err);
 			continue;
@@ -1011,7 +1012,7 @@ int tcp_conn_connect(struct tcp_conn *tc, const struct sa *peer)
 
 	tc->active = true;
 
-	if (tc->fdc == BAD_SOCK) {
+	if (tc->fdc == RE_BAD_SOCK) {
 		DEBUG_WARNING("invalid fd\n");
 		return EBADF;
 	}
@@ -1090,7 +1091,7 @@ static int tcp_send_internal(struct tcp_conn *tc, struct mbuf *mb,
 	const int flags = 0;
 #endif
 
-	if (tc->fdc == BAD_SOCK)
+	if (tc->fdc == RE_BAD_SOCK)
 		return ENOTCONN;
 
 	if (!mbuf_get_left(mb)) {
@@ -1115,7 +1116,7 @@ static int tcp_send_internal(struct tcp_conn *tc, struct mbuf *mb,
 	n = send(tc->fdc, BUF_CAST mbuf_buf(mb),
 		 SIZ_CAST (mb->end - mb->pos), flags);
 	if (n < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 
 		if (err == EAGAIN)
 			return enqueue(tc, mb);
@@ -1244,7 +1245,7 @@ int tcp_sock_local_get(const struct tcp_sock *ts, struct sa *local)
 	err = getsockname(ts->fd, &local->u.sa, &local->len);
 
 	if (err < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("local get: getsockname(): %m\n", err);
 	}
 
@@ -1271,7 +1272,7 @@ int tcp_conn_local_get(const struct tcp_conn *tc, struct sa *local)
 	err = getsockname(tc->fdc, &local->u.sa, &local->len);
 
 	if (err < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("conn local get: getsockname(): %m\n", err);
 	}
 
@@ -1298,7 +1299,7 @@ int tcp_conn_peer_get(const struct tcp_conn *tc, struct sa *peer)
 	err = getpeername(tc->fdc, &peer->u.sa, &peer->len);
 
 	if (err < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("conn peer get: getpeername(): %m\n", err);
 	}
 
@@ -1426,10 +1427,10 @@ int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
 		return EINVAL;
 
 	tc->tos = tos;
-	if (tc->fdc != BAD_SOCK) {
+	if (tc->fdc != RE_BAD_SOCK) {
 		if (0 != setsockopt(tc->fdc, IPPROTO_IP, IP_TOS,
 					BUF_CAST &v, sizeof(v)))
-			err = ERRNO_SOCK;
+			err = RE_ERRNO_SOCK;
 	}
 
 	return err;
