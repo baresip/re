@@ -13,7 +13,7 @@ $(warning ***************************************************)
 
 # Main version number
 VER_MAJOR := 2
-VER_MINOR := 9
+VER_MINOR := 10
 VER_PATCH := 0
 
 # Development version, comment out on a release
@@ -21,7 +21,7 @@ VER_PATCH := 0
 #VER_PRE   := dev
 
 # bump Major if ABI breaks
-ABI_MAJOR := 11
+ABI_MAJOR := 12
 ABI_AGE   := $(VER_MINOR)
 ABI_REV   := $(VER_PATCH)
 
