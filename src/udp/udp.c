@@ -374,39 +374,28 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 }
 
 
+/* todo: rename to alloc? */
 int udp_listen_fd(struct udp_sock **usp, re_sock_t fd,
 		  udp_recv_h *rh, void *arg)
 {
-	struct udp_sock *us = NULL;
-	int err;
-
-	if (!usp)
+	if (!usp || fd==RE_BAD_SOCK)
 		return EINVAL;
 
-	us = mem_zalloc(sizeof(*us), udp_destructor);
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
 	if (!us)
 		return ENOMEM;
 
 	list_init(&us->helpers);
 
-	us->fd  = fd;
-	us->fd6 = RE_BAD_SOCK;
-
-	err = udp_thread_attach(us);
-	if (err)
-		goto out;
-
+	us->fd   = fd;
+	us->fd6  = RE_BAD_SOCK;
 	us->rh   = rh ? rh : dummy_udp_recv_handler;
 	us->arg  = arg;
 	us->rxsz = UDP_RXSZ_DEFAULT;
 
- out:
-	if (err)
-		mem_deref(us);
-	else
-		*usp = us;
+	*usp = us;
 
-	return err;
+	return 0;
 }
 
 
