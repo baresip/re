@@ -1254,9 +1254,6 @@ int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 		return err;
 
 	err = hash_alloc(&dnsc->ht_tcpconn, dnsc->conf.tcp_hash_size);
-	if (err)
-		return err;
-
 	return err;
 }
 

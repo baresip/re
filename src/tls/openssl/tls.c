@@ -98,8 +98,11 @@ static void destructor(void *data)
 {
 	struct tls *tls = data;
 
-	if (tls->ctx)
+	if (tls->ctx) {
+		SSL_CTX_sess_set_new_cb(tls->ctx, NULL);
+		SSL_CTX_sess_set_remove_cb(tls->ctx, NULL);
 		SSL_CTX_free(tls->ctx);
+	}
 
 	if (tls->cert)
 		X509_free(tls->cert);

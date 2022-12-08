@@ -140,9 +140,6 @@ static int tls_connect(struct tls_conn *tc)
 
 	ERR_clear_error();
 
-	if (tls_get_session_reuse(tc))
-		(void) tls_reuse_session(tc);
-
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
@@ -207,6 +204,9 @@ static bool estab_handler(int *err, bool active, void *arg)
 		return true;
 
 	tc->active = true;
+	if (tls_get_session_reuse(tc))
+		(void) tls_reuse_session(tc);
+
 	*err = tls_connect(tc);
 
 	return true;
@@ -241,7 +241,7 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 			*err = tls_accept(tc);
 		}
 
-		DEBUG_INFO("state=0x%04x\n", SSL_state(tc->ssl));
+		DEBUG_INFO("state: %s\n", SSL_state_string_long(tc->ssl));
 
 		/* TLS connection is established */
 		if (SSL_state(tc->ssl) != SSL_ST_OK)
