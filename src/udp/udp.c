@@ -375,7 +375,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 
 
 int udp_alloc_sockless(struct udp_sock **usp,
-		       udp_send_h *sendh, udp_recv_h *rh, void *arg)
+		       udp_send_h *sendh, udp_recv_h *recvh, void *arg)
 {
 	if (!usp || !sendh)
 		return EINVAL;
@@ -389,7 +389,7 @@ int udp_alloc_sockless(struct udp_sock **usp,
 	us->fd    = RE_BAD_SOCK;
 	us->fd6   = RE_BAD_SOCK;
 	us->sendh = sendh;
-	us->rh    = rh ? rh : dummy_udp_recv_handler;
+	us->rh    = recvh ? recvh : dummy_udp_recv_handler;
 	us->arg   = arg;
 	us->rxsz  = UDP_RXSZ_DEFAULT;
 
@@ -400,7 +400,7 @@ int udp_alloc_sockless(struct udp_sock **usp,
 
 
 int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
-		  udp_recv_h *rh, void *arg)
+		  udp_recv_h *recvh, void *arg)
 {
 	if (!usp || fd==RE_BAD_SOCK)
 		return EINVAL;
@@ -413,7 +413,7 @@ int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 
 	us->fd   = fd;
 	us->fd6  = RE_BAD_SOCK;
-	us->rh   = rh ? rh : dummy_udp_recv_handler;
+	us->rh   = recvh ? recvh : dummy_udp_recv_handler;
 	us->arg  = arg;
 	us->rxsz = UDP_RXSZ_DEFAULT;
 
@@ -1000,15 +1000,6 @@ void udp_flush(const struct udp_sock *us)
 				0, NULL, 0) > 0)
 			;
 	}
-}
-
-
-void udp_set_send_handler(struct udp_sock *us, udp_send_h *sendh)
-{
-	if (!us)
-		return;
-
-	us->sendh = sendh;
 }
 
 

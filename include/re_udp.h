@@ -25,9 +25,9 @@ typedef void (udp_error_h)(int err, void *arg);
 int  udp_listen(struct udp_sock **usp, const struct sa *local,
 		udp_recv_h *rh, void *arg);
 int  udp_alloc_sockless(struct udp_sock **usp,
-			udp_send_h *sendh, udp_recv_h *rh, void *arg);
+			udp_send_h *sendh, udp_recv_h *recvh, void *arg);
 int  udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
-		   udp_recv_h *rh, void *arg);
+		   udp_recv_h *recvh, void *arg);
 int  udp_connect(struct udp_sock *us, const struct sa *peer);
 int  udp_open(struct udp_sock **usp, int af);
 int  udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb);
@@ -47,7 +47,6 @@ int  udp_multicast_join(struct udp_sock *us, const struct sa *group);
 int  udp_multicast_leave(struct udp_sock *us, const struct sa *group);
 int  udp_settos(struct udp_sock *us, uint8_t tos);
 void udp_flush(const struct udp_sock *us);
-void udp_set_send_handler(struct udp_sock *us, udp_send_h *sendh);
 void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		struct mbuf *mb);
 
