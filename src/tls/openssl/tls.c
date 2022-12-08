@@ -454,20 +454,6 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 }
 
 
-/**
- * Generate and set selfsigned certificate on TLS context
- *
- * @param tls TLS Context
- * @param cn  Common Name
- *
- * @return 0 if success, otherwise errorcode
- */
-int tls_set_selfsigned(struct tls *tls, const char *cn)
-{
-	return tls_set_selfsigned_rsa(tls, cn, 2048);
-}
-
-
 static int tls_generate_cert(X509 **pcert, const char *cn)
 {
 	X509 *cert = NULL;
