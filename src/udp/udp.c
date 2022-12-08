@@ -62,6 +62,7 @@ enum {
 /** Defines a UDP socket */
 struct udp_sock {
 	struct list helpers; /**< List of UDP Helpers         */
+	udp_send_h *sendh;
 	udp_recv_h *rh;      /**< Receive handler             */
 	udp_error_h *eh;     /**< Error handler               */
 	void *arg;           /**< Handler argument            */
@@ -373,6 +374,55 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 }
 
 
+int udp_alloc_sockless(struct udp_sock **usp,
+		       udp_send_h *sendh, udp_recv_h *recvh, void *arg)
+{
+	if (!usp || !sendh)
+		return EINVAL;
+
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd    = RE_BAD_SOCK;
+	us->fd6   = RE_BAD_SOCK;
+	us->sendh = sendh;
+	us->rh    = recvh ? recvh : dummy_udp_recv_handler;
+	us->arg   = arg;
+	us->rxsz  = UDP_RXSZ_DEFAULT;
+
+	*usp = us;
+
+	return 0;
+}
+
+
+int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
+		  udp_recv_h *recvh, void *arg)
+{
+	if (!usp || fd==RE_BAD_SOCK)
+		return EINVAL;
+
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd   = fd;
+	us->fd6  = RE_BAD_SOCK;
+	us->rh   = recvh ? recvh : dummy_udp_recv_handler;
+	us->arg  = arg;
+	us->rxsz = UDP_RXSZ_DEFAULT;
+
+	*usp = us;
+
+	return 0;
+}
+
+
 /**
  * Create an UDP socket with specified address family.
  *
@@ -476,6 +526,10 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 		if (uh->sendh(&err, &hdst, mb, uh->arg) || err)
 			return err;
 	}
+
+	/* external send handler */
+	if (us->sendh)
+		return us->sendh(dst, mb, us->arg);
 
 	/* Connected socket? */
 	if (us->conn) {
@@ -711,6 +765,28 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
 
 
 /**
+ * Get the File Descriptor from a UDP Socket
+ *
+ * @param us  UDP Socket
+ * @param af  Address Family
+ *
+ * @return File Descriptor, or RE_BAD_SOCK for errors
+ */
+re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
+{
+	if (!us)
+		return RE_BAD_SOCK;
+
+	switch (af) {
+
+	default:
+	case AF_INET:  return us->fd;
+	case AF_INET6: return (us->fd6 != RE_BAD_SOCK) ? us->fd6 : us->fd;
+	}
+}
+
+
+/**
  * Attach the current thread to the UDP Socket
  *
  * @param us UDP Socket
@@ -924,4 +1000,33 @@ void udp_flush(const struct udp_sock *us)
 				0, NULL, 0) > 0)
 			;
 	}
+}
+
+
+void udp_recv_packet(struct udp_sock *us, const struct sa *src,
+		     struct mbuf *mb)
+{
+	struct sa hsrc;
+
+	if (!us || !src || !mb)
+		return;
+
+	struct le *le = us->helpers.head;
+	while (le) {
+		struct udp_helper *uh = le->data;
+		bool hdld;
+
+		le = le->next;
+
+		if (src != &hsrc) {
+			sa_cpy(&hsrc, src);
+			src = &hsrc;
+		}
+
+		hdld = uh->recvh(&hsrc, mb, uh->arg);
+		if (hdld)
+			return;
+	}
+
+	us->rh(src, mb, us->arg);
 }
