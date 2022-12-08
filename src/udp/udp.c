@@ -374,8 +374,32 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 }
 
 
-/* todo: rename to alloc? */
-int udp_listen_fd(struct udp_sock **usp, re_sock_t fd,
+int udp_alloc_sockless(struct udp_sock **usp,
+		       udp_send_h *sendh, udp_recv_h *rh, void *arg)
+{
+	if (!usp || !sendh)
+		return EINVAL;
+
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd    = RE_BAD_SOCK;
+	us->fd6   = RE_BAD_SOCK;
+	us->sendh = sendh;
+	us->rh    = rh ? rh : dummy_udp_recv_handler;
+	us->arg   = arg;
+	us->rxsz  = UDP_RXSZ_DEFAULT;
+
+	*usp = us;
+
+	return 0;
+}
+
+
+int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 		  udp_recv_h *rh, void *arg)
 {
 	if (!usp || fd==RE_BAD_SOCK)
@@ -502,6 +526,7 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 		if (uh->sendh(&err, &hdst, mb, uh->arg) || err)
 			return err;
 	}
+
 	/* external send handler */
 	if (us->sendh)
 		return us->sendh(dst, mb, us->arg);
