@@ -1280,8 +1280,8 @@ int re_thread_init(void)
 
 	re = tss_get(key);
 	if (re) {
-		DEBUG_WARNING("thread_init: already added for thread\n");
-		return EALREADY;
+		DEBUG_NOTICE("thread_init: already added for thread\n");
+		return 0;
 	}
 
 	err = re_alloc(&re);
