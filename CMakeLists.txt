@@ -38,6 +38,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # Module/Package Includes
 #
 include(GNUInstallDirs)
+include(CheckCCompilerFlag)
 
 ##############################################################################
 #
@@ -76,7 +77,12 @@ else()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
+  add_compile_options(-Wshorten-64-to-32)
+endif()
+
+check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
+if(COMPILER_SUPPORTS_WATOMIC)
+  add_compile_options(-Watomic-implicit-seq-cst)
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
