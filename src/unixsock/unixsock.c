@@ -26,52 +26,58 @@
 /**
  * Listen for incoming connections on a Unix domain socket.
  *
- * @param fd    Pointer to a re_sock_t variable where the listening socket
+ * @param fdp   Pointer to a re_sock_t variable where the listening socket
  *              file descriptor will be stored.
  * @param sock  Pointer to a struct sa containing the address of the
  *              Unix domain socket.
  *
  * @return 0 if success, otherwise errorcode
  */
-int unixsock_listen_fd(re_sock_t *fd, const struct sa *sock)
+int unixsock_listen_fd(re_sock_t *fdp, const struct sa *sock)
 {
 	int err = 0;
+	re_sock_t fd;
 
-	if (!fd || !sock)
+	if (!fdp || !sock)
 		return EINVAL;
 
 	if (sa_af(sock) != AF_UNIX || !sa_isset(sock, SA_ADDR))
 		return EINVAL;
 
-	*fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (*fd == RE_BAD_SOCK) {
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (fd == RE_BAD_SOCK) {
 		err = RE_ERRNO_SOCK;
-		goto out;
+		goto err;
 	}
 
-	err = net_sockopt_blocking_set(*fd, false);
+	err = net_sockopt_blocking_set(fd, false);
 	if (err) {
 		DEBUG_WARNING("unix listen: nonblock set: %m\n", err);
-		goto out;
+		goto err;
 	}
 
 	(void)unlink(sock->u.un.sun_path);
 
-	if (bind(*fd, &sock->u.sa, sock->len) < 0) {
+	if (bind(fd, &sock->u.sa, sock->len) < 0) {
 		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("bind(): %m (%J)\n", err, sock);
-		goto out;
+		goto err;
 	}
 
-	if (listen(*fd, SOMAXCONN) < 0) {
+	if (listen(fd, SOMAXCONN) < 0) {
 		err = RE_ERRNO_SOCK;
 		DEBUG_WARNING("listen(): %m (%J)\n", err, sock);
-		goto out;
+		goto err;
 	}
 
-out:
-	if (err && *fd != RE_BAD_SOCK)
-		(void)close(*fd);
+	*fdp = fd;
+
+	return 0;
+
+err:
+	if (fd != RE_BAD_SOCK) {
+		(void)close(fd);
+	}
 
 	return err;
 }
