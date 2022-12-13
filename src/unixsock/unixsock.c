@@ -1,3 +1,9 @@
+/**
+ * @file unixsock/unixsock.c  Unix domain sockets
+ *
+ * Copyright (C) 2022 Sebastian Reimers
+ */
+
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -17,6 +23,16 @@
 #endif
 
 
+/**
+ * Listen for incoming connections on a Unix domain socket.
+ *
+ * @param fd    Pointer to a re_sock_t variable where the listening socket
+ *              file descriptor will be stored.
+ * @param sock  Pointer to a struct sa containing the address of the
+ *              Unix domain socket.
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int unixsock_listen_fd(re_sock_t *fd, const struct sa *sock)
 {
 	int err = 0;
