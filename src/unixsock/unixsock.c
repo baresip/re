@@ -54,11 +54,8 @@ int unixsock_listen_fd(re_sock_t *fd, const struct sa *local)
 	}
 
 out:
-	if (err) {
-		if (*fd != RE_BAD_SOCK)
-			(void)close(*fd);
-		*fd = RE_BAD_SOCK;
-	}
+	if (err && *fd != RE_BAD_SOCK)
+		(void)close(*fd);
 
 	return err;
 }
