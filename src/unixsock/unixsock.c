@@ -17,14 +17,14 @@
 #endif
 
 
-int unixsock_listen_fd(re_sock_t *fd, const struct sa *local)
+int unixsock_listen_fd(re_sock_t *fd, const struct sa *sock)
 {
 	int err = 0;
 
-	if (!fd || !local)
+	if (!fd || !sock)
 		return EINVAL;
 
-	if (sa_af(local) != AF_UNIX || !sa_isset(local, SA_ADDR))
+	if (sa_af(sock) != AF_UNIX || !sa_isset(sock, SA_ADDR))
 		return EINVAL;
 
 	*fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -39,17 +39,17 @@ int unixsock_listen_fd(re_sock_t *fd, const struct sa *local)
 		goto out;
 	}
 
-	(void)unlink(local->u.un.sun_path);
+	(void)unlink(sock->u.un.sun_path);
 
-	if (bind(*fd, &local->u.sa, local->len) < 0) {
+	if (bind(*fd, &sock->u.sa, sock->len) < 0) {
 		err = RE_ERRNO_SOCK;
-		DEBUG_WARNING("bind(): %m (%J)\n", err, local);
+		DEBUG_WARNING("bind(): %m (%J)\n", err, sock);
 		goto out;
 	}
 
 	if (listen(*fd, SOMAXCONN) < 0) {
 		err = RE_ERRNO_SOCK;
-		DEBUG_WARNING("listen(): %m (%J)\n", err, local);
+		DEBUG_WARNING("listen(): %m (%J)\n", err, sock);
 		goto out;
 	}
 
