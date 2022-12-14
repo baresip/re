@@ -38,6 +38,9 @@ STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc);
 const char *tls_cert_host(struct tls_cert *hc);
 const struct list *tls_certs(const struct tls *tls);
 
-SSL *tls_conn_ssl(struct tls_conn *tc);
-struct tls *tls_conn_tls(struct tls_conn *tc);
-
+struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
+int tls_verify_handler(int ok, X509_STORE_CTX *ctx);
+void tls_enable_sni(struct tls *tls);
+#endif
