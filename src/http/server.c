@@ -257,7 +257,7 @@ int http_listen_fd(struct http_sock **sockp, re_sock_t fd, http_req_h *reqh,
 	struct http_sock *sock;
 	int err;
 
-	if (!sockp || fd == BAD_SOCK || !reqh)
+	if (!sockp || fd == RE_BAD_SOCK || !reqh)
 		return EINVAL;
 
 	sock = mem_zalloc(sizeof(*sock), sock_destructor);

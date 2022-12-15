@@ -566,7 +566,7 @@ int tcp_sock_alloc_fd(struct tcp_sock **tsp, re_sock_t fd, tcp_conn_h *ch,
 {
 	struct tcp_sock *ts = NULL;
 
-	if (!tsp || fd == BAD_SOCK)
+	if (!tsp || fd == RE_BAD_SOCK)
 		return EINVAL;
 
 	ts = mem_zalloc(sizeof(*ts), sock_destructor);
