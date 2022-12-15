@@ -574,6 +574,7 @@ int tcp_sock_alloc_fd(struct tcp_sock **tsp, re_sock_t fd, tcp_conn_h *ch,
 		return ENOMEM;
 
 	ts->fd	  = fd;
+	ts->fdc   = RE_BAD_SOCK;
 	ts->connh = ch;
 	ts->arg	  = arg;
 
