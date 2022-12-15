@@ -8,6 +8,7 @@ find_package(ZLIB)
 find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
+option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
@@ -112,6 +113,11 @@ if(USE_OPENSSL)
   )
 endif()
 
+if(USE_UNIXSOCK)
+  list(APPEND RE_DEFINITIONS
+    -DHAVE_UNIXSOCK
+  )
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND RE_DEFINITIONS -DDARWIN)

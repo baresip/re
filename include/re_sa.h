@@ -35,7 +35,9 @@ struct sa {
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in in;
+#ifdef HAVE_UNIXSOCK
 		struct sockaddr_un un;
+#endif
 #ifdef HAVE_INET6
 		struct sockaddr_in6 in6;
 #endif
