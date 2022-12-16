@@ -450,7 +450,7 @@ static int mk_sdes(struct rtcp_sess *sess, struct mbuf *mb)
 static int send_rtcp_report(struct rtcp_sess *sess, enum rtcp_type type)
 {
 	struct mbuf *mb;
-	int err;
+	int err = 0;
 
 	mb = mbuf_alloc(512);
 	if (!mb)
