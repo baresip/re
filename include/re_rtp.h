@@ -246,6 +246,7 @@ int   rtcp_send_nack(struct rtp_sock *rs, uint16_t fsn, uint16_t blp);
 int   rtcp_send_pli(struct rtp_sock *rs, uint32_t fb_ssrc);
 int   rtcp_send_fir_rfc5104(struct rtp_sock *rs, uint32_t ssrc,
 			    uint8_t fir_seqn);
+void  rtcp_enable_rr(const struct rtp_sock *rs, bool enable);
 int   rtcp_debug(struct re_printf *pf, const struct rtp_sock *rs);
 void *rtcp_sock(const struct rtp_sock *rs);
 int   rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats);

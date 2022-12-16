@@ -55,6 +55,7 @@ struct rtcp_sess {
 	uint32_t senderc;           /**< Number of senders                   */
 	uint32_t srate_tx;          /**< Transmit sampling rate              */
 	uint32_t srate_rx;          /**< Receive sampling rate               */
+	bool rtcp_rr;               /**< Send additional Receiver Reports    */
 
 	/* stats */
 	mtx_t *lock;                /**< Lock for txstat                     */
@@ -393,6 +394,9 @@ static int encode_handler(struct mbuf *mb, void *arg)
 static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 {
 	struct txstat txstat;
+	struct ntp_time ntp;
+	uint64_t jfs_rt, dur;
+	uint32_t rtp_ts;
 	int err;
 
 	mtx_lock(sess->lock);
@@ -400,30 +404,30 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	sess->txstat.ts_synced = false;
 	mtx_unlock(sess->lock);
 
-	if (txstat.jfs_rt_ref) {
-		struct ntp_time ntp;
-		uint64_t jfs_rt, dur;
-		uint32_t rtp_ts;
+	if (!txstat.jfs_rt_ref)
+		return EINVAL;
 
-		ntp_time_get(&ntp, &jfs_rt);
+	ntp_time_get(&ntp, &jfs_rt);
 
-		dur = jfs_rt - txstat.jfs_rt_ref;
-		rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref + dur *
-				    sess->srate_tx / 1000000u);
+	dur    = jfs_rt - txstat.jfs_rt_ref;
+	rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref +
+			    dur * sess->srate_tx / 1000000u);
 
-		err = rtcp_encode(mb, RTCP_SR, sess->senderc,
-				  rtp_sess_ssrc(sess->rs), ntp.hi, ntp.lo,
-				  rtp_ts, txstat.psent, txstat.osent,
-				  encode_handler, sess->members);
-	}
-	else {
-		/* No packets were sent yet, no NTP/RTP timestamps available,
-		 * generate receiver report */
-		err = rtcp_encode(mb, RTCP_RR, sess->senderc,
-				  rtp_sess_ssrc(sess->rs),
-				  encode_handler, sess->members);
-	}
+	err = rtcp_encode(mb, RTCP_SR, sess->senderc, rtp_sess_ssrc(sess->rs),
+			  ntp.hi, ntp.lo, rtp_ts, txstat.psent, txstat.osent,
+			  encode_handler, sess->members);
 
+	return err;
+}
+
+
+/** Create a Receiver Report */
+static int mk_rr(struct rtcp_sess *sess, struct mbuf *mb)
+{
+	int err;
+
+	err = rtcp_encode(mb, RTCP_RR, sess->senderc, rtp_sess_ssrc(sess->rs),
+			  encode_handler, sess->members);
 	return err;
 }
 
@@ -443,7 +447,7 @@ static int mk_sdes(struct rtcp_sess *sess, struct mbuf *mb)
 }
 
 
-static int send_rtcp_report(struct rtcp_sess *sess)
+static int send_rtcp_report(struct rtcp_sess *sess, enum rtcp_type type)
 {
 	struct mbuf *mb;
 	int err;
@@ -454,7 +458,11 @@ static int send_rtcp_report(struct rtcp_sess *sess)
 
 	mb->pos = RTCP_HEADROOM;
 
-	err  = mk_sr(sess, mb);
+	if (type == RTCP_SR)
+		err  = mk_sr(sess, mb);
+	if (type == RTCP_RR)
+		err  = mk_rr(sess, mb);
+
 	err |= mk_sdes(sess, mb);
 	if (err)
 		goto out;
@@ -501,7 +509,10 @@ static void timeout(void *arg)
 	struct rtcp_sess *sess = arg;
 	int err;
 
-	err = send_rtcp_report(sess);
+	err = send_rtcp_report(sess, RTCP_SR);
+	if (err || sess->rtcp_rr)
+		err = send_rtcp_report(sess, RTCP_RR);
+
 	if (err) {
 		DEBUG_WARNING("Send RTCP report failed: %m\n", err);
 	}
@@ -645,6 +656,22 @@ static bool debug_handler(struct le *le, void *arg)
 	}
 
 	return err != 0;
+}
+
+
+/**
+ * RTCP enable additional Receiver Reports
+ *
+ * @param rs     Pointer to rtp_sock
+ * @param enable True for enable and false for disable (default)
+ */
+void rtcp_enable_rr(const struct rtp_sock *rs, bool enable)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return;
+
+	sess->rtcp_rr = enable;
 }
 
 
