@@ -173,6 +173,12 @@ set(HEADERS
   include/re_websock.h
 )
 
+if(USE_UNIXSOCK)
+  list(APPEND HEADERS
+    include/re_unixsock.h
+  )
+endif()
+
 set(SRCS
 
   src/av1/depack.c
@@ -364,6 +370,11 @@ set(SRCS
   src/websock/websock.c
 )
 
+if(USE_UNIXSOCK)
+  list(APPEND SRCS
+    src/unixsock/unixsock.c
+  )
+endif()
 
 if(USE_BFCP)
   list(APPEND SRCS
