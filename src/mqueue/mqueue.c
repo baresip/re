@@ -49,11 +49,11 @@ static void destructor(void *arg)
 {
 	struct mqueue *q = arg;
 
-	if (q->pfd[0] != BAD_SOCK) {
+	if (q->pfd[0] != RE_BAD_SOCK) {
 		fd_close(q->pfd[0]);
 		(void)close(q->pfd[0]);
 	}
-	if (q->pfd[1] != BAD_SOCK)
+	if (q->pfd[1] != RE_BAD_SOCK)
 		(void)close(q->pfd[1]);
 }
 
@@ -111,9 +111,9 @@ int mqueue_alloc(struct mqueue **mqp, mqueue_h *h, void *arg)
 	mq->h   = h;
 	mq->arg = arg;
 
-	mq->pfd[0] = mq->pfd[1] = BAD_SOCK;
+	mq->pfd[0] = mq->pfd[1] = RE_BAD_SOCK;
 	if (pipe(mq->pfd) < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 		goto out;
 	}
 

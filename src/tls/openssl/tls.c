@@ -98,8 +98,11 @@ static void destructor(void *data)
 {
 	struct tls *tls = data;
 
-	if (tls->ctx)
+	if (tls->ctx) {
+		SSL_CTX_sess_set_new_cb(tls->ctx, NULL);
+		SSL_CTX_sess_set_remove_cb(tls->ctx, NULL);
 		SSL_CTX_free(tls->ctx);
+	}
 
 	if (tls->cert)
 		X509_free(tls->cert);
@@ -451,20 +454,6 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 	err = SSL_CTX_set_purpose(tls->ctx, i);
 
 	return err == 1 ? 0 : EINVAL;
-}
-
-
-/**
- * Generate and set selfsigned certificate on TLS context
- *
- * @param tls TLS Context
- * @param cn  Common Name
- *
- * @return 0 if success, otherwise errorcode
- */
-int tls_set_selfsigned(struct tls *tls, const char *cn)
-{
-	return tls_set_selfsigned_rsa(tls, cn, 2048);
 }
 
 
@@ -1035,7 +1024,11 @@ int tls_peer_fingerprint(const struct tls_conn *tc, enum tls_fingerprint type,
 	if (!tc || !md)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	cert = SSL_get1_peer_certificate(tc->ssl);
+#else
 	cert = SSL_get_peer_certificate(tc->ssl);
+#endif
 	if (!cert)
 		return ENOENT;
 
@@ -1064,7 +1057,11 @@ int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 	if (!tc || !cn || !size)
 		return EINVAL;
 
+#if OPENSSL_VERSION_MAJOR >= 3
+	cert = SSL_get1_peer_certificate(tc->ssl);
+#else
 	cert = SSL_get_peer_certificate(tc->ssl);
+#endif
 	if (!cert)
 		return ENOENT;
 

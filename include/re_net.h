@@ -16,17 +16,6 @@
 #include <arpa/inet.h>
 #endif
 
-/* Socket helpers */
-#ifdef WIN32
-#define ERRNO_SOCK WSAGetLastError()
-#define BAD_SOCK INVALID_SOCKET
-typedef size_t re_sock_t;
-#else
-#define ERRNO_SOCK errno
-#define BAD_SOCK -1
-typedef int re_sock_t;
-#endif
-
 /** Length of IPv4 address string */
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 16

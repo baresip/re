@@ -4,17 +4,24 @@
 # Copyright (C) 2010 Creytiv.com
 #
 
+$(warning ***************************************************)
+$(warning ***                                             ***)
+$(warning *** Makefile is deprecated and will be replaced ***)
+$(warning *** by a generic CMake wrapper next release     ***)
+$(warning ***                                             ***)
+$(warning ***************************************************)
+
 # Main version number
 VER_MAJOR := 2
-VER_MINOR := 9
+VER_MINOR := 10
 VER_PATCH := 0
 
 # Development version, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-VER_PRE   := dev
+#VER_PRE   := dev
 
 # bump Major if ABI breaks
-ABI_MAJOR := 10
+ABI_MAJOR := 12
 ABI_AGE   := $(VER_MINOR)
 ABI_REV   := $(VER_PATCH)
 
@@ -38,7 +45,7 @@ include $(MK)
 MODULES += sip sipevent sipreg sipsess
 MODULES += uri http httpauth msg websock
 MODULES += stun turn ice
-MODULES += rtp sdp jbuf telev
+MODULES += rtp rtpext sdp jbuf telev
 MODULES += dns
 MODULES += md5 crc32 sha hmac base64
 MODULES += udp sa net tcp tls

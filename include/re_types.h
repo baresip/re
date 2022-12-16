@@ -258,3 +258,14 @@ typedef SSIZE_T ssize_t;
 #else
 #define re_restrict restrict
 #endif
+
+/* Socket helpers */
+#ifdef WIN32
+#define RE_ERRNO_SOCK WSAGetLastError()
+#define RE_BAD_SOCK INVALID_SOCKET
+typedef size_t re_sock_t;
+#else
+#define RE_ERRNO_SOCK errno
+#define RE_BAD_SOCK -1
+typedef int re_sock_t;
+#endif

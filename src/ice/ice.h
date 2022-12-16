@@ -17,10 +17,6 @@ enum ice_checkl_state {
 	ICE_CHECKLIST_FAILED
 };
 
-enum ice_transp {
-	ICE_TRANSP_NONE = -1,
-	ICE_TRANSP_UDP  = IPPROTO_UDP
-};
 
 /** ICE protocol values */
 enum {
@@ -111,9 +107,6 @@ struct ice_candpair {
 
 
 /* cand */
-int icem_lcand_add_base(struct icem *icem, unsigned compid, uint16_t lprio,
-			const char *ifname, enum ice_transp transp,
-			const struct sa *addr);
 int icem_rcand_add(struct icem *icem, enum ice_cand_type type, unsigned compid,
 		   uint32_t prio, const struct sa *addr,
 		   const struct sa *rel_addr, const struct pl *foundation);

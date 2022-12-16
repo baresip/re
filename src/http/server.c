@@ -242,6 +242,46 @@ static void connect_handler(const struct sa *peer, void *arg)
 
 
 /**
+ * Create an HTTP socket from file descriptor
+ *
+ * @param sockp Pointer to returned HTTP Socket
+ * @param fd    File descriptor
+ * @param reqh  Request handler
+ * @param arg   Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_listen_fd(struct http_sock **sockp, re_sock_t fd, http_req_h *reqh,
+		   void *arg)
+{
+	struct http_sock *sock;
+	int err;
+
+	if (!sockp || fd == RE_BAD_SOCK || !reqh)
+		return EINVAL;
+
+	sock = mem_zalloc(sizeof(*sock), sock_destructor);
+	if (!sock)
+		return ENOMEM;
+
+	err = tcp_sock_alloc_fd(&sock->ts, fd, connect_handler, sock);
+	if (err)
+		goto out;
+
+	sock->reqh = reqh;
+	sock->arg  = arg;
+
+out:
+	if (err)
+		mem_deref(sock);
+	else
+		*sockp = sock;
+
+	return err;
+}
+
+
+/**
  * Create an HTTP socket
  *
  * @param sockp Pointer to returned HTTP Socket

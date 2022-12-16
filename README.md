@@ -149,6 +149,7 @@ Patches can sent via Github
 | turn     | stable   | Obtaining Relay Addresses from STUN (TURN)     |
 | trace    | testing  | Trace Helpers JSON traces (chrome://tracing)   |
 | udp      | stable   | UDP transport                                  |
+| unixsock | testing  | Unix domain sockets                            |
 | uri      | stable   | Generic URI library                            |
 | websock  | stable   | WebSocket Client and Server                    |
 

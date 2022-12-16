@@ -12,6 +12,12 @@ enum ice_role {
 	ICE_ROLE_CONTROLLED
 };
 
+/** ICE Transport **/
+enum ice_transp {
+	ICE_TRANSP_NONE = -1,
+	ICE_TRANSP_UDP  = IPPROTO_UDP
+};
+
 /** ICE Component ID */
 enum ice_compid {
 	ICE_COMPID_RTP  = 1,
@@ -42,6 +48,12 @@ enum ice_candpair_state {
 	ICE_CANDPAIR_FAILED      /**< Failed state; check failed             */
 };
 
+/** ICE local candidate policy */
+enum ice_policy {
+	ICE_POLICY_ALL,	  /**< Allow all local candidates */
+	ICE_POLICY_RELAY, /**< Use only RELAY candidates  */
+};
+
 struct ice;
 struct ice_cand;
 struct icem;
@@ -51,6 +63,7 @@ struct turnc;
 struct ice_conf {
 	uint32_t rto;             /**< STUN Retransmission TimeOut */
 	uint32_t rc;              /**< STUN Retransmission Count   */
+	enum ice_policy policy;   /**< ICE Local Candidate Policy  */
 	bool debug;               /**< Enable ICE debugging        */
 };
 
@@ -67,8 +80,6 @@ void icem_set_conf(struct icem *icem, const struct ice_conf *conf);
 void icem_set_role(struct icem *icem, enum ice_role role);
 void icem_set_name(struct icem *icem, const char *name);
 int  icem_comp_add(struct icem *icem, unsigned compid, void *sock);
-int  icem_cand_add(struct icem *icem, unsigned compid, uint16_t lprio,
-		   const char *ifname, const struct sa *addr);
 
 bool icem_verify_support(struct icem *icem, unsigned compid,
 			 const struct sa *raddr);
@@ -103,6 +114,9 @@ int  ice_cand_encode(struct re_printf *pf, const struct ice_cand *cand);
 int  ice_remotecands_encode(struct re_printf *pf, const struct icem *icem);
 struct ice_cand *icem_cand_find(const struct list *lst, unsigned compid,
 				const struct sa *addr);
+int icem_lcand_add_base(struct icem *icem, enum ice_cand_type type,
+			unsigned compid, uint16_t lprio, const char *ifname,
+			enum ice_transp transp, const struct sa *addr);
 int icem_lcand_add(struct icem *icem, struct ice_cand *base,
 		   enum ice_cand_type type,
 		   const struct sa *addr);

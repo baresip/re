@@ -1236,6 +1236,10 @@ int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 	else
 		dnsc->conf = default_conf;
 
+	list_flush(&dnsc->hdl_cache);
+
+	hash_flush(dnsc->ht_tcpconn);
+	hash_flush(dnsc->ht_query_cache);
 
 	dnsc->ht_query = mem_deref(dnsc->ht_query);
 	dnsc->ht_query_cache = mem_deref(dnsc->ht_query_cache);
@@ -1250,9 +1254,6 @@ int dnsc_conf_set(struct dnsc *dnsc, const struct dnsc_conf *conf)
 		return err;
 
 	err = hash_alloc(&dnsc->ht_tcpconn, dnsc->conf.tcp_hash_size);
-	if (err)
-		return err;
-
 	return err;
 }
 

@@ -62,6 +62,7 @@ enum {
 /** Defines a UDP socket */
 struct udp_sock {
 	struct list helpers; /**< List of UDP Helpers         */
+	udp_send_h *sendh;
 	udp_recv_h *rh;      /**< Receive handler             */
 	udp_error_h *eh;     /**< Error handler               */
 	void *arg;           /**< Handler argument            */
@@ -132,12 +133,12 @@ static void udp_destructor(void *data)
 		(void)QOSCloseHandle(us->qos);
 #endif
 
-	if (BAD_SOCK != us->fd) {
+	if (RE_BAD_SOCK != us->fd) {
 		fd_close(us->fd);
 		(void)close(us->fd);
 	}
 
-	if (BAD_SOCK != us->fd6) {
+	if (RE_BAD_SOCK != us->fd6) {
 		fd_close(us->fd6);
 		(void)close(us->fd6);
 	}
@@ -160,7 +161,7 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 		     SIZ_CAST (mb->size - us->rx_presz), 0,
 		     &src.u.sa, &src.len);
 	if (n < 0) {
-		err = ERRNO_SOCK;
+		err = RE_ERRNO_SOCK;
 
 		if (EAGAIN == err)
 			goto out;
@@ -253,8 +254,8 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 
 	list_init(&us->helpers);
 
-	us->fd  = BAD_SOCK;
-	us->fd6 = BAD_SOCK;
+	us->fd  = RE_BAD_SOCK;
+	us->fd6 = RE_BAD_SOCK;
 
 	if (local) {
 		af = sa_af(local);
@@ -292,15 +293,15 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 	for (r = res; r; r = r->ai_next) {
 		re_sock_t fd;
 
-		if (us->fd != BAD_SOCK)
+		if (us->fd != RE_BAD_SOCK)
 			continue;
 
 		DEBUG_INFO("listen: for: af=%d addr=%j\n",
 			   r->ai_family, r->ai_addr);
 
 		fd = socket(r->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-		if (fd == BAD_SOCK) {
-			err = ERRNO_SOCK;
+		if (fd == RE_BAD_SOCK) {
+			err = RE_ERRNO_SOCK;
 			continue;
 		}
 
@@ -312,7 +313,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 		}
 
 		if (bind(fd, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
-			err = ERRNO_SOCK;
+			err = RE_ERRNO_SOCK;
 			DEBUG_INFO("listen: bind(): %m (%J)\n", err, local);
 			(void)close(fd);
 			continue;
@@ -349,7 +350,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 	freeaddrinfo(res);
 
 	/* We must have at least one socket */
-	if (BAD_SOCK == us->fd && BAD_SOCK == us->fd6) {
+	if (RE_BAD_SOCK == us->fd && RE_BAD_SOCK == us->fd6) {
 		if (0 == err)
 			err = EADDRNOTAVAIL;
 		goto out;
@@ -370,6 +371,55 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 		*usp = us;
 
 	return err;
+}
+
+
+int udp_alloc_sockless(struct udp_sock **usp,
+		       udp_send_h *sendh, udp_recv_h *recvh, void *arg)
+{
+	if (!usp || !sendh)
+		return EINVAL;
+
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd    = RE_BAD_SOCK;
+	us->fd6   = RE_BAD_SOCK;
+	us->sendh = sendh;
+	us->rh    = recvh ? recvh : dummy_udp_recv_handler;
+	us->arg   = arg;
+	us->rxsz  = UDP_RXSZ_DEFAULT;
+
+	*usp = us;
+
+	return 0;
+}
+
+
+int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
+		  udp_recv_h *recvh, void *arg)
+{
+	if (!usp || fd==RE_BAD_SOCK)
+		return EINVAL;
+
+	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	us->fd   = fd;
+	us->fd6  = RE_BAD_SOCK;
+	us->rh   = recvh ? recvh : dummy_udp_recv_handler;
+	us->arg  = arg;
+	us->rxsz = UDP_RXSZ_DEFAULT;
+
+	*usp = us;
+
+	return 0;
 }
 
 
@@ -394,12 +444,12 @@ int udp_open(struct udp_sock **usp, int af)
 	if (!us)
 		return ENOMEM;
 
-	us->fd  = BAD_SOCK;
-	us->fd6 = BAD_SOCK;
+	us->fd  = RE_BAD_SOCK;
+	us->fd6 = RE_BAD_SOCK;
 
 	fd = socket(af, SOCK_DGRAM, IPPROTO_UDP);
-	if (fd == BAD_SOCK) {
-		err = ERRNO_SOCK;
+	if (fd == RE_BAD_SOCK) {
+		err = RE_ERRNO_SOCK;
 		goto out;
 	}
 
@@ -435,13 +485,13 @@ int udp_connect(struct udp_sock *us, const struct sa *peer)
 		return EINVAL;
 
 	/* choose a socket */
-	if (AF_INET6 == sa_af(peer) && BAD_SOCK != us->fd6)
+	if (AF_INET6 == sa_af(peer) && RE_BAD_SOCK != us->fd6)
 		fd = us->fd6;
 	else
 		fd = us->fd;
 
 	if (0 != connect(fd, &peer->u.sa, peer->len))
-		return ERRNO_SOCK;
+		return RE_ERRNO_SOCK;
 
 	us->conn = true;
 
@@ -457,7 +507,7 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 	re_sock_t fd;
 
 	/* choose a socket */
-	if (AF_INET6 == sa_af(dst) && BAD_SOCK != us->fd6)
+	if (AF_INET6 == sa_af(dst) && RE_BAD_SOCK != us->fd6)
 		fd = us->fd6;
 	else
 		fd = us->fd;
@@ -477,18 +527,22 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 			return err;
 	}
 
+	/* external send handler */
+	if (us->sendh)
+		return us->sendh(dst, mb, us->arg);
+
 	/* Connected socket? */
 	if (us->conn) {
 		if (send(fd, BUF_CAST mb->buf + mb->pos,
 			 SIZ_CAST (mb->end - mb->pos),
 			 0) < 0)
-			return ERRNO_SOCK;
+			return RE_ERRNO_SOCK;
 	}
 	else {
 		if (sendto(fd, BUF_CAST mb->buf + mb->pos,
 			   SIZ_CAST (mb->end - mb->pos),
 			   0, &dst->u.sa, dst->len) < 0)
-			return ERRNO_SOCK;
+			return RE_ERRNO_SOCK;
 	}
 
 	return 0;
@@ -536,7 +590,7 @@ int udp_local_get(const struct udp_sock *us, struct sa *local)
 	if (0 == getsockname(us->fd6, &local->u.sa, &local->len))
 		return 0;
 
-	return ERRNO_SOCK;
+	return RE_ERRNO_SOCK;
 }
 
 
@@ -559,16 +613,16 @@ int udp_setsockopt(struct udp_sock *us, int level, int optname,
 	if (!us)
 		return EINVAL;
 
-	if (BAD_SOCK != us->fd) {
+	if (RE_BAD_SOCK != us->fd) {
 		if (0 != setsockopt(us->fd, level, optname,
 				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
+			err |= RE_ERRNO_SOCK;
 	}
 
-	if (BAD_SOCK != us->fd6) {
+	if (RE_BAD_SOCK != us->fd6) {
 		if (0 != setsockopt(us->fd6, level, optname,
 				    BUF_CAST optval, optlen))
-			err |= ERRNO_SOCK;
+			err |= RE_ERRNO_SOCK;
 	}
 
 	return err;
@@ -624,7 +678,7 @@ int udp_settos(struct udp_sock *us, uint8_t tos)
 		return GetLastError();
 
 	us->qos_id = 0;
-	if (BAD_SOCK != us->fd) {
+	if (RE_BAD_SOCK != us->fd) {
 		err = QOSAddSocketToFlow(us->qos, us->fd, NULL,
 				qos_type,
 				QOS_NON_ADAPTIVE_FLOW,
@@ -634,7 +688,7 @@ int udp_settos(struct udp_sock *us, uint8_t tos)
 	}
 
 	us->qos_id6 = 0;
-	if (BAD_SOCK != us->fd6) {
+	if (RE_BAD_SOCK != us->fd6) {
 		err = QOSAddSocketToFlow(us->qos, us->fd6, NULL,
 				qos_type,
 				QOS_NON_ADAPTIVE_FLOW,
@@ -711,6 +765,28 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
 
 
 /**
+ * Get the File Descriptor from a UDP Socket
+ *
+ * @param us  UDP Socket
+ * @param af  Address Family
+ *
+ * @return File Descriptor, or RE_BAD_SOCK for errors
+ */
+re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
+{
+	if (!us)
+		return RE_BAD_SOCK;
+
+	switch (af) {
+
+	default:
+	case AF_INET:  return us->fd;
+	case AF_INET6: return (us->fd6 != RE_BAD_SOCK) ? us->fd6 : us->fd;
+	}
+}
+
+
+/**
  * Attach the current thread to the UDP Socket
  *
  * @param us UDP Socket
@@ -724,13 +800,13 @@ int udp_thread_attach(struct udp_sock *us)
 	if (!us)
 		return EINVAL;
 
-	if (BAD_SOCK != us->fd) {
+	if (RE_BAD_SOCK != us->fd) {
 		err = fd_listen(us->fd, FD_READ, udp_read_handler, us);
 		if (err)
 			goto out;
 	}
 
-	if (BAD_SOCK != us->fd6) {
+	if (RE_BAD_SOCK != us->fd6) {
 		err = fd_listen(us->fd6, FD_READ, udp_read_handler6, us);
 		if (err)
 			goto out;
@@ -754,10 +830,10 @@ void udp_thread_detach(struct udp_sock *us)
 	if (!us)
 		return;
 
-	if (BAD_SOCK != us->fd)
+	if (RE_BAD_SOCK != us->fd)
 		fd_close(us->fd);
 
-	if (BAD_SOCK != us->fd6)
+	if (RE_BAD_SOCK != us->fd6)
 		fd_close(us->fd6);
 }
 
@@ -909,7 +985,7 @@ void udp_flush(const struct udp_sock *us)
 	if (!us)
 		return;
 
-	if (BAD_SOCK != us->fd) {
+	if (RE_BAD_SOCK != us->fd) {
 		uint8_t buf[4096];
 
 		while (recvfrom(us->fd, BUF_CAST buf, sizeof(buf),
@@ -917,11 +993,40 @@ void udp_flush(const struct udp_sock *us)
 			;
 	}
 
-	if (BAD_SOCK != us->fd6) {
+	if (RE_BAD_SOCK != us->fd6) {
 		uint8_t buf[4096];
 
 		while (recvfrom(us->fd6, BUF_CAST buf, sizeof(buf),
 				0, NULL, 0) > 0)
 			;
 	}
+}
+
+
+void udp_recv_packet(struct udp_sock *us, const struct sa *src,
+		     struct mbuf *mb)
+{
+	struct sa hsrc;
+
+	if (!us || !src || !mb)
+		return;
+
+	struct le *le = us->helpers.head;
+	while (le) {
+		struct udp_helper *uh = le->data;
+		bool hdld;
+
+		le = le->next;
+
+		if (src != &hsrc) {
+			sa_cpy(&hsrc, src);
+			src = &hsrc;
+		}
+
+		hdld = uh->recvh(&hsrc, mb, uh->arg);
+		if (hdld)
+			return;
+	}
+
+	us->rh(src, mb, us->arg);
 }

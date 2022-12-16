@@ -13,17 +13,17 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(re
-  VERSION 2.9.0
+  VERSION 2.10.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 10) # bump if ABI breaks
+set(PROJECT_SOVERSION 12) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
-set(PROJECT_VERSION_PRE dev)
+#set(PROJECT_VERSION_PRE dev)
 
 if(PROJECT_VERSION_PRE)
   set(PROJECT_VERSION_FULL ${PROJECT_VERSION}-${PROJECT_VERSION_PRE})
@@ -38,6 +38,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # Module/Package Includes
 #
 include(GNUInstallDirs)
+include(CheckCCompilerFlag)
 
 ##############################################################################
 #
@@ -76,7 +77,12 @@ else()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32 -Watomic-implicit-seq-cst)
+  add_compile_options(-Wshorten-64-to-32)
+endif()
+
+check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
+if(COMPILER_SUPPORTS_WATOMIC)
+  add_compile_options(-Watomic-implicit-seq-cst)
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
@@ -93,6 +99,11 @@ list(APPEND RE_DEFINITIONS
   -DVER_MINOR=${PROJECT_VERSION_MINOR}
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
 )
+
+if(DEFINED TRACE_SSL)
+  list(APPEND RE_DEFINITIONS
+    -DTRACE_SSL="${TRACE_SSL}")
+endif()
 
 ##############################################################################
 #
@@ -136,6 +147,7 @@ set(HEADERS
   include/re_pcp.h
   include/re_rtmp.h
   include/re_rtp.h
+  include/re_rtpext.h
   include/re_sa.h
   include/re_sdp.h
   include/re_sha.h
@@ -160,6 +172,12 @@ set(HEADERS
   include/re_uri.h
   include/re_websock.h
 )
+
+if(USE_UNIXSOCK)
+  list(APPEND HEADERS
+    include/re_unixsock.h
+  )
+endif()
 
 set(SRCS
 
@@ -275,6 +293,8 @@ set(SRCS
   src/rtp/sess.c
   src/rtp/source.c
 
+  src/rtpext/rtpext.c
+
   src/sa/printaddr.c
   src/sa/sa.c
 
@@ -350,6 +370,11 @@ set(SRCS
   src/websock/websock.c
 )
 
+if(USE_UNIXSOCK)
+  list(APPEND SRCS
+    src/unixsock/unixsock.c
+  )
+endif()
 
 if(USE_BFCP)
   list(APPEND SRCS
@@ -555,7 +580,8 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
 target_include_directories(re-objs PRIVATE .)
-target_include_directories(re-objs PRIVATE include ${OPENSSL_INCLUDE_DIR})
+target_include_directories(re-objs PRIVATE include
+  ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 
 
 ##############################################################################

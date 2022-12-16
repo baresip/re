@@ -5,7 +5,63 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+## [v2.10.0] - 2022-12-06
+
+## What's Changed
+* h264: add STAP-A by @alfredh in https://github.com/baresip/re/pull/584
+* tls: SSL_get_peer_certificate is deprecated by @sreimers in https://github.com/baresip/re/pull/585
+* sipreg fix contact handler `expires` evaluation by @cspiel1 in https://github.com/baresip/re/pull/581
+* ice: local candidate policy config by @sreimers in https://github.com/baresip/re/pull/589
+* h265: add missing NAL types by @alfredh in https://github.com/baresip/re/pull/590
+* rtpext: move from baresip to re by @alfredh in https://github.com/baresip/re/pull/591
+* mk: add rtpext to Makefile build by @cspiel1 in https://github.com/baresip/re/pull/594
+* mk: add makefile deprecation warning by @sreimers in https://github.com/baresip/re/pull/595
+* fs: use dup/dup2 for stdio hide and restore by @sreimers in https://github.com/baresip/re/pull/597
+* dns: fix dnsc_conf_set memory leak by @alfredh in https://github.com/baresip/re/pull/598
+* cmake: add TRACE_SSL compile definition by @cspiel1 in https://github.com/baresip/re/pull/599
+* cmake: add ZLIB_INCLUDE_DIRS by @sreimers in https://github.com/baresip/re/pull/601
+* cmake/pkgconfig: fix prefix variable by @cspiel1 in https://github.com/baresip/re/pull/603
+* ci/valgrind: use ubuntu-20.04 by @sreimers in https://github.com/baresip/re/pull/606
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.9.0...v2.10.0
+
+---
+
+## [v2.9.0] - 2022-11-01
+
+## What's Changed
+* cmake,make: bump version and set dev identifier by @cspiel1 in https://github.com/baresip/re/pull/553
+* udp: remove udp_send_anon() by @alfredh in https://github.com/baresip/re/pull/550
+* cmake: enable export symbols for backtrace by @sreimers in https://github.com/baresip/re/pull/554
+* README.md: Update build instructions for cmake by @robert-scheck in https://github.com/baresip/re/pull/556
+* cmake: improve kqueue and epoll detection by @sreimers in https://github.com/baresip/re/pull/558
+* fs: add fs_stdio_hide() and fs_stdio_restore() helpers by @sreimers in https://github.com/baresip/re/pull/559
+* json: remove unknown type warning by @alfredh in https://github.com/baresip/re/pull/560
+* http: fix warning arguments by @alfredh in https://github.com/baresip/re/pull/561
+* net_if_getlinklocal: use AF from input parameter by @alfredh in https://github.com/baresip/re/pull/565
+* fmt: add str_itoa by @sreimers in https://github.com/baresip/re/pull/569
+* SDP support for <proto> udp by @vanrein in https://github.com/baresip/re/pull/538
+* tls: remove some warnings by @alfredh in https://github.com/baresip/re/pull/567
+* fmt: add pl_trim functions by @cspiel1 in https://github.com/baresip/re/pull/557
+* aes/openssl: remove obsolete version check by @alfredh in https://github.com/baresip/re/pull/572
+* http: use str_dup() instead of unsafe strcpy() by @alfredh in https://github.com/baresip/re/pull/574
+* doxygen: update comments by @alfredh in https://github.com/baresip/re/pull/577
+* reg: remove obsolete void cast by @cspiel1 in https://github.com/baresip/re/pull/576
+* Tls connect debug by @alfredh in https://github.com/baresip/re/pull/573
+* mk: update doxygen file by @alfredh in https://github.com/baresip/re/pull/578
+* ci: use actions/checkout@v3 by @sreimers in https://github.com/baresip/re/pull/579
+* tls: remove ifdef from public API by @alfredh in https://github.com/baresip/re/pull/580
+* sip: sip_conncfg_set pass by reference by @alfredh in https://github.com/baresip/re/pull/582
+* dnsc get conf and skip hash alloc without hash size changes by @fAuernigg in https://github.com/baresip/re/pull/575
+* sdp/media: fix reorder codecs (restore old behavior) by @juha-h in https://github.com/baresip/re/pull/583
+* list: fix list_flush head and tail by @sreimers in https://github.com/baresip/re/pull/586
+* prepare 2.9.0 by @alfredh in https://github.com/baresip/re/pull/587
+
+## New Contributors
+* @vanrein made their first contribution in https://github.com/baresip/re/pull/538
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.8.0...v2.9.0
 
 ---
 

@@ -148,17 +148,31 @@ static bool contact_handler(const struct sip_hdr *hdr,
 {
 	struct sipreg *reg = arg;
 	struct sip_addr c;
+	struct pl transp = PL("transport");
 	struct pl pval;
-	char uri[256];
+	struct sa host;
+	enum sip_transp tp;
+	int err;
 
 	if (sip_addr_decode(&c, &hdr->val))
 		return false;
 
-	if (re_snprintf(uri, sizeof(uri), "sip:%s@%J%s", reg->cuser,
-			&reg->laddr, sip_transp_param(reg->tp)) < 0)
+	if (pl_strcmp(&c.uri.user, reg->cuser))
+	    return false;
+
+	err = sa_set(&host, &c.uri.host, c.uri.port);
+	if (err)
 		return false;
 
-	if (pl_strcmp(&c.auri, uri))
+	if (!sa_cmp(&host, &reg->laddr, SA_ADDR))
+		return false;
+
+	err = uri_param_get(&c.auri, &transp, &pval);
+	if (err)
+		pl_set_str(&pval, "udp");
+
+	tp = sip_transp_decode(&pval);
+	if (tp != reg->tp)
 		return false;
 
 	if (!msg_param_decode(&c.params, "expires", &pval)) {
