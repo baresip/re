@@ -510,7 +510,9 @@ static void timeout(void *arg)
 	int err;
 
 	err = send_rtcp_report(sess, RTCP_SR);
-	if (err || sess->rtcp_rr)
+	/* EINVAL = No packets were sent yet, no NTP/RTP timestamps available,
+	 * generate receiver report */
+	if (err == EINVAL || sess->rtcp_rr)
 		err = send_rtcp_report(sess, RTCP_RR);
 
 	if (err) {
