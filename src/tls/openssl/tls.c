@@ -1828,7 +1828,7 @@ static void tls_cert_destructor(void *arg)
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_add_certf(struct tls *tls, const char *certf, const struct pl *host)
+int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 {
 	struct tls_cert *uc;
 	BIO *bio = NULL;
@@ -1838,8 +1838,8 @@ int tls_add_certf(struct tls *tls, const char *certf, const struct pl *host)
 		return EINVAL;
 
 	uc = mem_zalloc(sizeof(*uc), tls_cert_destructor);
-	if (pl_isset(host)) {
-		err = pl_strdup(&uc->host, host);
+	if (str_isset(host)) {
+		err = str_dup(&uc->host, host);
 		if (err)
 			goto out;
 	}
