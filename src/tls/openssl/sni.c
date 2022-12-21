@@ -97,8 +97,8 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 	if (!str_isset(sni))
 		return list_head(certs)->data;
 
-	sz = str_len(sni);
-	if (sz >= TLSEXT_MAXLEN_host_name)
+	sz = str_len(sni) + 1;
+	if (sz > TLSEXT_MAXLEN_host_name)
 		return NULL;
 
 	cn = mem_zalloc(sz, NULL);
@@ -208,6 +208,7 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 	if (!uc)
 		goto out;
 
+	DEBUG_INFO("found cert for sni %s\n", sni);
 	(void)ssl_use_cert(ssl, uc);
 
 out:
