@@ -116,7 +116,7 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 		}
 
 		nm = X509_get_subject_name(x509);
-		X509_NAME_get_text_by_NID(nm, NID_commonName, cn, sz);
+		X509_NAME_get_text_by_NID(nm, NID_commonName, cn, (int) sz);
 		if (!str_cmp(sni, cn))
 			break;
 
