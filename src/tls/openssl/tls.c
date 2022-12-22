@@ -1838,6 +1838,9 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 		return EINVAL;
 
 	uc = mem_zalloc(sizeof(*uc), tls_cert_destructor);
+	if (!uc)
+		return ENOMEM;
+
 	if (str_isset(host)) {
 		err = str_dup(&uc->host, host);
 		if (err)
