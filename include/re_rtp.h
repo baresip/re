@@ -221,6 +221,8 @@ int   rtp_hdr_encode(struct mbuf *mb, const struct rtp_header *hdr);
 int   rtp_hdr_decode(struct rtp_header *hdr, struct mbuf *mb);
 int   rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 		 uint32_t ts, struct mbuf *mb);
+int   rtp_encode_seq(struct rtp_sock *rs, uint16_t seq, bool ext, bool marker,
+		   uint8_t pt, uint32_t ts, struct mbuf *mb);
 int   rtp_decode(struct rtp_sock *rs, struct mbuf *mb, struct rtp_header *hdr);
 int   rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 	       bool marker, uint8_t pt, uint32_t ts, uint64_t jfs_rt,
