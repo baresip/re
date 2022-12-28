@@ -531,6 +531,50 @@ int rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 
 
 /**
+ * Resend an RTP packet to a peer (no rtcp update)
+ *
+ * @param rs     RTP Socket
+ * @param seq    Sequence Number
+ * @param dst    Destination address
+ * @param ext    Extension bit
+ * @param marker Marker bit
+ * @param pt     Payload type
+ * @param ts     Timestamp
+ * @param mb     Payload buffer
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
+	       bool ext, bool marker, uint8_t pt, uint32_t ts, struct mbuf *mb)
+{
+	size_t pos;
+	int err;
+
+	if (!rs || !mb)
+		return EINVAL;
+
+	if (mb->pos < RTP_HEADER_SIZE) {
+		DEBUG_WARNING("rtp_send: buffer must have space for"
+			      " rtp header (pos=%u, end=%u)\n",
+			      mb->pos, mb->end);
+		return EBADMSG;
+	}
+
+	mbuf_advance(mb, -RTP_HEADER_SIZE);
+
+	pos = mb->pos;
+
+	err = rtp_encode_seq(rs, seq, ext, marker, pt, ts, mb);
+	if (err)
+		return err;
+
+	mb->pos = pos;
+
+	return udp_send(rs->sock_rtp, dst, mb);
+}
+
+
+/**
  * Get the RTP transport socket from an RTP/RTCP Socket
  *
  * @param rs RTP Socket
