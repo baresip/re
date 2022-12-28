@@ -228,6 +228,7 @@ int   rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 int   rtp_debug(struct re_printf *pf, const struct rtp_sock *rs);
 void *rtp_sock(const struct rtp_sock *rs);
 uint32_t rtp_sess_ssrc(const struct rtp_sock *rs);
+uint16_t rtp_sess_seq(const struct rtp_sock *rs);
 const struct sa *rtp_local(const struct rtp_sock *rs);
 int rtp_clear(struct rtp_sock *rs);
 
