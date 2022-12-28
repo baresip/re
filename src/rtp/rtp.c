@@ -406,7 +406,7 @@ int rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 	hdr.cc   = 0;
 	hdr.m    = marker ? 1 : 0;
 	hdr.pt   = pt;
-	hdr.seq  = rs->enc.seq++;
+	hdr.seq  = ++rs->enc.seq;
 	hdr.ts   = ts;
 	hdr.ssrc = rs->enc.ssrc;
 
@@ -542,6 +542,19 @@ const struct sa *rtp_local(const struct rtp_sock *rs)
 uint32_t rtp_sess_ssrc(const struct rtp_sock *rs)
 {
 	return rs ? rs->enc.ssrc : 0;
+}
+
+
+/**
+ * Get the last Sequence number from an RTP/RTCP Socket
+ *
+ * @param rs RTP Socket
+ *
+ * @return Sequence number
+ */
+uint16_t rtp_sess_seq(const struct rtp_sock *rs)
+{
+	return rs ? rs->enc.seq : 0;
 }
 
 
