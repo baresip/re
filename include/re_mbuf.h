@@ -41,6 +41,7 @@ struct pl;
 struct re_printf;
 
 struct mbuf *mbuf_alloc(size_t size);
+struct mbuf *mbuf_dup(struct mbuf *mbd);
 struct mbuf *mbuf_alloc_ref(struct mbuf *mbr);
 void     mbuf_init(struct mbuf *mb);
 void     mbuf_reset(struct mbuf *mb);

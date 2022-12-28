@@ -49,6 +49,34 @@ struct mbuf *mbuf_alloc(size_t size)
 
 
 /**
+ * Duplicate memory buffer
+ *
+ * @param mbd Memory buffer to duplicate
+ *
+ * @return Duplicated memory buffer, NULL if no memory
+ */
+struct mbuf *mbuf_dup(struct mbuf *mbd)
+{
+	struct mbuf *mb;
+
+	if (!mbd)
+		return NULL;
+
+	mb = mbuf_alloc(mbd->size);
+	if (!mb)
+		return NULL;
+
+	mb->size = mbd->size;
+	mb->pos	 = mbd->pos;
+	mb->end	 = mbd->end;
+
+	memcpy(mb->buf, mbd->buf, mbd->size);
+
+	return mb;
+}
+
+
+/**
  * Allocate a new memory buffer with a reference to another mbuf
  *
  * @param mbr Memory buffer to reference
