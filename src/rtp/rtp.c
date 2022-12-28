@@ -379,6 +379,43 @@ int rtp_open(struct rtp_sock **rsp, int af)
 
 
 /**
+ * Encode a new RTP header with sequence into the beginning of the buffer
+ *
+ * @param rs     RTP Socket
+ * @param seq    Sequence Number
+ * @param ext    Extension bit
+ * @param marker Marker bit
+ * @param pt     Payload type
+ * @param ts     Timestamp
+ * @param mb     Memory buffer
+ *
+ * @return 0 for success, otherwise errorcode
+ *
+ * @note The buffer must have enough space for the RTP header
+ */
+int rtp_encode_seq(struct rtp_sock *rs, uint16_t seq, bool ext, bool marker,
+		   uint8_t pt, uint32_t ts, struct mbuf *mb)
+{
+	struct rtp_header hdr;
+
+	if (!rs || pt&~0x7f || !mb)
+		return EINVAL;
+
+	hdr.ver  = RTP_VERSION;
+	hdr.pad  = false;
+	hdr.ext  = ext;
+	hdr.cc   = 0;
+	hdr.m    = marker ? 1 : 0;
+	hdr.pt   = pt;
+	hdr.seq  = seq;
+	hdr.ts   = ts;
+	hdr.ssrc = rs->enc.ssrc;
+
+	return rtp_hdr_encode(mb, &hdr);
+}
+
+
+/**
  * Encode a new RTP header into the beginning of the buffer
  *
  * @param rs     RTP Socket
