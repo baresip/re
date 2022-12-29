@@ -354,7 +354,7 @@ void *mem_ref(void *data)
  *
  * @param data Memory object
  *
- * @return Always NULL
+ * @return NULL if deallocated or data if not freed yet
  */
 /* coverity[-tainted_data_sink: arg-0] */
 void *mem_deref(void *data)
@@ -369,7 +369,7 @@ void *mem_deref(void *data)
 	MAGIC_CHECK(m);
 
 	if (re_atomic_acq_sub(&m->nrefs, 1u) > 1u) {
-		return NULL;
+		return data;
 	}
 
 	if (m->dh)
@@ -377,7 +377,7 @@ void *mem_deref(void *data)
 
 	/* NOTE: check if the destructor called mem_ref() */
 	if (re_atomic_rlx(&m->nrefs) > 0u)
-		return NULL;
+		return data;
 
 #if MEM_DEBUG
 	mem_lock();
