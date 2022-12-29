@@ -471,6 +471,7 @@ if(USE_OPENSSL)
     src/tls/openssl/tls_tcp.c
     src/tls/openssl/tls_udp.c
     src/tls/openssl/tls.c
+    src/tls/openssl/sni.c
     src/hmac/openssl/hmac.c
   )
 endif()
