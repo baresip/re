@@ -290,7 +290,6 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 		}
 	}
 
-	tls_enable_sni(tls);
 	err = hash_alloc(&tls->reuse.ht_sessions, 256);
 	if (err)
 		goto out;
@@ -1900,6 +1899,8 @@ out:
 	}
 	else {
 		list_append(&tls->certs, &uc->le, uc);
+		if (list_count(&tls->certs) == 1)
+			tls_enable_sni(tls);
 	}
 
 	return err;
