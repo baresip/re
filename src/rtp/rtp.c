@@ -554,7 +554,7 @@ int rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
 		return EINVAL;
 
 	if (mb->pos < RTP_HEADER_SIZE) {
-		DEBUG_WARNING("rtp_send: buffer must have space for"
+		DEBUG_WARNING("rtp_resend: buffer must have space for"
 			      " rtp header (pos=%u, end=%u)\n",
 			      mb->pos, mb->end);
 		return EBADMSG;
