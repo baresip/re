@@ -17,5 +17,5 @@ jobs:
       with:
         project: 'baresip%2Fre'
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
-        command: make libre.a
+        command: cmake -B build && cmake --build build -j
         email: 'hallo@studio-link.de'
