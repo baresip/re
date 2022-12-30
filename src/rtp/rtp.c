@@ -379,6 +379,43 @@ int rtp_open(struct rtp_sock **rsp, int af)
 
 
 /**
+ * Encode a new RTP header with sequence into the beginning of the buffer
+ *
+ * @param rs     RTP Socket
+ * @param seq    Sequence Number
+ * @param ext    Extension bit
+ * @param marker Marker bit
+ * @param pt     Payload type
+ * @param ts     Timestamp
+ * @param mb     Memory buffer
+ *
+ * @return 0 for success, otherwise errorcode
+ *
+ * @note The buffer must have enough space for the RTP header
+ */
+int rtp_encode_seq(struct rtp_sock *rs, uint16_t seq, bool ext, bool marker,
+		   uint8_t pt, uint32_t ts, struct mbuf *mb)
+{
+	struct rtp_header hdr;
+
+	if (!rs || pt&~0x7f || !mb)
+		return EINVAL;
+
+	hdr.ver  = RTP_VERSION;
+	hdr.pad  = false;
+	hdr.ext  = ext;
+	hdr.cc   = 0;
+	hdr.m    = marker ? 1 : 0;
+	hdr.pt   = pt;
+	hdr.seq  = seq;
+	hdr.ts   = ts;
+	hdr.ssrc = rs->enc.ssrc;
+
+	return rtp_hdr_encode(mb, &hdr);
+}
+
+
+/**
  * Encode a new RTP header into the beginning of the buffer
  *
  * @param rs     RTP Socket
@@ -406,7 +443,7 @@ int rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 	hdr.cc   = 0;
 	hdr.m    = marker ? 1 : 0;
 	hdr.pt   = pt;
-	hdr.seq  = rs->enc.seq++;
+	hdr.seq  = ++rs->enc.seq;
 	hdr.ts   = ts;
 	hdr.ssrc = rs->enc.ssrc;
 
@@ -494,6 +531,50 @@ int rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 
 
 /**
+ * Resend an RTP packet to a peer (no rtcp update)
+ *
+ * @param rs     RTP Socket
+ * @param seq    Sequence Number
+ * @param dst    Destination address
+ * @param ext    Extension bit
+ * @param marker Marker bit
+ * @param pt     Payload type
+ * @param ts     Timestamp
+ * @param mb     Payload buffer
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
+	       bool ext, bool marker, uint8_t pt, uint32_t ts, struct mbuf *mb)
+{
+	size_t pos;
+	int err;
+
+	if (!rs || !mb)
+		return EINVAL;
+
+	if (mb->pos < RTP_HEADER_SIZE) {
+		DEBUG_WARNING("rtp_resend: buffer must have space for"
+			      " rtp header (pos=%u, end=%u)\n",
+			      mb->pos, mb->end);
+		return EBADMSG;
+	}
+
+	mbuf_advance(mb, -RTP_HEADER_SIZE);
+
+	pos = mb->pos;
+
+	err = rtp_encode_seq(rs, seq, ext, marker, pt, ts, mb);
+	if (err)
+		return err;
+
+	mb->pos = pos;
+
+	return udp_send(rs->sock_rtp, dst, mb);
+}
+
+
+/**
  * Get the RTP transport socket from an RTP/RTCP Socket
  *
  * @param rs RTP Socket
@@ -542,6 +623,19 @@ const struct sa *rtp_local(const struct rtp_sock *rs)
 uint32_t rtp_sess_ssrc(const struct rtp_sock *rs)
 {
 	return rs ? rs->enc.ssrc : 0;
+}
+
+
+/**
+ * Get the last Sequence number from an RTP/RTCP Socket
+ *
+ * @param rs RTP Socket
+ *
+ * @return Sequence number
+ */
+uint16_t rtp_sess_seq(const struct rtp_sock *rs)
+{
+	return rs ? rs->enc.seq : 0;
 }
 
 

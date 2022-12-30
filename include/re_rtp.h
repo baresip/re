@@ -221,13 +221,19 @@ int   rtp_hdr_encode(struct mbuf *mb, const struct rtp_header *hdr);
 int   rtp_hdr_decode(struct rtp_header *hdr, struct mbuf *mb);
 int   rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 		 uint32_t ts, struct mbuf *mb);
+int   rtp_encode_seq(struct rtp_sock *rs, uint16_t seq, bool ext, bool marker,
+		   uint8_t pt, uint32_t ts, struct mbuf *mb);
 int   rtp_decode(struct rtp_sock *rs, struct mbuf *mb, struct rtp_header *hdr);
 int   rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 	       bool marker, uint8_t pt, uint32_t ts, uint64_t jfs_rt,
 	       struct mbuf *mb);
+int   rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
+	       bool ext, bool marker, uint8_t pt, uint32_t ts,
+	       struct mbuf *mb);
 int   rtp_debug(struct re_printf *pf, const struct rtp_sock *rs);
 void *rtp_sock(const struct rtp_sock *rs);
 uint32_t rtp_sess_ssrc(const struct rtp_sock *rs);
+uint16_t rtp_sess_seq(const struct rtp_sock *rs);
 const struct sa *rtp_local(const struct rtp_sock *rs);
 int rtp_clear(struct rtp_sock *rs);
 

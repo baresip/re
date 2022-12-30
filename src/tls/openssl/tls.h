@@ -27,8 +27,20 @@ typedef X509_NAME*(tls_get_certfield_h)(const X509 *);
 typedef X509_NAME*(tls_get_certfield_h)(X509 *);
 #endif
 
-
 struct tls;
+struct tls_cert;
 
 void tls_flush_error(void);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
+X509 *tls_cert_x509(struct tls_cert *hc);
+EVP_PKEY *tls_cert_pkey(struct tls_cert *hc);
+STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc);
+const char *tls_cert_host(struct tls_cert *hc);
+const struct list *tls_certs(const struct tls *tls);
+
+struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+	!defined(LIBRESSL_VERSION_NUMBER)
+int tls_verify_handler(int ok, X509_STORE_CTX *ctx);
+void tls_enable_sni(struct tls *tls);
+#endif

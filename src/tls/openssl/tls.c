@@ -45,6 +45,20 @@ struct tls {
 	char *pass;          /**< password for private key             */
 	bool verify_server;  /**< Enable SIP TLS server verification   */
 	struct session_reuse reuse;
+	struct list certs;   /**< Certificates for SNI selection       */
+};
+
+/**
+ * A TLS certificate with private key, certificate chain and a host name that
+ * is passed to OpenSSL for the host name check
+ *
+ */
+struct tls_cert {
+	struct le le;
+	X509 *x509;
+	EVP_PKEY *pkey;
+	STACK_OF(X509) *chain;
+	char *host;
 };
 
 #if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
@@ -110,6 +124,7 @@ static void destructor(void *data)
 	hash_flush(tls->reuse.ht_sessions);
 	mem_deref(tls->reuse.ht_sessions);
 	mem_deref(tls->pass);
+	list_flush(&tls->certs);
 }
 
 
@@ -146,7 +161,16 @@ static int keytype2int(enum tls_keytype type)
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
 	!defined(LIBRESSL_VERSION_NUMBER)
-static int verify_handler(int ok, X509_STORE_CTX *ctx)
+/**
+ * OpenSSL verify handler for debugging purposes. Prints only warnings in the
+ * default build
+ *
+ * @param ok  Verification result of OpenSSL
+ * @param ctx OpenSSL X509 store context set by OpenSSL
+ *
+ * @return passes parameter ok unchanged
+ */
+int tls_verify_handler(int ok, X509_STORE_CTX *ctx)
 {
 	int err, depth;
 
@@ -1298,7 +1322,7 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 		}
 	}
 
-	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, verify_handler);
+	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, tls_verify_handler);
 
 	return 0;
 #else
@@ -1778,4 +1802,171 @@ SSL_CTX *tls_ssl_ctx(const struct tls *tls)
 		return NULL;
 
 	return tls->ctx;
+}
+
+
+static void tls_cert_destructor(void *arg)
+{
+	struct tls_cert *uc = arg;
+
+	mem_deref(uc->host);
+	X509_free(uc->x509);
+	EVP_PKEY_free(uc->pkey);
+	sk_X509_pop_free(uc->chain, X509_free);
+}
+
+
+/**
+ * Adds a certificate for Server Name Indication (SNI) based certificate
+ * selection. An incoming client hello may contain an SNI extension which
+ * is used to select a local server certificate
+ *
+ * @param tls   TLS context
+ * @param certf Filename of the certificate
+ * @param host  Hostname that should match the SNI from client hello
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_add_certf(struct tls *tls, const char *certf, const char *host)
+{
+	struct tls_cert *uc;
+	BIO *bio = NULL;
+	int err = 0;
+
+	if (!tls || !certf)
+		return EINVAL;
+
+	uc = mem_zalloc(sizeof(*uc), tls_cert_destructor);
+	if (!uc)
+		return ENOMEM;
+
+	if (str_isset(host)) {
+		err = str_dup(&uc->host, host);
+		if (err)
+			goto out;
+	}
+
+	bio = BIO_new_file(certf, "r");
+	if (!bio) {
+		err = EIO;
+		goto out;
+	}
+
+	uc->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+	if (!uc->x509) {
+		DEBUG_WARNING("Can't read certificate from file: %s\n", certf);
+		err = ENOTSUP;
+		goto out;
+	}
+
+	while (1) {
+		X509 *ca = PEM_read_bio_X509(bio, NULL, 0, NULL);
+		if (!ca)
+			break;
+
+		if (!uc->chain)
+			uc->chain = sk_X509_new_null();
+
+		if (!uc->chain) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		if (!sk_X509_push(uc->chain, ca)) {
+			err = ENOMEM;
+			goto out;
+		}
+	}
+
+	BIO_reset(bio);
+	if (!bio) {
+		err = EIO;
+		goto out;
+	}
+
+	uc->pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+	if (!uc->pkey) {
+		DEBUG_WARNING("Can't read private key from file: %s\n", certf);
+		err = ENOTSUP;
+		goto out;
+	}
+
+out:
+	BIO_free(bio);
+	if (err) {
+		ERR_clear_error();
+		mem_deref(uc);
+	}
+	else {
+		list_append(&tls->certs, &uc->le, uc);
+		if (list_count(&tls->certs) == 1)
+			tls_enable_sni(tls);
+	}
+
+	return err;
+}
+
+
+/**
+ * Returns the X509 of the TLS certificate
+ *
+ * @param hc  TLS certificate
+ *
+ * @return The OpenSSL X509
+ */
+X509 *tls_cert_x509(struct tls_cert *hc)
+{
+	return hc ? hc->x509 : NULL;
+}
+
+
+/**
+ * Returns the private key of the TLS certificate
+ *
+ * @param hc  TLS certificate
+ *
+ * @return The OpenSSL EVP_PKEY
+ */
+EVP_PKEY *tls_cert_pkey(struct tls_cert *hc)
+{
+	return hc ? hc->pkey : NULL;
+}
+
+
+/**
+ * Returns the certificate chain of the TLS certificate
+ *
+ * @param hc  TLS certificate
+ *
+ * @return The OpenSSL stack of X509
+ */
+STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc)
+{
+	return hc ? hc->chain : NULL;
+}
+
+
+/**
+ * Returns the host name of the TLS certificate
+ *
+ * @param hc  TLS certificate
+ *
+ * @return The host name
+ */
+const char *tls_cert_host(struct tls_cert *hc)
+{
+	return hc ? hc->host : NULL;
+}
+
+
+/**
+ * Returns the list of TLS certificates
+ *
+ * @param tls TLS context
+ *
+ * @return The list
+ */
+const struct list *tls_certs(const struct tls *tls)
+{
+	return tls ? &tls->certs : NULL;
 }

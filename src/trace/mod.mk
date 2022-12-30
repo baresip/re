@@ -1,1 +1,0 @@
-SRCS	+= trace/trace.c
