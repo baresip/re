@@ -14,5 +14,6 @@ typedef void (re_async_h)(int err, void *arg);
 int re_async_alloc(struct re_async **asyncp, uint16_t workers);
 int re_async(struct re_async *a, re_async_work_h *workh, re_async_h *cb,
 	     void *arg);
-
+int re_async_seq(void *seqp, struct re_async *async, re_async_work_h *workh,
+		 re_async_h *cb, void *arg);
 #endif

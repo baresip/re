@@ -1,7 +1,7 @@
 /**
  * @file async.c Async API
  *
- * Copyright (C) 2022 Sebastian Reimers
+ * Copyright (C) 2022-2023 Sebastian Reimers
  */
 
 #include <re_types.h>
@@ -20,6 +20,7 @@ struct async_work {
 	struct le le;
 	re_async_work_h *workh;
 	re_async_h *cb;
+	void *seqp;
 	void *arg;
 	int err;
 };
@@ -54,22 +55,30 @@ static int worker_thread(void *arg)
 		if (list_isempty(&a->workl)) {
 			cnd_wait(&a->wait, &a->mtx);
 
-			if (list_isempty(&a->workl) || !a->run) {
-				mtx_unlock(&a->mtx);
-				continue;
-			}
+			if (list_isempty(&a->workl) || !a->run)
+				goto loop;
 		}
 
 		le = list_head(&a->workl);
+		work = le->data;
+		if (work->seqp) {
+			struct le *lec;
+			LIST_FOREACH(&a->curl, lec)
+			{
+				struct async_work *w = lec->data;
+				if (work->seqp == w->seqp)
+					goto loop;
+			}
+		}
 		list_move(le, &a->curl);
 		mtx_unlock(&a->mtx);
 
-		work = le->data;
 		if (work->workh)
 			work->err = work->workh(work->arg);
 
 		mtx_lock(&a->mtx);
 		mqueue_push(a->mqueue, 0, work);
+loop:
 		mtx_unlock(&a->mtx);
 	}
 
@@ -206,18 +215,8 @@ err:
 }
 
 
-/**
- * Execute work handler async and get a callback from re main thread
- *
- * @param async Pointer to async object
- * @param workh Work handler
- * @param cb    Callback handler (called by re main thread)
- * @param arg   Handler argument (has to be thread-safe)
- *
- * @return 0 if success, otherwise errorcode
- */
-int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
-	     void *arg)
+static int async_work(struct re_async *async, re_async_work_h *workh,
+		      re_async_h *cb, void *seqp, void *arg)
 {
 	int err = 0;
 	struct async_work *async_work;
@@ -237,6 +236,7 @@ int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 
 	async_work->workh = workh;
 	async_work->cb	  = cb;
+	async_work->seqp  = seqp;
 	async_work->arg	  = arg;
 
 	mtx_lock(&async->mtx);
@@ -245,4 +245,40 @@ int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 	mtx_unlock(&async->mtx);
 
 	return err;
+}
+
+
+/**
+ * Execute work handler async and get a callback from re main thread
+ *
+ * @param async Pointer to async object
+ * @param workh Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
+	     void *arg)
+{
+	return async_work(async, workh, cb, NULL, arg);
+}
+
+
+/**
+ * Execute work handler async and get a callback from re main thread,
+ * but same [seqp] one after the other in a sequential manner.
+ *
+ * @param seqp  Pointer to sequential compare identifier
+ * @param async Pointer to async object
+ * @param workh Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_async_seq(void *seqp, struct re_async *async, re_async_work_h *workh,
+		 re_async_h *cb, void *arg)
+{
+	return async_work(async, workh, cb, seqp, arg);
 }
