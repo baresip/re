@@ -1521,7 +1521,7 @@ void re_thread_async_close(void)
  * @param cb    Callback handler (called by re main thread)
  * @param arg   Handler argument (has to be thread-safe)
  *
- * @return async object on success, otherwise NULL
+ * @return 0 if success, otherwise errorcode
  */
 int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 {
@@ -1547,4 +1547,43 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 #endif
 
 	return re_async(re->async, work, cb, arg);
+}
+
+
+/**
+ * Execute work handler for current event loop,
+ * but same [seqp] one after the other in a sequential manner.
+ *
+ * @param seqp  Pointer to sequential compare identifier
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_seq(void *seqp, re_async_work_h *work, re_async_h *cb,
+			void *arg)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async_seq: re not ready\n");
+		return EAGAIN;
+	}
+
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
+#ifndef RELEASE
+	err = re_thread_check();
+	if (err)
+		return err;
+#endif
+
+	return re_async_seq(seqp, re->async, work, cb, arg);
 }
