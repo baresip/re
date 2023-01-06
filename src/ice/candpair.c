@@ -453,9 +453,9 @@ int icem_candpairs_debug(struct re_printf *pf, const struct list *list)
 			}
 		}
 
-		err = re_hprintf(pf, "  %c  %H\n",
-				 is_selected ? '*' : ' ',
-				 icem_candpair_debug, cp);
+		err |= re_hprintf(pf, "  %c  %H\n",
+				  is_selected ? '*' : ' ',
+				  icem_candpair_debug, cp);
 
 		if (ansi)
 			err |= re_hprintf(pf, "\x1b[;m");
