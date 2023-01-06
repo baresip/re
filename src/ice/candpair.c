@@ -428,6 +428,7 @@ int icem_candpair_debug(struct re_printf *pf, const struct ice_candpair *cp)
 int icem_candpairs_debug(struct re_printf *pf, const struct list *list)
 {
 	struct le *le;
+	bool ansi_output = true;
 	int err;
 
 	if (!list)
@@ -439,10 +440,25 @@ int icem_candpairs_debug(struct re_printf *pf, const struct list *list)
 
 		const struct ice_candpair *cp = le->data;
 		bool is_selected = (cp == cp->comp->cp_sel);
+		bool ansi = false;
+
+		if (ansi_output) {
+			if (cp->state == ICE_CANDPAIR_SUCCEEDED) {
+				err |= re_hprintf(pf, "\x1b[32m");
+				ansi = true;
+			}
+			else if (cp->err || cp->scode) {
+				err |= re_hprintf(pf, "\x1b[31m");
+				ansi = true;
+			}
+		}
 
 		err = re_hprintf(pf, "  %c  %H\n",
 				 is_selected ? '*' : ' ',
 				 icem_candpair_debug, cp);
+
+		if (ansi)
+			err |= re_hprintf(pf, "\x1b[;m");
 	}
 
 	return err;
