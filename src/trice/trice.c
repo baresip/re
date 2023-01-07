@@ -61,13 +61,9 @@ static void trice_destructor(void *data)
  * @param role        Local role
  * @param lufrag      Local username fragment
  * @param lpwd        Local password
- * @param estabh      Candidate pair established handler
- * @param closeh      Close / error handler
- * @param arg         Handler argument
  *
  * @return 0 if success, otherwise errorcode
  */
-
 int trice_alloc(struct trice **icemp, const struct trice_conf *conf,
 	       enum ice_role role,
 	       const char *lufrag, const char *lpwd)
@@ -224,8 +220,8 @@ static void trice_reqbuf_process(struct trice *icem)
  * Set the local role to either CONTROLLING or CONTROLLED.
  * Note: The role can be set multiple times.
  *
- * @param icem ICE Media object
- * @param role New local role
+ * @param trice ICE Media object
+ * @param role  New local role
  *
  * @return 0 if success, otherwise errorcode
  */
