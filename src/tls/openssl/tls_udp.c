@@ -201,8 +201,6 @@ static void conn_close(struct tls_conn *tc, int err)
 }
 
 
-#if defined (DTLS_CTRL_HANDLE_TIMEOUT) && defined(DTLS_CTRL_GET_TIMEOUT)
-
 static void check_timer(struct tls_conn *tc);
 
 
@@ -236,15 +234,6 @@ static void check_timer(struct tls_conn *tc)
 		tmr_cancel(&tc->tmr);
 	}
 }
-
-#else
-
-static void check_timer(struct tls_conn *tc)
-{
-	(void)tc;
-}
-
-#endif
 
 
 static int tls_connect(struct tls_conn *tc)
