@@ -35,7 +35,7 @@ struct sa {
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in in;
-#ifdef HAVE_UNIXSOCK
+#if !defined(HAVE_UNIXSOCK) || HAVE_UNIXSOCK == 1
 		struct sockaddr_un un;
 #endif
 #ifdef HAVE_INET6

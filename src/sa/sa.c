@@ -108,7 +108,7 @@ int sa_pton(const char *addr, struct sa *sa)
 	if (inet_pton(AF_INET, addr, &sa->u.in.sin_addr) > 0) {
 		sa->u.in.sin_family = AF_INET;
 	}
-#ifdef HAVE_UNIXSOCK
+#if HAVE_UNIXSOCK == 1
 	else if (!strncmp(addr, "unix:", 5)) {
 		sa->u.un.sun_family = AF_UNIX;
 		str_ncpy(sa->u.un.sun_path, addr + 5,
@@ -161,7 +161,7 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
 
 	switch (sa->u.sa.sa_family) {
 
-#ifdef HAVE_UNIXSOCK
+#if HAVE_UNIXSOCK == 1
 	case AF_UNIX:
 		sa->len = sizeof(struct sockaddr_un);
 		break;
@@ -416,7 +416,7 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 		return EINVAL;
 
 	switch (sa->u.sa.sa_family) {
-#ifdef HAVE_UNIXSOCK
+#if HAVE_UNIXSOCK == 1
 	case AF_UNIX:
 		str_ncpy(buf, sa->u.un.sun_path, size);
 		ret = buf;
@@ -487,7 +487,7 @@ bool sa_isset(const struct sa *sa, int flag)
 
 	switch (sa->u.sa.sa_family) {
 
-#ifdef HAVE_UNIXSOCK
+#if HAVE_UNIXSOCK == 1
 	case AF_UNIX:
 		return str_isset(sa->u.un.sun_path);
 		break;
@@ -602,7 +602,7 @@ bool sa_cmp(const struct sa *l, const struct sa *r, int flag)
 
 	switch (l->u.sa.sa_family) {
 
-#ifdef HAVE_UNIXSOCK
+#if HAVE_UNIXSOCK == 1
 	case AF_UNIX:
 		if (0 == str_cmp(l->u.un.sun_path, r->u.un.sun_path))
 			return true;
