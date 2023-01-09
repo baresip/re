@@ -115,7 +115,11 @@ endif()
 
 if(USE_UNIXSOCK)
   list(APPEND RE_DEFINITIONS
-    -DHAVE_UNIXSOCK
+    -DHAVE_UNIXSOCK=1
+  )
+else()
+  list(APPEND RE_DEFINITIONS
+    -DHAVE_UNIXSOCK=0
   )
 endif()
 
