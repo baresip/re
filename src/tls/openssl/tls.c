@@ -1879,8 +1879,8 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 		}
 	}
 
-	r = BIO_reset(bio);
-	if (r < 0 || !bio) {
+	ret = BIO_reset(bio);
+	if (ret < 0 || !bio) {
 		err = EIO;
 		goto out;
 	}
