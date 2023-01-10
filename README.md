@@ -188,7 +188,6 @@ legend:
 * [RFC 3711](https://tools.ietf.org/html/rfc3711) - The Secure Real-time Transport Protocol (SRTP)
 * [RFC 3969](https://tools.ietf.org/html/rfc3969) - The IANA URI Parameter Registry for SIP
 * [RFC 3994](https://tools.ietf.org/html/rfc3994) - Indication of Message Composition for Instant Messaging
-* [RFC 4346](https://tools.ietf.org/html/rfc4346) - The TLS Protocol Version 1.1
 * [RFC 4566](https://tools.ietf.org/html/rfc4566) - SDP: Session Description Protocol
 * [RFC 4582](https://tools.ietf.org/html/rfc4582) - The Binary Floor Control Protocol (BFCP)
 * [RFC 4582bis](https://tools.ietf.org/html/draft-ietf-bfcpbis-rfc4582bis-08) - The Binary Floor Control Protocol (BFCP)
@@ -197,6 +196,7 @@ legend:
 * [RFC 4961](https://tools.ietf.org/html/rfc4961) - Symmetric RTP / RTP Control Protocol (RTCP)
 * [RFC 5118](https://tools.ietf.org/html/rfc5118) - SIP Torture Test Messages for IPv6
 * [RFC 5245](https://tools.ietf.org/html/rfc5245) - Interactive Connectivity Establishment (ICE)
+* [RFC 5246](https://tools.ietf.org/html/rfc5246) - The TLS Protocol Version 1.2
 * [RFC 5389](https://tools.ietf.org/html/rfc5389) - Session Traversal Utilities for NAT (STUN)
 * [RFC 5626](https://tools.ietf.org/html/rfc5626) - Managing Client-Initiated Connections in SIP
 * [RFC 5761](https://tools.ietf.org/html/rfc5761) - Multiplexing RTP Data and Control Packets on a Single Port

@@ -77,5 +77,5 @@ int sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 	else
 		*reqp = req;
 
-	return 0;
+	return err;
 }
