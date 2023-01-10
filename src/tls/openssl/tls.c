@@ -1832,6 +1832,7 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 	struct tls_cert *uc;
 	BIO *bio = NULL;
 	int err = 0;
+	int ret;
 
 	if (!tls || !certf)
 		return EINVAL;
@@ -1878,8 +1879,8 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 		}
 	}
 
-	BIO_reset(bio);
-	if (!bio) {
+	ret = BIO_reset(bio);
+	if (ret < 0 || !bio) {
 		err = EIO;
 		goto out;
 	}
