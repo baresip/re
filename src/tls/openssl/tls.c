@@ -1832,7 +1832,7 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 	struct tls_cert *uc;
 	BIO *bio = NULL;
 	int err = 0;
-	int r;
+	int ret;
 
 	if (!tls || !certf)
 		return EINVAL;
