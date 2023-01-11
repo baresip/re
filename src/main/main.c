@@ -1540,11 +1540,5 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 			return err;
 	}
 
-#ifndef RELEASE
-	err = re_thread_check();
-	if (err)
-		return err;
-#endif
-
 	return re_async(re->async, work, cb, arg);
 }
