@@ -34,6 +34,15 @@ enum {
 };
 
 
+/* TLS ContentType defined in RFC 5246 */
+enum content_type {
+       TYPE_CHANGE_CIPHER_SPEC = 20,
+       TYPE_ALERT              = 21,
+       TYPE_HANDSHAKE          = 22,
+       TYPE_APPLICATION_DATA   = 23
+};
+
+
 struct dtls_sock {
 	struct sa peer;
 	struct udp_helper *uh;
@@ -64,6 +73,21 @@ struct tls_conn {
 	bool active;
 	bool up;
 };
+
+
+#if DEBUG_LEVEL >= 6
+static const char *content_type_str(enum content_type content_type)
+{
+	switch (content_type) {
+
+	case TYPE_CHANGE_CIPHER_SPEC: return "CHANGE_CIPHER_SPEC";
+	case TYPE_ALERT:              return "ALERT";
+	case TYPE_HANDSHAKE:          return "HANDSHAKE";
+	case TYPE_APPLICATION_DATA:   return "APPLICATION_DATA";
+	default: return "???";
+	}
+}
+#endif
 
 
 static int bio_create(BIO *b)
@@ -701,6 +725,8 @@ static bool recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 	b = mb->buf[mb->pos];
 	if (b < 20 || b > 63)
 		return false;
+
+	DEBUG_INFO("receive '%s' from %J\n", content_type_str(b), src);
 
 	tc = conn_lookup(sock, src);
 	if (tc) {
