@@ -225,10 +225,13 @@ int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 	if (unlikely(!async))
 		return EINVAL;
 
+	mtx_lock(&async->mtx);
 	if (unlikely(list_isempty(&async->freel))) {
 		async_work = mem_zalloc(sizeof(struct async_work), NULL);
-		if (!async_work)
-			return ENOMEM;
+		if (!async_work) {
+			err = ENOMEM;
+			goto out;
+		}
 	}
 	else {
 		async_work = list_head(&async->freel)->data;
@@ -239,9 +242,10 @@ int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 	async_work->cb	  = cb;
 	async_work->arg	  = arg;
 
-	mtx_lock(&async->mtx);
 	list_append(&async->workl, &async_work->le, async_work);
 	cnd_signal(&async->wait);
+
+out:
 	mtx_unlock(&async->mtx);
 
 	return err;
