@@ -10,7 +10,7 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 project(re
   VERSION 2.11.0
