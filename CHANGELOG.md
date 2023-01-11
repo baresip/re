@@ -5,6 +5,36 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.11.0] - 2023-01-11
+
+## What's Changed
+* net/types: move socket helpers and rename RE_ERRNO_SOCK and RE_BAD_SOCK by @sreimers in https://github.com/baresip/re/pull/608
+* sys: fix fileno warning by @alfredh in https://github.com/baresip/re/pull/612
+* tls: clear session callbacks in destructor by @cspiel1 in https://github.com/baresip/re/pull/611
+* tls: use long SSL state strings for logging by @cspiel1 in https://github.com/baresip/re/pull/613
+* tls: Set session only once before Client Hello by @cspiel1 in https://github.com/baresip/re/pull/607
+* udp: add optional send/recv handler by @alfredh in https://github.com/baresip/re/pull/602
+* tls: remove deprecated tls_set_selfsigned() by @alfredh in https://github.com/baresip/re/pull/614
+* main: allow for init twice by @alfredh in https://github.com/baresip/re/pull/615
+* cmake: add check_c_compiler_flag for atomic-implicit-seq-cst warning by @sreimers in https://github.com/baresip/re/pull/617
+* http,tcp: add http_listen_fd and tcp_sock_alloc_fd by @sreimers in https://github.com/baresip/re/pull/618
+* tcp_sock_alloc_fd: fix fdc initializing by @sreimers in https://github.com/baresip/re/pull/619
+* sa,unixsock: add unix domain socket support by @sreimers in https://github.com/baresip/re/pull/600
+* mk: remove makefiles by @sreimers in https://github.com/baresip/re/pull/620
+* RTP Resend by @sreimers in https://github.com/baresip/re/pull/626
+* TLS server support SNI based certificate selection by @cspiel1 in https://github.com/baresip/re/pull/596
+* sipsess/request.c: return error code in sipsess_request_alloc by @maximilianfridrich in https://github.com/baresip/re/pull/631
+* ice: add ANSI output with Green and Red colors by @alfredh in https://github.com/baresip/re/pull/632
+* docs: update reference to TLS 1.2 by @alfredh in https://github.com/baresip/re/pull/633
+* cmake, sa: enable unix sockets, if HAVE_UNIXSOCK is undefined by @fAuernigg in https://github.com/baresip/re/pull/636
+* trice: refresh doxygen comments by @alfredh in https://github.com/baresip/re/pull/635
+* tls: add error handling for BIO_reset by @cspiel1 in https://github.com/baresip/re/pull/638
+* dns/client: fix rrlv reference cache handling by @sreimers in https://github.com/baresip/re/pull/637
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.10.0...v2.11.0
+
+---
 
 ## [v2.10.0] - 2022-12-06
 
