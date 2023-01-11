@@ -113,6 +113,7 @@ const struct sa *dtls_peer(const struct tls_conn *tc);
 void dtls_set_peer(struct tls_conn *tc, const struct sa *peer);
 void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 		      struct mbuf *mb);
+void dtls_set_single(struct dtls_sock *sock, bool single);
 
 
 struct x509_st;

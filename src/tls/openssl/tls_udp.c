@@ -52,6 +52,7 @@ struct dtls_sock {
 	dtls_conn_h *connh;
 	void *arg;
 	size_t mtu;
+	bool single_conn;  /* If enabled, only one DTLS connection */
 };
 
 
@@ -88,6 +89,21 @@ static const char *content_type_str(enum content_type content_type)
 	}
 }
 #endif
+
+
+static bool first_handler(struct le *le, void *arg)
+{
+	(void)le;
+	(void)arg;
+
+	return true;  /* stop on the first element */
+}
+
+
+static struct le *hash_get_first(const struct hash *ht)
+{
+	return hash_apply(ht, first_handler, NULL);
+}
 
 
 static int bio_create(BIO *b)
@@ -439,6 +455,13 @@ static int conn_alloc(struct tls_conn **ptc, struct tls *tls,
 	struct tls_conn *tc;
 	int err = 0;
 
+	if (sock->single_conn) {
+		if (hash_get_first(sock->ht)) {
+			DEBUG_WARNING("single: only one connection allowed\n");
+			return EMFILE;
+		}
+	}
+
 	tc = mem_zalloc(sizeof(*tc), conn_destructor);
 	if (!tc)
 		return ENOMEM;
@@ -708,6 +731,11 @@ static bool cmp_handler(struct le *le, void *arg)
 static struct tls_conn *conn_lookup(struct dtls_sock *sock,
 				    const struct sa *peer)
 {
+	if (sock->single_conn) {
+		struct le *le = hash_get_first(sock->ht);
+		return list_ledata(le);
+	}
+
 	return list_ledata(hash_lookup(sock->ht, sa_hash(peer, SA_ALL),
                                        cmp_handler, (void *)peer));
 }
@@ -845,4 +873,19 @@ void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 	addr = *src;
 
 	recv_handler(&addr, mb, sock);
+}
+
+
+/**
+ * Set single connection mode. If enabled, only one DTLS connection is allowed.
+ *
+ * @param sock   DTLS Socket
+ * @param single True to enable, False to disable
+ */
+void dtls_set_single(struct dtls_sock *sock, bool single)
+{
+	if (!sock)
+		return;
+
+	sock->single_conn = single;
 }
