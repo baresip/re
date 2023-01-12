@@ -22,6 +22,7 @@ struct async_work {
 	re_async_h *cb;
 	void *arg;
 	int err;
+	intptr_t id;
 };
 
 struct re_async {
@@ -210,14 +211,15 @@ err:
  * Execute work handler async and get a callback from re main thread
  *
  * @param async Pointer to async object
+ * @param id    Work identifier
  * @param workh Work handler
  * @param cb    Callback handler (called by re main thread)
  * @param arg   Handler argument (has to be thread-safe)
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
-	     void *arg)
+int re_async(struct re_async *async, intptr_t id, re_async_work_h *workh,
+	     re_async_h *cb, void *arg)
 {
 	int err = 0;
 	struct async_work *async_work;
@@ -241,6 +243,7 @@ int re_async(struct re_async *async, re_async_work_h *workh, re_async_h *cb,
 	async_work->workh = workh;
 	async_work->cb	  = cb;
 	async_work->arg	  = arg;
+	async_work->id	  = id;
 
 	list_append(&async->workl, &async_work->le, async_work);
 	cnd_signal(&async->wait);
@@ -249,4 +252,48 @@ out:
 	mtx_unlock(&async->mtx);
 
 	return err;
+}
+
+
+/**
+ * Cancel pending async work and callback
+ *
+ * @param async Pointer to async object
+ * @param id    Work identifier
+ */
+void re_async_cancel(struct re_async *async, intptr_t id)
+{
+	struct le *le;
+
+	if (unlikely(!async))
+		return;
+
+	mtx_lock(&async->mtx);
+
+	LIST_FOREACH(&async->workl, le)
+	{
+		struct async_work *w = le->data;
+
+		if (w->id != id)
+			continue;
+
+		w->workh = NULL;
+		w->cb	 = NULL;
+		w->arg	 = mem_deref(w->arg);
+		list_move(&w->le, &async->freel);
+	}
+
+	LIST_FOREACH(&async->curl, le)
+	{
+		struct async_work *w = le->data;
+
+		if (w->id != id)
+			continue;
+
+		w->workh = NULL;
+		w->cb	 = NULL;
+		w->arg	 = mem_deref(w->arg);
+	}
+
+	mtx_unlock(&async->mtx);
 }
