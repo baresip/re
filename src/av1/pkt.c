@@ -154,7 +154,7 @@ static int av1_packetize_internal(bool *newp, bool marker, uint64_t rtp_ts,
 		len  -= maxlen;
 		cont = true;
 
-		/* if OBUs are fragmented */
+		/* If OBUs are fragmented */
 		if (w == 2)
 			w = 1;
 	}
