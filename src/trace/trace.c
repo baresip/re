@@ -177,7 +177,7 @@ int re_trace_flush(void)
 	struct trace_event *e;
 	char json_arg[256];
 	char name[128];
-	static bool first = true;
+	bool first = true;
 
 #ifndef RE_TRACE_ENABLED
 	return 0;
