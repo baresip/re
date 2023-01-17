@@ -60,4 +60,4 @@ jobs:
       run: |
         cd ..
         cmake -S rem -B rem/build && cmake --build rem/build
-        cd retest && make && ./retest -r
+        cd retest && make && ./retest -v -r
