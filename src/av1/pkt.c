@@ -153,6 +153,10 @@ static int av1_packetize_internal(bool *newp, bool marker, uint64_t rtp_ts,
 		buf  += maxlen;
 		len  -= maxlen;
 		cont = true;
+
+		/* if OBUs are fragmented */
+		if (w == 2)
+			w = 1;
 	}
 
 	hdr_encode(hdr, cont, false, w, *newp);
