@@ -57,6 +57,7 @@ static struct {
 	struct trace_event *event_buffer_flush;
 	mtx_t lock;
 	bool init;
+	bool new;
 	uint64_t start_time;
 } trace = {
 	.init = false
@@ -130,6 +131,7 @@ int re_trace_init(const char *json_file)
 
 	trace.start_time = tmr_jiffies_usec();
 	trace.init = true;
+	trace.new = true;
 
 out:
 	if (err) {
@@ -177,7 +179,6 @@ int re_trace_flush(void)
 	struct trace_event *e;
 	char json_arg[256];
 	char name[128];
-	static bool first = true;
 
 #ifndef RE_TRACE_ENABLED
 	return 0;
@@ -227,10 +228,10 @@ int re_trace_flush(void)
 		(void)re_fprintf(trace.f,
 			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%llu,"
 			"\"ph\":\"%c\",%s%s}",
-			first ? "" : ",\n",
+			trace.new ? "" : ",\n",
 			e->cat, e->pid, e->tid, e->ts - trace.start_time,
 			e->ph, name, str_isset(json_arg) ? json_arg : "");
-		first = false;
+		trace.new = false;
 	}
 
 	(void)fflush(trace.f);
