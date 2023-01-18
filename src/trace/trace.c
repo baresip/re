@@ -93,6 +93,13 @@ static inline int get_process_id(void)
 }
 
 
+/**
+ * Init new trace json file
+ *
+ * @param json_file  json file for trace events
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int re_trace_init(const char *json_file)
 {
 	int err = 0;
@@ -144,6 +151,11 @@ out:
 }
 
 
+/**
+ * Close and flush trace file
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int re_trace_close(void)
 {
 	int err = 0;
@@ -172,6 +184,11 @@ int re_trace_close(void)
 }
 
 
+/**
+ * Flush trace buffer (can be called multiple times)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int re_trace_flush(void)
 {
 	int i, flush_count;
