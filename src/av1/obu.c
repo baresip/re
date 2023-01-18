@@ -16,6 +16,24 @@
 #include <re_dbg.h>
 
 
+static bool obu_allowed_rtp(enum obu_type type)
+{
+	switch (type) {
+
+	case AV1_OBU_SEQUENCE_HEADER:
+	case AV1_OBU_FRAME_HEADER:
+	case AV1_OBU_METADATA:
+	case AV1_OBU_FRAME:
+	case AV1_OBU_REDUNDANT_FRAME_HEADER:
+	case AV1_OBU_TILE_GROUP:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+
 /**
  * Encode a number into LEB128 format, which is an unsigned integer
  * represented by a variable number of little-endian bytes.
@@ -59,12 +77,11 @@ int av1_leb128_encode(struct mbuf *mb, uint64_t value)
 int av1_leb128_decode(struct mbuf *mb, uint64_t *value)
 {
 	uint64_t ret = 0;
-	unsigned i;
 
 	if (!mb || !value)
 		return EINVAL;
 
-	for (i = 0; i < 8; i++) {
+	for (unsigned i = 0; i < 8; i++) {
 
 		size_t byte;
 
@@ -203,6 +220,14 @@ int av1_obu_print(struct re_printf *pf, const struct av1_obu_hdr *hdr)
 }
 
 
+/**
+ * Count number of OBUs in the bitstream
+ *
+ * @param buf  Bitstream buffer
+ * @param size Number of bytes in buffer
+ *
+ * @return Number of OBUs
+ */
 unsigned av1_obu_count(const uint8_t *buf, size_t size)
 {
 	struct mbuf wrap = {
@@ -233,6 +258,14 @@ unsigned av1_obu_count(const uint8_t *buf, size_t size)
 }
 
 
+/**
+ * Count number of OBUs in the bitstream allowed for RTP transmission
+ *
+ * @param buf  Bitstream buffer
+ * @param size Number of bytes in buffer
+ *
+ * @return Number of OBUs
+ */
 unsigned av1_obu_count_rtp(const uint8_t *buf, size_t size)
 {
 	struct mbuf wrap = {
@@ -254,20 +287,8 @@ unsigned av1_obu_count_rtp(const uint8_t *buf, size_t size)
 			return 0;
 		}
 
-		switch (hdr.type) {
-
-		case AV1_OBU_SEQUENCE_HEADER:
-		case AV1_OBU_FRAME_HEADER:
-		case AV1_OBU_METADATA:
-		case AV1_OBU_FRAME:
-		case AV1_OBU_REDUNDANT_FRAME_HEADER:
-		case AV1_OBU_TILE_GROUP:
+		if (obu_allowed_rtp(hdr.type))
 			++count;
-			break;
-
-		default:
-			break;
-		}
 
 		mbuf_advance(&wrap, hdr.size);
 	}

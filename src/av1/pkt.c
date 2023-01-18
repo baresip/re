@@ -17,6 +17,11 @@
 #include <re_dbg.h>
 
 
+enum {
+	MAX_OBUS = 3  /* Maximum number of OBUs for W field */
+};
+
+
 static void hdr_encode(uint8_t hdr[AV1_AGGR_HDR_SIZE],
 		       bool z, bool y, uint8_t w, bool n)
 {
@@ -200,14 +205,14 @@ int av1_packetize_high(bool *newp, bool marker, uint64_t rtp_ts,
 
 	count = av1_obu_count_rtp(buf, len);
 
-	if (count > 3) {
+	if (count > MAX_OBUS) {
 		w = 0;
 	}
 	else {
 		w = count;
 	}
 
-	err = copy_obus(mb_pkt, buf, len, count > 3);
+	err = copy_obus(mb_pkt, buf, len, count > MAX_OBUS);
 	if (err)
 		goto out;
 
