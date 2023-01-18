@@ -30,10 +30,10 @@ enum obu_type {
  *    +-+-+-+-+-+-+-+-+
  */
 struct av1_obu_hdr {
-	unsigned type:4;  /**< OBU type       */
-	bool x;           /**< Extension flag */
-	bool s;           /**< Has size field */
-	size_t size;      /**< Payload size   */
+	enum obu_type type;  /**< OBU type       */
+	bool x;              /**< Extension flag */
+	bool s;              /**< Has size field */
+	size_t size;         /**< Payload size   */
 };
 
 int av1_leb128_encode(struct mbuf *mb, uint64_t value);
