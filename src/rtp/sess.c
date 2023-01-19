@@ -55,6 +55,7 @@ struct rtcp_sess {
 	uint32_t senderc;           /**< Number of senders                   */
 	uint32_t srate_tx;          /**< Transmit sampling rate              */
 	uint32_t srate_rx;          /**< Receive sampling rate               */
+	uint32_t interval;          /**< RTCP interval in [ms]               */
 
 	/* stats */
 	mtx_t *lock;                /**< Lock for txstat                     */
@@ -246,6 +247,8 @@ int rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs)
 	sess->rs = rs;
 	tmr_init(&sess->tmr);
 
+	sess->interval = RTCP_INTERVAL;
+
 	err = mutex_alloc(&sess->lock);
 	if (err)
 		goto out;
@@ -261,6 +264,22 @@ int rtcp_sess_alloc(struct rtcp_sess **sessp, struct rtp_sock *rs)
 		*sessp = sess;
 
 	return err;
+}
+
+
+/**
+ * Set interval between sending reports on an RTCP Session
+ *
+ * @param rs  RTP Socket
+ * @param n   RTCP interval in [ms]
+ */
+void rtcp_set_interval(struct rtp_sock *rs, uint32_t n)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return;
+
+	sess->interval = n;
 }
 
 
@@ -512,7 +531,7 @@ static void timeout(void *arg)
 
 static void schedule(struct rtcp_sess *sess)
 {
-	tmr_start(&sess->tmr, RTCP_INTERVAL, timeout, sess);
+	tmr_start(&sess->tmr, sess->interval, timeout, sess);
 }
 
 

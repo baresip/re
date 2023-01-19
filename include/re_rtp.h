@@ -241,6 +241,7 @@ int rtp_clear(struct rtp_sock *rs);
 void  rtcp_start(struct rtp_sock *rs, const char *cname,
 		 const struct sa *peer);
 void  rtcp_enable_mux(struct rtp_sock *rs, bool enabled);
+void  rtcp_set_interval(struct rtp_sock *rs, uint32_t n);
 void  rtcp_set_srate(struct rtp_sock *rs, uint32_t sr_tx, uint32_t sr_rx);
 void  rtcp_set_srate_tx(struct rtp_sock *rs, uint32_t srate_tx);
 void  rtcp_set_srate_rx(struct rtp_sock *rs, uint32_t srate_rx);
