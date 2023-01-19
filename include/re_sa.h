@@ -35,11 +35,10 @@ struct sa {
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in in;
+		struct sockaddr_in6 in6;
 #if !defined(HAVE_UNIXSOCK) || HAVE_UNIXSOCK == 1
 		struct sockaddr_un un;
 #endif
-		struct sockaddr_in6 in6;
-		uint8_t padding[28];
 	} u;
 	socklen_t len;
 };
