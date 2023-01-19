@@ -38,9 +38,7 @@ struct sa {
 #if !defined(HAVE_UNIXSOCK) || HAVE_UNIXSOCK == 1
 		struct sockaddr_un un;
 #endif
-#ifdef HAVE_INET6
 		struct sockaddr_in6 in6;
-#endif
 		uint8_t padding[28];
 	} u;
 	socklen_t len;
