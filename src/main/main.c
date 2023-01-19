@@ -1519,9 +1519,9 @@ void re_thread_async_close(void)
  *
  * @param work  Work handler
  * @param cb    Callback handler (called by re main thread)
- * @param arg   Handler argument (has to be thread-safe)
+ * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
  *
- * @return async object on success, otherwise NULL
+ * @return 0 if success, otherwise errorcode
  */
 int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 {
@@ -1540,11 +1540,59 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 			return err;
 	}
 
+	return re_async(re->async, 0, work, cb, arg);
+}
+
+
+/**
+ * Execute work handler for current event loop
+ *
+ * @param id    Work identifier
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re main thread)
+ * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_id(intptr_t id, re_async_work_h *work, re_async_h *cb,
+		       void *arg)
+{
+	struct re *re = re_get();
+	int err;
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async_id: re not ready\n");
+		return EAGAIN;
+	}
+
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
+	return re_async(re->async, id, work, cb, arg);
+}
+
+
+/**
+ * Cancel pending async work and callback
+ *
+ * @param id  Work identifier
+ */
+void re_thread_async_cancel(intptr_t id)
+{
+	struct re *re = re_get();
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async_cancel: re not ready\n");
+		return;
+	}
+
 #ifndef RELEASE
-	err = re_thread_check();
-	if (err)
-		return err;
+	re_thread_check();
 #endif
 
-	return re_async(re->async, work, cb, arg);
+	re_async_cancel(re->async, id);
 }
