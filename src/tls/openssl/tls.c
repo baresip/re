@@ -23,6 +23,7 @@
 #include <re_sys.h>
 #include <re_tcp.h>
 #include <re_tls.h>
+#include <re_atomic.h>
 #include "tls.h"
 
 
@@ -38,6 +39,7 @@ struct session_reuse {
 	bool enabled;
 	struct hash *ht_sessions;
 };
+
 
 struct tls {
 	SSL_CTX *ctx;
@@ -60,6 +62,7 @@ struct tls_cert {
 	STACK_OF(X509) *chain;
 	char *host;
 };
+
 
 #if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 /**
@@ -105,6 +108,7 @@ static void tls_keylogger_cb(const SSL *ssl,
 struct tls_conn {
 	SSL *ssl;
 	struct tls *tls;
+	struct tls_conn_d cd;
 };
 
 
@@ -921,11 +925,12 @@ static int verify_trust_all(int ok, X509_STORE_CTX *ctx)
 
 
 /**
- * Set TLS server context to request certificate from client
+ * Set TLS server context to request certificate from peer
+ * and set trust all certificates of peer.
  *
  * @param tls    TLS Context
  */
-void tls_set_verify_client(struct tls *tls)
+void tls_set_verify_client_trust_all(struct tls *tls)
 {
 	if (!tls)
 		return;
@@ -934,6 +939,96 @@ void tls_set_verify_client(struct tls *tls)
 	SSL_CTX_set_verify(tls->ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
 			   verify_trust_all);
 }
+
+
+/**
+ * Set TLS server context to request certificate from peer
+ * and set trust all certificates of peer.
+ *
+ * @deprecated Use tls_set_verify_peer_trust_all instead
+ * @param tls    TLS Context
+ */
+void tls_set_verify_client(struct tls *tls)
+{
+	if (!tls)
+		return;
+
+	tls_set_verify_client_trust_all(tls);
+}
+
+
+#if !defined(LIBRESSL_VERSION_NUMBER)
+static int tls_verify_d_idx(void)
+{
+	static RE_ATOMIC int verify_ud_idx = -1;
+	if (verify_ud_idx > -1)
+		return verify_ud_idx;
+
+	verify_ud_idx = SSL_get_ex_new_index(0, "tls verify ud",
+		NULL, NULL, NULL);
+
+	return verify_ud_idx;
+}
+
+
+static int tls_verify_handler_ud(int ok, X509_STORE_CTX *ctx)
+{
+	int ret = ok;
+	struct tls_conn_d *d;
+	SSL *ssl = X509_STORE_CTX_get_ex_data(ctx,
+		SSL_get_ex_data_X509_STORE_CTX_idx());
+
+	if (!ssl) {
+		DEBUG_WARNING("X509_STORE_CTX_get_ex_data (SSL*) failed\n");
+		return ret;
+	}
+
+	d = SSL_get_ex_data(ssl, tls_verify_d_idx());
+	if (!d) {
+		DEBUG_WARNING("SSL_get_app_data (struct tls_conn_d) failed\n");
+		return ret;
+	}
+
+	if (d->verify_cb)
+		ret = d->verify_cb(ok, ctx, d->verify_d);
+
+	return ret;
+}
+
+
+/**
+ * Enable request certificate from peer in TLS server connection
+ * Set verify handler.
+ *
+ * @param tc     TLS connection
+ * @param depth  Max depth certificate chain accepted.
+ *               A negative depth uses default depth.
+ * @param cb     SSL verify handler. If NULL default verify handler is used.
+ */
+int tls_set_conn_verify_client_handler(struct tls_conn *tc, int depth,
+	int (*cb) (int ok, X509_STORE_CTX *x509_ctx, void *d), void *d)
+{
+	int err = 0;
+	SSL_verify_cb tls_cb = tls_verify_handler_ud;
+	if (!tc)
+		return EINVAL;
+
+	if (!cb)
+		tls_cb = tls_verify_handler;
+	else {
+		tc->cd.verify_cb = cb;
+		tc->cd.verify_d = d;
+		SSL_set_ex_data(tc->ssl, tls_verify_d_idx(), &tc->cd);
+	}
+
+	SSL_set_verify_depth(tc->ssl, depth < 0 ?
+		SSL_get_verify_depth(tc->ssl) : depth);
+	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+		tls_cb);
+
+	return err;
+}
+#endif
 
 
 /**
@@ -1956,3 +2051,126 @@ const struct list *tls_certs(const struct tls *tls)
 {
 	return tls ? &tls->certs : NULL;
 }
+
+
+#if !defined(LIBRESSL_VERSION_NUMBER)
+/**
+ * Start tls renegotiation
+ * Sends a TLS "Hello Request" to the client.
+ *
+ * E.g. After "Client Hello" is sent the server can request
+ * a certificate from the client in the Server Hello response.
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_renegotiate(const struct tls_conn *tc)
+{
+	int err = 0;
+	if (!tc || !tc->tls)
+		return EINVAL;
+
+	if (SSL_renegotiate(tc->ssl) <= 0) {
+		err = EFAULT;
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
+			SSL_get_error(tc->ssl, err));
+	}
+
+	/* process state machine */
+	if (SSL_do_handshake(tc->ssl) <= 0) {
+		err = EIO;
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
+			SSL_get_error(tc->ssl, err));
+	}
+
+	return err;
+}
+
+
+/**
+ * Disable session resumption (server side only)
+ *
+ * @param tc  tlc connection object
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_disable_session_on_reneg(struct tls_conn *tc)
+{
+	if (!tc)
+		return EINVAL;
+
+	SSL_set_options(tc->ssl,
+		SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+
+	return 0;
+}
+
+
+/**
+ * Enable/disable posthandshake
+ * Only on client side for TLSv1.3
+ *
+ * @param tls  tls object
+ * @param value posthandshake auth value. 1 enabled, Default: 0
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_posthandshake_auth(struct tls *tls, int value)
+{
+	if (!tls)
+		return EINVAL;
+
+	SSL_CTX_set_post_handshake_auth(tls->ctx, value);
+
+	return 0;
+}
+
+
+/**
+ * Request client certificate using post handshake
+ * Only on client side for TLSv1.3
+ *
+ * @param tc  tls connection
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_conn_verify_client_post_handshake(struct tls_conn *tc)
+{
+	int ret;
+	int err = 0;
+	if (!tc || !tc->ssl)
+		return EINVAL;
+
+	if (!(ret=SSL_verify_client_post_handshake(tc->ssl))) {
+		err = EFAULT;
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
+			SSL_get_error(tc->ssl, ret));
+	}
+
+	if (!(ret = SSL_do_handshake(tc->ssl))) {
+		err = EIO;
+		DEBUG_WARNING("%s: error: %m, ssl_err=%d\n", __func__, err,
+			SSL_get_error(tc->ssl, ret));
+	}
+
+	return err;
+}
+
+
+/**
+ * Request client certificate using post handshake
+ * Only on client side for TLSv1.3
+ *
+ * @param tc  tls connection
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+const char* tls_conn_version(struct tls_conn *tc)
+{
+	if (!tc || !tc->ssl)
+		return "";
+
+	return SSL_get_version(tc->ssl);
+}
+#endif

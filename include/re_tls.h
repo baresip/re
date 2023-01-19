@@ -8,6 +8,10 @@ struct tls;
 struct tls_conn;
 struct tcp_conn;
 struct udp_sock;
+#if !defined(LIBRESSL_VERSION_NUMBER)
+struct x509_store_ctx_st;
+typedef struct x509_store_ctx_st X509_STORE_CTX;
+#endif
 
 
 /** Defines the TLS method */
@@ -28,6 +32,11 @@ enum tls_keytype {
 	TLS_KEYTYPE_EC,
 };
 
+struct tls_conn_d {
+	int (*verify_cb) (int ok, X509_STORE_CTX *ctx, void *d);
+	void *verify_d;
+};
+
 
 int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	      const char *pwd);
@@ -46,6 +55,11 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 			    const uint8_t *key, size_t len_key);
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 void tls_set_verify_client(struct tls *tls);
+void tls_set_verify_client_trust_all(struct tls *tls);
+#if !defined(LIBRESSL_VERSION_NUMBER)
+int tls_set_conn_verify_client_handler(struct tls_conn *tc, int depth,
+	int (*cb) (int ok, X509_STORE_CTX *ctx, void *d), void *d);
+#endif
 int tls_set_srtp(struct tls *tls, const char *suites);
 int tls_fingerprint(const struct tls *tls, enum tls_fingerprint type,
 		    uint8_t *md, size_t size);
@@ -74,12 +88,22 @@ bool tls_get_session_reuse(const struct tls_conn *tc);
 int tls_reuse_session(const struct tls_conn *tc);
 bool tls_session_reused(const struct tls_conn *tc);
 int tls_update_sessions(const struct tls_conn *tc);
+#if !defined(LIBRESSL_VERSION_NUMBER)
+int tls_renegotiate(const struct tls_conn *tc);
+int tls_disable_session_on_reneg(struct tls_conn *tc);
+int tls_set_posthandshake_auth(struct tls *tls, int enabled);
+#endif
 
 /* TCP */
 
 int tls_conn_change_cert(struct tls_conn *tc, const char *file);
 int tls_start_tcp(struct tls_conn **ptc, struct tls *tls,
 		  struct tcp_conn *tcp, int layer);
+
+#if !defined(LIBRESSL_VERSION_NUMBER)
+int tls_conn_verify_client_post_handshake(struct tls_conn *tc);
+const char* tls_conn_version(struct tls_conn *tc);
+#endif
 
 const struct tcp_conn *tls_get_tcp_conn(const struct tls_conn *tc);
 
