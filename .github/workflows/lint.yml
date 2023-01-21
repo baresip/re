@@ -1,9 +1,9 @@
-name: ccheck
+name: lint
 
 on: [push, pull_request]
 
 jobs:
-  ccheck:
+  lint:
 
     runs-on: ubuntu-latest
 
