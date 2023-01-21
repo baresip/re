@@ -23,6 +23,7 @@ jobs:
             compiler: gcc
     env:
       CC: ${{ matrix.compiler }}
+      CMAKE_GENERATOR: Ninja
 
     steps:
     - uses: actions/checkout@v3

@@ -12,6 +12,9 @@ jobs:
   clang-analyze:
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
 

@@ -20,12 +20,13 @@ jobs:
 
     env:
       CC: ${{ matrix.compiler }}
+      CMAKE_GENERATOR: Ninja
 
     steps:
     - uses: actions/checkout@v3
     - name: install devel tools
       run: |
-        yum -y install gcc clang cmake make openssl-devel zlib-devel
+        yum -y install gcc clang cmake make openssl-devel zlib-devel ninja
 
     - name: make info
       run: |
