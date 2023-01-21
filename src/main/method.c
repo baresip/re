@@ -11,7 +11,6 @@
 #include "main.h"
 
 
-static const char str_poll[]   = "poll";     /**< POSIX.1-2001 poll       */
 static const char str_select[] = "select";   /**< POSIX.1-2001 select     */
 static const char str_epoll[]  = "epoll";    /**< Linux epoll             */
 static const char str_kqueue[] = "kqueue";
@@ -33,10 +32,6 @@ enum poll_method poll_method_best(void)
 	return METHOD_KQUEUE;
 #endif
 
-#ifdef HAVE_POLL
-	return METHOD_POLL;
-#endif
-
 #ifdef HAVE_SELECT
 	return METHOD_SELECT;
 #endif
@@ -56,7 +51,6 @@ const char *poll_method_name(enum poll_method method)
 {
 	switch (method) {
 
-	case METHOD_POLL:      return str_poll;
 	case METHOD_SELECT:    return str_select;
 	case METHOD_EPOLL:     return str_epoll;
 	case METHOD_KQUEUE:    return str_kqueue;
@@ -78,9 +72,7 @@ int poll_method_type(enum poll_method *method, const struct pl *name)
 	if (!method || !name)
 		return EINVAL;
 
-	if (0 == pl_strcasecmp(name, str_poll))
-		*method = METHOD_POLL;
-	else if (0 == pl_strcasecmp(name, str_select))
+	if (0 == pl_strcasecmp(name, str_select))
 		*method = METHOD_SELECT;
 	else if (0 == pl_strcasecmp(name, str_epoll))
 		*method = METHOD_EPOLL;
