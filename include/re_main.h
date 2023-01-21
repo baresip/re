@@ -70,7 +70,6 @@ void re_set_mutex(void *mutexp);
 /** Polling methods */
 enum poll_method {
 	METHOD_NULL = 0,
-	METHOD_POLL,
 	METHOD_SELECT,
 	METHOD_EPOLL,
 	METHOD_KQUEUE,
