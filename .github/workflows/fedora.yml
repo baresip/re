@@ -26,7 +26,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: install devel tools
       run: |
-        yum -y install gcc clang cmake make openssl-devel zlib-devel ninja
+        yum -y install gcc clang cmake make openssl-devel zlib-devel ninja-build
 
     - name: make info
       run: |

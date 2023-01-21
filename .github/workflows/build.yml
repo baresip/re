@@ -33,6 +33,16 @@ jobs:
       run: |
         echo "OPENSSL_ROOT_DIR=/usr/local/opt/openssl" >> $GITHUB_ENV
 
+    - name: install packages
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y ninja-build
+
+    - name: install packages
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        brew install ninja
+
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
