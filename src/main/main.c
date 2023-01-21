@@ -25,9 +25,6 @@
 #ifdef HAVE_SELECT_H
 #include <sys/select.h>
 #endif
-#ifdef HAVE_POLL
-#include <poll.h>
-#endif
 #ifdef HAVE_EPOLL
 #include <sys/epoll.h>
 #endif
@@ -86,10 +83,6 @@ struct re {
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct list tmrl;            /**< List of timers                    */
-
-#ifdef HAVE_POLL
-	struct pollfd *fds;          /**< Event set for poll()              */
-#endif
 
 #ifdef HAVE_EPOLL
 	struct epoll_event *events;  /**< Event set for epoll()             */
@@ -291,30 +284,6 @@ static void fd_handler(struct re *re, int i, int flags)
 #endif
 
 
-#ifdef HAVE_POLL
-static int set_poll_fds(struct re *re, re_sock_t fd, int flags)
-{
-	if (!re->fds)
-		return 0;
-
-	if (flags)
-		re->fds[fd].fd = fd;
-	else
-		re->fds[fd].fd = -1;
-
-	re->fds[fd].events = 0;
-	if (flags & FD_READ)
-		re->fds[fd].events |= POLLIN;
-	if (flags & FD_WRITE)
-		re->fds[fd].events |= POLLOUT;
-	if (flags & FD_EXCEPT)
-		re->fds[fd].events |= POLLERR;
-
-	return 0;
-}
-#endif
-
-
 #ifdef HAVE_EPOLL
 static int set_epoll_fds(struct re *re, re_sock_t fd, int flags)
 {
@@ -431,11 +400,6 @@ static int rebuild_fds(struct re *re)
 
 		switch (re->method) {
 
-#ifdef HAVE_POLL
-		case METHOD_POLL:
-			err = set_poll_fds(re, i, re->fhs[i].flags);
-			break;
-#endif
 #ifdef HAVE_EPOLL
 		case METHOD_EPOLL:
 			err = set_epoll_fds(re, i, re->fhs[i].flags);
@@ -471,16 +435,6 @@ static int poll_init(struct re *re)
 
 	switch (re->method) {
 
-#ifdef HAVE_POLL
-	case METHOD_POLL:
-		if (!re->fds) {
-			re->fds = mem_zalloc(re->maxfds * sizeof(*re->fds),
-					    NULL);
-			if (!re->fds)
-				return ENOMEM;
-		}
-		break;
-#endif
 #ifdef HAVE_EPOLL
 	case METHOD_EPOLL:
 		if (!re->events) {
@@ -543,9 +497,6 @@ static void poll_close(struct re *re)
 	re->fhs = mem_deref(re->fhs);
 	re->maxfds = 0;
 
-#ifdef HAVE_POLL
-	re->fds = mem_deref(re->fds);
-#endif
 #ifdef HAVE_EPOLL
 	DEBUG_INFO("poll_close: epfd=%d\n", re->epfd);
 
@@ -667,12 +618,6 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 
 	switch (re->method) {
 
-#ifdef HAVE_POLL
-	case METHOD_POLL:
-		err = set_poll_fds(re, fd, flags);
-		break;
-#endif
-
 #ifdef HAVE_EPOLL
 	case METHOD_EPOLL:
 		if (re->epfd < 0)
@@ -734,13 +679,6 @@ static int fd_poll(struct re *re)
 	/* Wait for I/O */
 	switch (re->method) {
 
-#ifdef HAVE_POLL
-	case METHOD_POLL:
-		re_unlock(re);
-		n = poll(re->fds, re->nfds, to ? (int)to : -1);
-		re_lock(re);
-		break;
-#endif
 #ifdef HAVE_SELECT
 	case METHOD_SELECT: {
 		struct timeval tv;
@@ -815,26 +753,6 @@ static int fd_poll(struct re *re)
 
 		switch (re->method) {
 
-#ifdef HAVE_POLL
-		case METHOD_POLL:
-			fd = i;
-			if (re->fds[fd].revents & POLLIN)
-				flags |= FD_READ;
-			if (re->fds[fd].revents & POLLOUT)
-				flags |= FD_WRITE;
-			if (re->fds[fd].revents & (POLLERR|POLLHUP|POLLNVAL))
-				flags |= FD_EXCEPT;
-			if (re->fds[fd].revents & POLLNVAL) {
-				DEBUG_WARNING("event: fd=%d POLLNVAL"
-					      " (fds.fd=%d,"
-					      " fds.events=0x%02x)\n",
-					      fd, re->fds[fd].fd,
-					      re->fds[fd].events);
-			}
-			/* Clear events */
-			re->fds[fd].revents = 0;
-			break;
-#endif
 #ifdef HAVE_SELECT
 		case METHOD_SELECT:
 			fd = re->fhs[i].fd;
@@ -1224,10 +1142,6 @@ int poll_method_set(enum poll_method method)
 
 	switch (method) {
 
-#ifdef HAVE_POLL
-	case METHOD_POLL:
-		break;
-#endif
 #ifdef HAVE_SELECT
 	case METHOD_SELECT:
 		if (re->maxfds > (int)FD_SETSIZE) {
