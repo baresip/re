@@ -19,78 +19,147 @@
 
 
 struct sipsess_prack {
-	struct le he;
-	struct tmr tmr;
-	struct sa dst;
-	struct sip_request *req;
-	struct sip_dialog *dlg;
-	struct sipsess_sock *sock;
-	struct mbuf *mb;
-	enum sip_transp tp;
 	uint32_t cseq;
+	uint32_t rseq;
+	char *met;
+	struct sipsess_request *req;
 };
+
+
+static int prack_request(struct sipsess_prack *prack);
 
 
 static void destructor(void *arg)
 {
 	struct sipsess_prack *prack = arg;
 
-	hash_unlink(&prack->he);
-	tmr_cancel(&prack->tmr);
+	mem_deref(prack->met);
 	mem_deref(prack->req);
-	mem_deref(prack->dlg);
-	mem_deref(prack->sock);
-	mem_deref(prack->mb);
 }
 
 
 static void tmr_handler(void *arg)
 {
 	struct sipsess_prack *prack = arg;
+	int err;
 
-	mem_deref(prack);
+	if (!prack)
+		return;
+
+	err = prack_request(prack);
+	if (err)
+		mem_deref(prack);
 }
 
 
-static int send_handler(enum sip_transp tp, struct sa *src,
-			const struct sa *dst, struct mbuf *mb,
-			struct mbuf **contp, void *arg)
+static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 {
 	struct sipsess_prack *prack = arg;
-	(void)src;
-	(void)contp;
+	struct sipsess_request *req = prack->req;
+	const struct sip_hdr *hdr;
 
-	mem_deref(prack->mb);
-	prack->mb = mem_ref(mb);
-	prack->dst = *dst;
-	prack->tp  = tp;
-
-	tmr_start(&prack->tmr, 64 * SIP_T1, tmr_handler, prack);
-	return 0;
-}
-
-
-static void resp_handler(int err, const struct sip_msg *msg, void *arg)
-{
-	struct sipsess *sess;
-	struct sipsess_prack *prack = arg;
-	if (err || !msg)
+	if (!msg || err || sip_request_loops(&req->ls, msg->scode))
 		goto out;
 
-	sess = sipsess_find(prack->sock, msg);
-	if (!sess || sess->terminated)
-		goto out;
+	if (msg->scode < 200) {
+		return;
+	}
+	else if (msg->scode < 300) {
+		(void)sip_dialog_update(req->sess->dlg, msg);
 
-	if (sess->prackh)
-		sess->prackh(msg, sess->arg);
+		if (mbuf_get_left(msg->mb)) {
+			if (req->sess->sent_offer) {
+				req->sess->awaiting_answer = false;
+				req->sess->refresh_allowed = true;
+				(void)req->sess->answerh(msg, req->sess->arg);
+			}
+
+			req->sess->desc = mem_deref(req->sess->desc);
+		}
+	}
+	else {
+		if (req->sess->terminated)
+			goto out;
+
+		switch (msg->scode) {
+
+		case 401:
+		case 407:
+			err = sip_auth_authenticate(req->sess->auth, msg);
+			if (err) {
+				err = (err == EAUTH) ? 0 : err;
+				break;
+			}
+
+			err = prack_request(prack);
+			if (err)
+				break;
+
+			return;
+		case 408:
+		case 491:
+			tmr_start(&req->tmr, req->sess->owner ? 3000 : 1000,
+				  tmr_handler, req);
+			return;
+		case 500:
+			hdr = sip_msg_hdr(msg, SIP_HDR_RETRY_AFTER);
+			if (!hdr)
+				break;
+
+			tmr_start(&req->tmr, pl_u32(&hdr->val) * 1000,
+				  tmr_handler, req);
+			return;
+		}
+	}
 
 out:
+	if (!req->sess->terminated) {
+		if (err == ETIMEDOUT)
+			sipsess_terminate(req->sess, err, NULL);
+	}
+
 	mem_deref(prack);
+}
+
+
+static int prack_request(struct sipsess_prack *prack)
+{
+	struct sipsess_request *req = prack->req;
+	char rack_header[256];
+	int err;
+
+	if (!req || req->tmr.th)
+		return EINVAL;
+
+	err = re_snprintf(rack_header, sizeof(rack_header), "%d %d %s",
+			  prack->rseq, prack->cseq, prack->met);
+	if (err == -1)
+		return err;
+
+	if (req->sess->sent_offer && !req->sess->awaiting_answer
+		&& (!req->body || !mbuf_get_left(req->body)))
+		req->sess->refresh_allowed = true;
+
+	return sip_drequestf(&req->req, req->sess->sip, true, "PRACK",
+			     req->sess->dlg, 0, req->sess->auth, NULL,
+			     prack_resp_handler, prack,
+			     "RAck: %s\n"
+			     "%s%s%s"
+			     "Content-Length: %zu\r\n"
+			     "\r\n"
+			     "%b",
+			     rack_header,
+			     req->body ? "Content-Type: " : "",
+			     req->body ? req->sess->ctype : "",
+			     req->body ? "\r\n" : "",
+			     req->body ? mbuf_get_left(req->body) : (size_t)0,
+			     req->body ? mbuf_buf(req->body) : NULL,
+			     req->body ? mbuf_get_left(req->body) : (size_t)0);
 }
 
 
 /**
- * Send PRACK message (RFC 3262)
+ * Send PRACK request (RFC 3262)
  *
  * @param sess      SIP Session
  * @param cseq      CSeq number to be written in RAck header
@@ -104,42 +173,29 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 		  const struct pl *met, struct mbuf *desc)
 {
 	struct sipsess_prack *prack;
-	char rack_header[256];
-	char method[64];
 	int err;
+
+	if (!sess || sess->terminated)
+		return EINVAL;
 
 	prack = mem_zalloc(sizeof(*prack), destructor);
 	if (!prack)
 		return ENOMEM;
 
-	hash_append(sess->sock->ht_prack,
-		    hash_joaat_str(sip_dialog_callid(sess->dlg)),
-		    &prack->he, prack);
+	err = sipsess_request_alloc(&prack->req, sess, sess->ctype, desc,
+				    NULL, prack);
+	if (err)
+		goto out;
 
-	prack->dlg  = mem_ref(sess->dlg);
-	prack->sock  = mem_ref(sess->sock);
 	prack->cseq = cseq;
+	prack->rseq = rseq;
+	err = pl_strdup(&prack->met, met);
+	if (err)
+		goto out;
 
-	(void)pl_strcpy(met, method, sizeof(method));
-	re_snprintf(rack_header, sizeof(rack_header), "%d %d %s", rseq, cseq,
-		    method);
+	err = prack_request(prack);
 
-	err = sip_drequestf(&prack->req, sess->sock->sip, true, "PRACK",
-			    sess->dlg, cseq, sess->auth, send_handler,
-			    resp_handler, prack,
-			    "RAck: %s\n"
-			    "%s%s%s"
-			    "Content-Length: %zu\r\n"
-			    "\r\n"
-			    "%b",
-			    rack_header,
-			    desc ? "Content-Type: " : "",
-			    desc ? sess->ctype : "",
-			    desc ? "\r\n" : "",
-			    desc ? mbuf_get_left(desc) : (size_t)0,
-			    desc ? mbuf_buf(desc) : NULL,
-			    desc ? mbuf_get_left(desc) : (size_t)0);
-
+out:
 	if (err)
 		mem_deref(prack);
 

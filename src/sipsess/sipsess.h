@@ -41,6 +41,8 @@ struct sipsess {
 	bool established;
 	bool peerterm;
 	bool rel100_supported;
+	bool awaiting_prack;
+	bool refresh_allowed;
 	int terminated;
 };
 
@@ -50,7 +52,6 @@ struct sipsess_sock {
 	struct sip_lsnr *lsnr_req;
 	struct hash *ht_sess;
 	struct hash *ht_ack;
-	struct hash *ht_prack;
 	struct sip *sip;
 	sipsess_conn_h *connh;
 	void *arg;
@@ -95,6 +96,8 @@ int  sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		       const char *fmt, va_list *ap);
 int  sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 		       bool *awaiting_answer);
+int  sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
+			 bool *awaiting_answer, bool *awaiting_prack);
 int  sipsess_reinvite(struct sipsess *sess, bool reset_ls);
 int  sipsess_update(struct sipsess *sess);
 int  sipsess_bye(struct sipsess *sess, bool reset_ls);
