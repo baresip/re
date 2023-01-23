@@ -13,6 +13,9 @@ jobs:
     name: CodeQL Analyze
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -22,6 +25,10 @@ jobs:
       with:
         languages: cpp
         queries: security-extended
+
+    - name: install packages
+      run: |
+        sudo apt-get update && sudo apt-get install -y ninja-build
 
     - run: |
         cmake -B build && cmake --build build

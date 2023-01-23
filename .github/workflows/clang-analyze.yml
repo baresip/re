@@ -12,6 +12,9 @@ jobs:
   clang-analyze:
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
 
@@ -19,7 +22,7 @@ jobs:
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main"
-        sudo apt-get update && sudo apt-get install -y clang-tools-14
+        sudo apt-get update && sudo apt-get install -y clang-tools-14 ninja-build
 
     - name: make
       run: | 

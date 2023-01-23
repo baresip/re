@@ -6,12 +6,15 @@ jobs:
   valgrind:
     runs-on: ubuntu-20.04
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
 
     - name: install packages
       run: |
-        sudo apt-get update && sudo apt-get install -y libssl-dev valgrind
+        sudo apt-get update && sudo apt-get install -y libssl-dev valgrind ninja-build
 
     - name: make
       run: |
