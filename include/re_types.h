@@ -43,8 +43,11 @@ typedef SSIZE_T ssize_t;
 #endif
 
 /** Get number of elements in an array */
-#undef ARRAY_SIZE
-#define ARRAY_SIZE(a) ((sizeof(a))/(sizeof((a)[0])))
+#define RE_ARRAY_SIZE(a) ((sizeof(a))/(sizeof((a)[0])))
+
+/* Backwards compat */
+#define ARRAY_SIZE RE_ARRAY_SIZE
+
 
 /** Align a value to the boundary of mask */
 #define ALIGN_MASK(x, mask)    (((x)+(mask))&~(mask))
