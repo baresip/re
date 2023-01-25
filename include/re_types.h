@@ -54,6 +54,7 @@ typedef SSIZE_T ssize_t;
 
 /** Check alignment of pointer (p) and byte count (c) **/
 #define re_is_aligned(p, c) (((uintptr_t)(const void *)(p)) % (c) == 0)
+#define is_aligned re_is_aligned
 
 /** Get the minimal value */
 #undef MIN
