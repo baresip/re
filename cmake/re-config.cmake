@@ -9,6 +9,7 @@ find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
+option(USE_TRACE "Enable Tracing helpers" OFF)
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
@@ -119,6 +120,12 @@ if(USE_UNIXSOCK)
 else()
   list(APPEND RE_DEFINITIONS
     -DHAVE_UNIXSOCK=0
+  )
+endif()
+
+if(USE_TRACE)
+  list(APPEND RE_DEFINITIONS
+    -DRE_TRACE_ENABLED
   )
 endif()
 
