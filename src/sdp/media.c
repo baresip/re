@@ -32,7 +32,7 @@ static void destructor(void *arg)
 		return;
 	}
 
-	for (i=0; i<ARRAY_SIZE(m->protov); i++)
+	for (i=0; i<RE_ARRAY_SIZE(m->protov); i++)
 		mem_deref(m->protov[i]);
 
 	list_unlink(&m->le);
@@ -196,7 +196,7 @@ bool sdp_media_proto_cmp(struct sdp_media *m, const struct pl *proto,
 	if (!pl_strcmp(proto, m->proto))
 		return true;
 
-	for (i=0; i<ARRAY_SIZE(m->protov); i++) {
+	for (i=0; i<RE_ARRAY_SIZE(m->protov); i++) {
 
 		if (!m->protov[i] || pl_strcmp(proto, m->protov[i]))
 			continue;
@@ -364,7 +364,7 @@ int sdp_media_set_alt_protos(struct sdp_media *m, unsigned protoc, ...)
 
 	va_start(ap, protoc);
 
-	for (i=0; i<ARRAY_SIZE(m->protov); i++) {
+	for (i=0; i<RE_ARRAY_SIZE(m->protov); i++) {
 
 		m->protov[i] = mem_deref(m->protov[i]);
 
