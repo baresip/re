@@ -28,8 +28,6 @@ static void destructor(void *arg)
 	mem_deref(sock->ht_sess);
 	hash_flush(sock->ht_ack);
 	mem_deref(sock->ht_ack);
-	hash_flush(sock->ht_prack);
-	mem_deref(sock->ht_prack);
 }
 
 
@@ -174,10 +172,12 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 	struct sipsess *sess;
 	struct mbuf *desc = NULL;
 	bool awaiting_answer = false;
+	bool awaiting_prack = false;
 
 	sess = sipsess_find(sock, msg);
 
-	if (!sess || sipsess_reply_ack(sess, msg, &awaiting_answer)) {
+	if (!sess || sipsess_reply_prack(sess, msg, &awaiting_answer,
+					 &awaiting_prack)) {
 		(void)sip_reply(sock->sip, msg, 481,
 				"Transaction Does Not Exist");
 		return;
@@ -190,6 +190,11 @@ static void prack_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 		}
 
 		return;
+	}
+
+	if (awaiting_prack) {
+		sess->awaiting_prack = false;
+		sess->refresh_allowed = true;
 	}
 
 	if (sess->prackh)
@@ -376,10 +381,6 @@ int sipsess_listen(struct sipsess_sock **sockp, struct sip *sip,
 		goto out;
 
 	err = hash_alloc(&sock->ht_ack, htsize);
-	if (err)
-		goto out;
-
-	err = hash_alloc(&sock->ht_prack, htsize);
 	if (err)
 		goto out;
 
