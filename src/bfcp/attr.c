@@ -363,7 +363,7 @@ static int attr_decode(struct bfcp_attr **attrp, struct mbuf *mb,
 		if (!attr->mand)
 			break;
 
-		if (uma && uma->typec < ARRAY_SIZE(uma->typev))
+		if (uma && uma->typec < RE_ARRAY_SIZE(uma->typev))
 			uma->typev[uma->typec++] = attr->type<<1;
 		break;
 	}

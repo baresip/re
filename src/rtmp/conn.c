@@ -723,7 +723,7 @@ static bool rr_handler(struct dnsrr *rr, void *arg)
 {
 	struct rtmp_conn *conn = arg;
 
-	if (conn->srvc >= ARRAY_SIZE(conn->srvv))
+	if (conn->srvc >= RE_ARRAY_SIZE(conn->srvv))
 		return true;
 
 	switch (rr->type) {

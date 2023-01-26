@@ -286,7 +286,7 @@ static int reply_recv(struct dnsc *dnsc, struct mbuf *mb)
 	nv[2] = dq.hdr.nadd;
 
 	DEBUG_INFO("--- ANSWER SECTION id: %d ---\n", q->id);
-	for (uint32_t i = 0; i < ARRAY_SIZE(nv); i++) {
+	for (uint32_t i = 0; i < RE_ARRAY_SIZE(nv); i++) {
 		uint32_t l = nv[i];
 
 		if (l > RR_MAX) {
@@ -1276,7 +1276,7 @@ int dnsc_srv_set(struct dnsc *dnsc, const struct sa *srvv, uint32_t srvc)
 	if (!dnsc)
 		return EINVAL;
 
-	dnsc->srvc = min((uint32_t)ARRAY_SIZE(dnsc->srvv), srvc);
+	dnsc->srvc = min((uint32_t)RE_ARRAY_SIZE(dnsc->srvv), srvc);
 
 	if (srvv) {
 		for (i=0; i<dnsc->srvc; i++)

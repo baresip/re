@@ -16,12 +16,12 @@
 /** Check that mbuf position does not exceed end */
 #define MBUF_CHECK_POS(mb)						\
 	if ((mb) && (mb)->pos > (mb)->end) {				\
-		BREAKPOINT;						\
+		RE_BREAKPOINT;						\
 	}
 /** Check that mbuf end does not exceed size */
 #define MBUF_CHECK_END(mb)						\
 	if ((mb) && (mb)->end > (mb)->size) {				\
-		BREAKPOINT;						\
+		RE_BREAKPOINT;						\
 	}
 #else
 #define MBUF_CHECK_POS(mb)

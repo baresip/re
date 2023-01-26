@@ -337,14 +337,14 @@ int pl_bool(bool *val, const struct pl *pl)
 	if (!val || !pl)
 		return EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(tval); ++i) {
+	for (i = 0; i < RE_ARRAY_SIZE(tval); ++i) {
 		if (!pl_strcasecmp(pl, tval[i])) {
 			*val = true;
 			err = 0;
 		}
 	}
 
-	for (i = 0; i < ARRAY_SIZE(fval); ++i) {
+	for (i = 0; i < RE_ARRAY_SIZE(fval); ++i) {
 		if (!pl_strcasecmp(pl, fval[i])) {
 			*val = false;
 			err = 0;

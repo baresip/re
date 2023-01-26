@@ -673,7 +673,7 @@ static bool rr_handler(struct dnsrr *rr, void *arg)
 {
 	struct http_req *req = arg;
 
-	if (req->srvc >= ARRAY_SIZE(req->srvv))
+	if (req->srvc >= RE_ARRAY_SIZE(req->srvv))
 		return true;
 
 	switch (rr->type) {

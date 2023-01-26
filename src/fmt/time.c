@@ -49,11 +49,11 @@ int fmt_gmtime(struct re_printf *pf, void *ts)
 #endif
 
 	return re_hprintf(pf, "%s, %02u %s %u %02u:%02u:%02u GMT",
-			  dayv[min((unsigned)tm.tm_wday, ARRAY_SIZE(dayv)-1)],
-			  tm.tm_mday,
-			  monv[min((unsigned)tm.tm_mon, ARRAY_SIZE(monv)-1)],
-			  tm.tm_year + 1900,
-			  tm.tm_hour, tm.tm_min, tm.tm_sec);
+			dayv[min((unsigned)tm.tm_wday, RE_ARRAY_SIZE(dayv)-1)],
+			tm.tm_mday,
+			monv[min((unsigned)tm.tm_mon, RE_ARRAY_SIZE(monv)-1)],
+			tm.tm_year + 1900,
+			tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
 

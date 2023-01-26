@@ -238,7 +238,7 @@ int re_regex(const char *ptr, size_t len, const char *expr, ...)
 		}
 
 	chr:
-		if (n >= ARRAY_SIZE(chrv))
+		if (n >= RE_ARRAY_SIZE(chrv))
 			break;
 
 		chrv[n].max = tolower(*ep);

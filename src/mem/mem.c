@@ -99,8 +99,8 @@ static inline void mem_unlock(void)
 #define MAGIC_CHECK(_m) \
 	if (mem_magic != (_m)->magic) { \
 		DEBUG_WARNING("%s: magic check failed 0x%08zx (%p)\n", \
-			__REFUNC__, (_m)->magic, get_mem_data((_m))); \
-		BREAKPOINT;					      \
+			__func__, (_m)->magic, get_mem_data((_m)));    \
+		RE_BREAKPOINT;					      \
 	}
 #else
 #define STAT_ALLOC(_m, _size) (_m)->size = (uint32_t)(_size);
