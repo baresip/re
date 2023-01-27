@@ -113,7 +113,7 @@ static int if_list_gai(net_ifaddr_h *ifh, void *arg)
 }
 
 
-/**
+/*
  * Enumerate all network interfaces
  *
  * @param ifh Interface handler

@@ -1934,7 +1934,7 @@ EVP_PKEY *tls_cert_pkey(struct tls_cert *hc)
 }
 
 
-/**
+/*
  * Returns the certificate chain of the TLS certificate
  *
  * @param hc  TLS certificate
