@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#define _GNU_SOURCE 1
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -15,7 +16,6 @@
 #define __USE_POSIX 1  /**< Use POSIX flag */
 #define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
 #define __USE_MISC 1
-#define _GNU_SOURCE 1
 #include <netdb.h>
 #endif
 #include <string.h>
@@ -522,7 +522,6 @@ static void tcp_conn_handler(int flags, void *arg)
 {
 	struct sa peer;
 	struct tcp_sock *ts = arg;
-	int err;
 
 	(void)flags;
 
@@ -531,18 +530,25 @@ static void tcp_conn_handler(int flags, void *arg)
 	if (ts->fdc != RE_BAD_SOCK)
 		(void)close(ts->fdc);
 
+#ifdef HAVE_ACCEPT4
+	ts->fdc = accept4(ts->fd, &peer.u.sa, &peer.len, SOCK_NONBLOCK);
+	if (ts->fdc == RE_BAD_SOCK) {
+		return;
+	}
+#else
 	ts->fdc = accept(ts->fd, &peer.u.sa, &peer.len);
 	if (ts->fdc == RE_BAD_SOCK) {
 		return;
 	}
 
-	err = net_sockopt_blocking_set(ts->fdc, false);
+	int err = net_sockopt_blocking_set(ts->fdc, false);
 	if (err) {
 		DEBUG_WARNING("conn handler: nonblock set: %m\n", err);
 		(void)close(ts->fdc);
 		ts->fdc = RE_BAD_SOCK;
 		return;
 	}
+#endif
 
 	tcp_sockopt_set(ts->fdc);
 
