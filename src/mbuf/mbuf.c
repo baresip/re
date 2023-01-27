@@ -365,7 +365,7 @@ int mbuf_read_mem(struct mbuf *mb, uint8_t *buf, size_t size)
 		return EINVAL;
 
 	if (size > mbuf_get_left(mb)) {
-		DEBUG_WARNING("tried to read beyond mbuf end (%u > %u)\n",
+		DEBUG_WARNING("tried to read beyond mbuf end (%zu > %zu)\n",
 			      size, mbuf_get_left(mb));
 		return EOVERFLOW;
 	}
@@ -615,6 +615,37 @@ int mbuf_fill(struct mbuf *mb, uint8_t c, size_t n)
 	mb->end  = MAX(mb->end, mb->pos);
 
 	return 0;
+}
+
+
+/**
+ * Set absolute position and end position
+ *
+ * @param mb  Memory buffer
+ * @param pos Position
+ * @param end End position
+ */
+void mbuf_set_posend(struct mbuf *mb, size_t pos, size_t end)
+{
+	if (!mb)
+		return;
+
+	if (pos > end) {
+		DEBUG_WARNING("set_posend: pos %zu > end %zu\n",
+			      pos, end);
+		return;
+	}
+	if (end > mb->size) {
+		DEBUG_WARNING("set_posend: end %zu > size %zu\n",
+			      end, mb->size);
+		return;
+	}
+
+	mb->pos = pos;
+	mb->end = end;
+
+	MBUF_CHECK_POS(mb);
+	MBUF_CHECK_END(mb);
 }
 
 

@@ -28,7 +28,18 @@
 #define MBUF_CHECK_END(mb)
 #endif
 
-/** Defines a memory buffer */
+/**
+ * Defines a memory buffer.
+ *
+ * This is a dynamic and linear buffer for storing raw bytes.
+ * It is designed for network protocols, and supports automatic
+ * resizing of the buffer.
+ *
+ * - Writing to the buffer
+ * - Reading from the buffer
+ * - Automatic growing of buffer size
+ * - Print function for formatting printing
+ */
 struct mbuf {
 	uint8_t *buf;   /**< Buffer memory      */
 	size_t size;    /**< Size of buffer     */
@@ -67,6 +78,7 @@ int      mbuf_printf(struct mbuf *mb, const char *fmt, ...);
 int      mbuf_write_pl_skip(struct mbuf *mb, const struct pl *pl,
 			    const struct pl *skip);
 int      mbuf_fill(struct mbuf *mb, uint8_t c, size_t n);
+void     mbuf_set_posend(struct mbuf *mb, size_t pos, size_t end);
 int      mbuf_debug(struct re_printf *pf, const struct mbuf *mb);
 
 
@@ -167,4 +179,30 @@ static inline void mbuf_rewind(struct mbuf *mb)
 static inline void mbuf_skip_to_end(struct mbuf *mb)
 {
 	mb->pos = mb->end;
+}
+
+
+/**
+ * Get the current MBUF position
+ *
+ * @param mb Memory buffer
+ *
+ * @return Current position
+ */
+static inline size_t mbuf_pos(const struct mbuf *mb)
+{
+	return mb ? mb->pos : 0;
+}
+
+
+/**
+ * Get the current MBUF end position
+ *
+ * @param mb Memory buffer
+ *
+ * @return Current end position
+ */
+static inline size_t mbuf_end(const struct mbuf *mb)
+{
+	return mb ? mb->end : 0;
 }
