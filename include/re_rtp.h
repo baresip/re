@@ -206,8 +206,25 @@ struct sa;
 struct re_printf;
 struct rtp_sock;
 
+/**
+ * Defines the callback handler for received RTP packets
+ *
+ * @param src  Source network address
+ * @param hdr  RTP header
+ * @param mb   RTP payload
+ * @param arg  Handler argument
+ */
 typedef void (rtp_recv_h)(const struct sa *src, const struct rtp_header *hdr,
 			  struct mbuf *mb, void *arg);
+
+
+/**
+ * Defines the callback handler for received RTCP packets
+ *
+ * @param src  Source network address
+ * @param msg  RTCP packet
+ * @param arg  Handler argument
+ */
 typedef void (rtcp_recv_h)(const struct sa *src, struct rtcp_msg *msg,
 			   void *arg);
 
