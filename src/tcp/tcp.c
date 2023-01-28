@@ -472,22 +472,6 @@ static struct tcp_conn *conn_alloc(tcp_estab_h *eh, tcp_recv_h *rh,
 }
 
 
-static void tcp_sockopt_set(re_sock_t fd)
-{
-#ifdef SO_LINGER
-	const struct linger dl = {0, 0};
-	int err;
-
-	err = setsockopt(fd, SOL_SOCKET, SO_LINGER, BUF_CAST &dl, sizeof(dl));
-	if (err) {
-		DEBUG_WARNING("sockopt: SO_LINGER (%m)\n", err);
-	}
-#else
-	(void)fd;
-#endif
-}
-
-
 static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
 		    const void *optval, uint32_t optlen)
 {
@@ -549,8 +533,6 @@ static void tcp_conn_handler(int flags, void *arg)
 		return;
 	}
 #endif
-
-	tcp_sockopt_set(ts->fdc);
 
 	if (ts->connh)
 		ts->connh(&peer, ts->arg);
@@ -665,8 +647,6 @@ int tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 			(void)close(fd);
 			continue;
 		}
-
-		tcp_sockopt_set(fd);
 
 		/* OK */
 		ts->fd = fd;
@@ -938,8 +918,6 @@ int tcp_conn_alloc(struct tcp_conn **tcp,
 			tc->fdc = RE_BAD_SOCK;
 			continue;
 		}
-
-		tcp_sockopt_set(tc->fdc);
 
 		err = 0;
 		break;
