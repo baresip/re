@@ -275,31 +275,34 @@ static void tcp_recv_handler(int flags, void *arg)
 	bool hlp_estab = false;
 	struct le *le;
 	ssize_t n;
-	int err;
+	int err = 0;
 	socklen_t err_len = sizeof(err);
 
 	if (flags & FD_EXCEPT) {
 		DEBUG_INFO("recv handler: got FD_EXCEPT on fd=%d\n", tc->fdc);
 	}
 
-	/* check for any errors */
-	if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
-			     BUF_CAST &err, &err_len)) {
-		DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
-			      RE_ERRNO_SOCK);
-		return;
+	/* check for connection errors */
+	if (tc->active && !tc->connected) {
+		if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
+				     BUF_CAST &err, &err_len)) {
+			DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
+				      RE_ERRNO_SOCK);
+			return;
+		}
 	}
 
-	if (err) {
-		conn_close(tc, err);
-		return;
-	}
 #if 0
 	if (EINPROGRESS != err && EALREADY != err) {
 		DEBUG_WARNING("recv handler: Socket error (%m)\n", err);
 		return;
 	}
 #endif
+
+	if (err) {
+		conn_close(tc, err);
+		return;
+	}
 
 	if (flags & FD_WRITE) {
 
