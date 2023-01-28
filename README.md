@@ -194,6 +194,7 @@ legend:
 * [RFC 4585](https://tools.ietf.org/html/rfc4585) - Extended RTP Profile for RTCP-Based Feedback
 * [RFC 4733](https://tools.ietf.org/html/rfc4733) - RTP Payload for DTMF Digits, Telephony Tones, and Teleph. Signals
 * [RFC 4961](https://tools.ietf.org/html/rfc4961) - Symmetric RTP / RTP Control Protocol (RTCP)
+* [RFC 5104](https://tools.ietf.org/html/rfc5104) - Codec Control Messages in AVPF
 * [RFC 5118](https://tools.ietf.org/html/rfc5118) - SIP Torture Test Messages for IPv6
 * [RFC 5245](https://tools.ietf.org/html/rfc5245) - Interactive Connectivity Establishment (ICE)
 * [RFC 5246](https://tools.ietf.org/html/rfc5246) - The TLS Protocol Version 1.2
