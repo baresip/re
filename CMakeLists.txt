@@ -539,7 +539,7 @@ endif()
 # Linking LIBS
 #
 
-set(LINKLIBS Threads::Threads ${HAVE_RESOLV})
+set(LINKLIBS Threads::Threads ${RESOLV_LIBRARY})
 
 if(BACKTRACE_FOUND)
   list(APPEND LINKLIBS ${Backtrace_LIBRARIES})
