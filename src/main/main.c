@@ -314,44 +314,39 @@ static int set_epoll_fds(struct re *re, struct fhs *fhs)
 
 	DEBUG_INFO("set_epoll_fds: fd=%d flags=0x%02x\n", fd, flags);
 
-	if (flags) {
-		event.data.ptr = fhs;
-
-		if (flags & FD_READ)
-			event.events |= EPOLLIN;
-		if (flags & FD_WRITE)
-			event.events |= EPOLLOUT;
-		if (flags & FD_EXCEPT)
-			event.events |= EPOLLERR;
-
-		/* Try to add it first */
-		if (-1 == epoll_ctl(re->epfd, EPOLL_CTL_ADD, fd, &event)) {
-
-			/* If already exist then modify it */
-			if (EEXIST == errno) {
-
-				if (-1 == epoll_ctl(re->epfd, EPOLL_CTL_MOD,
-						    fd, &event)) {
-					err = errno;
-					DEBUG_WARNING("epoll_ctl:"
-						      " EPOLL_CTL_MOD:"
-						      " fd=%d (%m)\n",
-						      fd, err);
-				}
-			}
-			else {
-				err = errno;
-				DEBUG_WARNING("epoll_ctl: EPOLL_CTL_ADD:"
-					      " fd=%d (%m)\n",
-					      fd, err);
-			}
-		}
-	}
-	else {
+	if (!flags) {
 		if (-1 == epoll_ctl(re->epfd, EPOLL_CTL_DEL, fd, &event)) {
 			err = errno;
 			DEBUG_INFO("epoll_ctl: EPOLL_CTL_DEL: fd=%d (%m)\n",
 				   fd, err);
+		}
+		return err;
+	}
+
+	event.data.ptr = fhs;
+
+	if (flags & FD_READ)
+		event.events |= EPOLLIN;
+	if (flags & FD_WRITE)
+		event.events |= EPOLLOUT;
+	if (flags & FD_EXCEPT)
+		event.events |= EPOLLERR;
+
+	if (fhs->active) {
+		if (-1 == epoll_ctl(re->epfd, EPOLL_CTL_MOD, fd, &event)) {
+			err = errno;
+			DEBUG_WARNING("epoll_ctl:"
+				      " EPOLL_CTL_MOD:"
+				      " fd=%d (%m)\n",
+				      fd, err);
+		}
+	}
+	else {
+		if (-1 == epoll_ctl(re->epfd, EPOLL_CTL_ADD, fd, &event)) {
+			err = errno;
+			DEBUG_WARNING("epoll_ctl: EPOLL_CTL_ADD:"
+				      " fd=%d (%m)\n",
+				      fd, err);
 		}
 	}
 
@@ -606,7 +601,6 @@ static int fhs_update(struct re *re, struct fhs **fhsp, re_sock_t fd,
 	fhs->arg   = arg;
 
 	if (!he) {
-		fhs->active = true;
 		++re->nfds;
 		hash_append(re->fhl, fhs_hash(re, fd), &fhs->le, fhs);
 	}
@@ -692,6 +686,13 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 		break;
 	}
 
+	if (err && flags) {
+		fd_close(fd);
+		DEBUG_WARNING("fd_listen: fd=%d flags=0x%02x (%m)\n", fd,
+			      flags, err);
+		return err;
+	}
+
 	/* Stop listening */
 	if (!flags) {
 		fhs->active = false;
@@ -704,11 +705,8 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 		}
 		--re->nfds;
 	}
-
-	if (err && flags) {
-		fd_close(fd);
-		DEBUG_WARNING("fd_listen: fd=%d flags=0x%02x (%m)\n", fd,
-			      flags, err);
+	else {
+		fhs->active = true;
 	}
 
 	return err;
