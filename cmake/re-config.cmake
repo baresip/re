@@ -35,6 +35,11 @@ if(HAVE_UNISTD_H)
   list(APPEND RE_DEFINITIONS -DHAVE_UNISTD_H)
 endif()
 
+check_include_file(resolv.h HAVE_RESOLV)
+if(HAVE_RESOLV)
+  list(APPEND RE_DEFINITIONS -DHAVE_RESOLV)
+endif()
+
 if(Backtrace_FOUND)
   list(APPEND RE_DEFINITIONS -DHAVE_EXECINFO)
 else()
