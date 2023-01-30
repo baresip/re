@@ -161,7 +161,8 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
  */
 int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 {
-	if (!sess || (sess->st && sess->established) || sess->terminated)
+	if (!sess || (!sess->established && !sess->refresh_allowed)
+	    || sess->terminated || sess->awaiting_answer)
 		return EINVAL;
 
 	mem_deref(sess->desc);

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#define _GNU_SOURCE 1
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -15,7 +16,6 @@
 #define __USE_POSIX 1  /**< Use POSIX flag */
 #define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
 #define __USE_MISC 1
-#define _GNU_SOURCE 1
 #include <netdb.h>
 #endif
 #include <string.h>
@@ -275,31 +275,34 @@ static void tcp_recv_handler(int flags, void *arg)
 	bool hlp_estab = false;
 	struct le *le;
 	ssize_t n;
-	int err;
+	int err = 0;
 	socklen_t err_len = sizeof(err);
 
 	if (flags & FD_EXCEPT) {
 		DEBUG_INFO("recv handler: got FD_EXCEPT on fd=%d\n", tc->fdc);
 	}
 
-	/* check for any errors */
-	if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
-			     BUF_CAST &err, &err_len)) {
-		DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
-			      RE_ERRNO_SOCK);
-		return;
+	/* check for connection errors */
+	if (tc->active && !tc->connected) {
+		if (-1 == getsockopt(tc->fdc, SOL_SOCKET, SO_ERROR,
+				     BUF_CAST &err, &err_len)) {
+			DEBUG_WARNING("recv handler: getsockopt: (%m)\n",
+				      RE_ERRNO_SOCK);
+			return;
+		}
 	}
 
-	if (err) {
-		conn_close(tc, err);
-		return;
-	}
 #if 0
 	if (EINPROGRESS != err && EALREADY != err) {
 		DEBUG_WARNING("recv handler: Socket error (%m)\n", err);
 		return;
 	}
 #endif
+
+	if (err) {
+		conn_close(tc, err);
+		return;
+	}
 
 	if (flags & FD_WRITE) {
 
@@ -472,22 +475,6 @@ static struct tcp_conn *conn_alloc(tcp_estab_h *eh, tcp_recv_h *rh,
 }
 
 
-static void tcp_sockopt_set(re_sock_t fd)
-{
-#ifdef SO_LINGER
-	const struct linger dl = {0, 0};
-	int err;
-
-	err = setsockopt(fd, SOL_SOCKET, SO_LINGER, BUF_CAST &dl, sizeof(dl));
-	if (err) {
-		DEBUG_WARNING("sockopt: SO_LINGER (%m)\n", err);
-	}
-#else
-	(void)fd;
-#endif
-}
-
-
 static int  tcp_sock_setopt(struct tcp_sock *ts, int level, int optname,
 		    const void *optval, uint32_t optlen)
 {
@@ -522,7 +509,6 @@ static void tcp_conn_handler(int flags, void *arg)
 {
 	struct sa peer;
 	struct tcp_sock *ts = arg;
-	int err;
 
 	(void)flags;
 
@@ -531,20 +517,25 @@ static void tcp_conn_handler(int flags, void *arg)
 	if (ts->fdc != RE_BAD_SOCK)
 		(void)close(ts->fdc);
 
+#ifdef HAVE_ACCEPT4
+	ts->fdc = accept4(ts->fd, &peer.u.sa, &peer.len, SOCK_NONBLOCK);
+	if (ts->fdc == RE_BAD_SOCK) {
+		return;
+	}
+#else
 	ts->fdc = accept(ts->fd, &peer.u.sa, &peer.len);
 	if (ts->fdc == RE_BAD_SOCK) {
 		return;
 	}
 
-	err = net_sockopt_blocking_set(ts->fdc, false);
+	int err = net_sockopt_blocking_set(ts->fdc, false);
 	if (err) {
 		DEBUG_WARNING("conn handler: nonblock set: %m\n", err);
 		(void)close(ts->fdc);
 		ts->fdc = RE_BAD_SOCK;
 		return;
 	}
-
-	tcp_sockopt_set(ts->fdc);
+#endif
 
 	if (ts->connh)
 		ts->connh(&peer, ts->arg);
@@ -659,8 +650,6 @@ int tcp_sock_alloc(struct tcp_sock **tsp, const struct sa *local,
 			(void)close(fd);
 			continue;
 		}
-
-		tcp_sockopt_set(fd);
 
 		/* OK */
 		ts->fd = fd;
@@ -932,8 +921,6 @@ int tcp_conn_alloc(struct tcp_conn **tcp,
 			tc->fdc = RE_BAD_SOCK;
 			continue;
 		}
-
-		tcp_sockopt_set(tc->fdc);
 
 		err = 0;
 		break;

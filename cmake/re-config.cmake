@@ -9,6 +9,7 @@ find_package(OpenSSL)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
+option(USE_TRACE "Enable Tracing helpers" OFF)
 
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
@@ -34,6 +35,18 @@ if(HAVE_UNISTD_H)
   list(APPEND RE_DEFINITIONS -DHAVE_UNISTD_H)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+  check_symbol_exists(res_init resolv.h HAVE_RESOLV)
+else()
+  check_symbol_exists(res_ninit resolv.h HAVE_RESOLV)
+endif()
+if(HAVE_RESOLV)
+  find_library(RESOLV_LIBRARY resolv)
+  list(APPEND RE_DEFINITIONS -DHAVE_RESOLV)
+else()
+  set(RESOLV_LIBRARY)
+endif()
+
 if(Backtrace_FOUND)
   list(APPEND RE_DEFINITIONS -DHAVE_EXECINFO)
 else()
@@ -43,6 +56,11 @@ endif()
 check_function_exists(thrd_create HAVE_THREADS)
 if(HAVE_THREADS)
   list(APPEND RE_DEFINITIONS -DHAVE_THREADS)
+endif()
+
+check_function_exists(accept4 HAVE_ACCEPT4)
+if(HAVE_ACCEPT4)
+  list(APPEND RE_DEFINITIONS -DHAVE_ACCEPT4)
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
@@ -70,7 +88,6 @@ list(APPEND RE_DEFINITIONS
 
 if(UNIX)
   list(APPEND RE_DEFINITIONS
-    -DHAVE_POLL
     -DHAVE_PWD_H
     -DHAVE_ROUTE_LIST
     -DHAVE_SETRLIMIT
@@ -120,6 +137,12 @@ if(USE_UNIXSOCK)
 else()
   list(APPEND RE_DEFINITIONS
     -DHAVE_UNIXSOCK=0
+  )
+endif()
+
+if(USE_TRACE)
+  list(APPEND RE_DEFINITIONS
+    -DRE_TRACE_ENABLED
   )
 endif()
 

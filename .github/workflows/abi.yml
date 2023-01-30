@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-          ref: 'v2.6.1'
+          ref: 'v2.11.0'
           path: old
 
     - uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
 
     - name: abidiff compare
       id: abidiff
-      run: abidiff old/libre.so current/libre.so
+      run: abidiff old/build/libre.so current/build/libre.so
       continue-on-error: true
 
     - name: display warning

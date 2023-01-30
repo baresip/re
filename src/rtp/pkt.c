@@ -257,6 +257,7 @@ int rtcp_vencode(struct mbuf *mb, enum rtcp_type type, uint32_t count,
  * @param mb    Buffer to encode into
  * @param type  RTCP Packet type
  * @param count Packet-specific count
+ * @param ...   Variable arguments, type specific
  *
  * @return 0 for success, otherwise errorcode
  */

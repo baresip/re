@@ -46,8 +46,10 @@ static void update_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	else if (msg->scode < 300) {
 		(void)sip_dialog_update(req->sess->dlg, msg);
 
-		if (req->sess->sent_offer)
+		if (req->sess->sent_offer) {
 			(void)req->sess->answerh(msg, req->sess->arg);
+			req->sess->awaiting_answer = false;
+		}
 	}
 	else {
 		if (req->sess->terminated)
@@ -152,8 +154,9 @@ int sipsess_update(struct sipsess *sess)
 	if (!sess || sess->terminated || !sess->ctype || !sess->desc)
 		return EINVAL;
 
-	sess->sent_offer = sess->desc ? true : false;
-	sess->modify_pending = false;
+	if ((!sess->established && !sess->refresh_allowed)
+	    || sess->awaiting_answer)
+		return EPROTO;
 
 	err = sipsess_request_alloc(&req, sess, sess->ctype, sess->desc, NULL,
 				    NULL);
@@ -161,8 +164,14 @@ int sipsess_update(struct sipsess *sess)
 		return err;
 
 	err = update_request(req);
-	if (err)
+	if (err) {
 		mem_deref(req);
+		return err;
+	}
+
+	sess->sent_offer = sess->desc ? true : false;
+	sess->awaiting_answer = sess->sent_offer;
+	sess->modify_pending = false;
 
 	return err;
 }

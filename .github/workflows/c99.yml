@@ -12,8 +12,15 @@ jobs:
   c99:
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
+
+    - name: install packages
+      run: |
+        sudo apt-get update && sudo apt-get install -y ninja-build
 
     - name: make
       run: | 

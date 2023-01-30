@@ -253,7 +253,7 @@ int stun_attr_decode(struct stun_attr **attrp, struct mbuf *mb,
 		for (i=0; i<len/2; i++) {
 			uint16_t type = ntohs(mbuf_read_u16(mb));
 
-			if (i >= ARRAY_SIZE(attr->v.unknown_attr.typev))
+			if (i >= RE_ARRAY_SIZE(attr->v.unknown_attr.typev))
 				continue;
 
 			attr->v.unknown_attr.typev[i] = type;
@@ -325,7 +325,7 @@ int stun_attr_decode(struct stun_attr **attrp, struct mbuf *mb,
 		if (attr->type >= 0x8000)
 			break;
 
-		if (ua && ua->typec < ARRAY_SIZE(ua->typev))
+		if (ua && ua->typec < RE_ARRAY_SIZE(ua->typev))
 			ua->typev[ua->typec++] = attr->type;
 		break;
 	}

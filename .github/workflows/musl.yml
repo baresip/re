@@ -13,11 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     container: alpine
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
     - name: install devel tools
       run: |
-        apk add musl-dev git cmake gcc make binutils openssl-dev linux-headers zlib-dev 
+        apk add musl-dev git cmake gcc make binutils openssl-dev linux-headers zlib-dev ninja
 
     - name: make
       run: |

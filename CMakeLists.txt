@@ -512,6 +512,12 @@ else()
   )
 endif()
 
+if(HAVE_RESOLV)
+  list(APPEND SRCS
+    src/dns/res.c
+  )
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND SRCS
     src/dns/darwin/srv.c
@@ -533,7 +539,7 @@ endif()
 # Linking LIBS
 #
 
-set(LINKLIBS Threads::Threads)
+set(LINKLIBS Threads::Threads ${RESOLV_LIBRARY})
 
 if(BACKTRACE_FOUND)
   list(APPEND LINKLIBS ${Backtrace_LIBRARIES})

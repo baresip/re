@@ -12,8 +12,15 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
+
+    - name: install packages
+      run: |
+        sudo apt-get update && sudo apt-get install -y ninja-build
 
     - name: make
       run: | 
@@ -38,7 +45,9 @@ jobs:
         cd ..
         cmake -S rem -B rem/build && cmake --build rem/build
         cd retest; cmake -B build -DCMAKE_EXE_LINKER_FLAGS="--coverage" && \
-          cmake --build build -j && ./build/retest -v -a
+           cmake --build build -j && \
+          ./build/retest -a -v && \
+          ./build/retest -r -m select -v
 
     - name: gcov
       run: | 

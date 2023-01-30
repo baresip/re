@@ -43,14 +43,18 @@ typedef SSIZE_T ssize_t;
 #endif
 
 /** Get number of elements in an array */
-#undef ARRAY_SIZE
-#define ARRAY_SIZE(a) ((sizeof(a))/(sizeof((a)[0])))
+#define RE_ARRAY_SIZE(a) ((sizeof(a))/(sizeof((a)[0])))
+
+/* Backwards compat */
+#define ARRAY_SIZE RE_ARRAY_SIZE
+
 
 /** Align a value to the boundary of mask */
-#define ALIGN_MASK(x, mask)    (((x)+(mask))&~(mask))
+#define RE_ALIGN_MASK(x, mask)    (((x)+(mask))&~(mask))
 
 /** Check alignment of pointer (p) and byte count (c) **/
-#define is_aligned(p, c) (((uintptr_t)(const void *)(p)) % (c) == 0)
+#define re_is_aligned(p, c) (((uintptr_t)(const void *)(p)) % (c) == 0)
+#define is_aligned re_is_aligned
 
 /** Get the minimal value */
 #undef MIN
@@ -74,10 +78,14 @@ typedef SSIZE_T ssize_t;
 
 /** Defines a soft breakpoint */
 #if (defined(__i386__) || defined(__x86_64__))
-#define BREAKPOINT __asm__("int $0x03")
+#define RE_BREAKPOINT __asm__("int $0x03")
 #else
-#define BREAKPOINT
+#define RE_BREAKPOINT
 #endif
+
+/* Backwards compat */
+#define BREAKPOINT RE_BREAKPOINT
+
 
 /* Error return/goto debug helpers */
 #ifdef TRACE_ERR
@@ -232,14 +240,6 @@ typedef SSIZE_T ssize_t;
 #define EKEYREJECTED 129
 #endif
 
-/*
- * Any C compiler conforming to C99 or later MUST support __func__
- */
-#if __STDC_VERSION__ >= 199901L
-#define __REFUNC__ (const char *)__func__
-#else
-#define __REFUNC__ __FUNCTION__
-#endif
 
 /*
  * Give the compiler a hint which branch is "likely" or "unlikely" (inspired

@@ -8,6 +8,9 @@
 #include <re_mbuf.h>
 #include <re_tcp.h>
 
+#ifndef RE_TCP_BACKLOG
+#define RE_TCP_BACKLOG 5
+#endif
 
 /**
  * Create and listen on a TCP Socket
@@ -36,7 +39,7 @@ int tcp_listen(struct tcp_sock **tsp, const struct sa *local,
 	if (err)
 		goto out;
 
-	err = tcp_sock_listen(ts, 5);
+	err = tcp_sock_listen(ts, RE_TCP_BACKLOG);
 	if (err)
 		goto out;
 

@@ -6,12 +6,15 @@ jobs:
   valgrind:
     runs-on: ubuntu-20.04
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - uses: actions/checkout@v3
 
     - name: install packages
       run: |
-        sudo apt-get update && sudo apt-get install -y libssl-dev valgrind
+        sudo apt-get update && sudo apt-get install -y libssl-dev valgrind ninja-build
 
     - name: make
       run: |
@@ -37,4 +40,4 @@ jobs:
         cmake -S rem -B rem/build && cmake --build rem/build
         cd retest
         cmake -B build && cmake --build build -j
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/retest -r
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/retest -r -v

@@ -6,10 +6,13 @@ jobs:
   MinGW-w64-build:
     runs-on: ubuntu-latest
 
+    env:
+      CMAKE_GENERATOR: Ninja
+
     steps:
     - name: "install packages"
       run: |
-        sudo apt-get update && sudo apt-get install -y mingw-w64
+        sudo apt-get update && sudo apt-get install -y mingw-w64 ninja-build
     
     - uses: actions/checkout@v3 # needed for pr checkout
 

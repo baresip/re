@@ -13,7 +13,7 @@
 #include <re_dbg.h>
 
 
-/**
+/*
  * Open a DLL file
  *
  * @param name  Name of DLL to open
@@ -36,7 +36,7 @@ void *_mod_open(const char *name)
 }
 
 
-/**
+/*
  * Resolve a symbol address in a DLL
  *
  * @param h       DLL Handle
@@ -67,7 +67,7 @@ void *_mod_sym(void *h, const char *symbol)
 }
 
 
-/**
+/*
  * Close a DLL
  *
  * @param h DLL Handle
