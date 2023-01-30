@@ -11,9 +11,6 @@ jobs:
   coverity:
     runs-on: ubuntu-latest
 
-    env:
-      CMAKE_GENERATOR: Ninja
-
     steps:
     - uses: actions/checkout@v3
     - uses: sreimers/coverity-scan-action@v0
