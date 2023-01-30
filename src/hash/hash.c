@@ -5,6 +5,7 @@
  */
 #include <re_types.h>
 #include <re_mem.h>
+#include <re_fmt.h>
 #include <re_mbuf.h>
 #include <re_list.h>
 #include <re_hash.h>
@@ -232,4 +233,37 @@ uint32_t hash_valid_size(uint32_t size)
 		;
 
 	return 1<<x;
+}
+
+
+/**
+ * Debug Hashmap table
+ *
+ * @param pf  Print handler where debug output is printed to
+ * @param h   Hashmap table
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int hash_debug(struct re_printf *pf, struct hash *h)
+{
+	int err = 0;
+
+	if (!h)
+		return EINVAL;
+
+	err |= re_hprintf(pf, "hash (bsize %u) list entries:\n", h->bsize);
+	for (uint32_t i = 0; i < h->bsize; i++) {
+		struct le *he = hash_list_idx(h, i)->head;
+
+		if (!he)
+			continue;
+
+		uint32_t c = list_count(he->list);
+		if (!c)
+			continue;
+
+		err |= re_hprintf(pf, "  [%u]: %u\n", i, c);
+	}
+
+	return err;
 }
