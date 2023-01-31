@@ -284,12 +284,27 @@ const char *rtcp_sdes_name(enum rtcp_sdes_type sdes);
 bool rtp_is_rtcp_packet(const struct mbuf *mb);
 
 
+/**
+ * Check if a payload type is RTCP
+ *
+ * @param pt Payload type
+ *
+ * @return True if RTCP, otherwise false
+ */
 static inline bool rtp_pt_is_rtcp(uint8_t pt)
 {
 	return 64 <= pt && pt <= 95;
 }
 
 
+/**
+ * Calculate difference between two sequence numbers
+ *
+ * @param x First sequence number
+ * @param y Second sequence number
+ *
+ * @return Difference between the two sequence numbers
+ */
 static inline int16_t rtp_seq_diff(uint16_t x, uint16_t y)
 {
 	return (int16_t)(y - x);
