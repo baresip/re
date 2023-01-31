@@ -259,6 +259,50 @@ int rtcp_vencode(struct mbuf *mb, enum rtcp_type type, uint32_t count,
  * @param count Packet-specific count
  * @param ...   Variable arguments, type specific
  *
+ * Variable arguments for each RTCP type:
+ *
+ * \verbatim
+  SR       SSRC of sender
+           NTP Timestamp (MSW)
+           NTP Timestamp (LSW)
+           RTP Timestamp
+           Sender packet count
+           Sender octet count
+           Encode handler for report block
+           Handler argument
+
+  RR       SSRC of sender
+           Encode handler for report block
+           Handler argument
+
+  SDES     Encode handler for SDES chunk
+           Handler argument
+
+  BYE      SSRCs (vector)
+           Reason string (optional)
+
+  APP      SSRC/CSRC
+           name (ASCII)
+           Data
+           Data length
+
+  FIR      SSRC
+
+  NACK     SSRC
+           FSN
+           BLP
+
+  RTPFB    SSRC packet
+           SSRC media
+           Encode handler
+           Handler argument
+
+  PSFB     SSRC packet
+           SSRC media
+           Encode handler
+           Handler argument
+   \endverbatim
+ *
  * @return 0 for success, otherwise errorcode
  */
 int rtcp_encode(struct mbuf *mb, enum rtcp_type type, uint32_t count, ...)
