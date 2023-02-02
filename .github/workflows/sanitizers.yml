@@ -36,7 +36,7 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build && cmake --build build
+        cmake -B build -DHAVE_THREADS= && cmake --build build
         cat build/compile_commands.json
     
     - uses: sreimers/pr-dependency-action@v0.5
