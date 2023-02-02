@@ -31,8 +31,7 @@ jobs:
     - name: make info
       run: |
         echo "OS: ${{ matrix.os }}"
-        echo "--- ${{ matrix.compiler }} DEBUG VERSION ---"
-        ${{ matrix.compiler }} - --version
+        clang - --version
 
     - name: cmake
       run: |
