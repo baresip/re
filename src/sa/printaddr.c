@@ -6,7 +6,6 @@
 #ifdef HAVE_GETIFADDRS
 #include <sys/types.h>
 #include <sys/socket.h>
-#define __USE_MISC 1   /**< Use MISC code */
 #include <net/if.h>
 #endif
 #include <re_types.h>

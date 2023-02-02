@@ -10,7 +10,6 @@
 #include <windows.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#define _BSD_SOURCE 1
 #include <unistd.h>
 #endif
 #ifdef HAVE_SELECT_H

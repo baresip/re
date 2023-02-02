@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#define _GNU_SOURCE 1
-#define __EXTENSIONS__ 1
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
