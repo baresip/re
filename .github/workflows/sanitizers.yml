@@ -36,9 +36,8 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build -DHAVE_THREADS= && cmake --build build
-        cat build/compile_commands.json
-    
+        cmake -B build -DHAVE_THREADS= && cmake --build build -j
+
     - uses: sreimers/pr-dependency-action@v0.5
       with:
         name: rem
@@ -56,5 +55,5 @@ jobs:
     - name: retest
       run: |
         cd ..
-        cmake -S rem -B rem/build && cmake --build rem/build
+        cmake -S rem -B rem/build && cmake --build rem/build -j
         cd retest && make && ./retest -riv
