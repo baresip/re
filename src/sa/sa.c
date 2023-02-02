@@ -3,14 +3,8 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#define _BSD_SOURCE 1
-#define _DEFAULT_SOURCE 1
-
 #ifndef WIN32
 #include <arpa/inet.h>
-#define __USE_POSIX 1  /**< Use POSIX flag */
-#define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
-#define __USE_MISC 1
 #include <netdb.h>
 #endif
 

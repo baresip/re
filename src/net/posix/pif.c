@@ -7,11 +7,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#define __USE_POSIX 1  /**< Use POSIX code */
-#define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
 #include <netdb.h>
-#define __USE_MISC 1   /**< Use MISC code */
-#define _BSD_SOURCE 1
 #include <net/if.h>
 #include <arpa/inet.h>
 /*#include <net/if_arp.h>*/
