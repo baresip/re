@@ -31,4 +31,4 @@ jobs:
         wget "https://github.com/baresip/ci/releases/download/v0.1/assets.tar.gz"
         tar -xf assets.tar.gz
     - name: make
-      run: cmake -B build && cmake --build build -j
+      run: cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j
