@@ -5,7 +5,7 @@ include(CheckSymbolExists)
 find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(ZLIB)
-find_package(OpenSSL)
+find_package(OpenSSL "1.1.0")
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
