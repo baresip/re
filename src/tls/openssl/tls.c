@@ -159,8 +159,7 @@ static int keytype2int(enum tls_keytype type)
 }
 
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
+#if !defined(LIBRESSL_VERSION_NUMBER)
 /**
  * OpenSSL verify handler for debugging purposes. Prints only warnings in the
  * default build
@@ -462,12 +461,7 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 	if (!tls || !purpose)
 		return EINVAL;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	i = X509_PURPOSE_get_by_sname(purpose);
-#else
-	i = X509_PURPOSE_get_by_sname((char *) purpose);
-#endif
-
 	if (i < 0)
 		return EINVAL;
 
@@ -513,15 +507,9 @@ static int tls_generate_cert(X509 **pcert, const char *cn)
 	    !X509_set_subject_name(cert, subj))
 		goto err;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	if (!X509_gmtime_adj(X509_getm_notBefore(cert), -3600*24*365) ||
 	    !X509_gmtime_adj(X509_getm_notAfter(cert),   3600*24*365*10))
 		goto err;
-#else
-	if (!X509_gmtime_adj(X509_get_notBefore(cert), -3600*24*365) ||
-	    !X509_gmtime_adj(X509_get_notAfter(cert),   3600*24*365*10))
-		goto err;
-#endif
 
 	goto out;
 
@@ -580,11 +568,7 @@ int tls_set_selfsigned_ec(struct tls *tls, const char *cn, const char *curve_n)
 	if (!EC_KEY_generate_key(eckey))
 		goto out;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	EC_KEY_set_asn1_flag(eckey, OPENSSL_EC_NAMED_CURVE);
-#else
-	EC_KEY_set_asn1_flag(eckey, 0);
-#endif
 
 	key = EVP_PKEY_new();
 	if (!key)
@@ -1295,8 +1279,7 @@ int tls_set_ciphers(struct tls *tls, const char *cipherv[], size_t count)
  */
 int tls_set_verify_server(struct tls_conn *tc, const char *host)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
+#if !defined(LIBRESSL_VERSION_NUMBER)
 	struct sa sa;
 
 	if (!tc || !host)
@@ -1485,14 +1468,10 @@ int tls_set_min_proto_version(struct tls *tls, int version)
 	if (!tls)
 		return EINVAL;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	if (SSL_CTX_set_min_proto_version(tls->ctx, version))
 		return 0;
-#else
-	(void) version;
-#endif
-	return EACCES;
 
+	return EACCES;
 }
 
 
@@ -1509,12 +1488,9 @@ int tls_set_max_proto_version(struct tls *tls, int version)
 	if (!tls)
 		return EINVAL;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	if (SSL_CTX_set_max_proto_version(tls->ctx, version))
 		return 0;
-#else
-	(void) version;
-#endif
+
 	return EACCES;
 }
 
@@ -1805,6 +1781,7 @@ SSL_CTX *tls_ssl_ctx(const struct tls *tls)
 }
 
 
+#if !defined(LIBRESSL_VERSION_NUMBER)
 static void tls_cert_destructor(void *arg)
 {
 	struct tls_cert *uc = arg;
@@ -1814,6 +1791,7 @@ static void tls_cert_destructor(void *arg)
 	EVP_PKEY_free(uc->pkey);
 	sk_X509_pop_free(uc->chain, X509_free);
 }
+#endif
 
 
 /**
@@ -1829,6 +1807,7 @@ static void tls_cert_destructor(void *arg)
  */
 int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 {
+#if !defined(LIBRESSL_VERSION_NUMBER)
 	struct tls_cert *uc;
 	BIO *bio = NULL;
 	int err = 0;
@@ -1905,6 +1884,12 @@ out:
 	}
 
 	return err;
+#else
+	(void)tls;
+	(void)certf;
+	(void)host;
+	return 0;
+#endif
 }
 
 

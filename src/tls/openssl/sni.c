@@ -23,6 +23,7 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+#if !defined(LIBRESSL_VERSION_NUMBER)
 
 struct tls_conn;
 
@@ -138,8 +139,6 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 
 static int ssl_set_verify_client(SSL *ssl, const char *host)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-	!defined(LIBRESSL_VERSION_NUMBER)
 	struct sa sa;
 
 	if (!ssl || !host)
@@ -159,12 +158,6 @@ static int ssl_set_verify_client(SSL *ssl, const char *host)
 	SSL_set_verify(ssl, SSL_VERIFY_PEER, tls_verify_handler);
 
 	return 0;
-#else
-	(void)tc;
-	(void)host;
-
-	return ENOSYS;
-#endif
 }
 
 
@@ -173,9 +166,7 @@ static int ssl_use_cert(SSL *ssl, struct tls_cert *uc)
 	int err;
 	long r;
 
-#if !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_certs_clear(ssl);
-#endif
 	r = SSL_clear_chain_certs(ssl);
 	if (r != 1)
 		return EINVAL;
@@ -227,3 +218,5 @@ void tls_enable_sni(struct tls *tls)
 					       ssl_servername_handler);
 	SSL_CTX_set_tlsext_servername_arg(tls_ssl_ctx(tls), tls);
 }
+
+#endif /* !defined(LIBRESSL_VERSION_NUMBER) */
