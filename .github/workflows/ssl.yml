@@ -12,6 +12,7 @@ jobs:
 
     env:
       CMAKE_GENERATOR: Ninja
+      OPENSSL_ROOT_DIR: "assets/${{ matrix.ssl }}"
 
     steps:
     - uses: actions/checkout@v3
@@ -30,4 +31,4 @@ jobs:
         wget "https://github.com/baresip/ci/releases/download/v0.1/assets.tar.gz"
         tar -xf assets.tar.gz
     - name: make
-      run: cmake -B build -DCMAKE_C_FLAGS="-Iassets/${{ matrix.ssl }}/include -Werror" -DCMAKE_EXE_LINKER_FLAGS="-Lassets/${{ matrix.ssl }}" && cmake --build build -j
+      run: cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j
