@@ -16,6 +16,11 @@ jobs:
       with:
           path: current
 
+    - name: fix flaky azure mirrors
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo sed -i 's/azure\./de\./' /etc/apt/sources.list
+
     - name: install abidiff
       run: sudo apt-get update && sudo apt-get install -y abigail-tools
 
