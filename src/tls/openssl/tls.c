@@ -1888,7 +1888,7 @@ out:
 	(void)tls;
 	(void)certf;
 	(void)host;
-	return 0;
+	return ENOSYS;
 #endif
 }
 
