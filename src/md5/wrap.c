@@ -25,16 +25,12 @@
 void md5(const uint8_t *d, size_t n, uint8_t *md)
 {
 #ifdef USE_OPENSSL
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
 	EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
 	EVP_DigestUpdate(ctx, d, n);
 	EVP_DigestFinal_ex(ctx, md, NULL);
 	EVP_MD_CTX_free(ctx);
-#else
-	(void)MD5(d, n, md);
-#endif
 #else
 #error missing MD5 backend
 #endif
