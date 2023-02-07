@@ -35,7 +35,7 @@ jobs:
         secret: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "baresip-win32 repo"
-       run: |
+      run: |
         mv retest baresip-win32/
 
     - uses: actions/checkout@v3
