@@ -28,11 +28,16 @@ jobs:
         repo: https://github.com/baresip/retest
         secret: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: "clone baresip-win32 repo"
-      run: |
-        git clone https://github.com/baresip/baresip-win32.git
+    - uses: sreimers/pr-dependency-action@v0.5
+      with:
+        name: baresip-win32
+        repo: https://github.com/baresip/baresip-win32
+        secret: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "baresip-win32 repo"
+       run: |
         mv retest baresip-win32/
-    
+
     - uses: actions/checkout@v3
       with:
         path: baresip-win32/re
