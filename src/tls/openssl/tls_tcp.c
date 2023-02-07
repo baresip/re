@@ -234,6 +234,7 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 #if !defined(LIBRESSL_VERSION_NUMBER)
 			&& SSL_state(tc->ssl) != TLS_ST_CW_CLNT_HELLO
 			&& SSL_state(tc->ssl) != TLS_ST_CW_FINISHED
+			&& SSL_state(tc->ssl) != TLS_ST_SW_SRVR_DONE
 #endif
 		) {
 			*err = EPROTO;
