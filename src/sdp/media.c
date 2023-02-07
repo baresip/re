@@ -12,6 +12,7 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_sdp.h>
+#include <re_thread.h>
 #include "sdp.h"
 
 
@@ -39,6 +40,7 @@ static void destructor(void *arg)
 	mem_deref(m->name);
 	mem_deref(m->proto);
 	mem_deref(m->uproto);
+	mem_deref(m->lock);
 }
 
 
@@ -46,10 +48,17 @@ static int media_alloc(struct sdp_media **mp, struct list *list)
 {
 	struct sdp_media *m;
 	int i;
+	int err;
 
 	m = mem_zalloc(sizeof(*m), destructor);
 	if (!m)
 		return ENOMEM;
+
+	err  = mutex_alloc(&m->lock);
+	if (err) {
+		mem_deref(m);
+		return err;
+	}
 
 	list_append(list, &m->le, m);
 
@@ -534,7 +543,9 @@ void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir)
 	if (!m)
 		return;
 
+	mtx_lock(m->lock);
 	m->ldir = dir;
+	mtx_unlock(m->lock);
 }
 
 
@@ -682,7 +693,15 @@ int32_t sdp_media_rbandwidth(const struct sdp_media *m,
  */
 enum sdp_dir sdp_media_ldir(const struct sdp_media *m)
 {
-	return m ? m->ldir : SDP_INACTIVE;
+	enum sdp_dir ldir;
+
+	if (!m)
+		return SDP_INACTIVE;
+
+	mtx_lock(m->lock);
+	ldir = m->ldir;
+	mtx_unlock(m->lock);
+	return ldir;
 }
 
 
@@ -695,7 +714,15 @@ enum sdp_dir sdp_media_ldir(const struct sdp_media *m)
  */
 enum sdp_dir sdp_media_rdir(const struct sdp_media *m)
 {
-	return m ? m->rdir : SDP_INACTIVE;
+	enum sdp_dir rdir;
+
+	if (!m)
+		return SDP_INACTIVE;
+
+	mtx_lock(m->lock);
+	rdir = m->rdir;
+	mtx_unlock(m->lock);
+	return rdir;
 }
 
 
@@ -708,7 +735,15 @@ enum sdp_dir sdp_media_rdir(const struct sdp_media *m)
  */
 enum sdp_dir sdp_media_dir(const struct sdp_media *m)
 {
-	return m ? (enum sdp_dir)(m->ldir & m->rdir) : SDP_INACTIVE;
+	enum sdp_dir dir;
+
+	if (!m)
+		return SDP_INACTIVE;
+
+	mtx_lock(m->lock);
+	dir = (enum sdp_dir)(m->ldir & m->rdir);
+	mtx_unlock(m->lock);
+	return dir;
 }
 
 
