@@ -43,8 +43,8 @@ struct sdp_media {
 	char *uproto;           /* unsupported protocol */
 	sdp_media_enc_h *ench;
 	void *arg;
-	enum sdp_dir ldir;
-	enum sdp_dir rdir;
+	RE_ATOMIC enum sdp_dir ldir;
+	RE_ATOMIC enum sdp_dir rdir;
 	bool fmt_ignore;
 	bool disabled;
 	int dynpt;

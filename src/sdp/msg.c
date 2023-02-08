@@ -10,6 +10,7 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_sdp.h>
+#include <re_atomic.h>
 #include "sdp.h"
 
 
@@ -220,10 +221,10 @@ static int media_decode(struct sdp_media **mp, struct sdp_session *sess,
 	m->raddr = sess->raddr;
 	sa_set_port(&m->raddr, m->uproto ? 0 : pl_u32(&port));
 
-	m->rdir = sess->rdir;
+	re_atomic_rlx_set(&m->rdir, sess->rdir);
 
 	if (!pl_u32(&port))
-		m->rdir = SDP_INACTIVE;
+		re_atomic_rlx_set(&m->rdir, SDP_INACTIVE);
 
 	*mp = m;
 
@@ -249,6 +250,7 @@ static int version_decode(const struct pl *pl)
 int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 {
 	struct sdp_media *m;
+	enum sdp_dir rdir;
 	struct pl pl, val;
 	struct le *le;
 	char type = 0;
@@ -284,8 +286,10 @@ int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 
 			case 'a':
 				err = attr_decode(sess, m,
-						  m ? &m->rdir : &sess->rdir,
+						  m ? &rdir : &sess->rdir,
 						  &val);
+				if (m)
+					re_atomic_rlx_set(&m->rdir, rdir);
 				break;
 
 			case 'b':
@@ -358,6 +362,7 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 	bool rejected = false;
 	struct le *le;
 	uint16_t port;
+	enum sdp_dir ldir, rdir;
 
 	for (le=m->lfmtl.head; le; le=le->next) {
 
@@ -459,9 +464,11 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 		err |= mbuf_printf(mb, "a=rtcp:%u\r\n",
 				   sa_port(&m->laddr_rtcp));
 
+	ldir = re_atomic_rlx(&m->ldir);
+	rdir = re_atomic_rlx(&m->rdir);
 	err |= mbuf_printf(mb, "a=%s\r\n", disabled ?
 		sdp_dir_name(SDP_INACTIVE) :
-		sdp_dir_name(offer ? m->ldir : m->ldir & m->rdir));
+		sdp_dir_name(offer ? ldir : ldir & rdir));
 
 	for (le = m->lattrl.head; le; le = le->next)
 		err |= mbuf_printf(mb, "%H", sdp_attr_print, le->data);

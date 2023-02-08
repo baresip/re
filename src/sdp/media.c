@@ -12,6 +12,7 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_sdp.h>
+#include <re_atomic.h>
 #include "sdp.h"
 
 
@@ -53,8 +54,8 @@ static int media_alloc(struct sdp_media **mp, struct list *list)
 
 	list_append(list, &m->le, m);
 
-	m->ldir  = SDP_SENDRECV;
-	m->rdir  = SDP_SENDRECV;
+	re_atomic_rlx_set(&m->ldir, SDP_SENDRECV);
+	re_atomic_rlx_set(&m->rdir, SDP_SENDRECV);
 	m->dynpt = RTP_DYNPT_START;
 
 	sa_init(&m->laddr, AF_INET);
@@ -169,7 +170,7 @@ void sdp_media_rreset(struct sdp_media *m)
 	list_flush(&m->rfmtl);
 	list_flush(&m->rattrl);
 
-	m->rdir = SDP_SENDRECV;
+	re_atomic_rlx_set(&m->rdir, SDP_SENDRECV);
 
 	for (i=0; i<SDP_BANDWIDTH_MAX; i++)
 		m->rbwv[i] = -1;
@@ -534,7 +535,7 @@ void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir)
 	if (!m)
 		return;
 
-	m->ldir = dir;
+	re_atomic_rlx_set(&m->ldir, dir);
 }
 
 
@@ -682,7 +683,7 @@ int32_t sdp_media_rbandwidth(const struct sdp_media *m,
  */
 enum sdp_dir sdp_media_ldir(const struct sdp_media *m)
 {
-	return m ? m->ldir : SDP_INACTIVE;
+	return m ? re_atomic_rlx(&m->ldir) : SDP_INACTIVE;
 }
 
 
@@ -695,7 +696,7 @@ enum sdp_dir sdp_media_ldir(const struct sdp_media *m)
  */
 enum sdp_dir sdp_media_rdir(const struct sdp_media *m)
 {
-	return m ? m->rdir : SDP_INACTIVE;
+	return m ? re_atomic_rlx(&m->rdir) : SDP_INACTIVE;
 }
 
 
@@ -708,7 +709,8 @@ enum sdp_dir sdp_media_rdir(const struct sdp_media *m)
  */
 enum sdp_dir sdp_media_dir(const struct sdp_media *m)
 {
-	return m ? (enum sdp_dir)(m->ldir & m->rdir) : SDP_INACTIVE;
+	return m ? (enum sdp_dir)(re_atomic_rlx(&m->ldir) &
+				  re_atomic_rlx(&m->rdir)) : SDP_INACTIVE;
 }
 
 
@@ -981,10 +983,10 @@ int sdp_media_debug(struct re_printf *pf, const struct sdp_media *m)
 		err |= re_hprintf(pf, "    %H\n", sdp_attr_debug, le->data);
 
 	err |= re_hprintf(pf, "  local direction:  %s\n",
-			sdp_dir_name(m->ldir));
+			sdp_dir_name(re_atomic_rlx(&m->ldir)));
 
 	err |= re_hprintf(pf, "  remote direction: %s\n",
-			sdp_dir_name(m->rdir));
+			sdp_dir_name(re_atomic_rlx(&m->rdir)));
 
 	return err;
 }

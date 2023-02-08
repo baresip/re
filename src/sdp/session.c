@@ -12,6 +12,7 @@
 #include <re_sa.h>
 #include <re_sdp.h>
 #include <re_sys.h>
+#include <re_atomic.h>
 #include "sdp.h"
 
 
