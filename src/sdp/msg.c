@@ -285,6 +285,7 @@ int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 			switch (type) {
 
 			case 'a':
+				rdir = SDP_SENDRECV;
 				err = attr_decode(sess, m,
 						  m ? &rdir : &sess->rdir,
 						  &val);
