@@ -701,16 +701,16 @@ static __forceinline unsigned __int64 _re_atomic_load(
 	assert(size == 1u || size == 2u || size == 4u || size == 8u);
 	switch (size) {
 	case 1u:
-		v = _InterlockedCompareExchange8((char*)a, 0, 0);
+		v = _InterlockedCompareExchange8((const char*)a, 0, 0);
 		break;
 	case 2u:
-		v = _InterlockedCompareExchange16((short*)a, 0, 0);
+		v = _InterlockedCompareExchange16((const short*)a, 0, 0);
 		break;
 	case 4u:
-		v = _InterlockedCompareExchange((long*)a, 0, 0);
+		v = _InterlockedCompareExchange((const long*)a, 0, 0);
 		break;
 	default:
-		v = _InterlockedCompareExchange64((__int64*)a, 0, 0);
+		v = _InterlockedCompareExchange64((const __int64*)a, 0, 0);
 		break;
 	}
 
