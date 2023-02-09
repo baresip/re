@@ -221,10 +221,10 @@ static int media_decode(struct sdp_media **mp, struct sdp_session *sess,
 	m->raddr = sess->raddr;
 	sa_set_port(&m->raddr, m->uproto ? 0 : pl_u32(&port));
 
-	re_atomic_rlx_set(&m->rdir, sess->rdir);
+	sdp_media_set_rdir(m, sess->rdir);
 
 	if (!pl_u32(&port))
-		re_atomic_rlx_set(&m->rdir, SDP_INACTIVE);
+		sdp_media_set_rdir(m, SDP_INACTIVE);
 
 	*mp = m;
 
@@ -289,7 +289,7 @@ int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 						  m ? &rdir : &sess->rdir,
 						  &val);
 				if (m)
-					re_atomic_rlx_set(&m->rdir, rdir);
+					sdp_media_set_rdir(m, rdir);
 				break;
 
 			case 'b':
@@ -464,8 +464,8 @@ static int media_encode(const struct sdp_media *m, struct mbuf *mb, bool offer)
 		err |= mbuf_printf(mb, "a=rtcp:%u\r\n",
 				   sa_port(&m->laddr_rtcp));
 
-	ldir = re_atomic_rlx(&m->ldir);
-	rdir = re_atomic_rlx(&m->rdir);
+	ldir = sdp_media_ldir(m);
+	rdir = sdp_media_rdir(m);
 	err |= mbuf_printf(mb, "a=%s\r\n", disabled ?
 		sdp_dir_name(SDP_INACTIVE) :
 		sdp_dir_name(offer ? ldir : ldir & rdir));

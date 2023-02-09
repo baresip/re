@@ -540,6 +540,21 @@ void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir)
 
 
 /**
+ * Set the remote direction flag of an SDP Media line
+ *
+ * @param m   SDP Media line
+ * @param dir Media direction flag
+ */
+void sdp_media_set_rdir(struct sdp_media *m, enum sdp_dir dir)
+{
+	if (!m)
+		return;
+
+	re_atomic_rlx_set(&m->rdir, dir);
+}
+
+
+/**
  * Set a local attribute of an SDP Media line
  *
  * @param m       SDP Media line

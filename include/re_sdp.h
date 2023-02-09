@@ -101,6 +101,7 @@ void sdp_media_set_lbandwidth(struct sdp_media *m, enum sdp_bandwidth type,
 void sdp_media_set_lport_rtcp(struct sdp_media *m, uint16_t port);
 void sdp_media_set_laddr_rtcp(struct sdp_media *m, const struct sa *laddr);
 void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir);
+void sdp_media_set_rdir(struct sdp_media *m, enum sdp_dir dir);
 int  sdp_media_set_lattr(struct sdp_media *m, bool replace,
 			 const char *name, const char *value, ...);
 void sdp_media_del_lattr(struct sdp_media *m, const char *name);
