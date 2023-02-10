@@ -65,7 +65,7 @@ int tmrl_alloc(struct tmrl **tmrl)
 	if (!tmrl)
 		return EINVAL;
 
-	l = mem_zalloc(sizeof(struct tmrl), tmrl_destructor);
+	l = mem_zalloc(sizeof(struct tmrl), NULL);
 	if (!l)
 		return ENOMEM;
 
@@ -76,6 +76,8 @@ int tmrl_alloc(struct tmrl **tmrl)
 		mem_deref(l);
 		return err;
 	}
+
+	mem_destructor(l, tmrl_destructor);
 
 	*tmrl = l;
 
