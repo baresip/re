@@ -23,6 +23,9 @@
 
 #if defined(WIN32)
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
 typedef INIT_ONCE once_flag;
