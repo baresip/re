@@ -1034,7 +1034,7 @@ int re_main(re_signal_h *signalh)
 #endif
 #ifdef WIN32
 			if (WSAEINVAL == err) {
-				tmr_poll(&re->tmrl);
+				tmr_poll(re->tmrl);
 				continue;
 			}
 #endif
