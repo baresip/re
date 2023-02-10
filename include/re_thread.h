@@ -13,6 +13,9 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#ifndef RE_H_THREAD__
+#define RE_H_THREAD__
+
 #if defined(HAVE_THREADS)
 #include <threads.h>
 
@@ -286,3 +289,5 @@ int mutex_alloc(mtx_t **mtx);
  */
 int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);
+
+#endif /* RE_H_THREAD__ */

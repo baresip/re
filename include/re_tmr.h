@@ -5,12 +5,16 @@
  */
 
 
+#include <re_thread.h>
+
 /**
  * Defines the timeout handler
  *
  * @param arg Handler argument
  */
 typedef void (tmr_h)(void *arg);
+
+struct tmrl;
 
 /** Defines a timer */
 struct tmr {
@@ -20,14 +24,15 @@ struct tmr {
 	uint64_t jfs;       /**< Jiffies for timeout */
 	const char *file;
 	int line;
+	mtx_t *lock;
 };
 
-
-void     tmr_poll(struct list *tmrl);
+int      tmrl_alloc(struct tmrl **tmrl);
+void     tmr_poll(struct tmrl *tmrl);
 uint64_t tmr_jiffies_usec(void);
 uint64_t tmr_jiffies(void);
 uint64_t tmr_jiffies_rt_usec(void);
-uint64_t tmr_next_timeout(struct list *tmrl);
+uint64_t tmr_next_timeout(struct tmrl *tmrl);
 void     tmr_debug(void);
 int      tmr_status(struct re_printf *pf, void *unused);
 
