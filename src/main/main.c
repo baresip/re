@@ -1432,7 +1432,7 @@ void re_thread_async_close(void)
  * Execute work handler for current event loop
  *
  * @param work  Work handler
- * @param cb    Callback handler (called by re main thread)
+ * @param cb    Callback handler (called by re poll thread)
  * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
  *
  * @return 0 if success, otherwise errorcode
@@ -1459,11 +1459,41 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 
 
 /**
+ * Execute work handler for re_global main event loop
+ *
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re global main poll thread)
+ * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_main(re_async_work_h *work, re_async_h *cb, void *arg)
+{
+	struct re *re = re_global;
+	int err;
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async: re not ready\n");
+		return EAGAIN;
+	}
+
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
+	return re_async(re->async, 0, work, cb, arg);
+}
+
+
+/**
  * Execute work handler for current event loop
  *
  * @param id    Work identifier
  * @param work  Work handler
- * @param cb    Callback handler (called by re main thread)
+ * @param cb    Callback handler (called by re poll thread)
  * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
  *
  * @return 0 if success, otherwise errorcode
