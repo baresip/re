@@ -42,8 +42,6 @@ struct tmrl {
 	mtx_t *lock;
 };
 
-extern struct tmrl *tmrl_get(void);
-
 
 static void tmrl_destructor(void *arg)
 {
@@ -291,7 +289,7 @@ out:
 
 int tmr_status(struct re_printf *pf, void *unused)
 {
-	struct tmrl *tmrl = tmrl_get();
+	struct tmrl *tmrl = re_tmrl_get();
 	struct le *le;
 	uint32_t n;
 	int err = 0;
@@ -352,7 +350,7 @@ void tmr_init(struct tmr *tmr)
 void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 		   const char *file, int line)
 {
-	struct tmrl *tmrl = tmrl_get();
+	struct tmrl *tmrl = re_tmrl_get();
 	struct le *le;
 	mtx_t *lock;
 

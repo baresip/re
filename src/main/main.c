@@ -1376,13 +1376,12 @@ int re_thread_check(void)
  *
  * @note only used by tmr module
  */
-struct tmrl *tmrl_get(void);
-struct tmrl *tmrl_get(void)
+struct tmrl *re_tmrl_get(void)
 {
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("tmrl_get: re not ready\n");
+		DEBUG_WARNING("re_tmrl_get: re not ready\n");
 		return NULL;
 	}
 
