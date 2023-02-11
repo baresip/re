@@ -19,12 +19,12 @@ struct tmrl;
 /** Defines a timer */
 struct tmr {
 	struct le le;       /**< Linked list element */
+	mtx_t *lock;        /**< Mutex lock          */
 	tmr_h *th;          /**< Timeout handler     */
 	void *arg;          /**< Handler argument    */
 	uint64_t jfs;       /**< Jiffies for timeout */
 	const char *file;
 	int line;
-	mtx_t *lock;
 };
 
 int      tmrl_alloc(struct tmrl **tmrl);

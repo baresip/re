@@ -303,9 +303,6 @@ int tmr_status(struct re_printf *pf, void *unused)
 
 	mtx_lock(tmrl->lock);
 
-	if (!list_isempty(&tmrl->list))
-		goto out;
-
 	n = list_count(&tmrl->list);
 	if (!n)
 		goto out;
