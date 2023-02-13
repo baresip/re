@@ -261,6 +261,20 @@ int mbuf_write_mem(struct mbuf *mb, const uint8_t *buf, size_t size)
 
 
 /**
+ * Write an Pointer to a memory buffer
+ *
+ * @param mb Memory buffer
+ * @param v  Pointer to write
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int mbuf_write_ptr(struct mbuf *mb, intptr_t v)
+{
+	return mbuf_write_mem(mb, (uint8_t *)&v, sizeof(v));
+}
+
+
+/**
  * Write an 8-bit value to a memory buffer
  *
  * @param mb Memory buffer
@@ -375,6 +389,21 @@ int mbuf_read_mem(struct mbuf *mb, uint8_t *buf, size_t size)
 	mb->pos += size;
 
 	return 0;
+}
+
+
+/**
+ * Read an Pointer from a memory buffer
+ *
+ * @param mb Memory buffer
+ *
+ * @return Pointer on success, otherwise 0
+ */
+intptr_t mbuf_read_ptr(struct mbuf *mb)
+{
+	intptr_t v;
+
+	return (0 == mbuf_read_mem(mb, (uint8_t *)&v, sizeof(v))) ? v : 0;
 }
 
 
