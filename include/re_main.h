@@ -7,6 +7,7 @@
 #include "re_async.h"
 
 struct re;
+struct re_fhs;
 
 enum {
 #ifndef FD_READ
@@ -35,10 +36,10 @@ typedef void (fd_h)(int flags, void *arg);
 typedef void (re_signal_h)(int sig);
 
 
-int   fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg);
-void  fd_close(re_sock_t fd);
+int   fd_listen(struct re_fhs **fhs, re_sock_t fd, int flags, fd_h *fh,
+		void *arg);
+void  fd_close(struct re_fhs *fhs);
 int   fd_setsize(int maxfds);
-void  fd_debug(void);
 
 int   libre_init(void);
 void  libre_close(void);
