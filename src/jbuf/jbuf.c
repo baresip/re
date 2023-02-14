@@ -172,7 +172,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		return ENOSYS;
 	}
 
-	jb = mem_zalloc(sizeof(*jb), NULL);
+	jb = mem_zalloc(sizeof(*jb), jbuf_destructor);
 	if (!jb)
 		return ENOMEM;
 
@@ -205,15 +205,10 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	}
 
 out:
-	if (err) {
-		list_flush(&jb->pooll);
-		mem_deref(jb->lock);
+	if (err)
 		mem_deref(jb);
-	}
-	else {
+	else
 		*jbp = jb;
-		mem_destructor(jb, jbuf_destructor);
-	}
 
 	return err;
 }
@@ -541,7 +536,7 @@ void jbuf_flush(struct jbuf *jb)
 	uint32_t n_flush;
 #endif
 
-	if (!jb)
+	if (!jb || !jb->lock)
 		return;
 
 	mtx_lock(jb->lock);
