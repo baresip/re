@@ -135,12 +135,43 @@ static void frame_deref(struct jbuf *jb, struct frame *f)
 }
 
 
+static void flush_unlocked(struct jbuf *jb)
+{
+	struct le *le;
+#if JBUF_STAT
+	uint32_t n_flush;
+#endif
+
+	if (jb->framel.head) {
+		DEBUG_INFO("flush: %u frames\n", jb->n);
+	}
+
+	/* put all buffered frames back in free list */
+	for (le = jb->framel.head; le; le = jb->framel.head) {
+		DEBUG_INFO(" flush frame: seq=%u\n",
+			   ((struct frame *)(le->data))->hdr.seq);
+
+		frame_deref(jb, le->data);
+	}
+
+	jb->n       = 0;
+	jb->running = false;
+
+	jb->seq_get = 0;
+#if JBUF_STAT
+	n_flush = STAT_INC(n_flush);
+	memset(&jb->stat, 0, sizeof(jb->stat));
+	jb->stat.n_flush = n_flush;
+#endif
+}
+
+
 static void jbuf_destructor(void *data)
 {
 	struct jbuf *jb = data;
 
 	tmr_cancel(&jb->tmr);
-	jbuf_flush(jb);
+	flush_unlocked(jb);
 
 	/* Free all frames in the pool list */
 	list_flush(&jb->pooll);
@@ -526,6 +557,7 @@ out:
 	return err;
 }
 
+
 /**
  * Flush all frames in the jitter buffer
  *
@@ -533,36 +565,11 @@ out:
  */
 void jbuf_flush(struct jbuf *jb)
 {
-	struct le *le;
-#if JBUF_STAT
-	uint32_t n_flush;
-#endif
-
 	if (!jb)
 		return;
 
 	mtx_lock(jb->lock);
-	if (jb->framel.head) {
-		DEBUG_INFO("flush: %u frames\n", jb->n);
-	}
-
-	/* put all buffered frames back in free list */
-	for (le = jb->framel.head; le; le = jb->framel.head) {
-		DEBUG_INFO(" flush frame: seq=%u\n",
-			   ((struct frame *)(le->data))->hdr.seq);
-
-		frame_deref(jb, le->data);
-	}
-
-	jb->n       = 0;
-	jb->running = false;
-
-	jb->seq_get = 0;
-#if JBUF_STAT
-	n_flush = STAT_INC(n_flush);
-	memset(&jb->stat, 0, sizeof(jb->stat));
-	jb->stat.n_flush = n_flush;
-#endif
+	flush_unlocked(jb);
 	mtx_unlock(jb->lock);
 }
 
