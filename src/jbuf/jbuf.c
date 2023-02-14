@@ -172,7 +172,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		return ENOSYS;
 	}
 
-	jb = mem_zalloc(sizeof(*jb), jbuf_destructor);
+	jb = mem_zalloc(sizeof(*jb), NULL);
 	if (!jb)
 		return ENOMEM;
 
@@ -191,6 +191,8 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	err = mutex_alloc(&jb->lock);
 	if (err)
 		goto out;
+
+	mem_destructor(jb, jbuf_destructor);
 
 	/* Allocate all frames now */
 	for (i=0; i<jb->max; i++) {
@@ -536,7 +538,7 @@ void jbuf_flush(struct jbuf *jb)
 	uint32_t n_flush;
 #endif
 
-	if (!jb || !jb->lock)
+	if (!jb)
 		return;
 
 	mtx_lock(jb->lock);
