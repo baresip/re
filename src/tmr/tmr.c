@@ -360,7 +360,7 @@ void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 	if (!tmr->lock || !tmr->le.list)
 		lock = tmrl->lock;
 	else
-	 	lock = tmr->lock; /* use old lock for unlinking */
+		lock = tmr->lock; /* use old lock for unlinking */
 
 	mtx_lock(lock);
 
