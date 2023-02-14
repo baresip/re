@@ -206,6 +206,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 
 out:
 	if (err) {
+		mem_deref(jb->lock);
 		mem_deref(jb);
 	}
 	else {
