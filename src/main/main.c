@@ -79,7 +79,6 @@ struct re {
 	int maxfds;                  /**< Maximum number of polling fds     */
 	int nfds;                    /**< Number of active file descriptors */
 	enum poll_method method;     /**< The current polling method        */
-	bool update;                 /**< File descriptor set need updating */
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct list tmrl;            /**< List of timers                    */
@@ -381,47 +380,6 @@ static int set_kqueue_fds(struct re *re, re_sock_t fd, int flags)
 	return 0;
 }
 #endif
-
-
-/**
- * Rebuild the file descriptor mapping table. This must be done whenever
- * the polling method is changed.
- */
-static int rebuild_fds(struct re *re)
-{
-	int i, err = 0;
-
-	DEBUG_INFO("rebuilding fds (nfds=%d)\n", re->nfds);
-
-	/* Update fd sets */
-	for (i=0; i<re->nfds; i++) {
-		if (!re->fhs[i].fh)
-			continue;
-
-		switch (re->method) {
-
-#ifdef HAVE_EPOLL
-		case METHOD_EPOLL:
-			err = set_epoll_fds(re, i, re->fhs[i].flags);
-			break;
-#endif
-
-#ifdef HAVE_KQUEUE
-		case METHOD_KQUEUE:
-			err = set_kqueue_fds(re, i, re->fhs[i].flags);
-			break;
-#endif
-
-		default:
-			break;
-		}
-
-		if (err)
-			break;
-	}
-
-	return err;
-}
 
 
 static int poll_init(struct re *re)
@@ -839,12 +797,6 @@ static int fd_poll(struct re *re)
 #endif
 		}
 
-		/* Check if polling method was changed */
-		if (re->update) {
-			re->update = false;
-			return 0;
-		}
-
 		/* Handle only active events */
 		--n;
 	}
@@ -1083,10 +1035,19 @@ int re_debug(struct re_printf *pf, void *unused)
 	}
 
 	err |= re_hprintf(pf, "re main loop:\n");
-	err |= re_hprintf(pf, "  maxfds:  %d\n", re->maxfds);
-	err |= re_hprintf(pf, "  nfds:    %d\n", re->nfds);
-	err |= re_hprintf(pf, "  method:  %d (%s)\n", re->method,
+	err |= re_hprintf(pf, "  maxfds:       %d\n", re->maxfds);
+	err |= re_hprintf(pf, "  nfds:         %d\n", re->nfds);
+	err |= re_hprintf(pf, "  method:       %s\n",
 			  poll_method_name(re->method));
+	err |= re_hprintf(pf, "  polling:      %d\n",
+			  re_atomic_rlx(&re->polling));
+	err |= re_hprintf(pf, "  sig:          %d\n", re->sig);
+	err |= re_hprintf(pf, "  timers:       %u\n", list_count(&re->tmrl));
+	err |= re_hprintf(pf, "  mutex:        %p\n", re->mutex);
+	err |= re_hprintf(pf, "  tid:          %p\n", re->tid);
+	err |= re_hprintf(pf, "  thread_enter: %d\n",
+			  re_atomic_rlx(&re->thread_enter));
+	err |= re_hprintf(pf, "  async:        %p\n", re->async);
 
 	return err;
 }
@@ -1119,8 +1080,8 @@ enum poll_method poll_method_get(void)
 
 
 /**
- * Set async I/O polling method. This function can also be called while the
- * program is running.
+ * Set async I/O polling method. This function can only called once, before
+ * poll init/setup.
  *
  * @param method New polling method
  *
@@ -1133,6 +1094,11 @@ int poll_method_set(enum poll_method method)
 
 	if (!re) {
 		DEBUG_WARNING("poll_method_set: re not ready\n");
+		return EINVAL;
+	}
+
+	if (re->method != METHOD_NULL) {
+		DEBUG_WARNING("poll_method_set: already set\n");
 		return EINVAL;
 	}
 
@@ -1165,16 +1131,13 @@ int poll_method_set(enum poll_method method)
 	}
 
 	re->method = method;
-	re->update = true;
 
 	DEBUG_INFO("Setting async I/O polling method to `%s'\n",
 		   poll_method_name(re->method));
 
 	err = poll_init(re);
-	if (err)
-		return err;
 
-	return rebuild_fds(re);
+	return err;
 }
 
 
