@@ -1039,7 +1039,6 @@ int re_debug(struct re_printf *pf, void *unused)
 	err |= re_hprintf(pf, "  nfds:         %d\n", re->nfds);
 	err |= re_hprintf(pf, "  method:       %s\n",
 			  poll_method_name(re->method));
-	err |= re_hprintf(pf, "  update:       %d\n", re->update);
 	err |= re_hprintf(pf, "  polling:      %d\n",
 			  re_atomic_rlx(&re->polling));
 	err |= re_hprintf(pf, "  sig:          %d\n", re->sig);
