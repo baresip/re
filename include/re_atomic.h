@@ -608,7 +608,7 @@ static __forceinline unsigned __int64 _re_atomic_load(
 		v = __iso_volatile_load32((const unsigned __int32*)a);
 		break;
 	default:
-		v = __iso_volatile_load64(*(const unsigned __int64*)a);
+		v = __iso_volatile_load64((const unsigned __int64*)a);
 		break;
 	}
 
