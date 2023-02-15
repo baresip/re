@@ -5,6 +5,61 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.12.0] - 2023-02-15
+
+## What's Changed
+* tls: remove ifdef DTLS_CTRL_HANDLE_TIMEOUT by @alfredh in https://github.com/baresip/re/pull/634
+* cmake: increment required version by @cspiel1 in https://github.com/baresip/re/pull/642
+* dtls: add logging of DTLS packet content-type by @alfredh in https://github.com/baresip/re/pull/641
+* dtls: add single connection mode by @alfredh in https://github.com/baresip/re/pull/643
+* ice: reduce conncheck start timer by @alfredh in https://github.com/baresip/re/pull/640
+* async,main: make re_thread_async itself thread safe by @sreimers in https://github.com/baresip/re/pull/644
+* av1: remove old packetizer by @alfredh in https://github.com/baresip/re/pull/645
+* av1: fix chrome interop by @alfredh in https://github.com/baresip/re/pull/646
+* av1: minor cleanups by @alfredh in https://github.com/baresip/re/pull/649
+* trace: fix new json start by @sreimers in https://github.com/baresip/re/pull/648
+* make rtcp interval configureable by @sreimers in https://github.com/baresip/re/pull/650
+* sa: proposal to always enable struct sockaddr_in6 by @alfredh in https://github.com/baresip/re/pull/651
+* ci: rename ccheck to lint by @alfredh in https://github.com/baresip/re/pull/653
+* ci: extend coverage test with retest+select by @alfredh in https://github.com/baresip/re/pull/652
+* main: remove poll support by @sreimers in https://github.com/baresip/re/pull/654
+* ci: use Ninja as CMake generator by @alfredh in https://github.com/baresip/re/pull/656
+* ci/abi: fix abidiff paths by @sreimers in https://github.com/baresip/re/pull/657
+* PRACK refactoring by @maximilianfridrich in https://github.com/baresip/re/pull/630
+* types: add RE_ prefix to ARRAY_SIZE() by @alfredh in https://github.com/baresip/re/pull/658
+* cmake: add USE_TRACE option (default OFF) by @sreimers in https://github.com/baresip/re/pull/660
+* add re prefix by @alfredh in https://github.com/baresip/re/pull/659
+* tcp: add RE_TCP_BACKLOG by @sreimers in https://github.com/baresip/re/pull/661
+* Fix doxygen warnings by @alfredh in https://github.com/baresip/re/pull/662
+* mbuf: docs and setters/getters by @alfredh in https://github.com/baresip/re/pull/663
+* tcp,cmake: use accept4 if supported by @sreimers in https://github.com/baresip/re/pull/665
+* tcp: remove SO_LINGER socket option by @sreimers in https://github.com/baresip/re/pull/664
+* rtcp: update documentation by @alfredh in https://github.com/baresip/re/pull/666
+* tcp: check SO_ERROR only for active connections by @sreimers in https://github.com/baresip/re/pull/667
+* cmake: add HAVE_RESOLV by @sreimers in https://github.com/baresip/re/pull/668
+* hash: add hash_debug by @sreimers in https://github.com/baresip/re/pull/670
+* list: improve list_apply performance by @sreimers in https://github.com/baresip/re/pull/669
+* rtp: add doxygen comments by @alfredh in https://github.com/baresip/re/pull/671
+* rtp: extra dox for rtcp_encode by @alfredh in https://github.com/baresip/re/pull/672
+* ci: add thread and address sanitizer by @sreimers in https://github.com/baresip/re/pull/673
+* Do not change glibc feature selection macros in unsupported ways by @fweimer-rh in https://github.com/baresip/re/pull/674
+* auth: replace ETIME with ETIMEDOUT by @sreimers in https://github.com/baresip/re/pull/675
+* cmake: add min. OpenSSL 1.1.0 version requirement by @sreimers in https://github.com/baresip/re/pull/680
+* ci: fix flaky azure mirrors by @sreimers in https://github.com/baresip/re/pull/682
+* tls: remove obsolete openssl version check and fix libressl build by @cspiel1 in https://github.com/baresip/re/pull/679
+* ci/ssl: fix openssl root dir by @sreimers in https://github.com/baresip/re/pull/677
+* main: add re_thread_async_main for re_global only by @sreimers in https://github.com/baresip/re/pull/685
+* atomic: fix win32 atomic load const warnings by @sreimers in https://github.com/baresip/re/pull/688
+* atomic: fix __iso_volatile_load64 deref by @sreimers in https://github.com/baresip/re/pull/691
+* bump version numbers to 2.12.0 by @alfredh in https://github.com/baresip/re/pull/692
+
+## New Contributors
+* @fweimer-rh made their first contribution in https://github.com/baresip/re/pull/674
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.11.0...v2.12.0
+
+---
+
 ## [v2.11.0] - 2023-01-11
 
 ## What's Changed
