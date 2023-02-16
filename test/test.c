@@ -264,7 +264,7 @@ static const struct test tests_integration[] = {
 #ifdef DATA_PATH
 static char datapath[256] = DATA_PATH;
 #else
-static char datapath[256] = "./data";
+static char datapath[256] = "./test/data";
 #endif
 
 
