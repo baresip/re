@@ -279,8 +279,8 @@ static void hide_output(void)
 {
 	dup_stdout = dup(fileno(stdout));
 	dup_stderr = dup(fileno(stderr));
-	int fd_out = open("stdout.out", O_WRONLY | O_CREAT);
-	int fd_err = open("stderr.out", O_WRONLY | O_CREAT);
+	int fd_out = open("stdout.out", O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
+	int fd_err = open("stderr.out", O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
 	(void)dup2(fd_out, fileno(stdout));
 	(void)dup2(fd_err, fileno(stderr));
 }
