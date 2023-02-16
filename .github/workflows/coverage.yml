@@ -29,22 +29,13 @@ jobs:
 
     - name: make
       run: | 
-        cmake -B build -DCMAKE_C_FLAGS="--coverage" && cmake --build build -j
-
-    - uses: sreimers/pr-dependency-action@v0.5
-      with:
-        name: retest
-        repo: https://github.com/baresip/retest.git
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: '../.'
+        cmake -B build -DCMAKE_C_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake --build build -j
 
     - name: retest
       run: |
-        cd ..
-        cd retest; cmake -B build -DCMAKE_EXE_LINKER_FLAGS="--coverage" && \
-           cmake --build build -j && \
-          ./build/retest -a -v && \
-          ./build/retest -r -m select -v
+        ./build/test/retest -a -v
+        ./build/test/retest -r -m select -v
 
     - name: gcov
       run: | 
