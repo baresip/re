@@ -624,6 +624,8 @@ if(WIN32)
     wsock32
     ws2_32
   )
+else()
+  list(APPEND LINKLIBS -lm)
 endif()
 
 if(UNIX)
