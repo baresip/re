@@ -370,6 +370,7 @@ int test_rtcp_decode(void)
 	err |= mbuf_write_u8(mb, 0x55); /* overhead -- test padding */
 	err |= mbuf_write_mem(mb, rtcp_sdes, sizeof(rtcp_sdes));
 	err |= mbuf_write_u8(mb, 0xaa); /* junk */
+	TEST_ERR(err);
 	mb->pos = 1;
 
 	/* SDES */

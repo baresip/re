@@ -373,8 +373,10 @@ static int do_sipevent(struct sa *laddr)
 	struct agent *a = NULL, *b = NULL;
 	int err = 0;
 
-	err |= agent_alloc(&a, "a", laddr);
-	err |= agent_alloc(&b, "b", laddr);
+	err = agent_alloc(&a, "a", laddr);
+	if (err)
+		goto out;
+	err = agent_alloc(&b, "b", laddr);
 	if (err)
 		goto out;
 

@@ -711,8 +711,8 @@ static int do_sip_drequestf(struct sa *laddr)
 	if (!sr)
 		return ENOMEM;
 
-	err  = re_snprintf(uri, 64, "sip:%J;transport=UDP", laddr);
-	err |= re_snprintf(touri, 64, "sip:test@%J", laddr);
+	re_snprintf(uri, sizeof(uri), "sip:%J;transport=UDP", laddr);
+	re_snprintf(touri, sizeof(touri), "sip:test@%J", laddr);
 
 	err = sip_dialog_alloc(&sr->dlg, uri,
 			       touri, NULL,
