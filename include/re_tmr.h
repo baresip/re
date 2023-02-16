@@ -39,6 +39,8 @@ int      tmr_status(struct re_printf *pf, void *unused);
 void     tmr_init(struct tmr *tmr);
 void     tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 		   const char *file, int line);
+uint32_t tmrl_count(struct tmrl *tmrl);
+
 
 /**
  * @def tmr_start(tmr, delay, th, arg)
