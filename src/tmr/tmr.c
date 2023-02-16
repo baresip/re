@@ -440,3 +440,25 @@ uint64_t tmr_get_expire(const struct tmr *tmr)
 
 	return (tmr->jfs > jfs) ? (tmr->jfs - jfs) : 0;
 }
+
+
+/**
+ * Get current timer list count
+ *
+ * @param tmrl Timer list object
+ *
+ * @return timer list count
+ */
+uint32_t tmrl_count(struct tmrl *tmrl)
+{
+	uint32_t c;
+
+	if (!tmrl)
+		return 0;
+
+	mtx_lock(tmrl->lock);
+	c = list_count(&tmrl->list);
+	mtx_unlock(tmrl->lock);
+
+	return c;
+}
