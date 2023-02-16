@@ -402,7 +402,7 @@ static bool have_dtls_support(enum tls_method method)
 
 int test_dtls_turn(void)
 {
-	struct agent *a=0, *b=0;
+	struct agent *a = NULL, *b = NULL;
 	int err = 0;
 
 	if (!have_dtls_support(TLS_METHOD_DTLSV1)) {
@@ -410,8 +410,10 @@ int test_dtls_turn(void)
 		return ESKIPPED;
 	}
 
-	err |= agent_alloc(&a, 0, true, true, true);
-	err |= agent_alloc(&b, 0, false, false, false);
+	err = agent_alloc(&a, 0, true, true, true);
+	if (err)
+		goto out;
+	err = agent_alloc(&b, 0, false, false, false);
 	if (err)
 		goto out;
 
@@ -426,8 +428,12 @@ int test_dtls_turn(void)
 	if (err)
 		goto out;
 
-	TEST_EQUALS(0, a->err);
-	TEST_EQUALS(0, b->err);
+	if (a) {
+		TEST_EQUALS(0, a->err);
+	}
+	if (b) {
+		TEST_EQUALS(0, b->err);
+	}
 
 	/* verify results after test is complete */
 	err |= agent_verify(a);
