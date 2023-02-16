@@ -281,7 +281,7 @@ static void hide_output(void)
 	dup_stderr = dup(fileno(stderr));
 
 #ifdef WIN32
-	mode_t mode = _S_IREAD | _S_IWRITE;
+	int mode = _S_IREAD | _S_IWRITE;
 #else
 	mode_t mode = S_IWUSR | S_IRUSR;
 #endif
