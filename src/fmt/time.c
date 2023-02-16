@@ -4,8 +4,6 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
-#define _POSIX_C_SOURCE 200809L
-#define __USE_POSIX 1 /**< Use POSIX flag */
 #include <time.h>
 
 #ifdef WIN32

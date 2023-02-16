@@ -342,12 +342,29 @@ struct le *list_apply(const struct list *list, bool fwd,
 	if (!list || !ah)
 		return NULL;
 
-	le = fwd ? list->head : list->tail;
+	if (fwd) {
+		le = list->head;
+		goto fwd;
+	}
+
+	le = list->tail;
 
 	while (le) {
 		struct le *cur = le;
 
-		le = fwd ? le->next : le->prev;
+		le = le->prev;
+
+		if (ah(cur, arg))
+			return cur;
+	}
+
+	return NULL;
+
+fwd:
+	while (le) {
+		struct le *cur = le;
+
+		le = le->next;
 
 		if (ah(cur, arg))
 			return cur;

@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#define _GNU_SOURCE 1
-
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -13,9 +11,6 @@
 #include <io.h>
 #endif
 #if !defined(WIN32)
-#define __USE_POSIX 1  /**< Use POSIX flag */
-#define __USE_XOPEN2K 1/**< Use POSIX.1:2001 code */
-#define __USE_MISC 1
 #include <netdb.h>
 #endif
 #include <string.h>

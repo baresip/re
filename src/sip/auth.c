@@ -379,7 +379,7 @@ static int check_nonce(const struct pl *nonce, const struct sa *src,
 	ts = (time_t) pl_x64(&pl);
 
 	if (time(NULL) - ts > NONCE_EXPIRES)
-		return ETIME;
+		return ETIMEDOUT;
 
 	err = gen_nonce(&comp, ts, src, realm);
 	if (err)
@@ -459,7 +459,7 @@ int sip_uas_auth_check(struct sip_uas_auth *auth, const struct sip_msg *msg,
 		return EINVAL;
 
 	err = check_nonce(&resp.nonce, &msg->src, auth->realm);
-	if (err == ETIME || err == EAUTH) {
+	if (err == ETIMEDOUT || err == EAUTH) {
 		auth->stale = true;
 		return EAUTH;
 	}

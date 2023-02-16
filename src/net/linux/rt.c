@@ -3,15 +3,10 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#define _BSD_SOURCE 1
-#define _DEFAULT_SOURCE 1
 #include <string.h>
 #include <unistd.h>
-#define __USE_POSIX 1  /**< Use POSIX flag */
 #include <netdb.h>
-#define __USE_MISC 1
 #include <net/if.h>
-#undef __STRICT_ANSI__
 #include <linux/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>

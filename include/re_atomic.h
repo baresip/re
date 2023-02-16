@@ -526,7 +526,7 @@ static __forceinline void _re_atomic_store(
 }
 
 static __forceinline unsigned __int64 _re_atomic_load(
-	size_t size, void *a)
+	size_t size, const void *a)
 {
 	unsigned __int64 v;
 	assert(size == 1u || size == 2u || size == 4u || size == 8u);
@@ -591,7 +591,7 @@ static __forceinline void _re_atomic_store(
 }
 
 static __forceinline unsigned __int64 _re_atomic_load(
-	size_t size, void *a)
+	size_t size, const void *a)
 {
 	unsigned __int64 v;
 	assert(size == 1u || size == 2u || size == 4u || size == 8u);
@@ -608,7 +608,7 @@ static __forceinline unsigned __int64 _re_atomic_load(
 		v = __iso_volatile_load32((const unsigned __int32*)a);
 		break;
 	default:
-		v = __iso_volatile_load64(*(const unsigned __int64*)a);
+		v = __iso_volatile_load64((const unsigned __int64*)a);
 		break;
 	}
 

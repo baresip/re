@@ -41,9 +41,9 @@
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_list.h>
+#include <re_thread.h>
 #include <re_tmr.h>
 #include <re_main.h>
-#include <re_thread.h>
 #include <re_btrace.h>
 #include <re_atomic.h>
 #include "main.h"
@@ -79,10 +79,9 @@ struct re {
 	int maxfds;                  /**< Maximum number of polling fds     */
 	int nfds;                    /**< Number of active file descriptors */
 	enum poll_method method;     /**< The current polling method        */
-	bool update;                 /**< File descriptor set need updating */
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
-	struct list tmrl;            /**< List of timers                    */
+	struct tmrl *tmrl;           /**< List of timers                    */
 
 #ifdef HAVE_EPOLL
 	struct epoll_event *events;  /**< Event set for epoll()             */
@@ -114,6 +113,7 @@ static void re_destructor(void *arg)
 	poll_close(re);
 	mem_deref(re->mutex);
 	mem_deref(re->async);
+	mem_deref(re->tmrl);
 }
 
 
@@ -148,7 +148,12 @@ int re_alloc(struct re **rep)
 	}
 	re->mutexp = re->mutex;
 
-	list_init(&re->tmrl);
+	err = tmrl_alloc(&re->tmrl);
+	if (err) {
+		DEBUG_WARNING("thread_init: tmrl_alloc error\n");
+		goto out;
+	}
+
 	re->async = NULL;
 	re->tid = thrd_current();
 
@@ -381,47 +386,6 @@ static int set_kqueue_fds(struct re *re, re_sock_t fd, int flags)
 	return 0;
 }
 #endif
-
-
-/**
- * Rebuild the file descriptor mapping table. This must be done whenever
- * the polling method is changed.
- */
-static int rebuild_fds(struct re *re)
-{
-	int i, err = 0;
-
-	DEBUG_INFO("rebuilding fds (nfds=%d)\n", re->nfds);
-
-	/* Update fd sets */
-	for (i=0; i<re->nfds; i++) {
-		if (!re->fhs[i].fh)
-			continue;
-
-		switch (re->method) {
-
-#ifdef HAVE_EPOLL
-		case METHOD_EPOLL:
-			err = set_epoll_fds(re, i, re->fhs[i].flags);
-			break;
-#endif
-
-#ifdef HAVE_KQUEUE
-		case METHOD_KQUEUE:
-			err = set_kqueue_fds(re, i, re->fhs[i].flags);
-			break;
-#endif
-
-		default:
-			break;
-		}
-
-		if (err)
-			break;
-	}
-
-	return err;
-}
 
 
 static int poll_init(struct re *re)
@@ -668,7 +632,7 @@ void fd_close(re_sock_t fd)
  */
 static int fd_poll(struct re *re)
 {
-	const uint64_t to = tmr_next_timeout(&re->tmrl);
+	const uint64_t to = tmr_next_timeout(re->tmrl);
 	int i, n, index;
 #ifdef HAVE_SELECT
 	fd_set rfds, wfds, efds;
@@ -837,12 +801,6 @@ static int fd_poll(struct re *re)
 #else
 			re->fhs[index].fh(flags, re->fhs[index].arg);
 #endif
-		}
-
-		/* Check if polling method was changed */
-		if (re->update) {
-			re->update = false;
-			return 0;
 		}
 
 		/* Handle only active events */
@@ -1028,14 +986,14 @@ int re_main(re_signal_h *signalh)
 #endif
 #ifdef WIN32
 			if (WSAEINVAL == err) {
-				tmr_poll(&re->tmrl);
+				tmr_poll(re->tmrl);
 				continue;
 			}
 #endif
 			break;
 		}
 
-		tmr_poll(&re->tmrl);
+		tmr_poll(re->tmrl);
 	}
 	re_unlock(re);
 
@@ -1083,10 +1041,19 @@ int re_debug(struct re_printf *pf, void *unused)
 	}
 
 	err |= re_hprintf(pf, "re main loop:\n");
-	err |= re_hprintf(pf, "  maxfds:  %d\n", re->maxfds);
-	err |= re_hprintf(pf, "  nfds:    %d\n", re->nfds);
-	err |= re_hprintf(pf, "  method:  %d (%s)\n", re->method,
+	err |= re_hprintf(pf, "  maxfds:       %d\n", re->maxfds);
+	err |= re_hprintf(pf, "  nfds:         %d\n", re->nfds);
+	err |= re_hprintf(pf, "  method:       %s\n",
 			  poll_method_name(re->method));
+	err |= re_hprintf(pf, "  polling:      %d\n",
+			  re_atomic_rlx(&re->polling));
+	err |= re_hprintf(pf, "  sig:          %d\n", re->sig);
+	err |= re_hprintf(pf, "  timers:       %u\n", tmrl_count(re->tmrl));
+	err |= re_hprintf(pf, "  mutex:        %p\n", re->mutex);
+	err |= re_hprintf(pf, "  tid:          %p\n", re->tid);
+	err |= re_hprintf(pf, "  thread_enter: %d\n",
+			  re_atomic_rlx(&re->thread_enter));
+	err |= re_hprintf(pf, "  async:        %p\n", re->async);
 
 	return err;
 }
@@ -1119,8 +1086,8 @@ enum poll_method poll_method_get(void)
 
 
 /**
- * Set async I/O polling method. This function can also be called while the
- * program is running.
+ * Set async I/O polling method. This function can only called once, before
+ * poll init/setup.
  *
  * @param method New polling method
  *
@@ -1133,6 +1100,11 @@ int poll_method_set(enum poll_method method)
 
 	if (!re) {
 		DEBUG_WARNING("poll_method_set: re not ready\n");
+		return EINVAL;
+	}
+
+	if (re->method != METHOD_NULL) {
+		DEBUG_WARNING("poll_method_set: already set\n");
 		return EINVAL;
 	}
 
@@ -1165,16 +1137,13 @@ int poll_method_set(enum poll_method method)
 	}
 
 	re->method = method;
-	re->update = true;
 
 	DEBUG_INFO("Setting async I/O polling method to `%s'\n",
 		   poll_method_name(re->method));
 
 	err = poll_init(re);
-	if (err)
-		return err;
 
-	return rebuild_fds(re);
+	return err;
 }
 
 
@@ -1370,17 +1339,16 @@ int re_thread_check(void)
  *
  * @note only used by tmr module
  */
-struct list *tmrl_get(void);
-struct list *tmrl_get(void)
+struct tmrl *re_tmrl_get(void)
 {
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("tmrl_get: re not ready\n");
+		DEBUG_WARNING("re_tmrl_get: re not ready\n");
 		return NULL;
 	}
 
-	return &re->tmrl;
+	return re->tmrl;
 }
 
 
@@ -1432,7 +1400,7 @@ void re_thread_async_close(void)
  * Execute work handler for current event loop
  *
  * @param work  Work handler
- * @param cb    Callback handler (called by re main thread)
+ * @param cb    Callback handler (called by re poll thread)
  * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
  *
  * @return 0 if success, otherwise errorcode
@@ -1459,11 +1427,41 @@ int re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg)
 
 
 /**
+ * Execute work handler for re_global main event loop
+ *
+ * @param work  Work handler
+ * @param cb    Callback handler (called by re global main poll thread)
+ * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_thread_async_main(re_async_work_h *work, re_async_h *cb, void *arg)
+{
+	struct re *re = re_global;
+	int err;
+
+	if (unlikely(!re)) {
+		DEBUG_WARNING("re_thread_async: re not ready\n");
+		return EAGAIN;
+	}
+
+	if (unlikely(!re->async)) {
+		/* fallback needed for internal libre functions */
+		err = re_async_alloc(&re->async, RE_THREAD_WORKERS);
+		if (err)
+			return err;
+	}
+
+	return re_async(re->async, 0, work, cb, arg);
+}
+
+
+/**
  * Execute work handler for current event loop
  *
  * @param id    Work identifier
  * @param work  Work handler
- * @param cb    Callback handler (called by re main thread)
+ * @param cb    Callback handler (called by re poll thread)
  * @param arg   Handler argument (has to be thread-safe and mem_deref-safe)
  *
  * @return 0 if success, otherwise errorcode
