@@ -13,6 +13,9 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#ifndef RE_H_THREAD__
+#define RE_H_THREAD__
+
 #if defined(HAVE_THREADS)
 #include <threads.h>
 
@@ -20,6 +23,9 @@
 
 #if defined(WIN32)
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
 typedef INIT_ONCE once_flag;
@@ -286,3 +292,5 @@ int mutex_alloc(mtx_t **mtx);
  */
 int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 		     void *arg);
+
+#endif /* RE_H_THREAD__ */

@@ -41,9 +41,9 @@
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_list.h>
+#include <re_thread.h>
 #include <re_tmr.h>
 #include <re_main.h>
-#include <re_thread.h>
 #include <re_btrace.h>
 #include <re_atomic.h>
 #include "main.h"
@@ -81,7 +81,7 @@ struct re {
 	enum poll_method method;     /**< The current polling method        */
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
-	struct list tmrl;            /**< List of timers                    */
+	struct tmrl *tmrl;           /**< List of timers                    */
 
 #ifdef HAVE_EPOLL
 	struct epoll_event *events;  /**< Event set for epoll()             */
@@ -113,6 +113,7 @@ static void re_destructor(void *arg)
 	poll_close(re);
 	mem_deref(re->mutex);
 	mem_deref(re->async);
+	mem_deref(re->tmrl);
 }
 
 
@@ -147,7 +148,12 @@ int re_alloc(struct re **rep)
 	}
 	re->mutexp = re->mutex;
 
-	list_init(&re->tmrl);
+	err = tmrl_alloc(&re->tmrl);
+	if (err) {
+		DEBUG_WARNING("thread_init: tmrl_alloc error\n");
+		goto out;
+	}
+
 	re->async = NULL;
 	re->tid = thrd_current();
 
@@ -626,7 +632,7 @@ void fd_close(re_sock_t fd)
  */
 static int fd_poll(struct re *re)
 {
-	const uint64_t to = tmr_next_timeout(&re->tmrl);
+	const uint64_t to = tmr_next_timeout(re->tmrl);
 	int i, n, index;
 #ifdef HAVE_SELECT
 	fd_set rfds, wfds, efds;
@@ -980,14 +986,14 @@ int re_main(re_signal_h *signalh)
 #endif
 #ifdef WIN32
 			if (WSAEINVAL == err) {
-				tmr_poll(&re->tmrl);
+				tmr_poll(re->tmrl);
 				continue;
 			}
 #endif
 			break;
 		}
 
-		tmr_poll(&re->tmrl);
+		tmr_poll(re->tmrl);
 	}
 	re_unlock(re);
 
@@ -1333,17 +1339,16 @@ int re_thread_check(void)
  *
  * @note only used by tmr module
  */
-struct list *tmrl_get(void);
-struct list *tmrl_get(void)
+struct tmrl *re_tmrl_get(void)
 {
 	struct re *re = re_get();
 
 	if (!re) {
-		DEBUG_WARNING("tmrl_get: re not ready\n");
+		DEBUG_WARNING("re_tmrl_get: re not ready\n");
 		return NULL;
 	}
 
-	return &re->tmrl;
+	return re->tmrl;
 }
 
 

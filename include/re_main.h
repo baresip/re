@@ -67,6 +67,7 @@ void re_thread_async_cancel(intptr_t id);
 
 void re_set_mutex(void *mutexp);
 
+struct tmrl *re_tmrl_get(void);
 
 /** Polling methods */
 enum poll_method {
