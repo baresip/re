@@ -440,6 +440,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 
 	err |= sa_set_str(&srv, "127.0.0.1", 0);
 	err |= sa_set_str(&dns, "127.0.0.1", 53);    /* note: unused */
+	TEST_ERR(err);
 
 	if (secure) {
 
@@ -587,6 +588,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 
  out:
 	mem_deref(t.mb_body);
+	mem_deref(mb_body);
 	mem_deref(req);
 	mem_deref(conn);
 	mem_deref(cli);
