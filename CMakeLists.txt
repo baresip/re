@@ -45,6 +45,7 @@ include(CheckCCompilerFlag)
 # Options
 #
 
+option(USE_REM "Enable Librem" ON)
 option(USE_BFCP "Enable BFCP" ON)
 option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
@@ -172,6 +173,32 @@ set(HEADERS
   include/re_udp.h
   include/re_uri.h
   include/re_websock.h
+)
+
+set(REM_HEADERS
+  include/rem_aac.h
+  include/rem_aubuf.h
+  include/rem_auconv.h
+  include/rem_audio.h
+  include/rem_aufile.h
+  include/rem_auframe.h
+  include/rem_au.h
+  include/rem_aulevel.h
+  include/rem_aumix.h
+  include/rem_auresamp.h
+  include/rem_autone.h
+  include/rem_avc.h
+  include/rem_dsp.h
+  include/rem_dtmf.h
+  include/rem_fir.h
+  include/rem_flv.h
+  include/rem_g711.h
+  include/rem_goertzel.h
+  include/rem.h
+  include/rem_vidconv.h
+  include/rem_video.h
+  include/rem_vid.h
+  include/rem_vidmix.h
 )
 
 if(USE_UNIXSOCK)
@@ -371,6 +398,32 @@ set(SRCS
   src/websock/websock.c
 )
 
+set(REM_SRCS
+  rem/aac/aac.c
+  rem/au/fmt.c
+  rem/au/util.c
+  rem/aubuf/aubuf.c
+  rem/aubuf/ajb.c
+  rem/auconv/auconv.c
+  rem/aufile/aufile.c
+  rem/aufile/wave.c
+  rem/auframe/auframe.c
+  rem/aulevel/aulevel.c
+  rem/aumix/aumix.c
+  rem/auresamp/resamp.c
+  rem/autone/tone.c
+  rem/avc/config.c
+  rem/dtmf/dec.c
+  rem/fir/fir.c
+  rem/g711/g711.c
+  rem/goertzel/goertzel.c
+  rem/vid/draw.c
+  rem/vid/fmt.c
+  rem/vid/frame.c
+  rem/vidconv/vconv.c
+  rem/vidmix/vidmix.c
+)
+
 if(USE_UNIXSOCK)
   list(APPEND SRCS
     src/unixsock/unixsock.c
@@ -534,6 +587,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   )
 endif()
 
+if(USE_REM)
+  list(APPEND SRCS ${REM_SRCS})
+endif()
+
 
 ##############################################################################
 #
@@ -567,6 +624,8 @@ if(WIN32)
     wsock32
     ws2_32
   )
+else()
+  list(APPEND LINKLIBS -lm)
 endif()
 
 if(UNIX)

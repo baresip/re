@@ -45,13 +45,6 @@ jobs:
 
     - uses: sreimers/pr-dependency-action@v0.5
       with:
-        name: rem
-        repo: https://github.com/baresip/rem
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: '../.'
-
-    - uses: sreimers/pr-dependency-action@v0.5
-      with:
         name: retest
         repo: https://github.com/baresip/retest.git
         secret: ${{ secrets.GITHUB_TOKEN }}
@@ -60,5 +53,4 @@ jobs:
     - name: retest
       run: |
         cd ..
-        cmake -S rem -B rem/build && cmake --build rem/build -j
         cd retest && make && ./retest -riv
