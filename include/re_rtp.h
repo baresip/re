@@ -101,6 +101,7 @@ struct rtcp_msg {
 		unsigned int pt:8;       /**< RTCP packet type       */
 		uint16_t length;         /**< Packet length in words */
 	} hdr;
+	struct mbuf *mb;
 	union {
 		/** Sender report (SR) */
 		struct {

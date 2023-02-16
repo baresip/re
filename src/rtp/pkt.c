@@ -75,6 +75,8 @@ static void rtcp_destructor(void *data)
 		/* nothing allocated */
 		break;
 	}
+
+	mem_deref(msg->mb);
 }
 
 
@@ -341,6 +343,7 @@ int rtcp_decode(struct rtcp_msg **msgp, struct mbuf *mb)
 	if (!msg)
 		return ENOMEM;
 
+	msg->mb = mem_ref(mb);
 	start = mb->pos;
 
 	/* decode and check header */
