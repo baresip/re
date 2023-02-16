@@ -416,7 +416,10 @@ int test_dtls_turn(void)
 		goto out;
 
 	/* connect the 2 agents */
-	a->peer = b; b->peer = a;
+	if (a)
+		a->peer = b;
+	if (b)
+		b->peer = a;
 
 	/* start it! */
 	err = re_main_timeout(1000);
