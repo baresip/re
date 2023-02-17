@@ -147,6 +147,33 @@ int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n)
 	return 0;
 }
 
+
+/**
+ * Duplicate an RTCP Transport-wide congestion control Feedback Message
+ *
+ * @param msg  destination transport-cc
+ * @param msgs source transport-cc
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_rtpfb_twcc_dup(struct twcc *msg, struct twcc *msgs)
+{
+	if (!msg || !msgs)
+		return EINVAL;
+
+	msg->seq     = msgs->seq;
+	msg->count   = msgs->count;
+	msg->reftime = msgs->reftime;
+	msg->fbcount = msgs->fbcount;
+	msg->chunks  = mbuf_dup(msgs->chunks);
+	msg->deltas  = mbuf_dup(msgs->deltas);
+
+	if (!msg->chunks || !msg->deltas)
+		return ENOMEM;
+
+	return 0;
+}
+
 /**
  * Decode an RTCP Transport Layer Feedback Message
  *
@@ -267,6 +294,123 @@ int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg)
 			msg->r.fb.fci.firv[i].ssrc = ntohl(mbuf_read_u32(mb));
 			msg->r.fb.fci.firv[i].seq_n = mbuf_read_u8(mb);
 			mbuf_advance(mb, 3);
+		}
+		break;
+
+	default:
+		DEBUG_NOTICE("unknown PSFB fmt %d\n", msg->hdr.count);
+		break;
+	}
+
+	return 0;
+}
+
+
+/**
+ * Duplicate an RTCP Transport Layer Feedback Message
+ *
+ * @param mb  Buffer to decode
+ * @param msg RTCP Message to decode into
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_rtpfb_dup(struct rtcp_msg *msg, struct rtcp_msg *msgs)
+{
+	size_t i, sz;
+	int err;
+
+	if (!msg || !msgs)
+		return EINVAL;
+
+	switch (msg->hdr.count) {
+
+	case RTCP_RTPFB_GNACK:
+		sz = msg->r.fb.n * sizeof(*msg->r.fb.fci.gnackv);
+		msg->r.fb.fci.gnackv = mem_alloc(sz, NULL);
+		if (!msg->r.fb.fci.gnackv)
+			return ENOMEM;
+
+		for (i=0; i<msg->r.fb.n; i++) {
+			msg->r.fb.fci.gnackv[i].pid =
+				msgs->r.fb.fci.gnackv[i].pid;
+			msg->r.fb.fci.gnackv[i].blp =
+				msgs->r.fb.fci.gnackv[i].blp;
+		}
+		break;
+
+	case RTCP_RTPFB_TWCC:
+		msg->r.fb.fci.twccv = mem_zalloc(sizeof(*msg->r.fb.fci.twccv),
+			NULL);
+		if (!msg->r.fb.fci.twccv)
+			return ENOMEM;
+
+		err = rtcp_rtpfb_twcc_dup(msg->r.fb.fci.twccv,
+					  msgs->r.fb.fci.twccv);
+		if (err)
+			return err;
+
+		break;
+
+	default:
+		DEBUG_NOTICE("unknown RTPFB fmt %d\n", msg->hdr.count);
+		break;
+	}
+
+	return 0;
+}
+
+
+/**
+ * Decode an RTCP Payload-Specific Feedback Message
+ *
+ * @param mb  Buffer to decode
+ * @param msg RTCP Message to decode into
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_psfb_dup(struct rtcp_msg *msg, struct rtcp_msg *msgs)
+{
+	size_t i, sz;
+	uint32_t n;
+
+	if (!msg || !msgs)
+		return EINVAL;
+
+	n = msg->r.fb.n;
+	switch (msg->hdr.count) {
+
+	case RTCP_PSFB_PLI:
+		/* no params */
+		break;
+
+	case RTCP_PSFB_SLI:
+		sz = sizeof(*msg->r.fb.fci.sliv);
+		msg->r.fb.fci.sliv = mem_alloc(n * sz, NULL);
+		if (!msg->r.fb.fci.sliv)
+			return ENOMEM;
+
+		for (i=0; i<n; i++) {
+			memcpy(&msg->r.fb.fci.sliv[i],
+			       &msgs->r.fb.fci.sliv[i], sz);
+		}
+		break;
+
+	case RTCP_PSFB_AFB:
+		msg->r.fb.fci.afb = mbuf_dup(msgs->r.fb.fci.afb);
+		if (!msg->r.fb.fci.afb)
+			return ENOMEM;
+
+		break;
+
+	case RTCP_PSFB_FIR:
+		sz = sizeof(*msg->r.fb.fci.firv);
+		msg->r.fb.fci.firv = mem_alloc(n * sz, NULL);
+		if (!msg->r.fb.fci.firv)
+			return ENOMEM;
+
+		for (i=0; i<n; i++) {
+			memcpy(&msg->r.fb.fci.firv[i],
+			       &msgs->r.fb.fci.firv[i], sz);
 		}
 		break;
 

@@ -277,6 +277,7 @@ int   rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats);
 /* RTCP utils */
 int   rtcp_encode(struct mbuf *mb, enum rtcp_type type, uint32_t count, ...);
 int   rtcp_decode(struct rtcp_msg **msgp, struct mbuf *mb);
+int   rtcp_dup(struct rtcp_msg **msgp, struct rtcp_msg *msgs);
 int   rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg);
 int   rtcp_sdes_encode(struct mbuf *mb, uint32_t src, uint32_t itemc, ...);
 const char *rtcp_type_name(enum rtcp_type type);

@@ -78,14 +78,18 @@ int rtcp_rr_decode(struct mbuf *mb, struct rtcp_rr *rr);
 
 /* SDES (Source Description) */
 int rtcp_sdes_decode(struct mbuf *mb, struct rtcp_sdes *sdes);
+int rtcp_sdes_dup(struct rtcp_sdes *sdes_dst, struct rtcp_sdes *sdes_src);
 
 /* RTCP Feedback */
 int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp);
 int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
 			 uint8_t picid);
 int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n);
+int rtcp_rtpfb_twcc_dup(struct twcc *msg, struct twcc *msgs);
 int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
+int rtcp_rtpfb_dup(struct rtcp_msg *msg, struct rtcp_msg *msgs);
 int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
+int rtcp_psfb_dup(struct rtcp_msg *msg, struct rtcp_msg *msgs);
 
 /** NTP Time */
 struct timeval;

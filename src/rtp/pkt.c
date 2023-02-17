@@ -512,3 +512,131 @@ int rtcp_decode(struct rtcp_msg **msgp, struct mbuf *mb)
 	mem_deref(msg);
 	return EBADMSG;
 }
+
+
+/**
+ * Duplicate an RTCP message
+ *
+ * @param msgp Pointer to allocated RTCP Message
+ * @param msgs RTCP message to be duplicated
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_dup(struct rtcp_msg **msgp, struct rtcp_msg *msgs)
+{
+	struct rtcp_msg *msg;
+	size_t i, sz, count;
+	int err = 0;
+
+	if (!msgp || !msgs)
+		return EINVAL;
+
+	msg = mem_zalloc(sizeof(*msg), rtcp_destructor);
+	if (!msg)
+		return ENOMEM;
+
+	memcpy(&msg->hdr, &msgs->hdr, sizeof(msg->hdr));
+	if (msg->hdr.version != RTCP_VERSION)
+		goto badmsg;
+
+	count = msg->hdr.count;
+
+	switch (msg->hdr.pt) {
+	case RTCP_SR:
+		sz = sizeof(struct rtcp_rr);
+		memcpy(&msg->r.sr, &msgs->r.sr, sizeof(msg->r.sr));
+		msg->r.sr.rrv = NULL;
+		err = rtcp_rr_alloc(&msg->r.sr.rrv, count);
+		for (i=0; i<count && !err; i++) {
+			memcpy(&msg->r.sr.rrv[i], &msgs->r.sr.rrv[i], sz);
+		}
+		break;
+	case RTCP_RR:
+		sz = sizeof(struct rtcp_rr);
+		memcpy(&msg->r.rr, &msgs->r.rr, sizeof(msg->r.rr));
+		msg->r.rr.rrv = NULL;
+		err = rtcp_rr_alloc(&msg->r.rr.rrv, count);
+		for (i=0; i<count && !err; i++) {
+			memcpy(&msg->r.rr.rrv[i], &msgs->r.rr.rrv[i], sz);
+		}
+		break;
+	case RTCP_SDES:
+		if (count == 0)
+			break;
+
+		sz = count * sizeof(*msg->r.sdesv);
+		msg->r.sdesv = mem_zalloc(sz, NULL);
+		if (!msg->r.sdesv) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		for (i=0; i<msg->hdr.count && !err; i++) {
+			err = rtcp_sdes_dup(&msg->r.sdesv[i],
+					    &msgs->r.sdesv[i]);
+		}
+		break;
+	case RTCP_BYE:
+		sz = count * sizeof(*msg->r.bye.srcv);
+		msg->r.bye.srcv = mem_alloc(sz, NULL);
+		if (!msg->r.bye.srcv) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		memcpy(msg->r.bye.srcv, msgs->r.bye.srcv, sz);
+		if (msgs->r.bye.reason)
+			err = str_dup(&msg->r.bye.reason, msgs->r.bye.reason);
+		break;
+	case RTCP_APP:
+		msg->r.app.src = msgs->r.app.src;
+		memcpy(msg->r.app.name, msgs->r.app.name,
+				    sizeof(msg->r.app.name));
+		msg->r.app.data_len = msgs->r.app.data_len;
+		msg->r.app.data = mem_alloc(msg->r.app.data_len, NULL);
+		if (!msg->r.app.data) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		memcpy(msg->r.app.data, msgs->r.app.data, msg->r.app.data_len);
+		break;
+	case RTCP_FIR:
+		msg->r.fir.ssrc = msg->r.fir.ssrc;
+		break;
+	case RTCP_NACK:
+		msg->r.nack.ssrc = msgs->r.nack.ssrc;
+		msg->r.nack.fsn  = msgs->r.nack.fsn;
+		msg->r.nack.blp  = msgs->r.nack.blp;
+		break;
+	case RTCP_RTPFB:
+		if (msg->hdr.length < 2)
+			goto badmsg;
+
+		msg->r.fb.ssrc_packet = msgs->r.fb.ssrc_packet;
+		msg->r.fb.ssrc_media  = msgs->r.fb.ssrc_media;
+		msg->r.fb.n           = msgs->r.fb.n;
+		err = rtcp_rtpfb_dup(msg, msgs);
+		break;
+	case RTCP_PSFB:
+		if (msg->hdr.length < 2)
+			goto badmsg;
+
+		msg->r.fb.ssrc_packet = msgs->r.fb.ssrc_packet;
+		msg->r.fb.ssrc_media  = msgs->r.fb.ssrc_media;
+		msg->r.fb.n           = msgs->r.fb.n;
+		err = rtcp_psfb_dup(msg, msgs);
+		break;
+	}
+ out:
+	if (err)
+		mem_deref(msg);
+	else
+		*msgp = msg;
+
+	return err;
+
+ badmsg:
+	mem_deref(msg);
+	return EBADMSG;
+}

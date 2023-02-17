@@ -146,3 +146,51 @@ int rtcp_sdes_decode(struct mbuf *mb, struct rtcp_sdes *sdes)
 
 	return 0;
 }
+
+
+/**
+ * Duplicate SDES items
+ *
+ * @param sdes_dst SDES destination
+ * @param sdes_src SDES source
+ * @return 0 if success, otherwise errorcode
+ */
+int rtcp_sdes_dup(struct rtcp_sdes *sdes_dst, struct rtcp_sdes *sdes_src)
+{
+	size_t i, sz;
+	int err = 0;
+
+	if (!sdes_dst || !sdes_src)
+		return EINVAL;
+
+	sdes_dst->src = sdes_src->src;
+	sdes_dst->n   = sdes_src->n;
+
+	sz = sdes_dst->n * sizeof(*sdes_dst->itemv);
+	sdes_dst->itemv = mem_zalloc(sz, NULL);
+	if (!sdes_dst->itemv)
+		return ENOMEM;
+
+	for (i=0; i<sdes_src->n; i++) {
+		struct rtcp_sdes_item *iv_dst = &sdes_dst->itemv[i];
+		struct rtcp_sdes_item *iv_src = &sdes_src->itemv[i];
+		iv_dst->length = iv_src->length;
+		iv_dst->type   = iv_src->type;
+		iv_dst->data   = mem_alloc(iv_dst->length, NULL);
+		if (!iv_dst->data) {
+			err = ENOMEM;
+			goto errout;
+		}
+
+		memcpy(iv_dst->data, iv_src->data, iv_dst->length);
+	}
+
+	return err;
+errout:
+	for (i=0; i<sdes_dst->n; i++) {
+		struct rtcp_sdes_item *iv_dst = &sdes_dst->itemv[i];
+		iv_dst->data = mem_deref(iv_dst->data);
+	}
+
+	return err;
+}
