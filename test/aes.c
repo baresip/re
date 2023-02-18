@@ -120,9 +120,9 @@ int test_aes(void)
 	}
 
 	err = test_aes_ctr_loop();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
