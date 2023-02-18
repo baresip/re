@@ -371,8 +371,6 @@ int test_vidconv(void)
 	int err;
 
 	err = test_vid_rgb2yuv();
-	if (err)
-		return err;
 
 	return err;
 }
@@ -380,12 +378,14 @@ int test_vidconv(void)
 
 int test_vidconv_scaling(void)
 {
-	int err = 0;
+	int err;
 
-	err  = test_vidconv_scaling_base(VID_FMT_YUV420P);
-	err |= test_vidconv_scaling_base(VID_FMT_NV12);
-	if (err)
-		return err;
+	err = test_vidconv_scaling_base(VID_FMT_YUV420P);
+	TEST_ERR(err);
 
+	err = test_vidconv_scaling_base(VID_FMT_NV12);
+	TEST_ERR(err);
+
+out:
 	return err;
 }
