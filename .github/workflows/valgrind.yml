@@ -25,16 +25,6 @@ jobs:
       run: |
         cmake -B build && cmake --build build -j
 
-    - uses: sreimers/pr-dependency-action@v0.5
-      with:
-        name: retest
-        repo: https://github.com/baresip/retest
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: '../.'
-
     - name: retest
       run: |
-        cd ..
-        cd retest
-        cmake -B build && cmake --build build -j
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/retest -r -v
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v

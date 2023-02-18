@@ -725,3 +725,10 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
   COMPONENT Development
 )
+
+
+##############################################################################
+# Test
+#
+
+add_subdirectory(test)
