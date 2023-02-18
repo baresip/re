@@ -24,19 +24,9 @@ jobs:
 
     - uses: sreimers/pr-dependency-action@v0.5
       with:
-        name: retest
-        repo: https://github.com/baresip/retest
-        secret: ${{ secrets.GITHUB_TOKEN }}
-
-    - uses: sreimers/pr-dependency-action@v0.5
-      with:
         name: baresip-win32
         repo: https://github.com/baresip/baresip-win32
         secret: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: "baresip-win32 repo"
-      run: |
-        mv retest baresip-win32/
 
     - uses: actions/checkout@v3
       with:
@@ -63,7 +53,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: retest-exe
-        path: baresip-win32/retest/build/retest.exe
+        path: baresip-win32/re/build/test/retest.exe
         retention-days: 1
 
   wintest:
@@ -75,10 +65,10 @@ jobs:
     - uses: actions/download-artifact@v2
     - uses: sreimers/pr-dependency-action@v0.5
       with:
-        name: retest
-        repo: https://github.com/baresip/retest
+        name: re
+        repo: https://github.com/baresip/re
         secret: ${{ secrets.GITHUB_TOKEN }}
 
     - name: "run retest.exe"
-      run: mv retest-exe/retest.exe retest/ && cd retest && ./retest.exe -v
+      run: mv retest-exe/retest.exe re/ && cd re && ./retest.exe -v
       shell: bash

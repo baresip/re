@@ -862,6 +862,13 @@ void dtls_set_mtu(struct dtls_sock *sock, size_t mtu)
 }
 
 
+/**
+ * Receive a DTLS packet
+ *
+ * @param sock DTLS Socket
+ * @param src  Source network address
+ * @param mb   Mbuffer with DTLS packet
+ */
 void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,
 		      struct mbuf *mb)
 {
