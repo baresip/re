@@ -788,24 +788,20 @@ int test_av1(void)
 	int err;
 
 	err = test_leb128();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_av1_aggr();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_av1_obu();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_av1_packetize();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_av1_interop();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
