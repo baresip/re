@@ -332,13 +332,12 @@ int test_tls_ec(void)
 	int err;
 
 	err = test_tls_base(TLS_KEYTYPE_EC, false, EAUTH, false, -1);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_tls_base(TLS_KEYTYPE_EC, true, 0, false, -1);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
