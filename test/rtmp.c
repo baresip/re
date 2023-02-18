@@ -824,9 +824,9 @@ int test_rtmp_play(void)
 	int err = 0;
 
 	err = test_rtmp_client_server_conn(MODE_PLAY, false);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
@@ -836,9 +836,9 @@ int test_rtmp_publish(void)
 	int err = 0;
 
 	err = test_rtmp_client_server_conn(MODE_PUBLISH, false);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
@@ -849,9 +849,9 @@ int test_rtmps_publish(void)
 	int err = 0;
 
 	err = test_rtmp_client_server_conn(MODE_PUBLISH, true);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 #endif
