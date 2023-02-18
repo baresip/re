@@ -256,18 +256,18 @@ int test_pcp(void)
 {
 	int err;
 
-	err  = test_pcp_request_loop(0);
-	err |= test_pcp_request_loop(4);
-	if (err)
-		return err;
+	err = test_pcp_request_loop(0);
+	TEST_ERR(err);
+
+	err = test_pcp_request_loop(4);
+	TEST_ERR(err);
 
 	err = test_pcp_message();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_pcp_option();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
