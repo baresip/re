@@ -907,17 +907,15 @@ int test_ice_cand(void)
 	int err = 0;
 
 	err = test_ice_basic_candidate();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_ice_cand_prio();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_ice_cand_attribute();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
