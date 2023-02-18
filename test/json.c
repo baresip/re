@@ -499,17 +499,15 @@ int test_json(void)
 	int err = 0;
 
 	err = test_json_exponent();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_json_basic_parser();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_json_verify_decode();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
