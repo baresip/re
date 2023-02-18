@@ -56,8 +56,8 @@ int test_dsp(void)
 	int err;
 
 	err = test_saturate();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
