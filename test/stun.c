@@ -576,23 +576,20 @@ static int test_stun_req_attributes(void)
  */
 int test_stun(void)
 {
-	int err = 0;
+	int err;
 
 	err = test_stun_request(IPPROTO_UDP, false);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_stun_request(IPPROTO_UDP, NATTED);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_stun_request(IPPROTO_TCP, false);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_stun_req_attributes();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
