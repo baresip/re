@@ -444,7 +444,7 @@ int rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 	hdr.cc   = 0;
 	hdr.m    = marker ? 1 : 0;
 	hdr.pt   = pt;
-	hdr.seq  = re_atomic_acq_add(&rs->enc.seq, 1);
+	hdr.seq  = (uint16_t)re_atomic_acq_add(&rs->enc.seq, 1);
 	hdr.ts   = ts;
 	hdr.ssrc = rs->enc.ssrc;
 
@@ -636,7 +636,7 @@ uint32_t rtp_sess_ssrc(const struct rtp_sock *rs)
  */
 uint16_t rtp_sess_seq(const struct rtp_sock *rs)
 {
-	return rs ? re_atomic_acq(&rs->enc.seq) - 1 : 0;
+	return rs ? (uint16_t)re_atomic_acq(&rs->enc.seq) - 1 : 0;
 }
 
 
