@@ -15,12 +15,6 @@
 #include <re_hmac.h>
 
 
-/** SHA-1 Block size */
-#ifndef SHA_BLOCKSIZE
-#define SHA_BLOCKSIZE   64
-#endif
-
-
 /**
  * Function to compute the digest
  *
