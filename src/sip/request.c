@@ -31,6 +31,7 @@ struct sip_request {
 	char *met;
 	char *uri;
 	char *host;
+	char *branch;
 	struct mbuf *mb;
 	sip_send_h *sendh;
 	sip_resp_h *resph;
@@ -88,6 +89,7 @@ static void destructor(void *arg)
 	mem_deref(req->met);
 	mem_deref(req->uri);
 	mem_deref(req->host);
+	mem_deref(req->branch);
 	mem_deref(req->mb);
 }
 
@@ -158,62 +160,93 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 }
 
 
-static int request(struct sip_request *req, enum sip_transp tp,
-		   const struct sa *dst)
+static int connect_handler(struct sa *src, const struct sa *dst,
+			   struct mbuf *mb, void *arg)
 {
+	struct sip_request *req = arg;
 	struct mbuf *mbs  = NULL;
-	struct mbuf *mb   = NULL;
 	struct mbuf *cont = NULL;
-	char *branch = NULL;
-	int err = ENOMEM;
 	struct sa laddr;
+	int err;
 
-	req->provrecv = false;
+	if (!sa_isset(src, SA_ALL))
+		return EINVAL;
 
-	branch = mem_alloc(24, NULL);
-	mbs = mbuf_alloc(256);
-	mb  = mbuf_alloc(1024);
-
-	if (!branch || !mb)
-		goto out;
-
-	(void)re_snprintf(branch, 24, "z9hG4bK%016llx", rand_u64());
-
-	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
+	err = sip_transp_laddr(req->sip, &laddr, req->tp, dst);
 	if (err)
 		goto out;
 
-	err = req->sendh ? req->sendh(tp, &laddr, dst, mbs, &cont, req->arg) :
-			   0;
+	mbuf_set_posend(mb, 0, 0);
+	mbs = mbuf_alloc(256);
+	if (!mbs)
+		return ENOMEM;
+
+	err = req->sendh ? req->sendh(req->tp, &laddr, dst, mbs, &cont,
+				      req->arg) : 0;
 	if (err)
 		goto out;
 
 	mbuf_set_pos(mbs, 0);
 	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
-			   sip_transp_name(tp), &laddr, branch);
+			   sip_transp_name(req->tp), src, req->branch);
 	err |= mbuf_write_mem(mb, mbuf_buf(mbs), mbuf_get_left(mbs));
 	err |= mbuf_write_mem(mb, mbuf_buf(req->mb), mbuf_get_left(req->mb));
-	err |= cont ? mbuf_write_mem(mb, mbuf_buf(cont), mbuf_get_left(cont)) :
-		      0;
-	mem_deref(cont);
+	if (cont) {
+		err |= mbuf_write_mem(mb, mbuf_buf(cont), mbuf_get_left(cont));
+		mem_deref(cont);
+	}
+
 	if (err)
 		goto out;
 
 	mb->pos = 0;
 
-	if (!req->stateful)
-		err = sip_send(req->sip, NULL, tp, dst, mb);
-	else
+out:
+	if (err)
+		mbuf_reset(mb);
+
+	mem_deref(mbs);
+	return err;
+}
+
+
+static int request(struct sip_request *req, enum sip_transp tp,
+		   const struct sa *dst)
+{
+	struct mbuf *mb   = NULL;
+	int err = ENOMEM;
+	struct sa laddr;
+
+	req->provrecv = false;
+
+	mem_deref(req->branch);
+	req->branch = mem_alloc(24, NULL);
+	mb  = mbuf_alloc(1024);
+
+	if (!req->branch || !mb)
+		goto out;
+
+	(void)re_snprintf(req->branch, 24, "z9hG4bK%016llx", rand_u64());
+
+	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
+	if (err)
+		goto out;
+
+	if (!req->stateful) {
+		err = sip_send(req->sip, NULL, tp, dst, mb, connect_handler,
+			       req);
+	}
+	else {
 		err = sip_ctrans_request(&req->ct, req->sip, tp, dst, req->met,
-					 branch, req->host, mb,
-					 response_handler, req);
+					 req->branch, req->host, mb,
+					 connect_handler, response_handler,
+					 req);
+	}
 	if (err)
 		goto out;
 
  out:
-	mem_deref(branch);
-	mem_deref(mbs);
 	mem_deref(mb);
 
 	return err;

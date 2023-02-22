@@ -46,6 +46,7 @@ struct sip_ctrans {
 	char *met;
 	char *branch;
 	char *host;
+	sip_conn_h *connh;
 	sip_resp_h *resph;
 	void *arg;
 	enum sip_transp tp;
@@ -178,6 +179,18 @@ static void tmr_handler(void *arg)
 }
 
 
+static int connect_handler(struct sa *src, const struct sa *dst,
+			   struct mbuf *mb, void *arg)
+{
+	struct sip_ctrans *ct = arg;
+
+	if (ct->connh)
+		return ct->connh(src, dst, mb, ct->arg);
+
+	return 0;
+}
+
+
 static void retransmit_handler(void *arg)
 {
 	struct sip_ctrans *ct = arg;
@@ -207,7 +220,8 @@ static void retransmit_handler(void *arg)
 	tmr_start(&ct->tmre, timeout, retransmit_handler, ct);
 
 	err = sip_transp_send(&ct->qent, ct->sip, NULL, ct->tp, &ct->dst,
-			      ct->host, ct->mb, transport_handler, ct);
+			      ct->host, ct->mb, connect_handler,
+			      transport_handler, ct);
 	if (err) {
 		terminate(ct, err);
 		mem_deref(ct);
@@ -237,7 +251,7 @@ static void invite_response(struct sip_ctrans *ct, const struct sip_msg *msg)
 
 			(void)request_copy(&ct->mb_ack, ct, "ACK", msg);
 			(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst,
-				       ct->mb_ack);
+				       ct->mb_ack, NULL, NULL);
 
 			ct->resph(0, msg, ct->arg);
 
@@ -254,7 +268,8 @@ static void invite_response(struct sip_ctrans *ct, const struct sip_msg *msg)
 		if (msg->scode < 300)
 			break;
 
-		(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst, ct->mb_ack);
+		(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst, ct->mb_ack,
+			       NULL, NULL);
 		break;
 
 	default:
@@ -312,6 +327,7 @@ static bool response_handler(const struct sip_msg *msg, void *arg)
 int sip_ctrans_request(struct sip_ctrans **ctp, struct sip *sip,
 		       enum sip_transp tp, const struct sa *dst, char *met,
 		       char *branch, char *host, struct mbuf *mb,
+		       sip_conn_h *connh,
 		       sip_resp_h *resph, void *arg)
 {
 	struct sip_ctrans *ct;
@@ -335,11 +351,12 @@ int sip_ctrans_request(struct sip_ctrans **ctp, struct sip *sip,
 	ct->tp     = tp;
 	ct->sip    = sip;
 	ct->state  = ct->invite ? CALLING : TRYING;
+	ct->connh  = connh;
 	ct->resph  = resph ? resph : dummy_handler;
 	ct->arg    = arg;
 
 	err = sip_transp_send(&ct->qent, sip, NULL, tp, dst, host, mb,
-			      transport_handler, ct);
+			      connect_handler, transport_handler, ct);
 	if (err)
 		goto out;
 
@@ -389,7 +406,7 @@ int sip_ctrans_cancel(struct sip_ctrans *ct)
 		goto out;
 
 	err = sip_ctrans_request(NULL, ct->sip, ct->tp, &ct->dst, cancel,
-				 ct->branch, NULL, mb, NULL, NULL);
+				 ct->branch, NULL, mb, NULL, NULL, NULL);
 	if (err)
 		goto out;
 

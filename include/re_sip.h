@@ -271,6 +271,8 @@ typedef bool(sip_msg_h)(const struct sip_msg *msg, void *arg);
 typedef int(sip_send_h)(enum sip_transp tp, struct sa *src,
 			const struct sa *dst, struct mbuf *mb,
 			struct mbuf **contp, void *arg);
+typedef int(sip_conn_h)(struct sa *src, const struct sa *dst, struct mbuf *mb,
+			void *arg);
 typedef void(sip_resp_h)(int err, const struct sip_msg *msg, void *arg);
 typedef void(sip_cancel_h)(void *arg);
 typedef void(sip_exit_h)(void *arg);
@@ -297,7 +299,8 @@ int  sip_listen(struct sip_lsnr **lsnrp, struct sip *sip, bool req,
 		sip_msg_h *msgh, void *arg);
 int  sip_debug(struct re_printf *pf, const struct sip *sip);
 int  sip_send(struct sip *sip, void *sock, enum sip_transp tp,
-	      const struct sa *dst, struct mbuf *mb);
+	      const struct sa *dst, struct mbuf *mb,
+	      sip_conn_h *connh, void *arg);
 void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh);
 
 

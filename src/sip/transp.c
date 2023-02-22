@@ -734,7 +734,7 @@ static uint32_t get_hash_of_fromhdr(struct mbuf *mb)
 
 static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 		     const struct sa *dst, char *host, struct mbuf *mb,
-		     sip_transp_h *transph, void *arg)
+		     sip_conn_h *connh, sip_transp_h *transph, void *arg)
 {
 	struct sip_conn *conn, *new_conn = NULL;
 	struct sip_conncfg *conncfg;
@@ -747,6 +747,9 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 
 	conn = conn_find(sip, dst, secure);
 	if (conn) {
+		if (connh)
+			err = connh(&conn->laddr, dst, mb, arg);
+
 		if (!conn->established)
 			goto enqueue;
 
@@ -788,6 +791,9 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	err = tcp_conn_local_get(conn->tc, &conn->laddr);
 	if (err)
 		goto out;
+
+	if (connh)
+		err = connh(&conn->laddr, dst, mb, arg);
 
 	(void)tcp_conn_settos(conn->tc, sip->tos);
 #ifdef USE_TLS
@@ -1410,12 +1416,14 @@ void sip_transp_flush(struct sip *sip)
 
 int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		    enum sip_transp tp, const struct sa *dst, char *host,
-		    struct mbuf *mb, sip_transp_h *transph, void *arg)
+		    struct mbuf *mb, sip_conn_h *connh, sip_transp_h *transph,
+		    void *arg)
 {
 	const struct sip_transport *transp;
 	struct sip_conn *conn;
 	bool secure = false;
 	struct sa dsttmp;
+	struct sa laddr;
 	int err;
 
 	if (!sip || !dst || !mb)
@@ -1431,6 +1439,13 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 	switch (tp) {
 
 	case SIP_TRANSP_UDP:
+		err = sip_transp_laddr(sip, &laddr, tp, dst);
+		if (err)
+			return err;
+
+		if (connh)
+			connh(&laddr, dst, mb, arg);
+
 		if (!sock) {
 			transp = transp_find(sip, tp, sa_af(&dsttmp), &dsttmp);
 			if (!transp)
@@ -1452,6 +1467,11 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		conn = sock;
 
 		if (conn && conn->tc) {
+			if (connh) {
+				err = connh(&conn->laddr, dst, mb, arg);
+				if (err)
+					return err;
+			}
 
 			trace_send(sip, tp, conn, &dsttmp, mb);
 
@@ -1459,7 +1479,7 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		}
 		else
 			err = conn_send(qentp, sip, secure, &dsttmp, host, mb,
-					transph, arg);
+					connh, transph, arg);
 		break;
 
 	case SIP_TRANSP_WSS:
@@ -1467,6 +1487,16 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		/*@fallthrough@*/
 
 	case SIP_TRANSP_WS:
+		/*TODO: Ideally connh should be called if the websocket was
+		 * opened and the source port is known. As a workaround the
+		 * listen port is used for Contact and Via headers */
+		err = sip_transp_laddr(sip, &laddr, tp, dst);
+		if (err)
+			return err;
+
+		if (connh)
+			connh(&laddr, dst, mb, arg);
+
 		conn = sock;
 		if (conn && conn->websock_conn) {
 
