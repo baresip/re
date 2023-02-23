@@ -36,5 +36,6 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           cmake --version
           ninja --version
-          cmake -S . -B build -G "${{ matrix.config.generators }}" -DCMAKE_C_FLAGS="/WX" -DCMAKE_BUILD_TYPE=Debug
+          cmake -S . -B build -G "${{ matrix.config.generators }}" -DCMAKE_C_FLAGS="/WX" -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel
+          ./build/test/retest -r -v
