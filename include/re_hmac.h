@@ -12,6 +12,13 @@ void hmac_sha1(const uint8_t *k,   /* secret key */
 	       uint8_t*       out, /* output buffer, at least "t" bytes */
 	       size_t         t);
 
+void hmac_sha256(const uint8_t *key,
+		 size_t         key_len,
+		 const uint8_t *data,
+		 size_t         data_len,
+		 uint8_t       *out,
+		 size_t         out_len);
+
 
 enum hmac_hash {
 	HMAC_HASH_SHA1,
