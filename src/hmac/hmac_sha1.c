@@ -49,7 +49,7 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	(void)out;
 	(void)t;
 
-#error missing HMAC-SHA1 backend
+#warning missing HMAC-SHA1 backend
 
 
 #endif

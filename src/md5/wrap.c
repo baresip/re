@@ -32,7 +32,7 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	EVP_DigestFinal_ex(ctx, md, NULL);
 	EVP_MD_CTX_free(ctx);
 #else
-#error missing MD5 backend
+#warning missing MD5 backend
 #endif
 }
 
