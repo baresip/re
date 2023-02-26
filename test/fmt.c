@@ -5,6 +5,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include <re.h>
 #include "test.h"
 
@@ -1086,5 +1087,23 @@ out:
 	if (err)
 		DEBUG_WARNING("err itoa string: %s\n", s);
 
+	return err;
+}
+
+
+int test_fmt_str_wchar(void)
+{
+	wchar_t s1[] = L"Test String";
+	wchar_t *s2;
+	int err = 0;
+
+	s2 = str_wchar("Test String");
+	if (!s2)
+		return ENOMEM;
+
+	TEST_EQUALS(0, wcscmp(s1, s2));
+
+out:
+	mem_deref(s2);
 	return err;
 }
