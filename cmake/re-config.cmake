@@ -79,6 +79,11 @@ if(UNIX)
   endif()
 endif()
 
+check_include_file(sys/prctl.h HAVE_PRCTL)
+if(HAVE_PRCTL)
+  list(APPEND RE_DEFINITIONS -DHAVE_PRCTL)
+endif()
+
 
 list(APPEND RE_DEFINITIONS
   -DHAVE_ATOMIC
