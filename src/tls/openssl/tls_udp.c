@@ -350,7 +350,7 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 		return;
 	}
 
-	if (SSL_get_state(tc->ssl) != TLS_ST_OK) {
+	if (SSL_state(tc->ssl) != SSL_ST_OK) {
 
 		if (tc->up) {
 			conn_close(tc, EPROTO);
@@ -371,10 +371,10 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 
 		DEBUG_INFO("%s: state=0x%04x\n",
 			   tc->active ? "client" : "server",
-			   SSL_get_state(tc->ssl));
+			   SSL_state(tc->ssl));
 
 		/* TLS connection is established */
-		if (SSL_get_state(tc->ssl) != TLS_ST_OK)
+		if (SSL_state(tc->ssl) != SSL_ST_OK)
 			return;
 
 		tc->up = true;

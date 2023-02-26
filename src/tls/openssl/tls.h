@@ -15,11 +15,8 @@
 
 
 #if !defined(LIBRESSL_VERSION_NUMBER)
-
-/*#define SSL_state SSL_get_state*/
-
-/*#define SSL_ST_OK TLS_ST_OK*/
-
+#define SSL_state SSL_get_state
+#define SSL_ST_OK TLS_ST_OK
 #endif
 
 
