@@ -255,6 +255,16 @@ int test_hmac_sha256(void)
 		TEST_MEMCMP(digest, sizeof(digest), md, sizeof(md));
 
 		hmac = mem_deref(hmac);
+
+		/* Test Stateless API */
+
+		uint8_t md2[SHA256_DIGEST_LENGTH];
+
+		hmac_sha256(key, key_len,
+			    data, data_len,
+			    md2, sizeof(md2));
+
+		TEST_MEMCMP(digest, sizeof(digest), md2, sizeof(md2));
 	}
 
  out:
