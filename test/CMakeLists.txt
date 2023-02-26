@@ -164,7 +164,7 @@ set(LINKLIBS re ${OPENSSL_LIBRARIES})
 if(WIN32)
   list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32)
 else()
-  list(APPEND LINKLIBS -lpthread -lm ${RESOLV_LIBRARY})
+  list(APPEND LINKLIBS -lm ${RESOLV_LIBRARY})
 endif()
 
 if(ZLIB_FOUND)
