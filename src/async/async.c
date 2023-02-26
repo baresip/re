@@ -270,29 +270,36 @@ void re_async_cancel(struct re_async *async, intptr_t id)
 
 	mtx_lock(&async->mtx);
 
-	LIST_FOREACH(&async->workl, le)
-	{
+	le = list_head(&async->workl);
+	while (le) {
 		struct async_work *w = le->data;
+
+		le = le->next;
 
 		if (w->id != id)
 			continue;
 
+		w->id	 = 0;
 		w->workh = NULL;
 		w->cb	 = NULL;
 		w->arg	 = mem_deref(w->arg);
 		list_move(&w->le, &async->freel);
 	}
 
-	LIST_FOREACH(&async->curl, le)
-	{
+	le = list_head(&async->curl);
+	while (le) {
 		struct async_work *w = le->data;
+
+		le = le->next;
 
 		if (w->id != id)
 			continue;
 
+		w->id	 = 0;
 		w->workh = NULL;
 		w->cb	 = NULL;
 		w->arg	 = mem_deref(w->arg);
+		list_move(&w->le, &async->freel);
 	}
 
 	mtx_unlock(&async->mtx);
