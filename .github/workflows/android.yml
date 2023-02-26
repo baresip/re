@@ -16,5 +16,5 @@ jobs:
     - name: build
       run: |
         mkdir build && cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="x86_64" -DANDROID_PLATFORM=android-21 -DOPENSSL_ROOT_DIR=/usr/include/android/openssl -DOPENSSL_INCLUDE_DIR=/usr/include/android/openssl -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libssl.so ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="x86_64" -DANDROID_PLATFORM=android-21 -DOPENSSL_ROOT_DIR=/usr/include/android/openssl -DOPENSSL_INCLUDE_DIR=/usr/include/android -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libssl.so ..
         cmake --build . -j 2
