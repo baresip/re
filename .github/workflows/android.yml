@@ -11,10 +11,10 @@ jobs:
 
     - name: "build openssl"
       run: |
-        wget https://www.openssl.org/source/openssl-3.0.8.tar.gz
+        wget -q https://www.openssl.org/source/openssl-3.0.8.tar.gz
         tar -xzf openssl-3.0.8.tar.gz
         mv openssl-3.0.8 openssl
-        cd openssl && ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME ./Configure android-arm64 no-shared no-tests -U__ANDROID_API__ -D__ANDROID_API__=21 && make build_libs && cd ..
+        cd openssl && ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH ./Configure android-arm64 no-shared no-tests -U__ANDROID_API__ -D__ANDROID_API__=21 && make build_libs && cd ..
 
     - name: build
       run: |
