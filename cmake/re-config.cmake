@@ -7,9 +7,7 @@ find_package(Threads REQUIRED)
 find_package(ZLIB)
 
 # TODO: temp
-if(NOT ANDROID)
-  find_package(OpenSSL "1.1.0")
-endif()
+find_package(OpenSSL)
 
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
