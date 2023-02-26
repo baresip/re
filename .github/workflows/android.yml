@@ -9,12 +9,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: install packages
+    - name: "build openssl"
       run: |
-        sudo apt-get update && sudo apt-get install -y android-libboringssl-dev
+        wget https://www.openssl.org/source/openssl-3.0.8.tar.gz
+        tar -xzf openssl-3.0.8.tar.gz
+        mv openssl-3.0.8 openssl
+	cd openssl && ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME ./Configure android-arm64 no-shared no-tests -U__ANDROID_API__ -D__ANDROID_API__=21 && make build_libs && cd ..
 
     - name: build
       run: |
         mkdir build && cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="x86_64" -DANDROID_PLATFORM=android-21 -DOPENSSL_ROOT_DIR=/usr/include/android/openssl -DOPENSSL_INCLUDE_DIR=/usr/include/android -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/x86_64-linux-gnu/android/libssl.so ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="arm64-v8a" -DANDROID_PLATFORM=android-21 -DOPENSSL_ROOT_DIR=openssl -DOPENSSL_INCLUDE_DIR=openssl/include -DOPENSSL_CRYPTO_LIBRARY=openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY=openssl/libssl.a ..
         cmake --build . -j 2
