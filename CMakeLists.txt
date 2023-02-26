@@ -528,6 +528,16 @@ if(USE_OPENSSL)
     src/tls/openssl/sni.c
     src/hmac/openssl/hmac.c
   )
+elseif(APPLE)
+  list(APPEND SRCS
+    src/aes/apple/aes.c
+    src/hmac/apple/hmac.c
+  )
+else()
+  list(APPEND SRCS
+    src/aes/stub.c
+    src/hmac/hmac.c
+  )
 endif()
 
 
