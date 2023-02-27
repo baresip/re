@@ -49,30 +49,6 @@ enum {
  *
  * Print warning message
  */
-
-/**
- * @def DEBUG_NOTICE(...)
- *
- * Print notice message
- */
-
-/**
- * @def DEBUG_INFO(...)
- *
- * Print info message
- */
-
-/**
- * @def DEBUG_PRINTF(...)
- *
- * Print debug message
- */
-
-
-/* Check for ISO C99 variable argument macros */
-#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)	\
-	|| (__GNUC__ >= 3)
-
 #if (DEBUG_LEVEL >= 4)
 #define DEBUG_WARNING(...) \
 	dbg_printf(DBG_WARNING, DEBUG_MODULE ": " __VA_ARGS__)
@@ -80,6 +56,11 @@ enum {
 #define DEBUG_WARNING(...)
 #endif
 
+/**
+ * @def DEBUG_NOTICE(...)
+ *
+ * Print notice message
+ */
 #if (DEBUG_LEVEL >= 5)
 #define DEBUG_NOTICE(...) \
 	dbg_printf(DBG_NOTICE, DEBUG_MODULE ": " __VA_ARGS__)
@@ -87,6 +68,11 @@ enum {
 #define DEBUG_NOTICE(...)
 #endif
 
+/**
+ * @def DEBUG_INFO(...)
+ *
+ * Print info message
+ */
 #if (DEBUG_LEVEL >= 6)
 #define DEBUG_INFO(...) \
 	dbg_printf(DBG_INFO, DEBUG_MODULE ": " __VA_ARGS__)
@@ -94,67 +80,16 @@ enum {
 #define DEBUG_INFO(...)
 #endif
 
+/**
+ * @def DEBUG_PRINTF(...)
+ *
+ * Print debug message
+ */
 #if (DEBUG_LEVEL >= 7)
 #define DEBUG_PRINTF(...) \
 	dbg_printf(DBG_DEBUG, DEBUG_MODULE ": " __VA_ARGS__)
 #else
 #define DEBUG_PRINTF(...)
-#endif
-
-/* GNU extensions for variable argument macros */
-#elif defined(__GNUC__)
-
-#if (DEBUG_LEVEL >= 4)
-#define DEBUG_WARNING(a...) dbg_printf(DBG_WARNING, DEBUG_MODULE ": " a)
-#else
-#define DEBUG_WARNING(a...)
-#endif
-
-#if (DEBUG_LEVEL >= 5)
-#define DEBUG_NOTICE(a...) dbg_printf(DBG_NOTICE, DEBUG_MODULE ": " a)
-#else
-#define DEBUG_NOTICE(a...)
-#endif
-
-#if (DEBUG_LEVEL >= 6)
-#define DEBUG_INFO(a...) dbg_printf(DBG_INFO, DEBUG_MODULE ": " a)
-#else
-#define DEBUG_INFO(a...)
-#endif
-
-#if (DEBUG_LEVEL >= 7)
-#define DEBUG_PRINTF(a...) dbg_printf(DBG_DEBUG, DEBUG_MODULE ": " a)
-#else
-#define DEBUG_PRINTF(a...)
-#endif
-
-/* No variable argument macros */
-#else
-
-#if (DEBUG_LEVEL >= 4)
-#define DEBUG_WARNING dbg_warning
-#else
-#define DEBUG_WARNING dbg_noprintf
-#endif
-
-#if (DEBUG_LEVEL >= 5)
-#define DEBUG_NOTICE dbg_notice
-#else
-#define DEBUG_NOTICE dbg_noprintf
-#endif
-
-#if (DEBUG_LEVEL >= 6)
-#define DEBUG_INFO dbg_info
-#else
-#define DEBUG_INFO dbg_noprintf
-#endif
-
-#if (DEBUG_LEVEL >= 7)
-#define DEBUG_PRINTF dbg_noprintf
-#else
-#define DEBUG_PRINTF dbg_noprintf
-#endif
-
 #endif
 
 
