@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#include <stddef.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus

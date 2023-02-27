@@ -5,6 +5,7 @@
  */
 #undef __STRICT_ANSI__ /* for mingw32 */
 #include <string.h>
+#include <stdlib.h>
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
@@ -285,3 +286,32 @@ char *str_itoa(uint32_t val, char *buf, int base)
 	return &buf[i + 1];
 }
 
+
+/**
+ * Converts multibyte characters to wide characters
+ *
+ * @param str  String for conversion
+ *
+ * @return Pointer to new allocated wide string
+ */
+wchar_t *str_wchar(const char *str)
+{
+	wchar_t *w;
+	size_t n;
+
+	if (!str)
+		return NULL;
+
+	n = strlen(str) + 1;
+
+	w = mem_zalloc(n * sizeof(wchar_t), NULL);
+	if (!w)
+		return NULL;
+
+	if (mbstowcs(w, str, n) == (size_t)-1) {
+		mem_deref(w);
+		return NULL;
+	}
+
+	return w;
+}
