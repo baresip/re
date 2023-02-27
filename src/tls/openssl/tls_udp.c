@@ -754,7 +754,9 @@ static bool recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 	if (b < 20 || b > 63)
 		return false;
 
+#if DEBUG_LEVEL >= 6
 	DEBUG_INFO("receive '%s' from %J\n", content_type_str(b), src);
+#endif
 
 	tc = conn_lookup(sock, src);
 	if (tc) {
