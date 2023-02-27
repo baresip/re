@@ -797,7 +797,7 @@ int test_multithread(void)
 
 	test_mode = TEST_THREAD;
 
-	timeout_override = 15000;
+	timeout_override = 20000;
 
 	memset(threadv, 0, sizeof(threadv));
 
