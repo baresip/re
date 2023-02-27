@@ -592,14 +592,6 @@ int jbuf_stats(const struct jbuf *jb, struct jbuf_stat *jstat)
 }
 
 
-static int vprintf_handler(const char *p, size_t size, void *arg)
-{
-	struct mbuf *mb = arg;
-
-	return mbuf_write_mem(mb, (void *)p, size);
-}
-
-
 /**
  * Debug the jitter buffer. This function is thread safe with short blocking
  *
@@ -612,34 +604,30 @@ int jbuf_debug(struct re_printf *pf, const struct jbuf *jb)
 {
 	int err = 0;
 	struct mbuf *mb = mbuf_alloc(512);
-	struct re_printf pfh = {
-		vprintf_handler,
-		mb
-	};
 
 	if (!jb)
 		return 0;
 
-	err |= re_hprintf(&pfh, "--- jitter buffer debug---\n");
+	err |= mbuf_printf(mb, "--- jitter buffer debug---\n");
 
 	mtx_lock(jb->lock);
-	err |= re_hprintf(&pfh, " running=%d", jb->running);
-	err |= re_hprintf(&pfh, " min=%u cur=%u max=%u [frames]\n",
+	err |= mbuf_printf(mb, " running=%d", jb->running);
+	err |= mbuf_printf(mb, " min=%u cur=%u max=%u [frames]\n",
 			  jb->min, jb->n, jb->max);
-	err |= re_hprintf(&pfh, " seq_put=%u\n", jb->seq_put);
+	err |= mbuf_printf(mb, " seq_put=%u\n", jb->seq_put);
 
 #if JBUF_STAT
-	err |= re_hprintf(&pfh, " Stat: put=%u", jb->stat.n_put);
-	err |= re_hprintf(&pfh, " get=%u", jb->stat.n_get);
-	err |= re_hprintf(&pfh, " oos=%u", jb->stat.n_oos);
-	err |= re_hprintf(&pfh, " dup=%u", jb->stat.n_dups);
-	err |= re_hprintf(&pfh, " late=%u", jb->stat.n_late);
-	err |= re_hprintf(&pfh, " or=%u", jb->stat.n_overflow);
-	err |= re_hprintf(&pfh, " ur=%u", jb->stat.n_underflow);
-	err |= re_hprintf(&pfh, " flush=%u", jb->stat.n_flush);
-	err |= re_hprintf(&pfh, "       put/get_ratio=%u%%", jb->stat.n_get ?
+	err |= mbuf_printf(mb, " Stat: put=%u", jb->stat.n_put);
+	err |= mbuf_printf(mb, " get=%u", jb->stat.n_get);
+	err |= mbuf_printf(mb, " oos=%u", jb->stat.n_oos);
+	err |= mbuf_printf(mb, " dup=%u", jb->stat.n_dups);
+	err |= mbuf_printf(mb, " late=%u", jb->stat.n_late);
+	err |= mbuf_printf(mb, " or=%u", jb->stat.n_overflow);
+	err |= mbuf_printf(mb, " ur=%u", jb->stat.n_underflow);
+	err |= mbuf_printf(mb, " flush=%u", jb->stat.n_flush);
+	err |= mbuf_printf(mb, "       put/get_ratio=%u%%", jb->stat.n_get ?
 			  100*jb->stat.n_put/jb->stat.n_get : 0);
-	err |= re_hprintf(&pfh, " lost=%u (%u.%02u%%)\n",
+	err |= mbuf_printf(mb, " lost=%u (%u.%02u%%)\n",
 			  jb->stat.n_lost,
 			  jb->stat.n_put ?
 			  100*jb->stat.n_lost/jb->stat.n_put : 0,
