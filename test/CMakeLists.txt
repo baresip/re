@@ -30,7 +30,6 @@ option(USE_SANITIZER "Sanitizers like: address, thread, undefined, memory")
 include(sanitizer)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Debug)
 
