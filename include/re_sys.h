@@ -32,6 +32,8 @@
 #endif
 
 struct re_printf;
+struct mbuf;
+
 int  sys_kernel_get(struct re_printf *pf, void *unused);
 int  sys_build_get(struct re_printf *pf, void *unused);
 const char *sys_arch_get(void);
@@ -71,6 +73,7 @@ int  fs_gethome(char *path, size_t sz);
 bool fs_isdir(const char *path);
 bool fs_isfile(const char *file);
 int  fs_fopen(FILE **fp, const char *file, const char *mode);
+int  fs_fread(struct mbuf **mbp, const char *path);
 
 void fs_stdio_hide(void);
 void fs_stdio_restore(void);

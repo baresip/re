@@ -20,6 +20,7 @@
 #include <re_dns.h>
 #include <re_msg.h>
 #include <re_http.h>
+#include <re_sys.h>
 #include "http.h"
 
 
@@ -27,6 +28,7 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+#define PEMBUF_SIZE 512
 
 enum {
 	CONN_TIMEOUT = 30000,
@@ -45,8 +47,8 @@ struct http_cli {
 	struct dnsc *dnsc;
 	struct tls *tls;
 	char *tlshn;
-	char *cert;
-	char *key;
+	struct mbuf *cert;
+	struct mbuf *key;
 	struct sa laddr;
 #ifdef HAVE_INET6
 	struct sa laddr6;
@@ -724,51 +726,6 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 }
 
 
-#ifdef USE_TLS
-static int read_file(char **pbuf, const char *path)
-{
-	FILE *f = NULL;
-	long s = 0;
-	size_t n = 0;
-	char *buf;
-
-	if (!pbuf || !path)
-		return EINVAL;
-
-	f = fopen(path, "r");
-	if (!f) {
-		DEBUG_WARNING("Could not open cert file '%s'\n", path);
-		return EIO;
-	}
-
-	fseek(f, 0L, SEEK_END);
-	s = ftell(f);
-	if (s < 0) {
-		fclose(f);
-		return errno;
-	}
-	fseek(f, 0L, SEEK_SET);
-
-	buf = mem_zalloc(s + 1, NULL);
-	if (!buf) {
-		DEBUG_WARNING("Could not allocate cert file buffer\n");
-		fclose(f);
-		return ENOMEM;
-	}
-
-	n = fread(buf, 1, s, f);
-	fclose(f);
-	if (n < (size_t)s) {
-		mem_deref(buf);
-		return EIO;
-	}
-
-	*pbuf = buf;
-	return 0;
-}
-#endif
-
-
 int http_uri_decode(struct http_uri *hu, const struct pl *uri)
 {
 	int err = 0;
@@ -901,12 +858,12 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 #ifdef USE_TLS
 	if (cli->cert && cli->key) {
 		err = tls_set_certificate_pem(cli->tls,
-				cli->cert, strlen(cli->cert),
-				cli->key, strlen(cli->key));
+				(char *)cli->cert->buf, cli->cert->end,
+				(char *)cli->key->buf, cli->key->end);
 	}
 	else if (cli->cert) {
 		err = tls_set_certificate(cli->tls,
-				cli->cert, strlen(cli->cert));
+				(char *)cli->cert->buf, cli->cert->end);
 	}
 	if (err)
 		goto out;
@@ -1137,7 +1094,7 @@ int http_client_set_cert(struct http_cli *cli, const char *path)
 		return EINVAL;
 
 	cli->cert = mem_deref(cli->cert);
-	err = read_file(&cli->cert, path);
+	err = fs_fread(&cli->cert, path);
 	if (err) {
 		cli->cert = mem_deref(cli->cert);
 		return err;
@@ -1161,8 +1118,8 @@ int http_client_set_certpem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->cert = mem_deref(cli->cert);
-
-	return str_dup(&cli->cert, pem);
+	cli->cert = mbuf_alloc(PEMBUF_SIZE);
+	return mbuf_write_str(cli->cert, pem);
 }
 
 
@@ -1174,7 +1131,7 @@ int http_client_set_key(struct http_cli *cli, const char *path)
 		return EINVAL;
 
 	cli->key = mem_deref(cli->key);
-	err = read_file(&cli->key, path);
+	err = fs_fread(&cli->key, path);
 	if (err) {
 		cli->key = mem_deref(cli->key);
 		return err;
@@ -1191,7 +1148,8 @@ int http_client_set_keypem(struct http_cli *cli, const char *pem)
 
 	cli->key = mem_deref(cli->key);
 
-	return str_dup(&cli->key, pem);
+	cli->key = mbuf_alloc(PEMBUF_SIZE);
+	return mbuf_write_str(cli->key, pem);
 }
 
 
