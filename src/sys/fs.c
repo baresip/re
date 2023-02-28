@@ -190,10 +190,10 @@ int fs_fopen(FILE **fp, const char *file, const char *mode)
 	FILE *pfile;
 	int fd;
 
-	if (!fp || !file || !mode)
+	if (!fp || !file || !str_isset(mode))
 		return EINVAL;
 
-	if (fs_isfile(file))
+	if (mode[0] == 'r' || fs_isfile(file))
 		goto fopen;
 
 	fd = open(file, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
