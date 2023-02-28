@@ -217,6 +217,7 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 {
 	struct tls_conn *tc = arg;
 	int r;
+	bool reneg = false;
 
 	/* feed SSL data to the BIO */
 	r = BIO_write(tc->sbio_in, mbuf_buf(mb), (int)mbuf_get_left(mb));
@@ -228,8 +229,12 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 	}
 
 	if (SSL_state(tc->ssl) != SSL_ST_OK) {
+#if !defined(LIBRESSL_VERSION_NUMBER)
+		reneg = SSL_state(tc->ssl) == TLS_ST_CW_CLNT_HELLO
+		     || SSL_state(tc->ssl) == TLS_ST_CW_FINISHED;
+#endif
 
-		if (tc->up) {
+		if (tc->up && !reneg) {
 			*err = EPROTO;
 			return true;
 		}
