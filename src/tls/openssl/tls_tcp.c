@@ -231,7 +231,8 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 	if (SSL_state(tc->ssl) != SSL_ST_OK) {
 #if !defined(LIBRESSL_VERSION_NUMBER)
 		reneg = SSL_state(tc->ssl) == TLS_ST_CW_CLNT_HELLO
-		     || SSL_state(tc->ssl) == TLS_ST_CW_FINISHED;
+		     || SSL_state(tc->ssl) == TLS_ST_CW_FINISHED
+		     || SSL_state(tc->ssl) == TLS_ST_SW_SRVR_DONE;
 #endif
 
 		if (tc->up && !reneg) {
