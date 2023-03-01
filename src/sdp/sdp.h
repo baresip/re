@@ -5,6 +5,8 @@
  */
 
 
+#include <re_thread.h>
+
 enum {
 	RTP_DYNPT_START =  96,
 	RTP_DYNPT_END   = 127,
