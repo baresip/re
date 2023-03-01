@@ -1008,6 +1008,9 @@ int sdp_media_debug(struct re_printf *pf, const struct sdp_media *m)
  */
 void sdp_media_lock(const struct sdp_media *m)
 {
+	if (!m)
+		return;
+
 	(void)mtx_lock(m->lock);
 }
 
@@ -1019,5 +1022,8 @@ void sdp_media_lock(const struct sdp_media *m)
  */
 void sdp_media_unlock(const struct sdp_media *m)
 {
+	if (!m)
+		return;
+
 	(void)mtx_unlock(m->lock);
 }
