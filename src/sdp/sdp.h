@@ -48,6 +48,7 @@ struct sdp_media {
 	bool fmt_ignore;
 	bool disabled;
 	int dynpt;
+	mtx_t *lock;
 };
 
 

@@ -12,6 +12,7 @@
 #include <re_list.h>
 #include <re_sa.h>
 #include <re_sdp.h>
+#include "re_thread.h"
 #include "sdp.h"
 
 
@@ -39,17 +40,26 @@ static void destructor(void *arg)
 	mem_deref(m->name);
 	mem_deref(m->proto);
 	mem_deref(m->uproto);
+	mem_deref(m->lock);
 }
 
 
 static int media_alloc(struct sdp_media **mp, struct list *list)
 {
 	struct sdp_media *m;
-	int i;
+	int i, err;
 
-	m = mem_zalloc(sizeof(*m), destructor);
+	m = mem_zalloc(sizeof(*m), NULL);
 	if (!m)
 		return ENOMEM;
+
+	err = mutex_alloc(&m->lock);
+	if (err) {
+		mem_deref(m);
+		return err;
+	}
+
+	mem_destructor(m, destructor);
 
 	list_append(list, &m->le, m);
 
@@ -989,4 +999,26 @@ int sdp_media_debug(struct re_printf *pf, const struct sdp_media *m)
 			sdp_dir_name(m->rdir));
 
 	return err;
+}
+
+
+/**
+ * External SDP Media lock helper
+ *
+ * @param m  SDP Media line
+ */
+void sdp_media_lock(const struct sdp_media *m)
+{
+	(void)mtx_lock(m->lock);
+}
+
+
+/**
+ * External SDP Media unlock helper
+ *
+ * @param m  SDP Media line
+ */
+void sdp_media_unlock(const struct sdp_media *m)
+{
+	(void)mtx_unlock(m->lock);
 }

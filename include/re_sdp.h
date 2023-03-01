@@ -136,6 +136,8 @@ const char *sdp_media_rattr_apply(const struct sdp_media *m, const char *name,
 const char *sdp_media_name(const struct sdp_media *m);
 int  sdp_media_debug(struct re_printf *pf, const struct sdp_media *m);
 
+void sdp_media_lock(const struct sdp_media *m);
+void sdp_media_unlock(const struct sdp_media *m);
 
 /* format */
 int  sdp_format_add(struct sdp_format **fmtp, struct sdp_media *m,
