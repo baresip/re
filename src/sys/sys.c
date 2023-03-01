@@ -199,12 +199,16 @@ int sys_coredump_set(bool enable)
 /**
  * Get an environment variable
  *
- * @param name  environment variable
+ * @param env   Pointer to destination env var
+ * @param name  Environment variable name
  *
- * @return Pointer to allocation on success otherwise NULL
+ * @return 0 if success, otherwise errorcode
  */
-char *sys_getenv(const char *name)
+int sys_getenv(char **env, const char *name)
 {
+	if (!env || !name)
+		return EINVAL;
+
 #ifdef WIN32
 	uint32_t rc    = 1;
 	uint32_t bufsz = rc;
@@ -212,33 +216,34 @@ char *sys_getenv(const char *name)
 
 	buf = mem_zalloc(bufsz, NULL);
 	if (!buf)
-		return NULL;
+		return ENOMEM;
 
 	while (1) {
 		rc = GetEnvironmentVariableA(name, buf, bufsz);
 		if (!rc || rc == bufsz || rc > MAX_ENVSZ) {
 			mem_deref(buf);
-			return NULL;
+			return ENODATA;
 		}
 
 		/* success */
-		if (rc < bufsz)
-			return buf;
+		if (rc < bufsz) {
+			*env = buf;
+			return 0;
+		}
 
 		/* failed, getenv needs more space */
 		bufsz = rc;
 		buf   = mem_realloc(buf, bufsz);
 		if (!buf) {
 			mem_deref(buf);
-			return NULL;
+			return ENOMEM;
 		}
 	}
 #else
-	char *env;
-	int err = str_dup(&env, getenv(name));
-	if (err)
-		return NULL;
+	char *tmp = getenv(name);
+	if (!tmp)
+		return ENODATA;
 
-	return env;
+	return str_dup(env, tmp);
 #endif
 }
