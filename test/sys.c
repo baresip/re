@@ -212,12 +212,17 @@ int test_sys_getenv(void)
 	char *env;
 
 	env = sys_getenv("HOME");
+	if (!env)
+		return ENOMEM;
 	TEST_EQUALS(true, str_isset(env));
 	mem_deref(env);
 
 	env = sys_getenv("DOESNOTEXIST");
+	if (!env)
+		return ENOMEM;
 	TEST_EQUALS(false, str_isset(env));
 	mem_deref(env);
+
 out:
 	return err;
 }
