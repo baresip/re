@@ -7,6 +7,7 @@
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_mem.h>
 #include <re_sys.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -19,6 +20,13 @@
 #endif
 #ifdef HAVE_SETRLIMIT
 #include <sys/resource.h>
+#endif
+
+#ifdef WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 #endif
 
 #ifdef WIN32
