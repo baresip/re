@@ -40,6 +40,7 @@ const char *sys_arch_get(void);
 const char *sys_os_get(void);
 const char *sys_libre_version_get(void);
 const char *sys_username(void);
+int sys_getenv(char **env, const char *name);
 int sys_coredump_set(bool enable);
 int sys_daemon(void);
 void sys_usleep(unsigned int us);

@@ -201,6 +201,7 @@ static const struct test tests[] = {
 	TEST(test_sys_fs_isdir),
 	TEST(test_sys_fs_isfile),
 	TEST(test_sys_fs_fopen),
+	TEST(test_sys_getenv),
 	TEST(test_tcp),
 	TEST(test_telev),
 #ifdef USE_TLS

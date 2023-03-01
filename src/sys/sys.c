@@ -7,6 +7,7 @@
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_mem.h>
 #include <re_sys.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -19,6 +20,19 @@
 #endif
 #ifdef HAVE_SETRLIMIT
 #include <sys/resource.h>
+#endif
+
+#ifdef WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
+#ifdef WIN32
+enum {
+	MAX_ENVSZ = 32767
+};
 #endif
 
 
@@ -178,5 +192,58 @@ int sys_coredump_set(bool enable)
 #else
 	(void)enable;
 	return ENOSYS;
+#endif
+}
+
+
+/**
+ * Get an environment variable
+ *
+ * @param env   Pointer to destination env var
+ * @param name  Environment variable name
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sys_getenv(char **env, const char *name)
+{
+	if (!env || !name)
+		return EINVAL;
+
+#ifdef WIN32
+	uint32_t rc    = 1;
+	uint32_t bufsz = rc;
+	char *buf;
+
+	buf = mem_zalloc(bufsz, NULL);
+	if (!buf)
+		return ENOMEM;
+
+	while (1) {
+		rc = GetEnvironmentVariableA(name, buf, bufsz);
+		if (!rc || rc == bufsz || rc > MAX_ENVSZ) {
+			mem_deref(buf);
+			return ENODATA;
+		}
+
+		/* success */
+		if (rc < bufsz) {
+			*env = buf;
+			return 0;
+		}
+
+		/* failed, getenv needs more space */
+		bufsz = rc;
+		buf   = mem_realloc(buf, bufsz);
+		if (!buf) {
+			mem_deref(buf);
+			return ENOMEM;
+		}
+	}
+#else
+	char *tmp = getenv(name);
+	if (!tmp)
+		return ENODATA;
+
+	return str_dup(env, tmp);
 #endif
 }
