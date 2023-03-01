@@ -204,3 +204,20 @@ int test_sys_fs_fopen(void)
 out:
 	return err;
 }
+
+
+int test_sys_getenv(void)
+{
+	int err = 0;
+	char *env;
+
+	env = sys_getenv("HOME");
+	TEST_EQUALS(true, str_isset(env));
+	mem_deref(env);
+
+	env = sys_getenv("DOESNOTEXIST");
+	TEST_EQUALS(false, str_isset(env));
+	mem_deref(env);
+out:
+	return err;
+}

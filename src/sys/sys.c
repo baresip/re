@@ -21,6 +21,12 @@
 #include <sys/resource.h>
 #endif
 
+#ifdef WIN32
+enum {
+	MAX_ENVSZ = 32767
+};
+#endif
+
 
 /**
  * Get kernel name and version
@@ -178,5 +184,53 @@ int sys_coredump_set(bool enable)
 #else
 	(void)enable;
 	return ENOSYS;
+#endif
+}
+
+
+/**
+ * Get an environment variable
+ *
+ * @param name  environment variable
+ *
+ * @return Pointer to allocation on success otherwise NULL
+ */
+char *sys_getenv(const char *name)
+{
+#ifdef WIN32
+	uint32_t rc    = 1;
+	uint32_t bufsz = rc;
+	char *buf;
+
+	buf = mem_zalloc(bufsz, NULL);
+	if (!buf)
+		return NULL;
+
+	while (1) {
+		rc = GetEnvironmentVariableA(name, buf, bufsz);
+		if (!rc || rc == bufsz || rc > MAX_ENVSZ) {
+			mem_deref(buf);
+			return NULL;
+		}
+
+		/* success */
+		if (rc < bufsz)
+			return buf;
+
+		/* failed, getenv needs more space */
+		bufsz = rc;
+		buf   = mem_realloc(buf, bufsz);
+		if (!buf) {
+			mem_deref(buf);
+			return NULL;
+		}
+	}
+#else
+	char *env;
+	int err = str_dup(&env, getenv(name));
+	if (err)
+		return NULL;
+
+	return env;
 #endif
 }
