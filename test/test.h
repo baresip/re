@@ -221,6 +221,7 @@ int test_dns_cache_http_integration(void);
 int test_https_loop(void);
 int test_http_client_set_tls(void);
 int test_https_large_body(void);
+int test_https_conn_post_handshake(void);
 #endif
 int test_httpauth_chall(void);
 int test_httpauth_resp(void);
