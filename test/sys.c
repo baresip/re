@@ -218,8 +218,6 @@ int test_sys_getenv(void)
 	mem_deref(env);
 
 	env = sys_getenv("DOESNOTEXIST");
-	if (!env)
-		return ENOMEM;
 	TEST_EQUALS(false, str_isset(env));
 	mem_deref(env);
 
