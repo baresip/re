@@ -211,7 +211,11 @@ int test_sys_getenv(void)
 	int err = 0;
 	char *env = NULL;
 
+#ifdef WIN32
+	err = sys_getenv(&env, "HOMEPATH");
+#else
 	err = sys_getenv(&env, "HOME");
+#endif
 	TEST_ERR(err);
 
 	TEST_EQUALS(true, str_isset(env));
