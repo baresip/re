@@ -32,12 +32,15 @@
 #endif
 
 struct re_printf;
+struct mbuf;
+
 int  sys_kernel_get(struct re_printf *pf, void *unused);
 int  sys_build_get(struct re_printf *pf, void *unused);
 const char *sys_arch_get(void);
 const char *sys_os_get(void);
 const char *sys_libre_version_get(void);
 const char *sys_username(void);
+int sys_getenv(char **env, const char *name);
 int sys_coredump_set(bool enable);
 int sys_daemon(void);
 void sys_usleep(unsigned int us);
@@ -71,6 +74,7 @@ int  fs_gethome(char *path, size_t sz);
 bool fs_isdir(const char *path);
 bool fs_isfile(const char *file);
 int  fs_fopen(FILE **fp, const char *file, const char *mode);
+int  fs_fread(struct mbuf **mbp, const char *path);
 
 void fs_stdio_hide(void);
 void fs_stdio_restore(void);

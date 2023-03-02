@@ -6,6 +6,7 @@
  */
 
 #include <re_types.h>
+#include <re_mbuf.h>
 #ifdef USE_OPENSSL
 #include <openssl/sha.h>
 #elif defined (__APPLE__)
@@ -55,4 +56,33 @@ void sha256(const uint8_t *d, size_t n, uint8_t *md)
 	(void)md;
 #error missing SHA-256 backend
 #endif
+}
+
+
+/**
+ * Calculate the SHA-256 hash from a formatted string
+ *
+ * @param md  Calculated SHA-256 hash
+ * @param fmt Formatted string
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sha256_printf(uint8_t md[32], const char *fmt, ...)
+{
+	struct mbuf mb;
+	va_list ap;
+	int err;
+
+	mbuf_init(&mb);
+
+	va_start(ap, fmt);
+	err = mbuf_vprintf(&mb, fmt, ap);
+	va_end(ap);
+
+	if (!err)
+		sha256(mb.buf, mb.end, md);
+
+	mbuf_reset(&mb);
+
+	return err;
 }

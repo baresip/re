@@ -269,33 +269,29 @@ int test_vid(void)
 	int err;
 
 	err = test_vidsz_cmp();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_vidrect_cmp();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_vidframe_size();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_vidframe_alloc();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_vidframe_rgb32_2x2_red();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
-	err  = test_vidframe_yuv_2x2_white(VID_FMT_YUV420P, 1);
-	err |= test_vidframe_yuv_2x2_white(VID_FMT_YUV444P, 2);
-	if (err)
-		return err;
+	err = test_vidframe_yuv_2x2_white(VID_FMT_YUV420P, 1);
+	TEST_ERR(err);
+
+	err = test_vidframe_yuv_2x2_white(VID_FMT_YUV444P, 2);
+	TEST_ERR(err);
 
 	err = test_vid_draw();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }

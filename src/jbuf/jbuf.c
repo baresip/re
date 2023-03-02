@@ -75,7 +75,7 @@ struct jbuf {
 	int32_t rdiff;       /**< Average out of order reverse diff         */
 	struct tmr tmr;      /**< Rdiff down timer                          */
 
-	mtx_t lock;          /**< Makes jitter buffer thread safe           */
+	mtx_t *lock;         /**< Makes jitter buffer thread safe           */
 	enum jbuf_type jbtype;     /**< Jitter buffer type                  */
 #if JBUF_STAT
 	struct jbuf_stat stat; /**< Jitter buffer Statistics       */
@@ -144,7 +144,7 @@ static void jbuf_destructor(void *data)
 
 	/* Free all frames in the pool list */
 	list_flush(&jb->pooll);
-	mtx_destroy(&jb->lock);
+	mem_deref(jb->lock);
 }
 
 
@@ -172,7 +172,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		return ENOSYS;
 	}
 
-	jb = mem_zalloc(sizeof(*jb), jbuf_destructor);
+	jb = mem_zalloc(sizeof(*jb), NULL);
 	if (!jb)
 		return ENOMEM;
 
@@ -188,11 +188,11 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	DEBUG_INFO("alloc: delay=%u-%u frames\n", min, max);
 
 	jb->pt = -1;
-	err = mtx_init(&jb->lock, mtx_plain) != thrd_success;
-	if (err) {
-		err = ENOMEM;
+	err = mutex_alloc(&jb->lock);
+	if (err)
 		goto out;
-	}
+
+	mem_destructor(jb, jbuf_destructor);
 
 	/* Allocate all frames now */
 	for (i=0; i<jb->max; i++) {
@@ -331,7 +331,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 
 	jb->tr = tr;
 
-	mtx_lock(&jb->lock);
+	mtx_lock(jb->lock);
 	jb->ssrc = hdr->ssrc;
 
 	if (jb->running) {
@@ -408,7 +408,7 @@ success:
 	f->mem = mem_ref(mem);
 
 out:
-	mtx_unlock(&jb->lock);
+	mtx_unlock(jb->lock);
 	return err;
 }
 
@@ -431,7 +431,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	if (!jb || !hdr || !mem)
 		return EINVAL;
 
-	mtx_lock(&jb->lock);
+	mtx_lock(jb->lock);
 	STAT_INC(n_get);
 
 	if (jb->n <= jb->wish || !jb->framel.head) {
@@ -479,7 +479,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	}
 
 out:
-	mtx_unlock(&jb->lock);
+	mtx_unlock(jb->lock);
 	return err;
 }
 
@@ -500,7 +500,7 @@ int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	if (!jb || !hdr || !mem)
 		return EINVAL;
 
-	mtx_lock(&jb->lock);
+	mtx_lock(jb->lock);
 
 	if (jb->n <= 0 || !jb->framel.head) {
 		err = ENOENT;
@@ -522,7 +522,7 @@ int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	frame_deref(jb, f);
 
 out:
-	mtx_unlock(&jb->lock);
+	mtx_unlock(jb->lock);
 	return err;
 }
 
@@ -541,7 +541,7 @@ void jbuf_flush(struct jbuf *jb)
 	if (!jb)
 		return;
 
-	mtx_lock(&jb->lock);
+	mtx_lock(jb->lock);
 	if (jb->framel.head) {
 		DEBUG_INFO("flush: %u frames\n", jb->n);
 	}
@@ -563,7 +563,7 @@ void jbuf_flush(struct jbuf *jb)
 	memset(&jb->stat, 0, sizeof(jb->stat));
 	jb->stat.n_flush = n_flush;
 #endif
-	mtx_unlock(&jb->lock);
+	mtx_unlock(jb->lock);
 }
 
 
@@ -581,7 +581,9 @@ int jbuf_stats(const struct jbuf *jb, struct jbuf_stat *jstat)
 		return EINVAL;
 
 #if JBUF_STAT
+	mtx_lock(jb->lock);
 	*jstat = jb->stat;
+	mtx_unlock(jb->lock);
 
 	return 0;
 #else
@@ -591,7 +593,7 @@ int jbuf_stats(const struct jbuf *jb, struct jbuf_stat *jstat)
 
 
 /**
- * Debug the jitter buffer
+ * Debug the jitter buffer. This function is thread safe with short blocking
  *
  * @param pf Print handler
  * @param jb Jitter buffer
@@ -601,35 +603,45 @@ int jbuf_stats(const struct jbuf *jb, struct jbuf_stat *jstat)
 int jbuf_debug(struct re_printf *pf, const struct jbuf *jb)
 {
 	int err = 0;
+	struct mbuf *mb = mbuf_alloc(512);
 
 	if (!jb)
 		return 0;
 
-	err |= re_hprintf(pf, "--- jitter buffer debug---\n");
+	err |= mbuf_printf(mb, "--- jitter buffer debug---\n");
 
-	err |= re_hprintf(pf, " running=%d", jb->running);
-	err |= re_hprintf(pf, " min=%u cur=%u max=%u [frames]\n",
+	mtx_lock(jb->lock);
+	err |= mbuf_printf(mb, " running=%d", jb->running);
+	err |= mbuf_printf(mb, " min=%u cur=%u max=%u [frames]\n",
 			  jb->min, jb->n, jb->max);
-	err |= re_hprintf(pf, " seq_put=%u\n", jb->seq_put);
+	err |= mbuf_printf(mb, " seq_put=%u\n", jb->seq_put);
 
 #if JBUF_STAT
-	err |= re_hprintf(pf, " Stat: put=%u", jb->stat.n_put);
-	err |= re_hprintf(pf, " get=%u", jb->stat.n_get);
-	err |= re_hprintf(pf, " oos=%u", jb->stat.n_oos);
-	err |= re_hprintf(pf, " dup=%u", jb->stat.n_dups);
-	err |= re_hprintf(pf, " late=%u", jb->stat.n_late);
-	err |= re_hprintf(pf, " or=%u", jb->stat.n_overflow);
-	err |= re_hprintf(pf, " ur=%u", jb->stat.n_underflow);
-	err |= re_hprintf(pf, " flush=%u", jb->stat.n_flush);
-	err |= re_hprintf(pf, "       put/get_ratio=%u%%", jb->stat.n_get ?
+	err |= mbuf_printf(mb, " Stat: put=%u", jb->stat.n_put);
+	err |= mbuf_printf(mb, " get=%u", jb->stat.n_get);
+	err |= mbuf_printf(mb, " oos=%u", jb->stat.n_oos);
+	err |= mbuf_printf(mb, " dup=%u", jb->stat.n_dups);
+	err |= mbuf_printf(mb, " late=%u", jb->stat.n_late);
+	err |= mbuf_printf(mb, " or=%u", jb->stat.n_overflow);
+	err |= mbuf_printf(mb, " ur=%u", jb->stat.n_underflow);
+	err |= mbuf_printf(mb, " flush=%u", jb->stat.n_flush);
+	err |= mbuf_printf(mb, "       put/get_ratio=%u%%", jb->stat.n_get ?
 			  100*jb->stat.n_put/jb->stat.n_get : 0);
-	err |= re_hprintf(pf, " lost=%u (%u.%02u%%)\n",
+	err |= mbuf_printf(mb, " lost=%u (%u.%02u%%)\n",
 			  jb->stat.n_lost,
 			  jb->stat.n_put ?
 			  100*jb->stat.n_lost/jb->stat.n_put : 0,
 			  jb->stat.n_put ?
 			  10000*jb->stat.n_lost/jb->stat.n_put%100 : 0);
 #endif
+	mtx_unlock(jb->lock);
 
+	if (err)
+		goto out;
+
+	err = re_hprintf(pf, "%b", mb->buf, mb->pos);
+
+out:
+	mem_deref(mb);
 	return err;
 }

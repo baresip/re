@@ -273,9 +273,11 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 		lfmt->sup = false;
 	}
 
-	for (rle=m->rfmtl.head; rle; rle=rle->next) {
+	rle = m->rfmtl.head;
 
+	while (rle) {
 		rfmt = rle->data;
+		rle  = rle->next;
 
 		for (lle=m->lfmtl.head; lle; lle=lle->next) {
 

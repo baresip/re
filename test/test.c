@@ -92,6 +92,7 @@ static const struct test tests[] = {
 	TEST(test_fmt_str_bool),
 	TEST(test_fmt_str_error),
 	TEST(test_fmt_str_itoa),
+	TEST(test_fmt_str_wchar),
 	TEST(test_fmt_unicode),
 	TEST(test_fmt_unicode_decode),
 	TEST(test_g711_alaw),
@@ -200,6 +201,7 @@ static const struct test tests[] = {
 	TEST(test_sys_fs_isdir),
 	TEST(test_sys_fs_isfile),
 	TEST(test_sys_fs_fopen),
+	TEST(test_sys_getenv),
 	TEST(test_tcp),
 	TEST(test_telev),
 #ifdef USE_TLS
@@ -796,7 +798,7 @@ int test_multithread(void)
 
 	test_mode = TEST_THREAD;
 
-	timeout_override = 15000;
+	timeout_override = 20000;
 
 	memset(threadv, 0, sizeof(threadv));
 

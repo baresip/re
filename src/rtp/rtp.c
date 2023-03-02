@@ -697,11 +697,15 @@ void rtcp_enable_mux(struct rtp_sock *rs, bool enabled)
  */
 int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
 {
-	if (!rs || !rs->sock_rtcp || !sa_isset(&rs->rtcp_peer, SA_ALL))
+	void* sock;
+	if (!rs)
 		return EINVAL;
 
-	return udp_send(rs->rtcp_mux ? rs->sock_rtp : rs->sock_rtcp,
-			&rs->rtcp_peer, mb);
+	sock = rs->rtcp_mux ? rs->sock_rtp : rs->sock_rtcp;
+	if (!sock || !sa_isset(&rs->rtcp_peer, SA_ALL))
+		return EINVAL;
+
+	return udp_send(sock, &rs->rtcp_peer, mb);
 }
 
 

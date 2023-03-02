@@ -15,12 +15,6 @@
 #include <re_hmac.h>
 
 
-/** SHA-1 Block size */
-#ifndef SHA_BLOCKSIZE
-#define SHA_BLOCKSIZE   64
-#endif
-
-
 /**
  * Function to compute the digest
  *
@@ -56,6 +50,36 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	(void)t;
 
 #error missing HMAC-SHA1 backend
+
+
+#endif
+}
+
+
+void hmac_sha256(const uint8_t *key, size_t key_len,
+		 const uint8_t *data, size_t data_len,
+		 uint8_t *out, size_t out_len)
+{
+#ifdef USE_OPENSSL
+
+	(void)out_len;
+
+	if (!HMAC(EVP_sha256(), key, (int)key_len, data, data_len, out, NULL))
+		ERR_clear_error();
+
+#elif defined (__APPLE__)
+	(void)out_len;
+
+	CCHmac(kCCHmacAlgSHA256, key, key_len, data, data_len, out);
+#else
+	(void)key;
+	(void)key_len;
+	(void)data;
+	(void)data_len;
+	(void)out;
+	(void)out_len;
+
+#error missing HMAC-SHA256 backend
 
 
 #endif

@@ -126,6 +126,7 @@ int  str_casecmp(const char *s1, const char *s2);
 size_t str_len(const char *s);
 const char *str_error(int errnum, char *buf, size_t sz);
 char *str_itoa(uint32_t val, char *buf, int base);
+wchar_t *str_wchar(const char *c);
 
 
 /**

@@ -1084,47 +1084,51 @@ int test_srtp(void)
 	}
 
 	err  = test_srtp_aescm128();
-	err |= test_srtp_aescm256();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
-	err |= test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, 3);
-	err |= test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, 3);
-	err |= test_srtp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, 3);
-	err |= test_srtp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, 3);
-	if (err)
-		return err;
+	err = test_srtp_aescm256();
+	TEST_ERR(err);
 
-	err |= test_srtp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, 3);
-	err |= test_srtp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, 3);
-	if (err)
-		return err;
+	err = test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, 3);
+	TEST_ERR(err);
 
-	err |= test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, 65530);
-	err |= test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, 65530);
-	if (err)
-		return err;
+	err = test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, 65530);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, 65530);
+	TEST_ERR(err);
 
 	err  = test_srtp_libsrtp();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_replay(SRTP_AES_CM_128_HMAC_SHA1_32);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_reordering_and_wrap();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_unauth(SRTP_AES_CM_128_HMAC_SHA1_32);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_random(SRTP_AES_CM_128_HMAC_SHA1_32);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
@@ -1138,75 +1142,87 @@ int test_srtcp(void)
 		return ESKIPPED;
 	}
 
-	err |= test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, RTCP_BYE);
-	err |= test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
-	err |= test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_RR);
-	if (err)
-		return err;
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_RR);
+	TEST_ERR(err);
 
 	err = test_srtcp_libsrtp();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_unencrypted_srtcp();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtcp_random(SRTP_AES_CM_128_HMAC_SHA1_32);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
 
 int test_srtp_gcm(void)
 {
-	int err = 0;
+	int err;
 
-	err |= test_srtp_loop(0, SRTP_AES_128_GCM, 3);
-	if (err)
-		return err;
+	err = test_srtp_loop(0, SRTP_AES_128_GCM, 3);
+	TEST_ERR(err);
 
-	err |= test_srtp_loop(0, SRTP_AES_256_GCM, 3);
-	err |= test_srtp_loop(0, SRTP_AES_256_GCM, 65530);
-	if (err)
-		return err;
+	err = test_srtp_loop(0, SRTP_AES_256_GCM, 3);
+	TEST_ERR(err);
+
+	err = test_srtp_loop(0, SRTP_AES_256_GCM, 65530);
+	TEST_ERR(err);
 
 	err = test_srtp_unauth(SRTP_AES_256_GCM);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_replay(SRTP_AES_128_GCM);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_srtp_random(SRTP_AES_128_GCM);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
 
 int test_srtcp_gcm(void)
 {
-	int err = 0;
+	int err;
 
-	err |= test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_256_GCM, RTCP_BYE);
-	err |= test_srtcp_loop(4, SRTP_AES_128_GCM, RTCP_BYE);
-	err |= test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_RR);
-	if (err)
-		return err;
+	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_256_GCM, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(4, SRTP_AES_128_GCM, RTCP_BYE);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_RR);
+	TEST_ERR(err);
 
 	err = test_srtcp_random(SRTP_AES_128_GCM);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
+out:
 	return err;
 }

@@ -442,8 +442,6 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 
 	if (tc->recvh && mbuf_get_left(mb) > 0)
 		tc->recvh(mb, tc->arg);
-
-	return;
 }
 
 

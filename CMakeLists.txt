@@ -53,7 +53,6 @@ option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 
 if(MSVC)
@@ -527,6 +526,16 @@ if(USE_OPENSSL)
     src/tls/openssl/tls.c
     src/tls/openssl/sni.c
     src/hmac/openssl/hmac.c
+  )
+elseif(APPLE)
+  list(APPEND SRCS
+    src/aes/apple/aes.c
+    src/hmac/apple/hmac.c
+  )
+else()
+  list(APPEND SRCS
+    src/aes/stub.c
+    src/hmac/hmac.c
   )
 endif()
 

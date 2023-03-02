@@ -204,3 +204,27 @@ int test_sys_fs_fopen(void)
 out:
 	return err;
 }
+
+
+int test_sys_getenv(void)
+{
+	int err = 0;
+	char *env = NULL;
+
+#ifdef WIN32
+	err = sys_getenv(&env, "HOMEPATH");
+#else
+	err = sys_getenv(&env, "HOME");
+#endif
+	TEST_ERR(err);
+
+	TEST_EQUALS(true, str_isset(env));
+	mem_deref(env);
+
+	err = sys_getenv(&env, "DOESNOTEXIST");
+	TEST_EQUALS(ENODATA, err);
+	err = 0;
+
+out:
+	return err;
+}

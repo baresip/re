@@ -30,7 +30,6 @@ option(USE_SANITIZER "Sanitizers like: address, thread, undefined, memory")
 include(sanitizer)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Debug)
 
@@ -164,7 +163,7 @@ set(LINKLIBS re ${OPENSSL_LIBRARIES})
 if(WIN32)
   list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32)
 else()
-  list(APPEND LINKLIBS -lpthread -lm ${RESOLV_LIBRARY})
+  list(APPEND LINKLIBS -lm ${RESOLV_LIBRARY})
 endif()
 
 if(ZLIB_FOUND)
