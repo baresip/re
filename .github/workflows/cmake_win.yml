@@ -45,5 +45,5 @@ jobs:
           cmake --version
           ninja --version
           cmake -S . -B build -G "${{ matrix.config.generators }}" -DCMAKE_C_FLAGS="/WX" -DCMAKE_BUILD_TYPE=${{ matrix.config.build }}
-          cmake --build build --parallel
+          cmake --build build --parallel -t retest
           build\test\retest.exe -r -v
