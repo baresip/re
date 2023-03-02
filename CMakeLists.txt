@@ -740,4 +740,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
 # Test
 #
 
-add_subdirectory(test)
+add_subdirectory(test EXCLUDE_FROM_ALL)
