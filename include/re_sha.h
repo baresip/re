@@ -26,3 +26,4 @@
 
 void sha1(const uint8_t *d, size_t n, uint8_t *md);
 void sha256(const uint8_t *d, size_t n, uint8_t *md);
+int  sha256_printf(uint8_t md[32], const char *fmt, ...);
