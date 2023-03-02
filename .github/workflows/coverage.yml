@@ -30,7 +30,7 @@ jobs:
     - name: make
       run: | 
         cmake -B build -DCMAKE_C_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-        cmake --build build -j
+        cmake --build build -j -t retest
 
     - name: retest
       run: |
