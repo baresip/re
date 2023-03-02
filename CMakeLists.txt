@@ -649,7 +649,7 @@ endif()
 # Main target object
 #
 
-add_library(re-objs OBJECT ${SRCS} ${HEADERS})
+add_library(re-objs OBJECT ${SRCS} ${HEADERS} ${REM_HEADERS})
 
 set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -682,6 +682,7 @@ add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
 target_link_libraries(re PUBLIC ${LINKLIBS})
 target_include_directories(re PUBLIC include)
 set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
+set_target_properties(re PROPERTIES PUBLIC_HEADER "${REM_HEADERS}")
 
 if(MSVC)
 set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
