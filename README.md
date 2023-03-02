@@ -32,7 +32,7 @@ libre is a Generic library for real-time communications with async IO support.
 
 ## Building
 
-libre is using GNU makefiles. Make and OpenSSL development headers must be
+libre is using CMake. CMake and OpenSSL development headers must be
 installed before building.
 
 
@@ -43,6 +43,13 @@ $ cmake -B build
 $ cmake --build build -j
 $ sudo cmake --install build
 $ sudo ldconfig
+```
+
+### Build/run tests
+
+```
+cmake -B build && cmake --build build -t retest -j
+build/test/retest -rv
 ```
 
 On some distributions, /usr/local/lib may not be included in ld.so.conf. 
