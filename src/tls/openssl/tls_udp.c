@@ -437,8 +437,7 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 		mb->pos += n;
 	}
 
-	mbuf_set_end(mb, mb->pos);
-	mbuf_set_pos(mb, 0);
+	mbuf_set_posend(mb, 0, mb->pos);
 
 	if (tc->recvh && mbuf_get_left(mb) > 0)
 		tc->recvh(mb, tc->arg);
