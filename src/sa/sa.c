@@ -753,3 +753,14 @@ uint32_t sa_scopeid(const struct sa *sa)
 #endif
 	return 0;
 }
+
+
+/**
+ * Get the size of 'struct sa' as compiled by the library
+ *
+ * @return Size of 'struct sa' in bytes
+ */
+size_t sa_struct_get_size(void)
+{
+	return sizeof(struct sa);
+}

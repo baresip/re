@@ -72,6 +72,7 @@ bool     sa_is_any(const struct sa *sa);
 
 void     sa_set_scopeid(struct sa *sa, uint32_t scopeid);
 uint32_t sa_scopeid(const struct sa *sa);
+size_t   sa_struct_get_size(void);
 
 struct re_printf;
 int      sa_print_addr(struct re_printf *pf, const struct sa *sa);

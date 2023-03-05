@@ -212,6 +212,12 @@ int test_sa_class(void)
 	uint32_t i;
 	int err = 0;
 
+	/*
+	 * NOTE: The application and library must use the same build flags,
+	 *       so that the size of "struct sa" is the same.
+	 */
+	ASSERT_EQ(sizeof(struct sa), sa_struct_get_size());
+
 	for (i=0; i<RE_ARRAY_SIZE(testv); i++) {
 		struct sa sa;
 		int lo, ll, any;
