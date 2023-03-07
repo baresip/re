@@ -282,6 +282,7 @@ int   rtcp_sdes_encode(struct mbuf *mb, uint32_t src, uint32_t itemc, ...);
 const char *rtcp_type_name(enum rtcp_type type);
 const char *rtcp_sdes_name(enum rtcp_sdes_type sdes);
 bool rtp_is_rtcp_packet(const struct mbuf *mb);
+void rtcp_calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr);
 
 
 /**
