@@ -28,6 +28,10 @@ enum tls_keytype {
 	TLS_KEYTYPE_EC,
 };
 
+struct tls_conn_d {
+	int (*verifyh) (int ok, void *arg);
+	void *arg;
+};
 
 int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	      const char *pwd);
@@ -46,6 +50,10 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 			    const uint8_t *key, size_t len_key);
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 void tls_set_verify_client(struct tls *tls);
+void tls_set_verify_client_trust_all(struct tls *tls);
+int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
+	int (*verifyh) (int ok, void *arg), void *arg);
+
 int tls_set_srtp(struct tls *tls, const char *suites);
 int tls_fingerprint(const struct tls *tls, enum tls_fingerprint type,
 		    uint8_t *md, size_t size);
@@ -74,12 +82,15 @@ bool tls_get_session_reuse(const struct tls_conn *tc);
 int tls_reuse_session(const struct tls_conn *tc);
 bool tls_session_reused(const struct tls_conn *tc);
 int tls_update_sessions(const struct tls_conn *tc);
+void tls_set_posthandshake_auth(struct tls *tls, int enabled);
 
 /* TCP */
 
 int tls_conn_change_cert(struct tls_conn *tc, const char *file);
 int tls_start_tcp(struct tls_conn **ptc, struct tls *tls,
 		  struct tcp_conn *tcp, int layer);
+
+int tls_verify_client_post_handshake(struct tls_conn *tc);
 
 const struct tcp_conn *tls_get_tcp_conn(const struct tls_conn *tc);
 

@@ -28,6 +28,7 @@
 struct tls_conn {
 	SSL *ssl;             /* inheritance */
 	struct tls *tls;      /* inheritance */
+	struct tls_conn_d cd; /* inheritance */
 	BIO_METHOD *biomet;
 	BIO *sbio_out;
 	BIO *sbio_in;
