@@ -200,14 +200,16 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 		le = le->next;
 
 		hdld = uh->recvh(&src, mb, uh->arg);
-		if (hdld)
+		if (hdld) {
+			mtx_unlock(us->lock);
 			goto out;
+		}
 	}
 
+	mtx_unlock(us->lock);
 	us->rh(&src, mb, us->arg);
 
  out:
-	mtx_unlock(us->lock);
 	mem_deref(mb);
 }
 
