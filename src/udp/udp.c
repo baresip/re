@@ -992,7 +992,6 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 {
 	struct le *le;
-	struct udp_helper *uhf = NULL;
 
 	if (!us)
 		return NULL;
@@ -1003,13 +1002,13 @@ struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 		struct udp_helper *uh = le->data;
 
 		if (layer == uh->layer) {
-			uhf = uh;
-			break;
+			mtx_unlock(us->lock);
+			return uh;
 		}
 	}
 
 	mtx_unlock(us->lock);
-	return uhf;
+	return NULL;
 }
 
 
@@ -1064,11 +1063,12 @@ void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		}
 
 		hdld = uh->recvh(&hsrc, mb, uh->arg);
-		if (hdld)
-			goto out;
+		if (hdld) {
+			mtx_unlock(us->lock);
+			return;
+		}
 	}
 
-	us->rh(src, mb, us->arg);
-out:
 	mtx_unlock(us->lock);
+	us->rh(src, mb, us->arg);
 }
