@@ -75,7 +75,7 @@ struct udp_sock {
 	QOS_FLOWID qos_id;   /**< QOS IPv4 flow id            */
 	QOS_FLOWID qos_id6;  /**< QOS IPv6 flow id            */
 #endif
-	mtx_t *lock;         /**< A lock for helpers          */
+	mtx_t *lock;         /**< A lock for helpers list     */
 };
 
 /** Defines a UDP helper */
@@ -84,6 +84,7 @@ struct udp_helper {
 	int layer;
 	udp_helper_send_h *sendh;
 	udp_helper_recv_h *recvh;
+	mtx_t *lock;         /**< A lock for helpers list     */
 	void *arg;
 };
 
@@ -873,7 +874,9 @@ static void helper_destructor(void *data)
 {
 	struct udp_helper *uh = data;
 
+	mtx_lock(uh->lock);
 	list_unlink(&uh->le);
+	mtx_unlock(uh->lock);
 }
 
 
@@ -915,6 +918,7 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 	mtx_lock(us->lock);
 	list_append(&us->helpers, &uh->le, uh);
 
+	uh->lock  = us->lock;
 	uh->layer = layer;
 	uh->sendh = sh ? sh : helper_send_handler;
 	uh->recvh = rh ? rh : helper_recv_handler;
