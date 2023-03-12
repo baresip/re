@@ -3,12 +3,13 @@
  *
  * Copyright (C) 2022 Sebastian Reimers
  */
-
+#include <winsock2.h>
 #include <process.h>
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_thread.h>
-
+#include <re_list.h>
+#include <re_tmr.h>
 
 #define DEBUG_MODULE "thread"
 #define DEBUG_LEVEL 5
@@ -226,6 +227,43 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 	return thrd_success;
 }
 
+static DWORD get_milliseconds(const struct timespec *abstime)
+{
+	int64_t millis; 
+	uint64_t tmpres;
+	struct timeval tv;
+
+	if (abstime == NULL)
+		return INFINITE;
+
+	tmpres = tmr_jiffies_rt_usec();
+	tv.tv_sec = (long)(tmpres / 1000000UL);
+	//tv.tv_usec = (long)(tmpres % 1000000UL);
+    
+	millis = (abstime->tv_sec - tv.tv_sec) * 1000;
+	if (millis < 0)
+		return 0;
+
+	if (millis > UINT_MAX)
+		millis = UINT_MAX;
+
+	return (DWORD)millis;
+}
+
+int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *ts)
+{
+    DWORD timeout = 0;
+
+    if (!cnd || !mtx)
+        return thrd_error;
+
+    timeout = get_milliseconds(ts);
+
+    if (!SleepConditionVariableCS(cnd, mtx, timeout))
+        return thrd_success;
+
+    return (GetLastError() == ERROR_TIMEOUT) ? thrd_busy : thrd_error;
+}
 
 void cnd_destroy(cnd_t *cnd)
 {

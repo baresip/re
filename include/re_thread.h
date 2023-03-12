@@ -26,6 +26,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#include <time.h>
 #include <windows.h>
 #define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
 typedef INIT_ONCE once_flag;
@@ -180,6 +181,15 @@ int cnd_broadcast(cnd_t *cnd);
  */
 int cnd_wait(cnd_t *cnd, mtx_t *mtx);
 
+/**
+ * blocks on a condition variable, with a timeout
+ *
+ * @param cnd   Pointer to condition variable
+ * @param mtx   Lock mutex pointer
+ * @param ts	pointer to an object specifying timeout time to wait until
+ * @return thrd_success on success, otherwise thrd_error
+ */
+int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *ts);
 
 /**
  * Destroys the condition variable pointed to by cnd.
