@@ -252,17 +252,17 @@ static DWORD get_milliseconds(const struct timespec *abstime)
 
 int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *ts)
 {
-    DWORD timeout = 0;
+	DWORD timeout = 0;
 
-    if (!cnd || !mtx)
-        return thrd_error;
+	if (!cnd || !mtx)
+		return thrd_error;
 
-    timeout = get_milliseconds(ts);
+	timeout = get_milliseconds(ts);
 
-    if (!SleepConditionVariableCS(cnd, mtx, timeout))
-        return thrd_success;
+	if (!SleepConditionVariableCS(cnd, mtx, timeout))
+		return thrd_success;
 
-    return (GetLastError() == ERROR_TIMEOUT) ? thrd_busy : thrd_error;
+	return (GetLastError() == ERROR_TIMEOUT) ? thrd_busy : thrd_error;
 }
 
 void cnd_destroy(cnd_t *cnd)
