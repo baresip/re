@@ -7,9 +7,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifndef WIN32
 #include <time.h>
-#endif
 #include <re_types.h>
 #include <re_list.h>
 #include <re_fmt.h>
@@ -250,6 +248,43 @@ uint64_t tmr_jiffies_rt_usec(void)
 #endif
 
 	return jfs_rt;
+}
+
+
+/**
+ * Modifies the timespec object to current calendar time (TIME_UTC)
+ *
+ * @param tp     Pointer to timespec object
+ * @param offset Offset in [ms]
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tmr_timespec_get(struct timespec *tp, uint64_t offset)
+{
+	int err;
+
+	if (!tp)
+		return EINVAL;
+
+#if defined(WIN32) && !defined(__MINGW32__)
+	err = (timespec_get(tp, TIME_UTC) == TIME_UTC) ? 0 : EINVAL;
+#else
+	err = (clock_gettime(CLOCK_REALTIME, tp) == 0) ? 0 : errno;
+#endif
+
+	if (err)
+		return err;
+
+	if (offset) {
+		tp->tv_sec += (offset / 1000);
+		tp->tv_nsec += ((offset * 1000000) % 1000000000LL);
+		while (tp->tv_nsec > 1000000000LL) {
+			tp->tv_sec += 1;
+			tp->tv_nsec -= 1000000000LL;
+		}
+	}
+
+	return 0;
 }
 
 
