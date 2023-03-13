@@ -4,9 +4,12 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#include <time.h>
 #include <process.h>
 #include <re_types.h>
 #include <re_mem.h>
+#include <re_list.h>
+#include <re_tmr.h>
 #include <re_thread.h>
 
 
@@ -224,6 +227,33 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 	SleepConditionVariableCS(cnd, mtx, INFINITE);
 
 	return thrd_success;
+}
+
+
+static uint32_t abs2ms(const struct timespec *ts)
+{
+	struct timespec now;
+	if (!ts)
+		return 0;
+
+	uint64_t abs_ms = (ts->tv_sec * 1000U) + (ts->tv_nsec / 1000000L);
+
+	tmr_timespec_get(&now, 0);
+	uint64_t now_ms = (now.tv_sec * 1000U) + (now.tv_nsec / 1000000L);
+
+	return (abs_ms > now_ms) ? (uint32_t)(abs_ms - now_ms) : 0;
+}
+
+
+int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *abstime)
+{
+	if (!cnd || !mtx || !abstime)
+		return thrd_error;
+
+	if (SleepConditionVariableCS(cnd, mtx, abs2ms(abstime)))
+		return thrd_success;
+
+	return (GetLastError() == ERROR_TIMEOUT) ? thrd_timedout : thrd_error;
 }
 
 
