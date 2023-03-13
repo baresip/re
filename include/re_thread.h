@@ -182,6 +182,19 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx);
 
 
 /**
+ * Blocks on a condition variable with timeout (TIME_UTC based)
+ *
+ * @param cnd     Pointer to condition variable
+ * @param mtx     Lock mutex pointer
+ * @param abstime Pointer to timeout time
+ *
+ * @return thrd_success on success, thrd_timedout if the timeout time
+ * has been reached before the mutex is locked, otherwise thrd_error
+ */
+int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *abstime);
+
+
+/**
  * Destroys the condition variable pointed to by cnd.
  * If there are thrds waiting on cnd, the behavior is undefined.
  *

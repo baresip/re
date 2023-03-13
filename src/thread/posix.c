@@ -129,6 +129,19 @@ int cnd_wait(cnd_t *cnd, mtx_t *mtx)
 }
 
 
+int cnd_timedwait(cnd_t *cnd, mtx_t *mtx, const struct timespec *abstime)
+{
+	if (!cnd || !mtx || !abstime)
+		return thrd_error;
+
+	int ret = pthread_cond_timedwait(cnd, mtx, abstime);
+	if (ret == ETIMEDOUT)
+		return thrd_timedout;
+
+	return (ret == 0) ? thrd_success : thrd_error;
+}
+
+
 void cnd_destroy(cnd_t *cnd)
 {
 	if (!cnd)
