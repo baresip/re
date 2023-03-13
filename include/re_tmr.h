@@ -32,6 +32,7 @@ void     tmr_poll(struct tmrl *tmrl);
 uint64_t tmr_jiffies_usec(void);
 uint64_t tmr_jiffies(void);
 uint64_t tmr_jiffies_rt_usec(void);
+int      tmr_timespec_get(struct timespec *tp, uint64_t offset);
 uint64_t tmr_next_timeout(struct tmrl *tmrl);
 void     tmr_debug(void);
 int      tmr_status(struct re_printf *pf, void *unused);
