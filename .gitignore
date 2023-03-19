@@ -1,4 +1,5 @@
 /build*
+/dist
 test.d
 test.o
 *stamp

@@ -41,7 +41,7 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build -DHAVE_THREADS= && cmake --build build -j
+        cmake -B build -DHAVE_THREADS= && cmake --build build -j -t retest
 
     - name: retest
       run: |

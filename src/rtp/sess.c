@@ -105,8 +105,14 @@ static struct rtp_member *get_member(struct rtcp_sess *sess, uint32_t src)
 }
 
 
-/** Calculate Round-Trip Time in [microseconds] */
-static void calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr)
+/**
+ * Calculate Round-Trip Time in [microseconds]
+ *
+ * @param rtt  Calculated Rount-Trip time [us]
+ * @param lsr  Last SR packet from this source [compact NTP timestamp]
+ * @param dlsr Delay since last SR packet [units of 1/65536 seconds]
+ */
+void rtcp_calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr)
 {
 	struct ntp_time ntp_time;
 	uint64_t a_us, lsr_us, dlsr_us;
@@ -118,7 +124,8 @@ static void calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr)
 	dlsr_us = 1000000ULL * dlsr / 65536;
 
 	/* RTT delay is (A - LSR - DLSR) */
-	*rtt = MAX((int)(a_us - lsr_us - dlsr_us), 0);
+	if (rtt)
+		*rtt = MAX((int)(a_us - lsr_us - dlsr_us), 0);
 }
 
 
@@ -135,7 +142,7 @@ static void handle_rr_block(struct rtcp_sess *sess, struct rtp_member *mbr,
 
 	/* round-trip propagation delay as (A - LSR - DLSR) */
 	if (rr->lsr && rr->dlsr)
-		calc_rtt(&mbr->rtt, rr->lsr, rr->dlsr);
+		rtcp_calc_rtt(&mbr->rtt, rr->lsr, rr->dlsr);
 }
 
 

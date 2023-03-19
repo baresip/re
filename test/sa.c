@@ -22,11 +22,13 @@ int test_sa_cmp(void)
 		uint16_t port2;
 		bool eq;
 	} testv[] = {
+#if HAVE_UNIXSOCK
 		{
 			"unix:/test.sock", 0,
 			"unix:/test.sock", 0,
 			true
 		},
+#endif
 		{
 			"1.2.3.4", 12345,
 			"1.2.3.4", 12345,
@@ -212,6 +214,12 @@ int test_sa_class(void)
 	uint32_t i;
 	int err = 0;
 
+	/*
+	 * NOTE: The application and library must use the same build flags,
+	 *       so that the size of "struct sa" is the same.
+	 */
+	ASSERT_EQ(sizeof(struct sa), sa_struct_get_size());
+
 	for (i=0; i<RE_ARRAY_SIZE(testv); i++) {
 		struct sa sa;
 		int lo, ll, any;
@@ -341,7 +349,9 @@ int test_sa_pton(void)
 		{"fa01::2a29",                      0            },
 		{"127.0.0.1",                       0            },
 		{"192.168.110.2",                   0            },
+#if HAVE_UNIXSOCK
 		{"unix:/test.sock",                 0            },
+#endif
 		{"fe80::xxxx:d8d9:ddc3:25dd:%eth0", EADDRNOTAVAIL},
 	};
 

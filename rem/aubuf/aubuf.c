@@ -89,6 +89,7 @@ static void read_auframe(struct aubuf *ab, struct auframe *af)
 		af->srate     = f->af.srate;
 		af->ch	      = f->af.ch;
 		af->timestamp = f->af.timestamp;
+		af->fmt       = f->af.fmt;
 
 		if (!mbuf_get_left(f->mb)) {
 			mem_deref(f);

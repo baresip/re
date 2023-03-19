@@ -23,7 +23,7 @@ jobs:
 
     - name: make
       run: |
-        cmake -B build && cmake --build build -j
+        cmake -B build && cmake --build build -j -t retest
 
     - name: retest
       run: |

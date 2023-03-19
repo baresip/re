@@ -18,6 +18,7 @@
 #include <re_dbg.h>
 
 
+#if HAVE_UNIXSOCK
 static void http_req_handler(struct http_conn *conn,
 			     const struct http_msg *msg, void *arg)
 {
@@ -25,10 +26,12 @@ static void http_req_handler(struct http_conn *conn,
 	(void)msg;
 	(void)arg;
 }
+#endif
 
 
 int test_unixsock(void)
 {
+#if HAVE_UNIXSOCK
 	struct sa srv;
 	re_sock_t fd = RE_BAD_SOCK;
 	struct http_sock *sock;
@@ -57,4 +60,7 @@ out:
 	if (err)
 		(void)unlink(&socket[5]);
 	return err;
+#else
+	return ESKIPPED;
+#endif
 }
