@@ -5,6 +5,53 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.0.0] - 2023-03-20
+
+## What's Changed
+* main: allow poll_method change only before setup by @sreimers in https://github.com/baresip/re/pull/681
+* main: add more details to re_debug() by @alfredh in https://github.com/baresip/re/pull/689
+* merge rem into re by @alfredh in https://github.com/baresip/re/pull/683
+* tmr,main: thread safe tmr handling by @sreimers in https://github.com/baresip/re/pull/690
+* tmr,main: add tmrl_count by @sreimers in https://github.com/baresip/re/pull/694
+* main: add re_thread_async_main_id and re_thread_async_main_cancel by @sreimers in https://github.com/baresip/re/pull/697
+* merge retest into re by @alfredh in https://github.com/baresip/re/pull/695
+* tls: add doxygen comment to dtls_recv_packet() by @alfredh in https://github.com/baresip/re/pull/699
+* test: use TEST_ERR by @sreimers in https://github.com/baresip/re/pull/700
+* test: use TEST_ERR by @sreimers in https://github.com/baresip/re/pull/701
+* hmac: remove unused SHA_BLOCKSIZE by @alfredh in https://github.com/baresip/re/pull/703
+* async: fix cancel memory leaks by @sreimers in https://github.com/baresip/re/pull/705
+* ci: windows Debug/Release by @alfredh in https://github.com/baresip/re/pull/704
+* cmake: add extra source files for aes and hmac by @alfredh in https://github.com/baresip/re/pull/708
+* test: remove libpthread from LINKLIBS by @alfredh in https://github.com/baresip/re/pull/710
+* hmac: add stateless HMAC-SHA256 wrapper by @alfredh in https://github.com/baresip/re/pull/706
+* thread: add thread name handling by @sreimers in https://github.com/baresip/re/pull/709
+* ci: add support for Android by @alfredh in https://github.com/baresip/re/pull/707
+* test: fix convert C99 by @sreimers in https://github.com/baresip/re/pull/717
+* dbg: remove pre-C99 fallbacks by @sreimers in https://github.com/baresip/re/pull/718
+* test: remove CMAKE_C_STANDARD by @alfredh in https://github.com/baresip/re/pull/714
+* sdp/media: fix ccheck list_unlink warning by @sreimers in https://github.com/baresip/re/pull/715
+* jbuf: allocate mutex and lock also jbuf_debug() by @cspiel1 in https://github.com/baresip/re/pull/693
+* sys/fs: fix fs_fopen read only mode (should not create file) by @sreimers in https://github.com/baresip/re/pull/719
+* ci/ssl: update OpenSSL/LibreSSL by @sreimers in https://github.com/baresip/re/pull/720
+* http: fix read_file on win32 (wrong filesize) and use mbuf by @fAuernigg in https://github.com/baresip/re/pull/711
+* sys: add sys_getenv() by @sreimers in https://github.com/baresip/re/pull/721
+* rtp: Don't check RTCP socket if rtcp-mux is enabled by @Lastique in https://github.com/baresip/re/pull/723
+* tls: remove return statement that is not needed by @alfredh in https://github.com/baresip/re/pull/724
+* sha: add sha256_printf() by @alfredh in https://github.com/baresip/re/pull/725
+* cmake: add rem headers to install by @sreimers in https://github.com/baresip/re/pull/727
+* cmake: merge REM_HEADERS by @sreimers in https://github.com/baresip/re/pull/728
+* tls: set mbuf pos and end at the same time by @alfredh in https://github.com/baresip/re/pull/729
+* misc: add Makefile helpers and exclude retest from all target by @sreimers in https://github.com/baresip/re/pull/726
+* sa: add sa_struct_get_size() to check size by @alfredh in https://github.com/baresip/re/pull/730
+* rtcp: make rtcp_calc_rtt() public by @alfredh in https://github.com/baresip/re/pull/731
+* test: add HAVE_UNIXSOCK=0 support by @sreimers in https://github.com/baresip/re/pull/734
+* aubuf: set sample format when frame is read by @cspiel1 in https://github.com/baresip/re/pull/737
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v2.12.0...v2.13.0
+
+---
+
 ## [v2.12.0] - 2023-02-15
 
 ## What's Changed
