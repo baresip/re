@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * aubuf: set sample format when frame is read by @cspiel1 in https://github.com/baresip/re/pull/737
 
 
-**Full Changelog**: https://github.com/baresip/re/compare/v2.12.0...v2.13.0
+**Full Changelog**: https://github.com/baresip/re/compare/v2.12.0...v3.0.0
 
 ---
 
