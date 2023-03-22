@@ -45,4 +45,4 @@ jobs:
 
     - name: retest
       run: |
-        ./build/test/retest -riv
+        ./build/test/retest -rtiv
