@@ -382,16 +382,10 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			}
 
 			len = local_itoa(num, n, base, uc);
-			if (fpad != (size_t)-1) {
-				err |= write_padded(num + len - fpad, fpad, 0,
-						plr ? ' ' : pch, plr, NULL,
-						vph, arg);
-			}
-			else {
-				err |= write_padded(num, len, pad,
-						    plr ? ' ' : pch, plr, NULL,
-						    vph, arg);
-			}
+
+			err |= write_padded(num, len, pad,
+					    plr ? ' ' : pch, plr, NULL,
+					    vph, arg);
 			break;
 
 		case 'v':

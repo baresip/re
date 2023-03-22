@@ -174,10 +174,7 @@ static int comp_escape(struct re_printf *pf, const struct pl *pl, esc_h *eh)
 			err = pf->vph(&c, 1, pf->arg);
 		}
 		else {
-			if (c < 0)
-				err = re_hprintf(pf, "%%%02.X", c);
-			else
-				err = re_hprintf(pf, "%%%02X", c);
+			err = re_hprintf(pf, "%%%W", &c, 1);
 		}
 	}
 
