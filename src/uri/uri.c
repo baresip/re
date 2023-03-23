@@ -49,11 +49,9 @@ int uri_encode(struct re_printf *pf, const struct uri *uri)
 	/* The IPv6 address is delimited by '[' and ']' */
 	switch (uri->af) {
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		err = re_hprintf(pf, "[%r]", &uri->host);
 		break;
-#endif
 
 	default:
 		err = re_hprintf(pf, "%r", &uri->host);
@@ -331,11 +329,9 @@ int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
 	/* The IPv6 address is delimited by '[' and ']' */
 	switch (uri.af) {
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		err = re_hprintf(pf, "[%r]", &uri.host);
 		break;
-#endif
 
 	default:
 		err = re_hprintf(pf, "%r", &uri.host);
