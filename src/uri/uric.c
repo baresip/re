@@ -40,7 +40,7 @@ static bool is_mark(int c)
 
 static bool is_unreserved(char c)
 {
-	return isalnum(c) || is_mark(c);
+	return isalnum((unsigned char)c) || is_mark(c);
 }
 
 
@@ -143,7 +143,7 @@ static bool is_token_non_alphanum(int c)
 
 static bool is_token(char c)
 {
-	return isalnum(c) || is_token_non_alphanum(c);
+	return isalnum((unsigned char)c) || is_token_non_alphanum(c);
 }
 
 
