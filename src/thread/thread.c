@@ -18,6 +18,7 @@
 
 
 struct thread {
+	thrd_t *thr;
 	const char *name;
 	thrd_start_t func;
 	void *arg;
@@ -76,8 +77,10 @@ static int handler(void *p)
 		(void)SetThreadDescription(GetCurrentThread(), name);
 		mem_deref(name);
 	}
-#elif defined(HAVE_PTHREAD)
+#elif defined(DARWIN)
 	(void)pthread_setname_np(th.name);
+#elif defined(HAVE_PTHREAD)
+	(void)pthread_setname_np(th.thr, th.name);
 #endif
 
 	return th.func(th.arg);
@@ -97,6 +100,7 @@ int thread_create_name(thrd_t *thr, const char *name, thrd_start_t func,
 	if (!th)
 		return ENOMEM;
 
+	th->thr = thr;
 	th->name = name;
 	th->func = func;
 	th->arg	 = arg;
