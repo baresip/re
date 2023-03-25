@@ -24,7 +24,7 @@ jobs:
       with:
         usesh: true
         prepare: |
-          pkg install -y ninja cmake
+          pkg install -y ninja cmake openssl-devel
 
         run: |
           freebsd-version
