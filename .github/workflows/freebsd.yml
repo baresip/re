@@ -24,7 +24,7 @@ jobs:
       with:
         usesh: true
         prepare: |
-          pkg install -y ninja
+          pkg install -y ninja cmake
 
         run: |
           freebsd-version
