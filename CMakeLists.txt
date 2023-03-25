@@ -583,6 +583,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     src/dns/darwin/srv.c
     src/net/bsd/brt.c
   )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  list(APPEND SRCS
+    src/net/bsd/brt.c
+  )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND SRCS
     src/net/linux/rt.c
