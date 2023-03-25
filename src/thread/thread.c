@@ -80,7 +80,7 @@ static int handler(void *p)
 #elif defined(DARWIN)
 	(void)pthread_setname_np(th.name);
 #elif defined(HAVE_PTHREAD)
-	(void)pthread_setname_np(th.thr, th.name);
+	(void)pthread_setname_np(*th.thr, th.name);
 #endif
 
 	return th.func(th.arg);
