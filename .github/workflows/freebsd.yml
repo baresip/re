@@ -1,0 +1,33 @@
+name: FreeBSD
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build:
+    runs-on: macos-12
+
+    env:
+      CC: ${{ matrix.compiler }}
+      CMAKE_GENERATOR: Ninja
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v0
+      with:
+        usesh: true
+        prepare: |
+          pkg install -y ninja
+
+        run: |
+          freebsd-version
+          cmake -B build && cmake --build build -t retest
+          ./build/test/retest -r -v
