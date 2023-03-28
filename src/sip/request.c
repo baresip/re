@@ -189,7 +189,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 		goto out;
 
 	mbuf_set_pos(mbs, 0);
-	err  = mbuf_printf(mb, "%s %s SIP/2.0\r\n", req->met, req->uri);
+	err  = mbuf_printf(mb, "%s ", req->met);
+	err |= mbuf_printf(mb, "%H SIP/2.0\r\n", uri_escape, req->uri);
 	err |= mbuf_printf(mb, "Via: SIP/2.0/%s %J;branch=%s;rport\r\n",
 			   sip_transp_name(tp), &laddr, branch);
 	err |= mbuf_write_mem(mb, mbuf_buf(mbs), mbuf_get_left(mbs));

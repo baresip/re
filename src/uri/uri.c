@@ -49,11 +49,9 @@ int uri_encode(struct re_printf *pf, const struct uri *uri)
 	/* The IPv6 address is delimited by '[' and ']' */
 	switch (uri->af) {
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		err = re_hprintf(pf, "[%r]", &uri->host);
 		break;
-#endif
 
 	default:
 		err = re_hprintf(pf, "%r", &uri->host);
@@ -268,6 +266,85 @@ int uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg)
 		if (err)
 			break;
 	}
+
+	return err;
+}
+
+
+/**
+ * Escape SIP URI
+ *
+ * @param pf  Print function to encode into
+ * @param uri URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_escape(struct re_printf *pf, const char *uri)
+{
+	struct pl pl;
+	pl_set_str(&pl, uri);
+	return uri_escape_pl(pf, &pl);
+}
+
+
+/**
+ * Escape SIP URI
+ *
+ * @param pf Print function to encode into
+ * @param pl URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
+{
+	int err;
+	struct uri uri;
+
+	if (!pl)
+		return 0;
+
+	err = uri_decode(&uri, pl);
+	if (err)
+		return err;
+
+	if (!pl_isset(&uri.scheme) || !pl_isset(&uri.host))
+		return EINVAL;
+
+	err = re_hprintf(pf, "%r:", &uri.scheme);
+	if (err)
+		return err;
+
+	if (pl_isset(&uri.user)) {
+		err = re_hprintf(pf, "%H", uri_user_escape, &uri.user);
+
+		if (pl_isset(&uri.password))
+			err |= re_hprintf(pf, ":%H", uri_password_escape,
+					  &uri.password);
+
+		err |= pf->vph("@", 1, pf->arg);
+		if (err)
+			return err;
+	}
+
+	/* The IPv6 address is delimited by '[' and ']' */
+	switch (uri.af) {
+
+	case AF_INET6:
+		err = re_hprintf(pf, "[%r]", &uri.host);
+		break;
+
+	default:
+		err = re_hprintf(pf, "%r", &uri.host);
+		break;
+	}
+	if (err)
+		return err;
+
+	if (uri.port)
+		err = re_hprintf(pf, ":%u", uri.port);
+
+	err |= re_hprintf(pf, "%r%r%r", &uri.path, &uri.params,
+			  &uri.headers);
 
 	return err;
 }
