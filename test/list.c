@@ -16,6 +16,7 @@
 
 struct node {
 	struct le le;
+	struct le le2;
 	int value;
 };
 
@@ -109,7 +110,7 @@ int test_list_ref(void)
 }
 
 
-static bool sort_handler(struct le *le1, struct le *le2, void *arg)
+static bool sort_handler1(struct le *le1, struct le *le2, void *arg)
 {
 	struct node *node1 = le1->data;
 	struct node *node2 = le2->data;
@@ -121,10 +122,23 @@ static bool sort_handler(struct le *le1, struct le *le2, void *arg)
 }
 
 
+static bool sort_handler2(struct le *le1, struct le *le2, void *arg)
+{
+	struct node *node1 = le1->data;
+	struct node *node2 = le2->data;
+	(void)arg;
+
+	/* NOTE: important to use greater than OR equal to, otherwise
+	   the list_sort function may be stuck in a loop */
+	return node1->value >= node2->value;
+}
+
+
 #define NUM_ELEMENTS 100
 static int test_sort(bool sorted)
 {
-	struct list lst;
+	struct list lst_1;
+	struct list lst_2;
 	struct le *le;
 	int prev_value = 0;
 	bool prev_value_set = false;
@@ -132,7 +146,8 @@ static int test_sort(bool sorted)
 	unsigned value_counter = 7;
 	int err = 0;
 
-	list_init(&lst);
+	list_init(&lst_1);
+	list_init(&lst_2);
 
 	/* add many elements with a random value */
 	for (i=0; i<NUM_ELEMENTS; i++) {
@@ -148,20 +163,26 @@ static int test_sort(bool sorted)
 		node->value = -50 + (value_counter % 100);
 		value_counter *= 3;
 
-		if (sorted)
-			list_insert_sorted(&lst, sort_handler, NULL, &node->le,
-					   node);
-		else
-			list_append(&lst, &node->le, node);
+		if (sorted) {
+			list_insert_sorted(&lst_1, sort_handler1, NULL,
+					   &node->le, node);
+			list_insert_sorted(&lst_2, sort_handler2, NULL,
+					   &node->le2, node);
+		}
+		else {
+			list_append(&lst_1, &node->le, node);
+			list_append(&lst_2, &node->le2, node);
+		}
 	}
 
 	/* sort the list in ascending order */
-	if (!sorted)
-		list_sort(&lst, sort_handler, NULL);
+	if (!sorted) {
+		list_sort(&lst_1, sort_handler1, NULL);
+		list_sort(&lst_2, sort_handler2, NULL);
+	}
 
 	/* verify that the list is sorted */
-	for (le = lst.head; le; le = le->next) {
-
+	for (le = lst_1.head; le; le = le->next) {
 		struct node *node = le->data;
 
 		if (prev_value_set) {
@@ -172,8 +193,20 @@ static int test_sort(bool sorted)
 		prev_value_set = true;
 	}
 
+	prev_value_set = false;
+	for (le = lst_2.head; le; le = le->next) {
+		struct node *node = le->data;
+
+		if (prev_value_set) {
+			TEST_ASSERT(node->value <= prev_value);
+		}
+
+		prev_value = node->value;
+		prev_value_set = true;
+	}
+
  out:
-	list_flush(&lst);
+	list_flush(&lst_1);
 
 	return err;
 }
