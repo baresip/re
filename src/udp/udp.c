@@ -22,6 +22,7 @@
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_list.h>
+#include <re_thread.h>
 #include <re_net.h>
 #include <re_main.h>
 #include <re_sa.h>
@@ -74,6 +75,7 @@ struct udp_sock {
 	QOS_FLOWID qos_id;   /**< QOS IPv4 flow id            */
 	QOS_FLOWID qos_id6;  /**< QOS IPv6 flow id            */
 #endif
+	mtx_t *lock;         /**< A lock for helpers list     */
 };
 
 /** Defines a UDP helper */
@@ -82,6 +84,7 @@ struct udp_helper {
 	int layer;
 	udp_helper_send_h *sendh;
 	udp_helper_recv_h *recvh;
+	mtx_t *lock;         /**< A lock for the helpers list */
 	void *arg;
 };
 
@@ -121,6 +124,8 @@ static void udp_destructor(void *data)
 	struct udp_sock *us = data;
 
 	list_flush(&us->helpers);
+
+	mem_deref(us->lock);
 
 #ifdef WIN32
 	if (us->qos && us->qos_id)
@@ -185,12 +190,16 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 	(void)mbuf_resize(mb, mb->end);
 
 	/* call helpers */
+	mtx_lock(us->lock);
 	le = us->helpers.head;
+	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
 		bool hdld;
 
+		mtx_lock(us->lock);
 		le = le->next;
+		mtx_unlock(us->lock);
 
 		hdld = uh->recvh(&src, mb, uh->arg);
 		if (hdld)
@@ -224,6 +233,34 @@ static void udp_read_handler6(int flags, void *arg)
 }
 
 
+static int udp_alloc(struct udp_sock **usp)
+{
+	int err;
+	struct udp_sock *us;
+
+	if (!usp)
+		return EINVAL;
+
+	us = mem_zalloc(sizeof(*us), NULL);
+	if (!us)
+		return ENOMEM;
+
+	list_init(&us->helpers);
+
+	err = mutex_alloc(&us->lock);
+	if (err) {
+		mem_deref(us);
+		return err;
+	}
+
+	mem_destructor(us, udp_destructor);
+
+	*usp = us;
+
+	return 0;
+}
+
+
 /**
  * Create and listen on a UDP Socket
  *
@@ -238,19 +275,14 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 	       udp_recv_h *rh, void *arg)
 {
 	struct addrinfo hints, *res = NULL, *r;
-	struct udp_sock *us = NULL;
+	struct udp_sock *us;
 	char addr[64] = {0};
 	char serv[6] = "0";
 	int af, error, err = 0;
 
-	if (!usp)
-		return EINVAL;
-
-	us = mem_zalloc(sizeof(*us), udp_destructor);
-	if (!us)
-		return ENOMEM;
-
-	list_init(&us->helpers);
+	err = udp_alloc(&us);
+	if (err)
+		return err;
 
 	us->fd  = RE_BAD_SOCK;
 	us->fd6 = RE_BAD_SOCK;
@@ -375,14 +407,15 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 int udp_alloc_sockless(struct udp_sock **usp,
 		       udp_send_h *sendh, udp_recv_h *recvh, void *arg)
 {
+	struct udp_sock *us;
+	int err;
+
 	if (!usp || !sendh)
 		return EINVAL;
 
-	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
-	if (!us)
-		return ENOMEM;
-
-	list_init(&us->helpers);
+	err = udp_alloc(&us);
+	if (err)
+		return err;
 
 	us->fd    = RE_BAD_SOCK;
 	us->fd6   = RE_BAD_SOCK;
@@ -400,14 +433,15 @@ int udp_alloc_sockless(struct udp_sock **usp,
 int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 		  udp_recv_h *recvh, void *arg)
 {
+	struct udp_sock *us;
+	int err;
+
 	if (!usp || fd==RE_BAD_SOCK)
 		return EINVAL;
 
-	struct udp_sock *us = mem_zalloc(sizeof(*us), udp_destructor);
-	if (!us)
-		return ENOMEM;
-
-	list_init(&us->helpers);
+	err = udp_alloc(&us);
+	if (err)
+		return err;
 
 	us->fd   = fd;
 	us->fd6  = RE_BAD_SOCK;
@@ -416,7 +450,6 @@ int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 	us->rxsz = UDP_RXSZ_DEFAULT;
 
 	*usp = us;
-
 	return 0;
 }
 
@@ -431,16 +464,16 @@ int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
  */
 int udp_open(struct udp_sock **usp, int af)
 {
-	struct udp_sock *us = NULL;
+	struct udp_sock *us;
 	int err = 0;
 	re_sock_t fd;
 
 	if (!usp)
 		return EINVAL;
 
-	us = mem_zalloc(sizeof(*us), udp_destructor);
-	if (!us)
-		return ENOMEM;
+	err = udp_alloc(&us);
+	if (err)
+		return err;
 
 	us->fd  = RE_BAD_SOCK;
 	us->fd6 = RE_BAD_SOCK;
@@ -514,7 +547,9 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 	while (le) {
 		struct udp_helper *uh = le->data;
 
+		mtx_lock(us->lock);
 		le = le->prev;
+		mtx_unlock(us->lock);
 
 		if (dst != &hdst) {
 			sa_cpy(&hdst, dst);
@@ -558,10 +593,14 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
  */
 int udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb)
 {
+	struct le *le;
 	if (!us || !dst || !mb)
 		return EINVAL;
 
-	return udp_send_internal(us, dst, mb, us->helpers.tail);
+	mtx_lock(us->lock);
+	le = us->helpers.tail;
+	mtx_unlock(us->lock);
+	return udp_send_internal(us, dst, mb, le);
 }
 
 
@@ -840,7 +879,9 @@ static void helper_destructor(void *data)
 {
 	struct udp_helper *uh = data;
 
+	mtx_lock(uh->lock);
 	list_unlink(&uh->le);
+	mtx_unlock(uh->lock);
 }
 
 
@@ -879,8 +920,10 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 	if (!uh)
 		return ENOMEM;
 
+	mtx_lock(us->lock);
 	list_append(&us->helpers, &uh->le, uh);
 
+	uh->lock  = us->lock;
 	uh->layer = layer;
 	uh->sendh = sh ? sh : helper_send_handler;
 	uh->recvh = rh ? rh : helper_recv_handler;
@@ -891,6 +934,7 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 	if (uhp)
 		*uhp = uh;
 
+	mtx_unlock(us->lock);
 	return 0;
 }
 
@@ -909,10 +953,15 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 int udp_send_helper(struct udp_sock *us, const struct sa *dst,
 		    struct mbuf *mb, struct udp_helper *uh)
 {
+	struct le *le;
+
 	if (!us || !dst || !mb || !uh)
 		return EINVAL;
 
-	return udp_send_internal(us, dst, mb, uh->le.prev);
+	mtx_lock(us->lock);
+	le = uh->le.prev;
+	mtx_unlock(us->lock);
+	return udp_send_internal(us, dst, mb, le);
 }
 
 
@@ -925,12 +974,16 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 	if (!us || !src || !mb || !uhx)
 		return;
 
+	mtx_lock(us->lock);
 	le = uhx->le.next;
+	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
 		bool hdld;
 
+		mtx_lock(us->lock);
 		le = le->next;
+		mtx_unlock(us->lock);
 
 		if (src != &hsrc) {
 			sa_cpy(&hsrc, src);
@@ -961,9 +1014,16 @@ struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 	if (!us)
 		return NULL;
 
-	for (le = us->helpers.head; le; le = le->next) {
+	mtx_lock(us->lock);
+	le = us->helpers.head;
+	mtx_unlock(us->lock);
+	while (le) {
 
 		struct udp_helper *uh = le->data;
+
+		mtx_lock(us->lock);
+		le = le->next;
+		mtx_unlock(us->lock);
 
 		if (layer == uh->layer)
 			return uh;
@@ -1005,16 +1065,21 @@ void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb)
 {
 	struct sa hsrc;
+	struct le *le;
 
 	if (!us || !src || !mb)
 		return;
 
-	struct le *le = us->helpers.head;
+	mtx_lock(us->lock);
+	le = us->helpers.head;
+	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
 		bool hdld;
 
+		mtx_lock(us->lock);
 		le = le->next;
+		mtx_unlock(us->lock);
 
 		if (src != &hsrc) {
 			sa_cpy(&hsrc, src);
