@@ -36,6 +36,6 @@ void vidmix_source_toggle_selfview(struct vidmix_source *src);
 void vidmix_source_set_focus(struct vidmix_source *src,
 			     const struct vidmix_source *focus_src,
 			     bool focus_full);
-void vidmix_source_set_focus_idx(struct vidmix_source *src, unsigned pidx);
+void vidmix_source_set_focus_idx(struct vidmix_source *src, uint32_t pidx);
 void vidmix_source_put(struct vidmix_source *src,
 		       const struct vidframe *frame);
