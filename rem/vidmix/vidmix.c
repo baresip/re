@@ -26,10 +26,12 @@ struct vidmix {
 	mtx_t rwlock;
 	struct list srcl;
 	bool initialized;
+	uint32_t next_pidx;
 };
 
 struct vidmix_source {
 	struct le le;
+	uint32_t pidx;
 	thrd_t thread;
 	mtx_t mutex;
 	struct vidframe *frame_tx;
@@ -389,6 +391,7 @@ int vidmix_source_alloc(struct vidmix_source **srcp, struct vidmix *mix,
 	src->content = content;
 	src->fh      = fh;
 	src->arg     = arg;
+	src->pidx    = ++mix->next_pidx;
 
 	err = mtx_init(&src->mutex, mtx_plain) != thrd_success;
 	if (err) {
@@ -441,6 +444,19 @@ bool vidmix_source_isrunning(const struct vidmix_source *src)
 
 
 /**
+ * Get vidmix source position index
+ *
+ * @param src Video mixer source
+ *
+ * @return position index
+ */
+uint32_t vidmix_source_get_pidx(const struct vidmix_source *src)
+{
+	return src ? src->pidx : 0;
+}
+
+
+/**
  * Get focus source
  *
  * @param src Video mixer source
@@ -450,6 +466,18 @@ bool vidmix_source_isrunning(const struct vidmix_source *src)
 void *vidmix_source_get_focus(const struct vidmix_source *src)
 {
 	return src ? src->focus : NULL;
+}
+
+
+static bool sort_src_handler(struct le *le1, struct le *le2, void *arg)
+{
+	struct vidmix_source *src1 = le1->data;
+	struct vidmix_source *src2 = le2->data;
+	(void)arg;
+
+	/* NOTE: important to use less than OR equal to, otherwise
+	   the list_sort function may be stuck in a loop */
+	return src1->pidx <= src2->pidx;
 }
 
 
@@ -476,7 +504,8 @@ void vidmix_source_enable(struct vidmix_source *src, bool enable)
 		if (src->frame_rx)
 			clear_frame(src->frame_rx);
 
-		list_append(&src->mix->srcl, &src->le, src);
+		list_insert_sorted(&src->mix->srcl, sort_src_handler, NULL,
+				   &src->le, src);
 	}
 	else {
 		list_unlink(&src->le);
@@ -650,7 +679,7 @@ void vidmix_source_set_focus(struct vidmix_source *src,
  * @param src    Video mixer source
  * @param pidx   Participant to focus, 0 to disable
  */
-void vidmix_source_set_focus_idx(struct vidmix_source *src, unsigned pidx)
+void vidmix_source_set_focus_idx(struct vidmix_source *src, uint32_t pidx)
 {
 	bool focus_full = false;
 	void *focus = NULL;
@@ -661,12 +690,10 @@ void vidmix_source_set_focus_idx(struct vidmix_source *src, unsigned pidx)
 	if (pidx > 0) {
 
 		struct le *le;
-		unsigned i;
 
 		mtx_lock(&src->mix->rwlock);
 
-		for (le=src->mix->srcl.head, i=1; le; le=le->next) {
-
+		LIST_FOREACH(&src->mix->srcl, le) {
 			const struct vidmix_source *lsrc = le->data;
 
 			if (lsrc == src && !src->selfview)
@@ -675,7 +702,7 @@ void vidmix_source_set_focus_idx(struct vidmix_source *src, unsigned pidx)
 			if (lsrc->content && src->content_hide)
 				continue;
 
-			if (i++ == pidx) {
+			if (lsrc->pidx == pidx) {
 				focus = (void *)lsrc;
 				break;
 			}
