@@ -24,6 +24,7 @@ int  vidmix_source_alloc(struct vidmix_source **srcp, struct vidmix *mix,
 			 vidmix_frame_h *fh, void *arg);
 bool vidmix_source_isenabled(const struct vidmix_source *src);
 bool vidmix_source_isrunning(const struct vidmix_source *src);
+uint32_t vidmix_source_get_pidx(const struct vidmix_source *src);
 void *vidmix_source_get_focus(const struct vidmix_source *src);
 void vidmix_source_enable(struct vidmix_source *src, bool enable);
 int  vidmix_source_start(struct vidmix_source *src);
