@@ -122,7 +122,6 @@ static int test_aubuf_auframe(void)
 
 	/* write first frame (filling with wish_sz) */
 	auframe_init(&af, AUFMT_FLOAT, sampv_in, FRAMES, 48000, 2);
-	af.timestamp = 0;
 	af_in = af;
 
 	dt = FRAMES * AUDIO_TIMEBASE / (af_in.srate * af_in.ch);
@@ -190,7 +189,7 @@ static int test_aubuf_auframe(void)
 
 	TEST_EQUALS(2, af_out.ch);
 	TEST_EQUALS(48000, af_out.srate);
-	TEST_EQUALS(3 * dt, af_out.timestamp);
+	TEST_EQUALS(2 * dt, af_out.timestamp);
 
 	TEST_MEMCMP(sampv_in, sizeof(sampv_in), sampv_out, sizeof(sampv_out));
 	TEST_EQUALS(0, aubuf_cur_size(ab));
