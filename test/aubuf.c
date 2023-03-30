@@ -105,6 +105,7 @@ static int test_aubuf_auframe(void)
 	float sampv_out[3 * FRAMES + (FRAMES / 2)];
 	uint64_t dt;
 
+	struct auframe af;
 	struct auframe af_in;
 	struct auframe af_out;
 	int err;
@@ -120,14 +121,16 @@ static int test_aubuf_auframe(void)
 	TEST_EQUALS(0, aubuf_cur_size(ab));
 
 	/* write first frame (filling with wish_sz) */
-	auframe_init(&af_in, AUFMT_FLOAT, sampv_in, FRAMES, 48000, 2);
-	af_in.timestamp = 0;
+	auframe_init(&af, AUFMT_FLOAT, sampv_in, FRAMES, 48000, 2);
+	af.timestamp = 0;
+	af_in = af;
 
 	dt = FRAMES * AUDIO_TIMEBASE / (af_in.srate * af_in.ch);
 
 	err = aubuf_write_auframe(ab, &af_in);
 	TEST_ERR(err);
 	TEST_EQUALS(FRAMES * sizeof(float), aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af), aubuf_cur_size(ab));
 
 	/* first read after filling should start aubuf */
 	af_out.fmt   = AUFMT_FLOAT;
@@ -144,7 +147,7 @@ static int test_aubuf_auframe(void)
 
 	err = aubuf_write_auframe(ab, &af_in);
 	TEST_ERR(err);
-	TEST_EQUALS(FRAMES * sizeof(float), aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af), aubuf_cur_size(ab));
 
 	/* read half frame */
 	af_out.sampc = FRAMES / 2;
@@ -152,7 +155,7 @@ static int test_aubuf_auframe(void)
 	aubuf_read_auframe(ab, &af_out);
 
 	/* the first read drops old data: 80 - 40 = 40 */
-	TEST_EQUALS((FRAMES / 2) * sizeof(float), aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af)/2, aubuf_cur_size(ab));
 	TEST_EQUALS(dt, af_out.timestamp);
 
 	/* write one frame */
@@ -162,8 +165,7 @@ static int test_aubuf_auframe(void)
 
 	err = aubuf_write_auframe(ab, &af_in);
 	TEST_ERR(err);
-	TEST_EQUALS((FRAMES + (FRAMES / 2)) * sizeof(float),
-		    aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af) * 3 / 2, aubuf_cur_size(ab));
 
 	/* write half frame */
 	af_in.sampv	= &sampv_in[3 * FRAMES];
@@ -172,13 +174,13 @@ static int test_aubuf_auframe(void)
 
 	err = aubuf_write_auframe(ab, &af_in);
 	TEST_ERR(err);
-	TEST_EQUALS(2 * FRAMES * sizeof(float), aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af) * 2, aubuf_cur_size(ab));
 
 	/* read half frame */
 	af_out.sampv = &sampv_out[(FRAMES + (FRAMES / 2))];
 	af_out.sampc = FRAMES / 2;
 	aubuf_read_auframe(ab, &af_out);
-	TEST_EQUALS((FRAMES + FRAMES / 2) * sizeof(float), aubuf_cur_size(ab));
+	TEST_EQUALS(auframe_size(&af) * 3 / 2, aubuf_cur_size(ab));
 	TEST_EQUALS(3 * (dt / 2) + 1, af_out.timestamp);
 
 	/* read one and a half frame */
