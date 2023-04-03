@@ -133,6 +133,7 @@ struct test {
 	uint32_t n_response;
 	size_t i_req_body;
 	bool secure;
+	bool cert_auth;
 	int err;
 };
 
@@ -141,6 +142,31 @@ static void abort_test(struct test *t, int err)
 {
 	t->err = err;
 	re_cancel();
+}
+
+
+static enum re_https_verify_msg https_verify_msg_handler(
+	struct http_conn *conn, const struct http_msg *msg, void *arg)
+{
+	(void) conn;
+	struct test *t = arg;
+	int err = 0;
+	enum re_https_verify_msg res = HTTPS_MSG_OK;
+
+	if (!t->cert_auth)
+		goto out;
+
+	TEST_STRCMP("/auth/index.html", 11+5, msg->path.p, msg->path.l);
+
+	/* cert authorisation required, request client certificate */
+	res = HTTPS_MSG_REQUEST_CERT;
+out:
+	if (err) {
+		res = HTTPS_MSG_IGNORE;
+		abort_test(t, err);
+	}
+
+	return res;
 }
 
 
@@ -168,7 +194,14 @@ static void http_req_handler(struct http_conn *conn,
 	/* verify HTTP request */
 	TEST_STRCMP("1.1", 3, msg->ver.p, msg->ver.l);
 	TEST_STRCMP("GET", 3, msg->met.p, msg->met.l);
-	TEST_STRCMP("/index.html", 11, msg->path.p, msg->path.l);
+	if (t->cert_auth) {
+		TEST_STRCMP("/auth/index.html", 11+5, msg->path.p,
+			msg->path.l);
+	}
+	else {
+		TEST_STRCMP("/index.html", 11, msg->path.p, msg->path.l);
+	}
+
 	TEST_STRCMP("", 0, msg->prm.p, msg->prm.l);
 	TEST_EQUALS(t->clen, msg->clen);
 	TEST_STRCMP("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 52,
@@ -195,16 +228,15 @@ static void http_req_handler(struct http_conn *conn,
 		goto out;
 
 	t->clen = mb_body->end;
-
 	err = http_reply(conn, 200, "OK",
-			 "Transfer-Encoding: chunked\r\n"
-			 "Content-Type: text/plain\r\n"
-			 "Content-Length: %zu\r\n"
-			 "\r\n"
-			 "%b",
-			 mb_body->end,
-			 mb_body->buf, mb_body->end
-			 );
+			"Transfer-Encoding: chunked\r\n"
+			"Content-Type: text/plain\r\n"
+			"Content-Length: %zu\r\n"
+			"\r\n"
+			"%b",
+			mb_body->end,
+			mb_body->buf, mb_body->end
+			);
 
  out:
 	mem_deref(mb_body);
@@ -396,7 +428,7 @@ static size_t http_req_long_body_handler(struct mbuf *mb, void *arg)
 
 
 static int test_http_loop_base(bool secure, const char *met, bool http_conn,
-	bool dns_srv_query, bool dns_set_conf_test)
+	bool dns_srv_query, bool dns_set_conf_test, bool post_handshake)
 {
 	struct http_sock *sock = NULL;
 	struct http_cli *cli = NULL;
@@ -427,6 +459,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	memset(&t, 0, sizeof(t));
 
 	t.secure = secure;
+	t.cert_auth = secure && post_handshake;
 
 	if (dns_srv_query) {
 		/* Setup Mocking DNS Server */
@@ -443,12 +476,21 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	TEST_ERR(err);
 
 	if (secure) {
-
-		re_snprintf(path, sizeof(path), "%s/server-ecdsa.pem",
-			    test_datapath());
+		if (t.cert_auth)
+			re_snprintf(path, sizeof(path),
+				"%s/sni/server-interm.pem", test_datapath());
+		else
+			re_snprintf(path, sizeof(path), "%s/server-ecdsa.pem",
+					test_datapath());
 
 		err = https_listen(&sock, &srv, path,
 			put ? http_put_req_handler : http_req_handler, &t);
+		if (err)
+			goto out;
+
+		if (t.cert_auth)
+			err = https_set_verify_msgh(sock,
+				https_verify_msg_handler);
 	}
 	else {
 		err = http_listen(&sock, &srv,
@@ -476,22 +518,75 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	if (err)
 		goto out;
 
+	if (secure) {
+		struct tls*	 cli_tls;
+		http_client_get_tls(cli, &cli_tls);
+
+		if (t.cert_auth) {
+			re_snprintf(path, sizeof(path),
+				"%s/sni/client-interm.pem", test_datapath());
+			err |= http_client_set_cert(cli, path);
+			err |= http_client_set_key(cli, path);
+			if (err)
+				goto out;
+
+			tls_set_posthandshake_auth(cli_tls, 1);
+
+			/* add CAs to http server */
+			re_snprintf(path, sizeof(path), "%s/sni/root-ca.pem",
+				test_datapath());
+
+			err |=  tls_add_ca(http_sock_tls(sock), path);
+			re_snprintf(path, sizeof(path),
+				"%s/sni/server-interm.pem", test_datapath());
+
+			err |=  tls_add_ca(http_sock_tls(sock), path);
+			if (err)
+				goto out;
+		}
+
+		if (http_conn && !t.cert_auth)
+			err = tls_set_session_reuse(cli_tls, true);
+
+		if (err)
+			goto out;
+	}
+
 	if (put)
 		http_client_set_bufsize_max(cli, REQ_BODY_CHUNK_SIZE + 128);
 
 #ifdef USE_TLS
+	/* add root CA to http client */
 	if (secure) {
+		if (t.cert_auth)
+			re_snprintf(path, sizeof(path), "%s/sni/root-ca.pem",
+					test_datapath());
+		else
+			re_snprintf(path, sizeof(path), "%s/server-ecdsa.pem",
+					test_datapath());
 		err = http_client_add_ca(cli, path);
+		if (err)
+			goto out;
+	}
+
+	if (t.cert_auth) {
+		re_snprintf(path, sizeof(path), "%s/sni/client-interm.pem",
+				test_datapath());
+		err |= http_client_set_cert(cli, path);
+		err |= http_client_set_key(cli, path);
 		if (err)
 			goto out;
 	}
 #endif
 
 	(void)re_snprintf(url, sizeof(url),
-			  "http%s://%s:%u/index.html",
-			  secure ? "s" : "",
-			  dns_srv_query ? "test1.example.net" : "127.0.0.1",
-			  sa_port(&srv));
+					"http%s://%s:%u/%sindex.html",
+					secure ? "s" : "",
+					dns_srv_query ?
+					"test1.example.net"
+					: "127.0.0.1",
+					sa_port(&srv),
+					t.cert_auth ? "auth/" : "");
 
 	for (i = 1; i <= 10*REQ_HTTP_REQUESTS; i++) {
 		t.i_req_body = 0;
@@ -667,51 +762,59 @@ out:
 
 int test_http_loop(void)
 {
-	return test_http_loop_base(false, "GET", false, false, false);
+	return test_http_loop_base(false, "GET", false, false, false, false);
 }
 
 
 #ifdef USE_TLS
 int test_https_loop(void)
 {
-	return test_http_loop_base(true, "GET", false, false, false);
+	return test_http_loop_base(true, "GET", false, false, false, false);
 }
 #endif
 
 
 int test_http_large_body(void)
 {
-	return test_http_loop_base(false, "PUT", false, false, false);
+	return test_http_loop_base(false, "PUT", false, false, false, false);
 }
 
 
 #ifdef USE_TLS
 int test_https_large_body(void)
 {
-	return test_http_loop_base(true, "PUT", false, false, false);
+	return test_http_loop_base(true, "PUT", false, false, false, false);
 }
 #endif
 
 
 int test_http_conn(void)
 {
-	return test_http_loop_base(false, "GET", true, false, false);
+	return test_http_loop_base(false, "GET", true, false, false, false);
 }
 
 
 int test_http_conn_large_body(void)
 {
-	return test_http_loop_base(false, "PUT", true, false, false);
+	return test_http_loop_base(false, "PUT", true, false, false, false);
 }
 
 
 int test_dns_http_integration(void)
 {
-	return test_http_loop_base(false, "GET", true, true, false);
+	return test_http_loop_base(false, "GET", true, true, false, false);
 }
 
 
 int test_dns_cache_http_integration(void)
 {
-	return test_http_loop_base(false, "GET", true, true, true);
+	return test_http_loop_base(false, "GET", true, true, true, false);
 }
+
+#ifdef USE_TLS
+int test_https_conn_post_handshake(void)
+{
+	return test_http_loop_base(true, "GET", true, false, false, true);
+}
+
+#endif

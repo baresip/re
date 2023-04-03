@@ -40,7 +40,7 @@ static bool is_mark(int c)
 
 static bool is_unreserved(char c)
 {
-	return isalnum(c) || is_mark(c);
+	return isalnum((unsigned char)c) || is_mark(c);
 }
 
 
@@ -120,6 +120,33 @@ static bool is_param_unreserved(char c)
 }
 
 
+static bool is_token_non_alphanum(int c)
+{
+	switch (c) {
+
+	case '-':
+	case '.':
+	case '!':
+	case '%':
+	case '*':
+	case '_':
+	case '+':
+	case '`':
+	case '\'':
+	case '~':
+		return true;
+	default:
+		return false;
+	}
+}
+
+
+static bool is_token(char c)
+{
+	return isalnum((unsigned char)c) || is_token_non_alphanum(c);
+}
+
+
 static bool is_paramchar(char c)
 {
 	return is_param_unreserved(c) || is_unreserved(c);
@@ -147,7 +174,7 @@ static int comp_escape(struct re_printf *pf, const struct pl *pl, esc_h *eh)
 			err = pf->vph(&c, 1, pf->arg);
 		}
 		else {
-			err = re_hprintf(pf, "%%%02X", c);
+			err = re_hprintf(pf, "%%%W", &c, 1);
 		}
 	}
 
@@ -303,4 +330,18 @@ int uri_header_escape(struct re_printf *pf, const struct pl *pl)
 int uri_header_unescape(struct re_printf *pf, const struct pl *pl)
 {
 	return comp_unescape(pf, pl, is_hvalue);
+}
+
+
+/**
+ * Escape display name
+ *
+ * @param pf Print function
+ * @param pl String to escape
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_display_name_escape(struct re_printf *pf, const struct pl *pl)
+{
+	return comp_escape(pf, pl, is_token);
 }

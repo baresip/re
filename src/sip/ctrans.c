@@ -59,7 +59,8 @@ static bool route_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 			  void *arg)
 {
 	(void)msg;
-	return 0 != mbuf_printf(arg, "Route: %r\r\n", &hdr->val);
+	return 0 != mbuf_printf(arg, "Route: %H\r\n", uri_escape_pl,
+				&hdr->val);
 }
 
 

@@ -73,6 +73,7 @@ static void read_auframe(struct aubuf *ab, struct auframe *af)
 	size_t sample_size = aufmt_sample_size(af->fmt);
 	size_t sz = auframe_size(af);
 	uint8_t *p = af->sampv;
+	bool first = true;
 
 	while (le) {
 		struct frame *f = le->data;
@@ -85,11 +86,13 @@ static void read_auframe(struct aubuf *ab, struct auframe *af)
 		(void)mbuf_read_mem(f->mb, p, n);
 		ab->cur_sz -= n;
 
-		af->id	      = f->af.id;
-		af->srate     = f->af.srate;
-		af->ch	      = f->af.ch;
-		af->timestamp = f->af.timestamp;
-		af->fmt       = f->af.fmt;
+		if (first) {
+			af->id	      = f->af.id;
+			af->srate     = f->af.srate;
+			af->ch	      = f->af.ch;
+			af->timestamp = f->af.timestamp;
+			af->fmt       = f->af.fmt;
+		}
 
 		if (!mbuf_get_left(f->mb)) {
 			mem_deref(f);
@@ -105,6 +108,7 @@ static void read_auframe(struct aubuf *ab, struct auframe *af)
 
 		p  += n;
 		sz -= n;
+		first = false;
 	}
 }
 

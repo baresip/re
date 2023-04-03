@@ -178,7 +178,8 @@ int test_uri_user(void)
 	} uriv[] = {
 		{"alice%40atlanta.com", "alice@atlanta.com"},
 		{"project%20x", "project x"},
-		{"*21%23", "*21#"}
+		{"*21%23", "*21#"},
+		{"*21%23%C3%A4%E2%82%AC%40%20", "*21#ä\xE2\x82\xAC@ "}
 	};
 	struct mbuf mbe, mbd;
 	int err = EINVAL;

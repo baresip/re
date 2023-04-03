@@ -4,6 +4,7 @@
  * Copyright (C) 2022 Sebastian Reimers
  */
 
+#include <time.h>
 #include <re.h>
 #include "test.h"
 
@@ -47,5 +48,42 @@ int test_thread(void)
 	err = 0;
 
 out:
+	return err;
+}
+
+
+int test_thread_cnd_timedwait(void)
+{
+	cnd_t cnd;
+	mtx_t mtx;
+	struct timespec tp;
+	int err = 0;
+
+	cnd_init(&cnd);
+	mtx_init(&mtx, mtx_plain);
+
+	err = tmr_timespec_get(&tp, 100);
+	TEST_ERR(err);
+
+	mtx_lock(&mtx);
+
+	uint64_t start = tmr_jiffies();
+	int ret = cnd_timedwait(&cnd, &mtx, &tp);
+	TEST_EQUALS(thrd_timedout, ret);
+	uint64_t end = tmr_jiffies();
+
+	/* This tests can fail if a spurious wake-up occurs */
+	if (end - start < 100) {
+		DEBUG_WARNING("cnd_timedwait: early wake-up!\n");
+		goto out;
+	}
+
+	if (end - start > 500) {
+		err = ETIMEDOUT;
+		TEST_ERR(err);
+	}
+
+out:
+	mtx_unlock(&mtx);
 	return err;
 }

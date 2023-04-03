@@ -221,6 +221,7 @@ int test_dns_cache_http_integration(void);
 int test_https_loop(void);
 int test_http_client_set_tls(void);
 int test_https_large_body(void);
+int test_https_conn_post_handshake(void);
 #endif
 int test_httpauth_chall(void);
 int test_httpauth_resp(void);
@@ -324,6 +325,7 @@ int test_sys_getenv(void);
 int test_tcp(void);
 int test_telev(void);
 int test_thread(void);
+int test_thread_cnd_timedwait(void);
 int test_tmr_jiffies(void);
 int test_tmr_jiffies_usec(void);
 int test_try_into(void);

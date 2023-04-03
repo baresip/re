@@ -170,12 +170,13 @@ int main(int argc, char *argv[])
 #else
 	(void)argc;
 	(void)argv;
-	do_reg = true;
-	do_oom = false;
-	do_int = false;
-	do_perf = false;
-	do_all = false;
-	verbose = true;
+	do_reg	  = true;
+	do_int	  = true;
+	do_thread = true;
+	do_oom	  = false;
+	do_perf	  = false;
+	do_all	  = false;
+	verbose	  = true;
 #endif
 
 	/* Initialise debugging */
