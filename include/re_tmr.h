@@ -40,6 +40,9 @@ int      tmr_status(struct re_printf *pf, void *unused);
 void     tmr_init(struct tmr *tmr);
 void     tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 		   const char *file, int line);
+void     tmr_continue_dbg(struct tmr *tmr, uint64_t delay,
+                   tmr_h *th, void *arg,
+		   const char *file, int line);
 uint32_t tmrl_count(struct tmrl *tmrl);
 
 
@@ -55,6 +58,19 @@ uint32_t tmrl_count(struct tmrl *tmrl);
  */
 #define tmr_start(tmr, delay, th, arg)                                        \
 	tmr_start_dbg(tmr, delay, th, arg, __FILE__, __LINE__)
+
+/**
+ * @def tmr_continue(tmr, delay, th, arg)
+ *
+ * Continue a previously started timer with exactly added delay
+ *
+ * @param tmr   Timer to start
+ * @param delay Timer delay in [ms]
+ * @param th    Timeout handler
+ * @param arg   Handler argument
+ */
+#define tmr_continue(tmr, delay, th, arg)                                     \
+	tmr_continue_dbg(tmr, delay, th, arg, __FILE__, __LINE__)
 
 void     tmr_cancel(struct tmr *tmr);
 uint64_t tmr_get_expire(const struct tmr *tmr);
