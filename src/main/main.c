@@ -904,12 +904,18 @@ void fd_debug(void)
 /* Thread-safe signal handling */
 static void signal_handler(int sig)
 {
+	struct btrace trace;
 	struct re *re = re_get();
 
 	if (!re) {
 		DEBUG_WARNING("signal_handler: re not ready\n");
 		return;
 	}
+
+	btrace(&trace);
+	re_fprintf(stderr, "%H", btrace_println, &trace);
+	if (sig == SIGSEGV)
+		exit(0);
 
 	(void)signal(sig, signal_handler);
 	re->sig = sig;
@@ -940,6 +946,7 @@ int re_main(re_signal_h *signalh)
 		(void)signal(SIGINT, signal_handler);
 		(void)signal(SIGALRM, signal_handler);
 		(void)signal(SIGTERM, signal_handler);
+		(void)signal(SIGSEGV, signal_handler);
 	}
 #endif
 
