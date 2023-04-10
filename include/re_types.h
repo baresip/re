@@ -301,3 +301,57 @@ typedef int re_sock_t;
 #define re_assert(expr) assert(expr)
 #define re_assert_se(expr) assert(expr)
 #endif
+
+
+/* VA_ARG SIZE helpers */
+
+#define RE_ARG_SIZE(type)                                                     \
+	_Generic((type), \
+        char: sizeof(char), \
+        unsigned char: sizeof(unsigned char), \
+        short: sizeof(short), \
+        unsigned short: sizeof(unsigned short), \
+        int: sizeof(int), \
+        unsigned int: sizeof(unsigned int), \
+        long: sizeof(long), \
+        unsigned long: sizeof(unsigned long), \
+        long long: sizeof(long long), \
+        unsigned long long: sizeof(unsigned long long), \
+        float: sizeof(float), \
+        double: sizeof(double), \
+        char const*: sizeof(char*), \
+        char*: sizeof(char*), \
+        void const*: sizeof(void*), \
+        void*: sizeof(void*), \
+        default: sizeof(void*) \
+    )
+
+#define RE_ARG_0()
+#define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr),
+#define RE_ARG_2(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_1(__VA_ARGS__)
+#define RE_ARG_3(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_2(__VA_ARGS__)
+#define RE_ARG_4(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_3(__VA_ARGS__)
+#define RE_ARG_5(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_4(__VA_ARGS__)
+#define RE_ARG_6(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_5(__VA_ARGS__)
+#define RE_ARG_7(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_6(__VA_ARGS__)
+#define RE_ARG_8(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_7(__VA_ARGS__)
+#define RE_ARG_9(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_8(__VA_ARGS__)
+#define RE_ARG_10(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_9(__VA_ARGS__)
+#define RE_ARG_11(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_10(__VA_ARGS__)
+#define RE_ARG_12(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_11(__VA_ARGS__)
+#define RE_ARG_13(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_12(__VA_ARGS__)
+#define RE_ARG_14(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_13(__VA_ARGS__)
+#define RE_ARG_15(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_14(__VA_ARGS__)
+#define RE_ARG_16(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_15(__VA_ARGS__)
+
+#define RE_ARG_VA_NUM_2(X, X16, X15, X14, X13, X12, X11, X10, X9, X8, X7, X6, \
+			X5, X4, X3, X2, X1, N, ...)                           \
+	N
+#define RE_ARG_VA_NUM(...)                                                    \
+	RE_ARG_VA_NUM_2(0, ## __VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7,  \
+			6, 5, 4, 3, 2, 1, 0)
+
+#define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
+#define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
+#define RE_ARG_N(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
+#define RE_VA_ARG_SZ(args) va_arg((args), size_t)
