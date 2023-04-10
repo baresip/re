@@ -80,7 +80,7 @@ endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(
-      -Wshorten-64-to-32 
+      -Wshorten-64-to-32
       -Wno-gnu-zero-variadic-macro-arguments
     )
 endif()
