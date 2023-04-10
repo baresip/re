@@ -183,17 +183,17 @@ size_t utf8_byteseq(char u[4], unsigned cp);
 
 
 /* RE_VA_ARG - use only within RE_VA_ARG wrapped functions */
-int re_va_arg_int(va_list ap);
-char *re_va_arg_char_p(va_list ap);
-const char *re_va_arg_const_char_p(va_list ap);
-size_t re_va_arg_size_t(va_list ap);
-ssize_t re_va_arg_ssize_t(va_list ap);
-signed long long re_va_arg_signed_long_long(va_list ap);
-signed long re_va_arg_signed_long(va_list ap);
-signed re_va_arg_signed(va_list ap);
-unsigned long long re_va_arg_unsigned_long_long(va_list ap);
-unsigned long re_va_arg_unsigned_long(va_list ap);
-unsigned re_va_arg_unsigned(va_list ap);
-double re_va_arg_double(va_list ap);
-void *re_va_arg_void_p(va_list ap);
-re_printf_h *re_va_arg_re_printf_h(va_list ap);
+int re_va_arg_int(va_list *ap);
+char *re_va_arg_char_p(va_list *ap);
+const char *re_va_arg_const_char_p(va_list *ap);
+size_t re_va_arg_size_t(va_list *ap);
+ssize_t re_va_arg_ssize_t(va_list *ap);
+signed long long re_va_arg_signed_long_long(va_list *ap);
+signed long re_va_arg_signed_long(va_list *ap);
+signed re_va_arg_signed(va_list *ap);
+unsigned long long re_va_arg_unsigned_long_long(va_list *ap);
+unsigned long re_va_arg_unsigned_long(va_list *ap);
+unsigned re_va_arg_unsigned(va_list *ap);
+double re_va_arg_double(va_list *ap);
+void *re_va_arg_void_p(va_list *ap);
+re_printf_h *re_va_arg_re_printf_h(va_list *ap);

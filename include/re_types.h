@@ -305,7 +305,7 @@ typedef int re_sock_t;
 
 /* RE_VA_ARG SIZE helpers */
 
-#if __STDC_VERSION__ >= 201112L && !defined(WIN32) /* Needs C11 support */
+#if __STDC_VERSION__ >= 201112L && !defined(WIN32) && 0 /* Needs C11 support */
 
 #define HAVE_RE_ARG 1
 

@@ -506,7 +506,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 }
 
 
-int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
+int _re_vhprintf(const char *fmt, va_list ap_, re_vprintf_h *vph, void *arg)
 {
 	uint8_t base, *bptr;
 	char pch = 0, ch, num[NUM_SIZE], addr[64], msg[256];
@@ -526,6 +526,8 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 	int64_t sn;
 	bool uc = false;
 	double dbl;
+	va_list ap;
+	va_copy(ap, ap_);
 
 	if (!fmt || !vph)
 		return EINVAL;
@@ -575,15 +577,15 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'b':
-			str = re_va_arg_const_char_p(ap);
-			len = re_va_arg_size_t(ap);
+			str = re_va_arg_const_char_p(&ap);
+			len = re_va_arg_size_t(&ap);
 
 			err |= write_padded(str, str ? len : 0, pad, ' ',
 					    plr, NULL, vph, arg);
 			break;
 
 		case 'c':
-			ch = re_va_arg_int(ap);
+			ch = re_va_arg_int(&ap);
 
 			err |= write_padded(&ch, 1, pad, ' ', plr, NULL,
 					    vph, arg);
@@ -594,20 +596,20 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				sn = re_va_arg_ssize_t(ap);
+				sn = re_va_arg_ssize_t(&ap);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				sn = re_va_arg_signed_long_long(ap);
+				sn = re_va_arg_signed_long_long(&ap);
 				break;
 
 			case LENMOD_LONG:
-				sn = re_va_arg_signed_long(ap);
+				sn = re_va_arg_signed_long(&ap);
 				break;
 
 			case LENMOD_NONE:
-				sn = re_va_arg_signed(ap);
+				sn = re_va_arg_signed(&ap);
 				break;
 			}
 
@@ -622,7 +624,7 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 
 		case 'f':
 		case 'F':
-			dbl = re_va_arg_double(ap);
+			dbl = re_va_arg_double(&ap);
 
 			if (fpad == (size_t)-1) {
 				fpad = pad;
@@ -649,8 +651,8 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'H':
-			ph     = re_va_arg_re_printf_h(ap);
-			ph_arg = re_va_arg_void_p(ap);
+			ph     = re_va_arg_re_printf_h(&ap);
+			ph_arg = re_va_arg_void_p(&ap);
 
 			if (ph)
 				err |= ph(&pf, ph_arg);
@@ -662,13 +664,13 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'm':
-			str = str_error(re_va_arg_int(ap), msg, sizeof(msg));
+			str = str_error(re_va_arg_int(&ap), msg, sizeof(msg));
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
 
 		case 'p':
-			ptr = re_va_arg_void_p(ap);
+			ptr = re_va_arg_void_p(&ap);
 
 			if (ptr) {
 				len = local_itoa(num, (size_t)ptr,
@@ -686,7 +688,7 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'r':
-			pl = (const struct pl *)re_va_arg_void_p(ap);
+			pl = (const struct pl *)re_va_arg_void_p(&ap);
 
 			err |= write_padded(pl ? pl->p : NULL,
 					    (pl && pl->p) ? pl->l : 0,
@@ -694,7 +696,7 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 's':
-			str = re_va_arg_char_p(ap);
+			str = re_va_arg_char_p(&ap);
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
@@ -709,20 +711,20 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				n = re_va_arg_size_t(ap);
+				n = re_va_arg_size_t(&ap);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				n = re_va_arg_unsigned_long_long(ap);
+				n = re_va_arg_unsigned_long_long(&ap);
 				break;
 
 			case LENMOD_LONG:
-				n = re_va_arg_unsigned_long(ap);
+				n = re_va_arg_unsigned_long(&ap);
 				break;
 
 			case LENMOD_NONE:
-				n = re_va_arg_unsigned(ap);
+				n = re_va_arg_unsigned(&ap);
 				break;
 			}
 
@@ -734,8 +736,8 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'v':
-			str = re_va_arg_char_p(ap);
-			apl = (va_list *)re_va_arg_void_p(ap);
+			str = re_va_arg_char_p(&ap);
+			apl = (va_list *)re_va_arg_void_p(&ap);
 
 			if (!str || !apl)
 				break;
@@ -747,8 +749,8 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			uc = true;
 			/*@fallthrough@*/
 		case 'w':
-			bptr = re_va_arg_void_p(ap);
-			len = re_va_arg_size_t(ap);
+			bptr = re_va_arg_void_p(&ap);
+			len = re_va_arg_size_t(&ap);
 
 			len = bptr ? len : 0;
 			pch = plr ? ' ' : pch;
@@ -774,7 +776,7 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'j':
-			sa = (struct sa *)re_va_arg_void_p(ap);
+			sa = (struct sa *)re_va_arg_void_p(&ap);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
@@ -788,7 +790,7 @@ int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 
 
 		case 'J':
-			sa = (struct sa *)re_va_arg_void_p(ap);
+			sa = (struct sa *)re_va_arg_void_p(&ap);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
