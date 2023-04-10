@@ -323,8 +323,8 @@ typedef int re_sock_t;
 	char*:			sizeof(char *),	\
 	void const*:		sizeof(void const *),	\
 	void*:			sizeof(void *),	\
-        default: sizeof(void*) \
-    )
+	default: sizeof(void*) \
+)
 
 #define RE_ARG_0()
 #define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr),
@@ -348,7 +348,7 @@ typedef int re_sock_t;
 			X5, X4, X3, X2, X1, N, ...)                           \
 	N
 #define RE_ARG_VA_NUM(...)                                                    \
-	RE_ARG_VA_NUM_2(0 __VA_OPT__(,) __VA_ARGS__, 16, 15, 14, 13, 12, 11, \
+	RE_ARG_VA_NUM_2(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, \
 			10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
