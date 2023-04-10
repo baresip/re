@@ -79,7 +79,10 @@ else()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+    add_compile_options(
+      -Wshorten-64-to-32 
+      -Wno-gnu-zero-variadic-macro-arguments
+    )
 endif()
 
 check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
