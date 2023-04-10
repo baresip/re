@@ -99,9 +99,17 @@ int re_vsnprintf(char *re_restrict str, size_t size,
 		 const char *re_restrict fmt, va_list ap);
 int re_vsdprintf(char **strp, const char *fmt, va_list ap);
 
+int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg);
+int _re_vfprintf(FILE *stream, const char *fmt, va_list ap);
+int _re_vprintf(const char *fmt, va_list ap);
+int _re_vsnprintf(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, va_list ap);
+int _re_vsdprintf(char **strp, const char *fmt, va_list ap);
+
 int re_hprintf(struct re_printf *pf, const char *fmt, ...);
 int re_fprintf(FILE *stream, const char *fmt, ...);
-int re_printf(const char *fmt, ...);
+#define re_printf(fmt, ...) _re_printf((fmt), RE_VA_ARG(__VA_ARGS__) 0)
+int _re_printf(const char *fmt, ...);
 int re_snprintf(char *re_restrict str, size_t size,
 		const char *re_restrict fmt, ...);
 int re_sdprintf(char **strp, const char *fmt, ...);
@@ -168,3 +176,20 @@ void fmt_param_apply(const struct pl *pl, fmt_param_h *ph, void *arg);
 int utf8_encode(struct re_printf *pf, const char *str);
 int utf8_decode(struct re_printf *pf, const struct pl *pl);
 size_t utf8_byteseq(char u[4], unsigned cp);
+
+
+/* RE_VA_ARG - use only within RE_VA_ARG wrapped functions */
+int re_va_arg_int(va_list ap);
+char *re_va_arg_char_p(va_list ap);
+const char *re_va_arg_const_char_p(va_list ap);
+size_t re_va_arg_size_t(va_list ap);
+ssize_t re_va_arg_ssize_t(va_list ap);
+signed long long re_va_arg_signed_long_long(va_list ap);
+signed long re_va_arg_signed_long(va_list ap);
+signed re_va_arg_signed(va_list ap);
+unsigned long long re_va_arg_unsigned_long_long(va_list ap);
+unsigned long re_va_arg_unsigned_long(va_list ap);
+unsigned re_va_arg_unsigned(va_list ap);
+double re_va_arg_double(va_list ap);
+void *re_va_arg_void_p(va_list ap);
+re_printf_h *re_va_arg_re_printf_h(va_list ap);

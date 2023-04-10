@@ -229,6 +229,7 @@ set(SRCS
   src/dns/rr.c
   src/dns/rrlist.c
 
+  src/fmt/arg.c
   src/fmt/ch.c
   src/fmt/hexdump.c
   src/fmt/pl.c

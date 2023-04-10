@@ -303,26 +303,26 @@ typedef int re_sock_t;
 #endif
 
 
-/* VA_ARG SIZE helpers */
+/* RE_VA_ARG SIZE helpers */
 
 #define RE_ARG_SIZE(type)                                                     \
 	_Generic((type), \
-        char: sizeof(char), \
-        unsigned char: sizeof(unsigned char), \
-        short: sizeof(short), \
-        unsigned short: sizeof(unsigned short), \
-        int: sizeof(int), \
-        unsigned int: sizeof(unsigned int), \
-        long: sizeof(long), \
-        unsigned long: sizeof(unsigned long), \
-        long long: sizeof(long long), \
-        unsigned long long: sizeof(unsigned long long), \
-        float: sizeof(float), \
-        double: sizeof(double), \
-        char const*: sizeof(char*), \
-        char*: sizeof(char*), \
-        void const*: sizeof(void*), \
-        void*: sizeof(void*), \
+	char:			sizeof(char),	        \
+	unsigned char:		sizeof(unsigned char),	\
+	short:			sizeof(short),	        \
+	unsigned short:		sizeof(unsigned short),	\
+	int:			sizeof(int),		\
+	unsigned int:		sizeof(unsigned int),	\
+	long:			sizeof(long),	        \
+	unsigned long:		sizeof(unsigned long),	\
+	long long:		sizeof(long long),	\
+	unsigned long long:	sizeof(unsigned long long),	\
+	float:			sizeof(float),	        \
+	double:			sizeof(double),	        \
+	char const*:		sizeof(char const *),	\
+	char*:			sizeof(char *),	\
+	void const*:		sizeof(void const *),	\
+	void*:			sizeof(void *),	\
         default: sizeof(void*) \
     )
 
@@ -348,10 +348,9 @@ typedef int re_sock_t;
 			X5, X4, X3, X2, X1, N, ...)                           \
 	N
 #define RE_ARG_VA_NUM(...)                                                    \
-	RE_ARG_VA_NUM_2(0, ## __VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7,  \
-			6, 5, 4, 3, 2, 1, 0)
+	RE_ARG_VA_NUM_2(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8,   \
+			7, 6, 5, 4, 3, 2, 1, 0)
 
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
 #define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
-#define RE_ARG_N(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
-#define RE_VA_ARG_SZ(args) va_arg((args), size_t)
+#define RE_VA_ARG(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)

@@ -506,6 +506,351 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 }
 
 
+int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
+{
+	uint8_t base, *bptr;
+	char pch = 0, ch, num[NUM_SIZE], addr[64], msg[256];
+	enum length_modifier lenmod = LENMOD_NONE;
+	struct re_printf pf;
+	bool fm = false, plr = false;
+	const struct pl *pl;
+	size_t pad = 0, fpad = -1, len, i;
+	const char *str, *p = fmt, *p0 = fmt;
+	const struct sa *sa;
+	re_printf_h *ph;
+	void *ph_arg;
+	va_list *apl;
+	int err = 0;
+	void *ptr;
+	uint64_t n;
+	int64_t sn;
+	bool uc = false;
+	double dbl;
+
+	if (!fmt || !vph)
+		return EINVAL;
+
+	pf.vph = vph;
+	pf.arg = arg;
+
+	for (;*p && !err; p++) {
+		if (!fm) {
+			if (*p != '%')
+				continue;
+
+			pch = ' ';
+			plr = false;
+			pad = 0;
+			fpad = -1;
+			lenmod = LENMOD_NONE;
+			uc = false;
+
+			if (p > p0)
+				err |= vph(p0, p - p0, arg);
+
+			fm = true;
+			continue;
+		}
+
+		fm = false;
+		base = 10;
+
+		switch (*p) {
+
+		case '-':
+			plr = true;
+			fm  = true;
+			break;
+
+		case '.':
+			fpad = pad;
+			pad = 0;
+			fm = true;
+			break;
+
+		case '%':
+			ch = '%';
+
+			err |= vph(&ch, 1, arg);
+			break;
+
+		case 'b':
+			str = re_va_arg_const_char_p(ap);
+			len = re_va_arg_size_t(ap);
+
+			err |= write_padded(str, str ? len : 0, pad, ' ',
+					    plr, NULL, vph, arg);
+			break;
+
+		case 'c':
+			ch = re_va_arg_int(ap);
+
+			err |= write_padded(&ch, 1, pad, ' ', plr, NULL,
+					    vph, arg);
+			break;
+
+		case 'd':
+		case 'i':
+			switch (lenmod) {
+
+			case LENMOD_SIZE:
+				sn = re_va_arg_ssize_t(ap);
+				break;
+
+			default:
+			case LENMOD_LONG_LONG:
+				sn = re_va_arg_signed_long_long(ap);
+				break;
+
+			case LENMOD_LONG:
+				sn = re_va_arg_signed_long(ap);
+				break;
+
+			case LENMOD_NONE:
+				sn = re_va_arg_signed(ap);
+				break;
+			}
+
+			len = local_itoa(num, (sn < 0) ? -sn : sn, base,
+					 false);
+
+			err |= write_padded(num, len, pad,
+					    plr ? ' ' : pch, plr,
+					    (sn < 0) ? prfx_neg : NULL,
+					    vph, arg);
+			break;
+
+		case 'f':
+		case 'F':
+			dbl = re_va_arg_double(ap);
+
+			if (fpad == (size_t)-1) {
+				fpad = pad;
+				pad  = 0;
+			}
+
+			if (isinf(dbl)) {
+				err |= write_padded("inf", 3, fpad,
+						    ' ', plr, NULL, vph, arg);
+			}
+			else if (isnan(dbl)) {
+				err |= write_padded("nan", 3, fpad,
+						    ' ', plr, NULL, vph, arg);
+			}
+			else {
+				len = local_ftoa(num, dbl,
+						 pad ? min(pad, DEC_SIZE) : 6);
+
+				err |= write_padded(num, len, fpad,
+						    plr ? ' ' : pch, plr,
+						    (dbl<0) ? prfx_neg : NULL,
+						    vph, arg);
+			}
+			break;
+
+		case 'H':
+			ph     = re_va_arg_re_printf_h(ap);
+			ph_arg = re_va_arg_void_p(ap);
+
+			if (ph)
+				err |= ph(&pf, ph_arg);
+			break;
+
+		case 'l':
+			++lenmod;
+			fm = true;
+			break;
+
+		case 'm':
+			str = str_error(re_va_arg_int(ap), msg, sizeof(msg));
+			err |= write_padded(str, str_len(str), pad,
+					    ' ', plr, NULL, vph, arg);
+			break;
+
+		case 'p':
+			ptr = re_va_arg_void_p(ap);
+
+			if (ptr) {
+				len = local_itoa(num, (size_t)ptr,
+						 16, false);
+				err |= write_padded(num, len, pad,
+						    plr ? ' ' : pch, plr,
+						    prfx_hex, vph, arg);
+			}
+			else {
+				err |= write_padded(str_nil,
+						    sizeof(str_nil) - 1,
+						    pad, ' ', plr, NULL,
+						    vph, arg);
+			}
+			break;
+
+		case 'r':
+			pl = (const struct pl *)re_va_arg_void_p(ap);
+
+			err |= write_padded(pl ? pl->p : NULL,
+					    (pl && pl->p) ? pl->l : 0,
+					    pad, ' ', plr, NULL, vph, arg);
+			break;
+
+		case 's':
+			str = re_va_arg_char_p(ap);
+			err |= write_padded(str, str_len(str), pad,
+					    ' ', plr, NULL, vph, arg);
+			break;
+
+		case 'X':
+			uc = true;
+			/*@fallthrough@*/
+		case 'x':
+			base = 16;
+			/*@fallthrough@*/
+		case 'u':
+			switch (lenmod) {
+
+			case LENMOD_SIZE:
+				n = re_va_arg_size_t(ap);
+				break;
+
+			default:
+			case LENMOD_LONG_LONG:
+				n = re_va_arg_unsigned_long_long(ap);
+				break;
+
+			case LENMOD_LONG:
+				n = re_va_arg_unsigned_long(ap);
+				break;
+
+			case LENMOD_NONE:
+				n = re_va_arg_unsigned(ap);
+				break;
+			}
+
+			len = local_itoa(num, n, base, uc);
+
+			err |= write_padded(num, len, pad,
+					    plr ? ' ' : pch, plr, NULL,
+					    vph, arg);
+			break;
+
+		case 'v':
+			str = re_va_arg_char_p(ap);
+			apl = (va_list *)re_va_arg_void_p(ap);
+
+			if (!str || !apl)
+				break;
+
+			err |= re_vhprintf(str, *apl, vph, arg);
+			break;
+
+		case 'W':
+			uc = true;
+			/*@fallthrough@*/
+		case 'w':
+			bptr = re_va_arg_void_p(ap);
+			len = re_va_arg_size_t(ap);
+
+			len = bptr ? len : 0;
+			pch = plr ? ' ' : pch;
+
+			while (!plr && pad-- > (len * 2))
+				err |= vph(&pch, 1, arg);
+
+			for (i=0; i<len; i++) {
+				const uint8_t v = *bptr++;
+				uint32_t l = local_itoa(num, v, 16, uc);
+				err |= write_padded(num, l, 2, '0',
+						    false, NULL, vph, arg);
+			}
+
+			while (plr && pad-- > (len * 2))
+				err |= vph(&pch, 1, arg);
+
+			break;
+
+		case 'z':
+			lenmod = LENMOD_SIZE;
+			fm = true;
+			break;
+
+		case 'j':
+			sa = (struct sa *)re_va_arg_void_p(ap);
+			if (!sa)
+				break;
+			if (sa_ntop(sa, addr, sizeof(addr))) {
+				err |= write_padded("?", 1, pad, ' ',
+						    plr, NULL, vph, arg);
+				break;
+			}
+			err |= write_padded(addr, strlen(addr), pad, ' ',
+					    plr, NULL, vph, arg);
+			break;
+
+
+		case 'J':
+			sa = (struct sa *)re_va_arg_void_p(ap);
+			if (!sa)
+				break;
+			if (sa_ntop(sa, addr, sizeof(addr))) {
+				err |= write_padded("?", 1, pad, ' ',
+						    plr, NULL, vph, arg);
+				break;
+			}
+
+#ifdef HAVE_INET6
+			if (AF_INET6 == sa_af(sa)) {
+				ch = '[';
+				err |= vph(&ch, 1, arg);
+			}
+#endif
+			err |= write_padded(addr, strlen(addr), pad, ' ',
+					    plr, NULL, vph, arg);
+#ifdef HAVE_INET6
+			if (AF_INET6 == sa_af(sa)) {
+				ch = ']';
+				err |= vph(&ch, 1, arg);
+			}
+#endif
+
+			ch = ':';
+			err |= vph(&ch, 1, arg);
+			len = local_itoa(num, sa_port(sa), 10, false);
+			err |= write_padded(num, len, pad,
+					    plr ? ' ' : pch, plr, NULL,
+					    vph, arg);
+
+			break;
+
+		default:
+			if (('0' <= *p) && (*p <= '9')) {
+				if (!pad && ('0' == *p)) {
+					pch = '0';
+				}
+				else {
+					pad *= 10;
+					pad += *p - '0';
+				}
+				fm = true;
+				break;
+			}
+
+			ch = '?';
+
+			err |= vph(&ch, 1, arg);
+			break;
+		}
+
+		if (!fm)
+			p0 = p + 1;
+	}
+
+	if (!fm && p > p0)
+		err |= vph(p0, p - p0, arg);
+
+	return err;
+}
+
+
 static int print_handler(const char *p, size_t size, void *arg)
 {
 	struct pl *pl = arg;
@@ -597,6 +942,21 @@ int re_vfprintf(FILE *stream, const char *fmt, va_list ap)
 	return (int)sp.n;
 }
 
+int _re_vfprintf(FILE *stream, const char *fmt, va_list ap)
+{
+	struct strm_print sp;
+
+	if (!stream)
+		return -1;
+
+	sp.f = stream;
+	sp.n = 0;
+
+	if (0 != _re_vhprintf(fmt, ap, print_handler_stream, &sp))
+		return -1;
+
+	return (int)sp.n;
+}
 
 /**
  * Print a formatted string to stdout, using va_list
@@ -609,6 +969,11 @@ int re_vfprintf(FILE *stream, const char *fmt, va_list ap)
 int re_vprintf(const char *fmt, va_list ap)
 {
 	return re_vfprintf(stdout, fmt, ap);
+}
+
+int _re_vprintf(const char *fmt, va_list ap)
+{
+	return _re_vfprintf(stdout, fmt, ap);
 }
 
 
@@ -735,13 +1100,13 @@ int re_fprintf(FILE *stream, const char *fmt, ...)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_printf(const char *fmt, ...)
+int _re_printf(const char *fmt, ...)
 {
 	va_list ap;
 	int n;
 
 	va_start(ap, fmt);
-	n = re_vprintf(fmt, ap);
+	n = _re_vprintf(fmt, ap);
 	va_end(ap);
 
 	return n;
