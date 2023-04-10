@@ -99,24 +99,45 @@ int re_vsnprintf(char *re_restrict str, size_t size,
 		 const char *re_restrict fmt, va_list ap);
 int re_vsdprintf(char **strp, const char *fmt, va_list ap);
 
-int _re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg);
-int _re_vfprintf(FILE *stream, const char *fmt, va_list ap);
-int _re_vprintf(const char *fmt, va_list ap);
-int _re_vsnprintf(char *re_restrict str, size_t size,
+/* Secure va_list print */
+int re_vhprintf_s(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg);
+int re_vfprintf_s(FILE *stream, const char *fmt, va_list ap);
+int re_vprintf_s(const char *fmt, va_list ap);
+int re_vsnprintf_s(char *re_restrict str, size_t size,
 		 const char *re_restrict fmt, va_list ap);
-int _re_vsdprintf(char **strp, const char *fmt, va_list ap);
+int re_vsdprintf_s(char **strp, const char *fmt, va_list ap);
 
-int re_hprintf(struct re_printf *pf, const char *fmt, ...);
-int re_fprintf(FILE *stream, const char *fmt, ...);
 #ifdef HAVE_RE_ARG
-#define re_printf(fmt, ...) _re_printf((fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_printf(fmt, ...) _re_printf_s((fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_hprintf(pf, fmt, ...)                                              \
+	_re_hprintf_s((pf), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_fprintf(stream, fmt, ...)                                          \
+	_re_fprintf_s((stream), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_snprintf(str, size, fmt, ...)                                      \
+	_re_snprintf_s((str), (size), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_sdprintf(strp, fmt, ...)                                           \
+	_re_sdprintf_s((strp), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
 #else
 #define re_printf(...) _re_printf(__VA_ARGS__)
+#define re_hprintf(...) _re_hprintf(__VA_ARGS__)
+#define re_fprintf(...) _re_fprintf(__VA_ARGS__)
+#define re_snprintf(...) _re_snprintf(__VA_ARGS__)
+#define re_sdprintf(...) _re_sdprintf(__VA_ARGS__)
 #endif
+
 int _re_printf(const char *fmt, ...);
-int re_snprintf(char *re_restrict str, size_t size,
-		const char *re_restrict fmt, ...);
-int re_sdprintf(char **strp, const char *fmt, ...);
+int _re_hprintf(struct re_printf *pf, const char *fmt, ...);
+int _re_fprintf(FILE *stream, const char *fmt, ...);
+int _re_snprintf(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, ...);
+int _re_sdprintf(char **strp, const char *fmt, ...);
+
+int _re_printf_s(const char *fmt, ...);
+int _re_hprintf_s(struct re_printf *pf, const char *fmt, ...);
+int _re_fprintf_s(FILE *stream, const char *fmt, ...);
+int _re_snprintf_s(char *re_restrict str, size_t size,
+		   const char *re_restrict fmt, ...);
+int _re_sdprintf_s(char **strp, const char *fmt, ...);
 
 
 /* Regular expressions */
@@ -183,17 +204,17 @@ size_t utf8_byteseq(char u[4], unsigned cp);
 
 
 /* RE_VA_ARG - use only within RE_VA_ARG wrapped functions */
-int re_va_arg_int(va_list *ap);
-char *re_va_arg_char_p(va_list *ap);
-const char *re_va_arg_const_char_p(va_list *ap);
-size_t re_va_arg_size_t(va_list *ap);
-ssize_t re_va_arg_ssize_t(va_list *ap);
-signed long long re_va_arg_signed_long_long(va_list *ap);
-signed long re_va_arg_signed_long(va_list *ap);
-signed re_va_arg_signed(va_list *ap);
-unsigned long long re_va_arg_unsigned_long_long(va_list *ap);
-unsigned long re_va_arg_unsigned_long(va_list *ap);
-unsigned re_va_arg_unsigned(va_list *ap);
-double re_va_arg_double(va_list *ap);
-void *re_va_arg_void_p(va_list *ap);
-re_printf_h *re_va_arg_re_printf_h(va_list *ap);
+int re_va_arg_int(va_list *ap, bool type_check);
+char *re_va_arg_char_p(va_list *ap, bool type_check);
+const char *re_va_arg_const_char_p(va_list *ap, bool type_check);
+size_t re_va_arg_size_t(va_list *ap, bool type_check);
+ssize_t re_va_arg_ssize_t(va_list *ap, bool type_check);
+signed long long re_va_arg_signed_long_long(va_list *ap, bool type_check);
+signed long re_va_arg_signed_long(va_list *ap, bool type_check);
+signed re_va_arg_signed(va_list *ap, bool type_check);
+unsigned long long re_va_arg_unsigned_long_long(va_list *ap, bool type_check);
+unsigned long re_va_arg_unsigned_long(va_list *ap, bool type_check);
+unsigned re_va_arg_unsigned(va_list *ap, bool type_check);
+double re_va_arg_double(va_list *ap, bool type_check);
+void *re_va_arg_void_p(va_list *ap, bool type_check);
+re_printf_h *re_va_arg_re_printf_h(va_list *ap, bool type_check);

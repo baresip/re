@@ -311,6 +311,7 @@ typedef int re_sock_t;
 
 #define RE_ARG_SIZE(type)                                                     \
 	_Generic((type), \
+	bool:			sizeof(bool),		\
 	char:			sizeof(char),	        \
 	unsigned char:		sizeof(unsigned char),	\
 	short:			sizeof(short),	        \
