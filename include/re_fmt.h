@@ -108,7 +108,11 @@ int _re_vsdprintf(char **strp, const char *fmt, va_list ap);
 
 int re_hprintf(struct re_printf *pf, const char *fmt, ...);
 int re_fprintf(FILE *stream, const char *fmt, ...);
+#ifdef HAVE_RE_ARG
 #define re_printf(fmt, ...) _re_printf((fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#else
+#define re_printf(...) _re_printf(__VA_ARGS__)
+#endif
 int _re_printf(const char *fmt, ...);
 int re_snprintf(char *re_restrict str, size_t size,
 		const char *re_restrict fmt, ...);

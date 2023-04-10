@@ -11,10 +11,12 @@
 
 int re_va_arg_int(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(int) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, int);
 }
@@ -22,10 +24,12 @@ int re_va_arg_int(va_list ap)
 
 char *re_va_arg_char_p(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(char *) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, char *);
 }
@@ -33,11 +37,13 @@ char *re_va_arg_char_p(va_list ap)
 
 const char *re_va_arg_const_char_p(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(const char *) &&
 	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, const char *);
 }
@@ -45,10 +51,12 @@ const char *re_va_arg_const_char_p(va_list ap)
 
 size_t re_va_arg_size_t(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(size_t) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, size_t);
 }
@@ -56,10 +64,12 @@ size_t re_va_arg_size_t(va_list ap)
 
 ssize_t re_va_arg_ssize_t(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(ssize_t) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, ssize_t);
 }
@@ -67,11 +77,13 @@ ssize_t re_va_arg_ssize_t(va_list ap)
 
 signed long long re_va_arg_signed_long_long(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(signed long long) &&
 	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, signed long long);
 }
@@ -79,11 +91,13 @@ signed long long re_va_arg_signed_long_long(va_list ap)
 
 signed long re_va_arg_signed_long(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(signed long) &&
 	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, signed long);
 }
@@ -91,10 +105,12 @@ signed long re_va_arg_signed_long(va_list ap)
 
 signed re_va_arg_signed(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(signed) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, signed);
 }
@@ -102,11 +118,13 @@ signed re_va_arg_signed(va_list ap)
 
 unsigned long long re_va_arg_unsigned_long_long(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(unsigned long long) &&
 	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, unsigned long long);
 }
@@ -114,11 +132,13 @@ unsigned long long re_va_arg_unsigned_long_long(va_list ap)
 
 unsigned long re_va_arg_unsigned_long(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(unsigned long) &&
 	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, unsigned long);
 }
@@ -126,10 +146,12 @@ unsigned long re_va_arg_unsigned_long(va_list ap)
 
 unsigned re_va_arg_unsigned(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(unsigned) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, unsigned);
 }
@@ -137,10 +159,12 @@ unsigned re_va_arg_unsigned(va_list ap)
 
 double re_va_arg_double(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(double) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, double);
 }
@@ -148,10 +172,12 @@ double re_va_arg_double(va_list ap)
 
 void *re_va_arg_void_p(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
 	assert(sz == sizeof(void *) && "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, void *);
 }
@@ -159,10 +185,13 @@ void *re_va_arg_void_p(va_list ap)
 
 re_printf_h *re_va_arg_re_printf_h(va_list ap)
 {
+#ifdef HAVE_RE_ARG
 	size_t sz = va_arg(ap, size_t);
 
 	assert(sz && "re_va_arg: no more arguments");
-	assert(sz == sizeof(re_printf_h *) && "re_va_arg: arg is not compatible");
+	assert(sz == sizeof(re_printf_h *) &&
+	       "re_va_arg: arg is not compatible");
+#endif
 
 	return va_arg(ap, re_printf_h *);
 }

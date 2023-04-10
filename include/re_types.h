@@ -305,6 +305,10 @@ typedef int re_sock_t;
 
 /* RE_VA_ARG SIZE helpers */
 
+#if __STDC_VERSION__ >= 201112L && !defined(WIN32) /* Needs C11 support */
+
+#define HAVE_RE_ARG 1
+
 #define RE_ARG_SIZE(type)                                                     \
 	_Generic((type), \
 	char:			sizeof(char),	        \
@@ -354,3 +358,4 @@ typedef int re_sock_t;
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
 #define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
 #define RE_VA_ARG(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
+#endif
