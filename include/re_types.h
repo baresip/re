@@ -304,9 +304,9 @@ typedef int re_sock_t;
 
 
 /* RE_VA_ARG SIZE helpers */
-
 #if !defined(DISABLE_RE_ARG) && !defined(RELEASE) &&                          \
-	__STDC_VERSION__ >= 201112L /* Needs C11 support */
+	!defined(__STRICT_ANSI__) && /* Needs ## trailing comma fix */        \
+	__STDC_VERSION__ >= 201112L  /* Needs C11 support */
 
 #define HAVE_RE_ARG 1
 
