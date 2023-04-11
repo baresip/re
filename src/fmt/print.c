@@ -153,10 +153,11 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 	bool uc = false;
 	double dbl;
 	va_list ap;
-	va_copy(ap, apo);
 
 	if (!fmt || !vph)
 		return EINVAL;
+
+	va_copy(ap, apo);
 
 	pf.vph = vph;
 	pf.arg = arg;
@@ -478,6 +479,8 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 
 	if (!fm && p > p0)
 		err |= vph(p0, p - p0, arg);
+
+	va_end(ap);
 
 	return err;
 }
