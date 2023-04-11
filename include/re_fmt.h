@@ -119,10 +119,10 @@ int re_vsdprintf_s(char **strp, const char *fmt, va_list ap);
 	_re_sdprintf_s((strp), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
 #else
 #define re_printf(...) _re_printf(__VA_ARGS__)
-#define re_hprintf(...) _re_hprintf(__VA_ARGS__)
-#define re_fprintf(...) _re_fprintf(__VA_ARGS__)
-#define re_snprintf(...) _re_snprintf(__VA_ARGS__)
-#define re_sdprintf(...) _re_sdprintf(__VA_ARGS__)
+#define re_hprintf _re_hprintf
+#define re_fprintf _re_fprintf
+#define re_snprintf _re_snprintf
+#define re_sdprintf _re_sdprintf
 #endif
 
 int _re_printf(const char *fmt, ...);
