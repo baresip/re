@@ -44,14 +44,19 @@ void sip_contact_set(struct sip_contact *contact, const char *uri,
  */
 int sip_contact_print(struct re_printf *pf, const struct sip_contact *contact)
 {
+	char uri[256];
 	if (!contact)
 		return 0;
 
-	if (contact->uri && strchr(contact->uri, ':'))
-		return re_hprintf(pf, "Contact: <%s>\r\n", contact->uri);
-	else
-		return re_hprintf(pf, "Contact: <sip:%s@%J%s>\r\n",
-				  contact->uri,
-				  contact->addr,
-				  sip_transp_param(contact->tp));
+	if (contact->uri && strchr(contact->uri, ':')) {
+		return re_hprintf(pf, "Contact: <%H>\r\n", uri_escape,
+				  contact->uri);
+	}
+	else {
+		re_snprintf(uri, sizeof(uri), "sip:%s@%J%s",
+			    contact->uri,
+			    contact->addr,
+			    sip_transp_param(contact->tp));
+		return re_hprintf(pf, "Contact: <%H>\r\n", uri_escape, uri);
+	}
 }
