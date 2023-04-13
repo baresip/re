@@ -147,6 +147,18 @@ static bool is_token(char c)
 }
 
 
+static bool is_wsp(char c)
+{
+	return c == ' ' || c == '\t';
+}
+
+
+static bool is_disp_name(char c)
+{
+	return is_token((unsigned char)c) || is_wsp((unsigned char)c);
+}
+
+
 static bool is_paramchar(char c)
 {
 	return is_param_unreserved(c) || is_unreserved(c);
@@ -343,5 +355,5 @@ int uri_header_unescape(struct re_printf *pf, const struct pl *pl)
  */
 int uri_display_name_escape(struct re_printf *pf, const struct pl *pl)
 {
-	return comp_escape(pf, pl, is_token);
+	return comp_escape(pf, pl, is_disp_name);
 }
