@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#include <assert.h>
 #include <string.h>
 #include <re_types.h>
 #include <re_sa.h>
@@ -131,8 +132,8 @@ static size_t local_ftoa(char *buf, double n, size_t dp)
 }
 
 
-static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
-		    bool type_check)
+static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
+		    bool safe)
 {
 	uint8_t base, *bptr;
 	char pch = 0, ch, num[NUM_SIZE], addr[64], msg[256];
@@ -152,12 +153,9 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 	int64_t sn;
 	bool uc = false;
 	double dbl;
-	va_list ap;
 
 	if (!fmt || !vph)
 		return EINVAL;
-
-	va_copy(ap, apo);
 
 	pf.vph = vph;
 	pf.arg = arg;
@@ -204,15 +202,15 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'b':
-			str = re_va_arg_const_char_p(&ap, type_check);
-			len = re_va_arg_size_t(&ap, type_check);
+			RE_VA_ARG(ap, str, const char *, safe);
+			RE_VA_ARG(ap, len, size_t, safe);
 
 			err |= write_padded(str, str ? len : 0, pad, ' ',
 					    plr, NULL, vph, arg);
 			break;
 
 		case 'c':
-			ch = re_va_arg_int(&ap, type_check);
+			RE_VA_ARG(ap, ch, int, safe);
 
 			err |= write_padded(&ch, 1, pad, ' ', plr, NULL,
 					    vph, arg);
@@ -223,21 +221,20 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				sn = re_va_arg_ssize_t(&ap, type_check);
+				RE_VA_ARG(ap, sn, ssize_t, safe);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				sn = re_va_arg_signed_long_long(&ap,
-								type_check);
+				RE_VA_ARG(ap, sn, signed long long, safe);
 				break;
 
 			case LENMOD_LONG:
-				sn = re_va_arg_signed_long(&ap, type_check);
+				RE_VA_ARG(ap, sn, signed long, safe);
 				break;
 
 			case LENMOD_NONE:
-				sn = re_va_arg_signed(&ap, type_check);
+				RE_VA_ARG(ap, sn, signed, safe);
 				break;
 			}
 
@@ -252,7 +249,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 
 		case 'f':
 		case 'F':
-			dbl = re_va_arg_double(&ap, type_check);
+			RE_VA_ARG(ap, dbl, double, safe);
 
 			if (fpad == (size_t)-1) {
 				fpad = pad;
@@ -279,8 +276,8 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'H':
-			ph     = re_va_arg_re_printf_h(&ap, type_check);
-			ph_arg = re_va_arg_void_p(&ap, type_check);
+			RE_VA_ARG(ap, ph, re_printf_h *, safe);
+			RE_VA_ARG(ap, ph_arg, void *, safe);
 
 			if (ph)
 				err |= ph(&pf, ph_arg);
@@ -292,14 +289,14 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'm':
-			str = str_error(re_va_arg_int(&ap, type_check), msg,
-					sizeof(msg));
+			RE_VA_ARG(ap, ch, int, safe);
+			str = str_error(ch, msg, sizeof(msg));
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
 
 		case 'p':
-			ptr = re_va_arg_void_p(&ap, type_check);
+			RE_VA_ARG(ap, ptr, void *, safe);
 
 			if (ptr) {
 				len = local_itoa(num, (size_t)ptr,
@@ -317,8 +314,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'r':
-			pl = (const struct pl *)re_va_arg_void_p(&ap,
-								 type_check);
+			RE_VA_ARG(ap, pl, const struct pl *, safe);
 
 			err |= write_padded(pl ? pl->p : NULL,
 					    (pl && pl->p) ? pl->l : 0,
@@ -326,7 +322,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 's':
-			str = re_va_arg_char_p(&ap, type_check);
+			RE_VA_ARG(ap, str, char *, safe);
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
@@ -341,21 +337,20 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				n = re_va_arg_size_t(&ap, type_check);
+				RE_VA_ARG(ap, n, size_t, safe);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				n = re_va_arg_unsigned_long_long(&ap,
-								 type_check);
+				RE_VA_ARG(ap, n, unsigned long long, safe);
 				break;
 
 			case LENMOD_LONG:
-				n = re_va_arg_unsigned_long(&ap, type_check);
+				RE_VA_ARG(ap, n, unsigned long, safe);
 				break;
 
 			case LENMOD_NONE:
-				n = re_va_arg_unsigned(&ap, type_check);
+				RE_VA_ARG(ap, n, unsigned, safe);
 				break;
 			}
 
@@ -367,8 +362,8 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'v':
-			str = re_va_arg_char_p(&ap, type_check);
-			apl = (va_list *)re_va_arg_void_p(&ap, type_check);
+			RE_VA_ARG(ap, str, char *, safe);
+			RE_VA_ARG(ap, apl, void *, safe);
 
 			if (!str || !apl)
 				break;
@@ -380,8 +375,8 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			uc = true;
 			/*@fallthrough@*/
 		case 'w':
-			bptr = re_va_arg_void_p(&ap, type_check);
-			len = re_va_arg_size_t(&ap, type_check);
+			RE_VA_ARG(ap, bptr, void *, safe);
+			RE_VA_ARG(ap, len, size_t, safe);
 
 			len = bptr ? len : 0;
 			pch = plr ? ' ' : pch;
@@ -407,7 +402,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'j':
-			sa = (struct sa *)re_va_arg_void_p(&ap, type_check);
+			RE_VA_ARG(ap, sa, struct sa *, safe);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
@@ -421,7 +416,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 
 
 		case 'J':
-			sa = (struct sa *)re_va_arg_void_p(&ap, type_check);
+			RE_VA_ARG(ap, sa, struct sa *, safe);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
@@ -480,8 +475,7 @@ static int vhprintf(const char *fmt, va_list apo, re_vprintf_h *vph, void *arg,
 	if (!fm && p > p0)
 		err |= vph(p0, p - p0, arg);
 
-	va_end(ap);
-
+out:
 	return err;
 }
 
@@ -762,7 +756,7 @@ int re_vsnprintf_s(char *re_restrict str, size_t size,
 }
 
 
-static int vsdprintf(char **strp, const char *fmt, va_list ap, bool type_check)
+static int vsdprintf(char **strp, const char *fmt, va_list ap, bool safe)
 {
 	struct dyn_print dp;
 	int err;
@@ -778,7 +772,7 @@ static int vsdprintf(char **strp, const char *fmt, va_list ap, bool type_check)
 	dp.p = dp.str;
 	dp.l = dp.size;
 
-	err = vhprintf(fmt, ap, print_handler_dyn, &dp, type_check);
+	err = vhprintf(fmt, ap, print_handler_dyn, &dp, safe);
 	if (err)
 		goto out;
 

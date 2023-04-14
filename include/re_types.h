@@ -362,3 +362,16 @@ typedef int re_sock_t;
 #define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
 #define RE_VA_ARGS(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
 #endif
+
+#define RE_VA_ARG(ap, val, type, safe)                                        \
+	if ((safe)) {                                                         \
+		size_t sz = va_arg((ap), size_t);                             \
+		assert(sz && "RE_VA_ARG: no more arguments");                 \
+		assert(sz <= sizeof(type) &&                                  \
+		       "RE_VA_ARG: arg is not compatible");                   \
+		if (!sz || sz > sizeof(type)) {                               \
+			err = EINVAL;                                         \
+			goto out;                                             \
+		}                                                             \
+	}                                                                     \
+	(val) = va_arg((ap), type)

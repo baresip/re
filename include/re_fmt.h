@@ -202,19 +202,3 @@ int utf8_encode(struct re_printf *pf, const char *str);
 int utf8_decode(struct re_printf *pf, const struct pl *pl);
 size_t utf8_byteseq(char u[4], unsigned cp);
 
-
-/* RE_VA_ARG - use only within RE_VA_ARG wrapped functions */
-int re_va_arg_int(va_list *ap, bool type_check);
-char *re_va_arg_char_p(va_list *ap, bool type_check);
-const char *re_va_arg_const_char_p(va_list *ap, bool type_check);
-size_t re_va_arg_size_t(va_list *ap, bool type_check);
-ssize_t re_va_arg_ssize_t(va_list *ap, bool type_check);
-signed long long re_va_arg_signed_long_long(va_list *ap, bool type_check);
-signed long re_va_arg_signed_long(va_list *ap, bool type_check);
-signed re_va_arg_signed(va_list *ap, bool type_check);
-unsigned long long re_va_arg_unsigned_long_long(va_list *ap, bool type_check);
-unsigned long re_va_arg_unsigned_long(va_list *ap, bool type_check);
-unsigned re_va_arg_unsigned(va_list *ap, bool type_check);
-double re_va_arg_double(va_list *ap, bool type_check);
-void *re_va_arg_void_p(va_list *ap, bool type_check);
-re_printf_h *re_va_arg_re_printf_h(va_list *ap, bool type_check);
