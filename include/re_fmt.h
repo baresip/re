@@ -108,15 +108,15 @@ int re_vsnprintf_s(char *re_restrict str, size_t size,
 int re_vsdprintf_s(char **strp, const char *fmt, va_list ap);
 
 #ifdef HAVE_RE_ARG
-#define re_printf(fmt, ...) _re_printf_s((fmt), RE_VA_ARG(__VA_ARGS__) 0)
+#define re_printf(fmt, ...) _re_printf_s((fmt), RE_VA_ARGS(__VA_ARGS__))
 #define re_hprintf(pf, fmt, ...)                                              \
-	_re_hprintf_s((pf), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+	_re_hprintf_s((pf), (fmt), RE_VA_ARGS(__VA_ARGS__))
 #define re_fprintf(stream, fmt, ...)                                          \
-	_re_fprintf_s((stream), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+	_re_fprintf_s((stream), (fmt), RE_VA_ARGS(__VA_ARGS__))
 #define re_snprintf(str, size, fmt, ...)                                      \
-	_re_snprintf_s((str), (size), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+	_re_snprintf_s((str), (size), (fmt), RE_VA_ARGS(__VA_ARGS__))
 #define re_sdprintf(strp, fmt, ...)                                           \
-	_re_sdprintf_s((strp), (fmt), RE_VA_ARG(__VA_ARGS__) 0)
+	_re_sdprintf_s((strp), (fmt), RE_VA_ARGS(__VA_ARGS__))
 #else
 #define re_printf(...) _re_printf(__VA_ARGS__)
 #define re_hprintf _re_hprintf

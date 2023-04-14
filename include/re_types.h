@@ -305,8 +305,9 @@ typedef int re_sock_t;
 
 /* RE_VA_ARG SIZE helpers */
 #if !defined(DISABLE_RE_ARG) && !defined(RELEASE) &&                          \
-	!defined(__STRICT_ANSI__) && /* Needs ## trailing comma fix */        \
-	__STDC_VERSION__ >= 201112L  /* Needs C11 support */
+	!defined(__STRICT_ANSI__) && /* Needs ## trailing comma fix, with C23 \
+					we can use __VA_OPT__ */              \
+	__STDC_VERSION__ >= 201112L  /* Needs C11 support required */
 
 #define HAVE_RE_ARG 1
 
@@ -332,8 +333,8 @@ typedef int re_sock_t;
 	default: sizeof(void*) \
 )
 
-#define RE_ARG_0()
-#define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr),
+#define RE_ARG_0() 0
+#define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr), 0
 #define RE_ARG_2(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_1(__VA_ARGS__)
 #define RE_ARG_3(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_2(__VA_ARGS__)
 #define RE_ARG_4(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_3(__VA_ARGS__)
@@ -359,5 +360,5 @@ typedef int re_sock_t;
 
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
 #define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
-#define RE_VA_ARG(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
+#define RE_VA_ARGS(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
 #endif
