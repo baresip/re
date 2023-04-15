@@ -304,33 +304,33 @@ typedef int re_sock_t;
 
 
 /* RE_VA_ARG SIZE helpers */
-#if !defined(DISABLE_RE_ARG) && !defined(RELEASE) &&                          \
+#if !defined(DISABLE_RE_ARG) &&                                               \
 	!defined(__STRICT_ANSI__) && /* Needs ## trailing comma fix, with C23 \
 					we can use __VA_OPT__ */              \
-	__STDC_VERSION__ >= 201112L  /* Needs C11 support required */
+	__STDC_VERSION__ >= 201112L  /* _Generic C11 support required */
 
 #define HAVE_RE_ARG 1
 
 #define RE_ARG_SIZE(type)                                                     \
-	_Generic((type), \
-	bool:			sizeof(bool),		\
-	char:			sizeof(char),	        \
-	unsigned char:		sizeof(unsigned char),	\
-	short:			sizeof(short),	        \
-	unsigned short:		sizeof(unsigned short),	\
-	int:			sizeof(int),		\
-	unsigned int:		sizeof(unsigned int),	\
-	long:			sizeof(long),	        \
-	unsigned long:		sizeof(unsigned long),	\
-	long long:		sizeof(long long),	\
-	unsigned long long:	sizeof(unsigned long long),	\
-	float:			sizeof(float),	        \
-	double:			sizeof(double),	        \
-	char const*:		sizeof(char const *),	\
-	char*:			sizeof(char *),	\
-	void const*:		sizeof(void const *),	\
-	void*:			sizeof(void *),	\
-	default: sizeof(void*) \
+	_Generic((type),                                                      \
+	bool:			sizeof(bool),                                 \
+	char:			sizeof(char),                                 \
+	unsigned char:		sizeof(unsigned char),                        \
+	short:			sizeof(short),                                \
+	unsigned short:		sizeof(unsigned short),	                      \
+	int:			sizeof(int),                                  \
+	unsigned int:		sizeof(unsigned int),                         \
+	long:			sizeof(long),                                 \
+	unsigned long:		sizeof(unsigned long),                        \
+	long long:		sizeof(long long),                            \
+	unsigned long long:	sizeof(unsigned long long),                   \
+	float:			sizeof(float),                                \
+	double:			sizeof(double),                               \
+	char const*:		sizeof(char const *),                         \
+	char*:			sizeof(char *),                               \
+	void const*:		sizeof(void const *),                         \
+	void*:			sizeof(void *),                               \
+	default: sizeof(void*)                                                \
 )
 
 #define RE_ARG_0() 0
