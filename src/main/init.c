@@ -3,13 +3,31 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#include <stdlib.h>
+#ifdef HAVE_SIGNAL
+#include <signal.h>
+#endif
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_list.h>
 #include <re_net.h>
 #include <re_sys.h>
 #include <re_main.h>
+#include <re_btrace.h>
 #include "main.h"
+
+
+#ifdef HAVE_SIGNAL
+static void signal_handler(int sig)
+{
+	struct btrace bt;
+
+	btrace(&bt);
+	re_fprintf(stderr, "Signal (%d) %H\n", sig, btrace_println, &bt);
+
+	exit(128 + sig);
+}
+#endif
 
 
 /**
@@ -20,6 +38,12 @@
 int libre_init(void)
 {
 	int err;
+
+#ifdef HAVE_SIGNAL
+	(void)signal(SIGSEGV, signal_handler);
+	(void)signal(SIGABRT, signal_handler);
+	(void)signal(SIGILL, signal_handler);
+#endif
 
 #ifdef USE_OPENSSL
 	err = openssl_init();
