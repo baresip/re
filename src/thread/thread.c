@@ -71,12 +71,6 @@ static int handler(void *p)
 
 #ifdef HAVE_PRCTL
 	(void)prctl(PR_SET_NAME, th.name);
-#elif defined(WIN32)
-	wchar_t *name = str_wchar(th.name);
-	if (name) {
-		(void)SetThreadDescription(GetCurrentThread(), name);
-		mem_deref(name);
-	}
 #elif defined(DARWIN)
 	(void)pthread_setname_np(th.name);
 #elif defined(HAVE_PTHREAD)
