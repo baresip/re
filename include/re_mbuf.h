@@ -74,7 +74,17 @@ uint64_t mbuf_read_u64(struct mbuf *mb);
 int      mbuf_read_str(struct mbuf *mb, char *str, size_t size);
 int      mbuf_strdup(struct mbuf *mb, char **strp, size_t len);
 int      mbuf_vprintf(struct mbuf *mb, const char *fmt, va_list ap);
-int      mbuf_printf(struct mbuf *mb, const char *fmt, ...);
+
+#ifdef HAVE_RE_ARG
+#define mbuf_printf(mb, fmt, ...)                                             \
+	_mbuf_printf_s((mb), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#else
+#define mbuf_printf _mbuf_printf
+#endif
+
+int      _mbuf_printf(struct mbuf *mb, const char *fmt, ...);
+int      _mbuf_printf_s(struct mbuf *mb, const char *fmt, ...);
+
 int      mbuf_write_pl_skip(struct mbuf *mb, const struct pl *pl,
 			    const struct pl *skip);
 int      mbuf_fill(struct mbuf *mb, uint8_t c, size_t n);

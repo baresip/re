@@ -531,13 +531,34 @@ int mbuf_vprintf(struct mbuf *mb, const char *fmt, va_list ap)
  *
  * @return 0 if success, otherwise errorcode
  */
-int mbuf_printf(struct mbuf *mb, const char *fmt, ...)
+int _mbuf_printf(struct mbuf *mb, const char *fmt, ...)
 {
 	int err = 0;
 	va_list ap;
 
 	va_start(ap, fmt);
 	err = re_vhprintf(fmt, ap, vprintf_handler, mb);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
+ * Print a safe formatted string to a memory buffer
+ *
+ * @param mb  Memory buffer
+ * @param fmt Formatted string
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int _mbuf_printf_s(struct mbuf *mb, const char *fmt, ...)
+{
+	int err = 0;
+	va_list ap;
+
+	va_start(ap, fmt);
+	err = re_vhprintf_s(fmt, ap, vprintf_handler, mb);
 	va_end(ap);
 
 	return err;
