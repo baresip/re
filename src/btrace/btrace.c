@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_mem.h>
 #include <re_btrace.h>
 
 enum print_type { BTRACE_CSV, BTRACE_NEWLINE, BTRACE_JSON };
@@ -28,8 +29,9 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 #elif defined(WIN32)
 	SYMBOL_INFO *symbol;
 	IMAGEHLP_LINE line;
-	DWORD displacement = 0;
+	DWORD64 displacement = 0;
 	HANDLE hProcess = GetCurrentProcess();
+	(void)type;
 
 	/* Initialize the symbol buffer. */
 	symbol = mem_zalloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), NULL);
@@ -48,7 +50,7 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	for (size_t i = 0; i < bt->len; i++) {
 		SymFromAddr(hProcess, (DWORD64)(bt->stack[i]), &displacement,
 			    symbol);
-		SymGetLineFromAddr(hProcess, (DWORD64)(callstack[i]),
+		SymGetLineFromAddr(hProcess, (DWORD64)(bt->stack[i]),
 				   &displacement, &line);
 		re_hprintf(pf, "%zu: %s (%s:%lu)\n", i, symbol->Name,
 			   line.FileName, line.LineNumber);
