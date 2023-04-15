@@ -1,6 +1,9 @@
 /**
  * @file btrace.c Backtrace API (Linux/Unix only)
  */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -23,6 +26,14 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	if (!pf || !bt)
 		return EINVAL;
 
+#ifdef LINUX
+	char exe[256] = {0};
+
+	if (readlink("/proc/self/exe", exe, sizeof(exe) - 1) < 0)
+		return EINVAL;
+
+#endif
+
 	if (!bt->len)
 		return 0;
 
@@ -44,7 +55,18 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 		break;
 	case BTRACE_NEWLINE:
 		for (size_t j = 0; j < bt->len; j++) {
-			re_hprintf(pf, "%s \n", symbols[j]);
+			re_hprintf(pf, "%s\n", symbols[j]);
+#ifdef LINUX
+			struct pl addr	    = PL_INIT;
+			char addr2line[512] = {0};
+
+			re_regex(symbols[j], str_len(symbols[j]), "([^)]+",
+				 &addr);
+
+			re_snprintf(addr2line, sizeof(addr2line),
+				    "addr2line -p -f -e %s %r", exe, &addr);
+			system(addr2line);
+#endif
 		}
 		break;
 	case BTRACE_JSON:
