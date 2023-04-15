@@ -632,6 +632,7 @@ if(WIN32)
     iphlpapi
     wsock32
     ws2_32
+    dbghelp
   )
 else()
   list(APPEND LINKLIBS -lm)
