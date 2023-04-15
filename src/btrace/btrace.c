@@ -28,6 +28,7 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	return 0;
 #elif defined(WIN32)
 	SYMBOL_INFO *symbol;
+	DWORD displacement = 0;
 	IMAGEHLP_LINE line;
 	HANDLE hProcess = GetCurrentProcess();
 	(void)type;
@@ -48,8 +49,8 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 
 	for (size_t i = 0; i < bt->len; i++) {
 		SymFromAddr(hProcess, (DWORD64)(bt->stack[i]), NULL, symbol);
-		SymGetLineFromAddr(hProcess, (DWORD64)(bt->stack[i]), NULL,
-				   &line);
+		SymGetLineFromAddr(hProcess, (DWORD64)(bt->stack[i]),
+				   &displacement, &line);
 		re_hprintf(pf, "%zu: %s (%s:%lu)\n", i, symbol->Name,
 			   line.FileName, line.LineNumber);
 	}
