@@ -1,6 +1,14 @@
 /**
- * @file btrace.c Backtrace API (Linux/Unix only)
+ * @file btrace.c Backtrace API
+ *
+ * Copyright (C) 2023 Sebastian Reimers
  */
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <dbghelp.h>
+#endif
 #include <stdlib.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -11,10 +19,43 @@ enum print_type { BTRACE_CSV, BTRACE_NEWLINE, BTRACE_JSON };
 static int print_debug(struct re_printf *pf, struct btrace *bt,
 		       enum print_type type)
 {
-#if !defined(HAVE_EXECINFO) || defined(RELEASE)
+#if (!defined(HAVE_EXECINFO) && !defined(WIN32)) || defined(RELEASE)
 	(void)pf;
 	(void)bt;
 	(void)type;
+
+	return 0;
+#elif defined(WIN32)
+	SYMBOL_INFO *symbol;
+	IMAGEHLP_LINE line;
+	DWORD displacement = 0;
+	HANDLE hProcess = GetCurrentProcess();
+
+	/* Initialize the symbol buffer. */
+	symbol = mem_zalloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), NULL);
+	if (!symbol)
+		return ENOMEM;
+
+	SymInitialize(hProcess, NULL, TRUE);
+
+	symbol->MaxNameLen   = 255;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+	/* Initialize the line buffer. */
+	ZeroMemory(&line, sizeof(line));
+	line.SizeOfStruct = sizeof(line);
+
+	for (size_t i = 0; i < bt->len; i++) {
+		SymFromAddr(hProcess, (DWORD64)(bt->stack[i]), &displacement,
+			    symbol);
+		SymGetLineFromAddr(hProcess, (DWORD64)(callstack[i]),
+				   &displacement, &line);
+		re_hprintf(pf, "%zu: %s (%s:%lu)\n", i, symbol->Name,
+			   line.FileName, line.LineNumber);
+	}
+
+	mem_deref(symbol);
+	SymCleanup(hProcess);
 
 	return 0;
 #else
