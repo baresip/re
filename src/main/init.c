@@ -147,13 +147,13 @@ int libre_init(void)
 
 	if (signal_btrace) {
 #ifdef HAVE_SIGNAL
-	(void)signal(SIGSEGV, signal_handler);
-	(void)signal(SIGABRT, signal_handler);
-	(void)signal(SIGILL, signal_handler);
+		(void)signal(SIGSEGV, signal_handler);
+		(void)signal(SIGABRT, signal_handler);
+		(void)signal(SIGILL, signal_handler);
 #endif
 
 #ifdef WIN32
-	SetUnhandledExceptionFilter(exception_handler);
+		SetUnhandledExceptionFilter(exception_handler);
 #endif
 	}
 
