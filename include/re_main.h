@@ -42,6 +42,7 @@ void  fd_debug(void);
 
 int   libre_init(void);
 void  libre_close(void);
+void  libre_signal_btrace(bool enable);
 
 int   re_main(re_signal_h *signalh);
 void  re_cancel(void);

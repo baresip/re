@@ -188,7 +188,10 @@ int main(int argc, char *argv[])
 
 	dbg_init(DBG_INFO, flags);
 
+
 	/* Initialise library */
+	libre_signal_btrace(true);
+
 	err = libre_init();
 	if (err)
 		goto out;

@@ -4,7 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <stdlib.h>
-#if defined(HAVE_SIGNAL) && defined(SIGNAL_BTRACE)
+#ifdef HAVE_SIGNAL
 #include <signal.h>
 #endif
 #ifdef WIN32
@@ -23,10 +23,16 @@
 #include "main.h"
 
 
-#if defined(HAVE_SIGNAL) && defined(SIGNAL_BTRACE)
+static bool signal_btrace = false;
+
+
+#ifdef HAVE_SIGNAL
 static void signal_handler(int sig)
 {
 	struct btrace bt;
+
+	if (!signal_btrace)
+		return;
 
 	btrace(&bt);
 	re_fprintf(stderr, "Error: Signal (%d) %H\n", sig, btrace_println,
@@ -38,10 +44,13 @@ static void signal_handler(int sig)
 #endif
 
 
-#if defined(WIN32) && defined(SIGNAL_BTRACE)
+#ifdef WIN32
 LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	struct btrace bt;
+
+	if (!signal_btrace)
+		return EXCEPTION_CONTINUE_SEARCH;
 
 	if (EXCEPTION_STACK_OVERFLOW !=
 	    ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -136,15 +145,17 @@ int libre_init(void)
 {
 	int err;
 
-#if defined(HAVE_SIGNAL) && defined(SIGNAL_BTRACE)
+	if (signal_btrace) {
+#ifdef HAVE_SIGNAL
 	(void)signal(SIGSEGV, signal_handler);
 	(void)signal(SIGABRT, signal_handler);
 	(void)signal(SIGILL, signal_handler);
 #endif
 
-#if defined(WIN32) && defined(SIGNAL_BTRACE)
+#ifdef WIN32
 	SetUnhandledExceptionFilter(exception_handler);
 #endif
+	}
 
 #ifdef USE_OPENSSL
 	err = openssl_init();
@@ -172,4 +183,13 @@ void libre_close(void)
 	(void)fd_setsize(0);
 	net_sock_close();
 	re_thread_close();
+}
+
+
+/**
+ * Enable/Disable SIGSEGV, SIGABRT, SIGILL and exception handling
+ */
+void libre_signal_btrace(bool enable)
+{
+	signal_btrace = enable;
 }
