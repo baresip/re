@@ -23,7 +23,7 @@
 #include "main.h"
 
 
-static bool signal_btrace = false;
+static bool exception_btrace = false;
 
 
 #ifdef HAVE_SIGNAL
@@ -31,7 +31,7 @@ static void signal_handler(int sig)
 {
 	struct btrace bt;
 
-	if (!signal_btrace)
+	if (!exception_btrace)
 		return;
 
 	btrace(&bt);
@@ -49,7 +49,7 @@ LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	struct btrace bt;
 
-	if (!signal_btrace)
+	if (!exception_btrace)
 		return EXCEPTION_CONTINUE_SEARCH;
 
 	if (EXCEPTION_STACK_OVERFLOW !=
@@ -145,17 +145,17 @@ int libre_init(void)
 {
 	int err;
 
-	if (signal_btrace) {
-#ifdef HAVE_SIGNAL
+#if defined(HAVE_SIGNAL)
+	if (exception_btrace) {
 		(void)signal(SIGSEGV, signal_handler);
 		(void)signal(SIGABRT, signal_handler);
 		(void)signal(SIGILL, signal_handler);
-#endif
-
-#ifdef WIN32
-		SetUnhandledExceptionFilter(exception_handler);
-#endif
 	}
+#elif defined(WIN32)
+	if (exception_btrace) {
+		SetUnhandledExceptionFilter(exception_handler);
+	}
+#endif
 
 #ifdef USE_OPENSSL
 	err = openssl_init();
@@ -187,9 +187,9 @@ void libre_close(void)
 
 
 /**
- * Enable/Disable SIGSEGV, SIGABRT, SIGILL and exception handling
+ * Enable/Disable exception signal handling (SIGSEGV, SIGABRT, SIGILL...)
  */
-void libre_signal_btrace(bool enable)
+void libre_exception_btrace(bool enable)
 {
-	signal_btrace = enable;
+	exception_btrace = enable;
 }

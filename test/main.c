@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 
 
 	/* Initialise library */
-	libre_signal_btrace(true);
+	libre_exception_btrace(true);
 
 	err = libre_init();
 	if (err)
