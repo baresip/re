@@ -46,3 +46,4 @@ int uri_header_unescape(struct re_printf *pf, const struct pl *pl);
 int uri_display_name_escape(struct re_printf *pf, const struct pl *pl);
 int uri_escape(struct re_printf *pf, const char *uri);
 int uri_escape_pl(struct re_printf *pf, const struct pl *pl);
+int uri_unescape_pl(struct re_printf *pf, const struct pl *pl);
