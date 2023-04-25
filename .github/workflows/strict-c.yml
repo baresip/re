@@ -1,4 +1,4 @@
-name: C99 check
+name: Strict C checks
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
     - main
 
 jobs:
-  c99:
+  strict-c:
     runs-on: ubuntu-latest
 
     env:
@@ -27,6 +27,14 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y ninja-build
 
-    - name: make
+    - name: make strict C99
       run: | 
-        cmake -DCMAKE_C_STANDARD=99 -DCMAKE_C_FLAGS="-Werror" -B build && cmake --build build
+        cmake -DCMAKE_C_STANDARD=99 -DCMAKE_C_EXTENSIONS=OFF  -DCMAKE_C_FLAGS="-Werror" -B build 
+        cmake --build build
+        rm -Rf build
+
+    - name: make strict C11
+      run: | 
+        cmake -DCMAKE_C_STANDARD=11 -DCMAKE_C_EXTENSIONS=OFF -DCMAKE_C_FLAGS="-Werror" -B build
+        cmake --build build
+        rm -Rf build

@@ -382,7 +382,8 @@ void tmr_init(struct tmr *tmr)
 }
 
 
-void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
+static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
+                   tmr_h *th, void *arg,
 		   const char *file, int line)
 {
 	struct tmrl *tmrl = re_tmrl_get();
@@ -420,7 +421,9 @@ void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 		return;
 	}
 
-	tmr->jfs = delay + tmr_jiffies();
+	if (syncnow)
+		tmr->jfs = tmr_jiffies();
+	tmr->jfs += delay;
 
 	if (delay == 0) {
 		le = list_apply(&tmrl->list, true, inspos_handler_0,
@@ -443,6 +446,20 @@ void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
 	}
 
 	mtx_unlock(lock);
+}
+
+
+void tmr_start_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
+		   const char *file, int line)
+{
+	tmr_startcont_dbg(tmr, delay, true, th, arg, file, line);
+}
+
+
+void tmr_continue_dbg(struct tmr *tmr, uint64_t delay, tmr_h *th, void *arg,
+		   const char *file, int line)
+{
+	tmr_startcont_dbg(tmr, delay, false, th, arg, file, line);
 }
 
 
