@@ -24,6 +24,18 @@ static inline int btrace(struct btrace *bt)
 
 	return 0;
 }
+#elif defined(WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+static inline int btrace(struct btrace *bt)
+{
+	if (!bt)
+		return EINVAL;
+
+	bt->len = CaptureStackBackTrace(0, BTRACE_SZ, bt->stack, NULL);
+
+	return 0;
+}
 #else
 static inline int btrace(struct btrace *bt)
 {
