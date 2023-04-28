@@ -14,6 +14,9 @@
 #endif
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
+#ifdef OPENBSD
+#include <pthread_np.h>
+#endif
 #endif
 
 
@@ -74,7 +77,11 @@ static int handler(void *p)
 #elif defined(DARWIN)
 	(void)pthread_setname_np(th.name);
 #elif defined(HAVE_PTHREAD)
+#if defined(OPENBSD)
+	(void)pthread_set_name_np(*th.thr, th.name);
+#else
 	(void)pthread_setname_np(*th.thr, th.name);
+#endif
 #endif
 
 	return th.func(th.arg);
