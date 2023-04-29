@@ -51,7 +51,11 @@ option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+if(WIN32)
+  option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+else()
+  option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
