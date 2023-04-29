@@ -534,7 +534,7 @@ int fd_listen(re_sock_t fd, int flags, fd_h *fh, void *arg)
 	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
 #ifndef RELEASE
-	err = re_thread_check();
+	err = re_thread_check(true);
 	if (err)
 		return err;
 #endif
@@ -1306,7 +1306,7 @@ void re_set_mutex(void *mutexp)
  *
  * @return 0 if success, otherwise EPERM
  */
-int re_thread_check(void)
+int re_thread_check(bool debug)
 {
 	struct re *re = re_get();
 
@@ -1319,14 +1319,17 @@ int re_thread_check(void)
 	if (thrd_equal(re->tid, thrd_current()))
 		return 0;
 
-	DEBUG_WARNING("thread check: called from a NON-RE thread without "
-		      "thread_enter()!\n");
+	if (debug) {
+		DEBUG_WARNING(
+			"thread check: called from a NON-RE thread without "
+			"thread_enter()!\n");
 
 #if DEBUG_LEVEL > 5
-	struct btrace trace;
-	btrace(&trace);
-	DEBUG_INFO("%H", btrace_println, &trace);
+		struct btrace trace;
+		btrace(&trace);
+		DEBUG_INFO("%H", btrace_println, &trace);
 #endif
+	}
 
 	return EPERM;
 }
