@@ -64,7 +64,7 @@ static void completed(int err, void *arg)
 	if (err)
 		goto out;
 
-	err = re_thread_check();
+	err = re_thread_check(false);
 	TEST_ERR(err);
 
 	sa_set_str(&sa, "127.0.0.1", 0);
