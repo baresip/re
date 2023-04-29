@@ -57,7 +57,7 @@ int  re_thread_init(void);
 void re_thread_close(void);
 void re_thread_enter(void);
 void re_thread_leave(void);
-int  re_thread_check(void);
+int  re_thread_check(bool debug);
 int  re_thread_async_init(uint16_t workers);
 void re_thread_async_close(void);
 int  re_thread_async(re_async_work_h *work, re_async_h *cb, void *arg);
