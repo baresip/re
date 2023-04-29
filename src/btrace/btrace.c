@@ -4,6 +4,9 @@
  * Copyright (C) 2023 Sebastian Reimers
  */
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -14,6 +17,10 @@
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_btrace.h>
+
+#define DEBUG_MODULE "btrace"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 enum print_type { BTRACE_CSV, BTRACE_NEWLINE, BTRACE_JSON };
 
@@ -65,6 +72,15 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	if (!pf || !bt)
 		return EINVAL;
 
+#ifdef LINUX
+	char exe[256] = {0};
+
+	if (readlink("/proc/self/exe", exe, sizeof(exe) - 1) < 0) {
+		DEBUG_WARNING("readlink /proc/self/exe error %m\n", errno);
+		return errno;
+	}
+#endif
+
 	if (!bt->len)
 		return 0;
 
@@ -86,7 +102,29 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 		break;
 	case BTRACE_NEWLINE:
 		for (size_t j = 0; j < bt->len; j++) {
-			re_hprintf(pf, "%s \n", symbols[j]);
+			re_hprintf(pf, "%s\n", symbols[j]);
+#ifdef LINUX
+			struct pl addr	     = PL_INIT;
+			char addr2l[512]     = {0};
+			char addr2l_out[256] = {0};
+			FILE *pipe;
+
+			re_regex(symbols[j], str_len(symbols[j]), "([^)]+",
+				 &addr);
+
+			re_snprintf(addr2l, sizeof(addr2l),
+				    "addr2line -p -f -e %s %r", exe, &addr);
+
+			pipe = popen(addr2l, "r");
+			if (!pipe)
+				continue;
+
+			while (fgets(addr2l_out, sizeof(addr2l_out), pipe)) {
+				re_hprintf(pf, "\t%s", addr2l_out);
+			}
+
+			pclose(pipe);
+#endif
 		}
 		break;
 	case BTRACE_JSON:
