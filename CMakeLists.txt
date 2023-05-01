@@ -673,7 +673,7 @@ target_include_directories(re-objs PRIVATE include
 #
 
 if(LIBRE_BUILD_SHARED)
-  list(APPEND RE_TARGETS re-shared)
+  list(APPEND RE_INSTALL_TARGETS re-shared)
   add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re-shared PRIVATE ${LINKLIBS})
   set_target_properties(re-shared PROPERTIES VERSION
@@ -689,7 +689,7 @@ endif()
 #
 
 if(LIBRE_BUILD_STATIC)
-  list(APPEND RE_TARGETS re)
+  list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
   target_include_directories(re PUBLIC include)
@@ -718,7 +718,7 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 #
 
 
-install(TARGETS ${RE_TARGETS}
+install(TARGETS ${RE_INSTALL_TARGETS}
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Libraries
