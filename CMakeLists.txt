@@ -656,8 +656,6 @@ endif()
 # Main target object
 #
 
-#set(RE_TARGETS "")
-
 add_library(re-objs OBJECT ${SRCS} ${HEADERS})
 
 set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
