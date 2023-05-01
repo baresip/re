@@ -51,6 +51,8 @@ option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
+option(LIBRE_BUILD_SHARED "Build shared library" ON)
+option(LIBRE_BUILD_STATIC "Build static library" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -654,6 +656,8 @@ endif()
 # Main target object
 #
 
+#set(RE_TARGETS "")
+
 add_library(re-objs OBJECT ${SRCS} ${HEADERS})
 
 set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -670,12 +674,15 @@ target_include_directories(re-objs PRIVATE include
 # Shared target libre.[so|dll|dylib]
 #
 
-add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
-target_link_libraries(re-shared PRIVATE ${LINKLIBS})
-set_target_properties(re-shared PROPERTIES VERSION
-  ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
-set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
+if(LIBRE_BUILD_SHARED)
+  list(APPEND RE_TARGETS re-shared)
+  add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
+  target_link_libraries(re-shared PRIVATE ${LINKLIBS})
+  set_target_properties(re-shared PROPERTIES VERSION
+    ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
+  set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
+  set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
+endif()
 
 
 ##############################################################################
@@ -683,15 +690,17 @@ set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
 # Static target libre.a
 #
 
-add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
-target_link_libraries(re PUBLIC ${LINKLIBS})
-target_include_directories(re PUBLIC include)
-set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
+if(LIBRE_BUILD_STATIC)
+  list(APPEND RE_TARGETS re)
+  add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
+  target_link_libraries(re PUBLIC ${LINKLIBS})
+  target_include_directories(re PUBLIC include)
+  set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
-if(MSVC)
-set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
+  if(MSVC)
+    set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
+  endif()
 endif()
-
 
 ##############################################################################
 #
@@ -710,7 +719,8 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 # Install section
 #
 
-install(TARGETS re-shared re
+
+install(TARGETS ${RE_TARGETS}
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Libraries
@@ -723,12 +733,14 @@ install(TARGETS re-shared re
     COMPONENT Development
 )
 
-install(TARGETS re-shared
-  LIBRARY
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    NAMELINK_ONLY
-    COMPONENT Development
-)
+if(LIBRE_BUILD_SHARED)
+  install(TARGETS re-shared
+    LIBRARY
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      NAMELINK_ONLY
+      COMPONENT Development
+  )
+endif()
 
 install(FILES cmake/re-config.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
