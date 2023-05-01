@@ -1215,12 +1215,13 @@ void re_thread_enter(void)
 		return;
 	}
 
-	re_lock(re);
+	/* check if already on re thread */
+	if (re_atomic_rlx(&re->thread_enter) ||
+	    thrd_equal(re->tid, thrd_current()))
+		return;
 
-	/* set only for non-re threads */
-	if (!thrd_equal(re->tid, thrd_current())) {
-		re_atomic_rlx_set(&re->thread_enter, true);
-	}
+	re_lock(re);
+	re_atomic_rlx_set(&re->thread_enter, true);
 }
 
 
@@ -1235,11 +1236,18 @@ void re_thread_leave(void)
 		DEBUG_WARNING("re_thread_leave: re not ready\n");
 		return;
 	}
-	/* Dummy async event, to ensure timers are properly handled */
-	if (re->async)
-		re_thread_async(NULL, NULL, NULL);
-	re_atomic_rlx_set(&re->thread_enter, false);
-	re_unlock(re);
+
+	/* leave if on re thread */
+	if (re_atomic_rlx(&re->thread_enter) ||
+	    thrd_equal(re->tid, thrd_current())) {
+
+		/* Dummy async event, to ensure timers are properly handled */
+		if (re->async)
+			re_thread_async(NULL, NULL, NULL);
+
+		re_atomic_rlx_set(&re->thread_enter, false);
+		re_unlock(re);
+	}
 }
 
 
