@@ -5,6 +5,33 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.1.0] - 2023-04-27
+
+## What's Changed
+* ci: bump mingw openssl to 3.1.0 by @alfredh in https://github.com/baresip/re/pull/738
+* thread: add cnd_timedwait() by @sreimers in https://github.com/baresip/re/pull/736
+* Add tls and http apis for post handshake by @fAuernigg in https://github.com/baresip/re/pull/713
+* ci/sanitizers: add multi thread testing by @sreimers in https://github.com/baresip/re/pull/741
+* ci/win: use separate retest step by @sreimers in https://github.com/baresip/re/pull/742
+* thread: fix pthread_setname_np thread pointer deref by @sreimers in https://github.com/baresip/re/pull/744
+* ci: add FreeBSD test by @sreimers in https://github.com/baresip/re/pull/745
+* cmake: bump minimum version of OpenSSL to 1.1.1 by @alfredh in https://github.com/baresip/re/pull/746
+* ci: avoid hardcoded OpenSSL path on macOS by @robert-scheck in https://github.com/baresip/re/pull/747
+* sip,uri,test: Escape SIP URIs by @maximilianfridrich in https://github.com/baresip/re/pull/740
+* udp: add a lock for the helpers list by @cspiel1 in https://github.com/baresip/re/pull/732
+* rem/vidmix: add position index handling by @sreimers in https://github.com/baresip/re/pull/749
+* aubuf: set auframe fields correct in read_auframe loop by @cspiel1 in https://github.com/baresip/re/pull/750
+* list: refactor/optimize list_insert_sorted by @sreimers in https://github.com/baresip/re/pull/748
+* ci/freebsd: remove openssl-devel by @sreimers in https://github.com/baresip/re/pull/755
+* tmr: add tmr_continue() by @vanrein in https://github.com/baresip/re/pull/754
+* ci,cmake: replace C99 check by strict C99 and C11 checks by @sreimers in https://github.com/baresip/re/pull/759
+* atomic: Fix missing memory order arguments in MSVC atomic functions by @Lastique in https://github.com/baresip/re/pull/766
+* thread: remove win32 SetThreadDescription  by @sreimers in https://github.com/baresip/re/pull/768
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.0.0...v3.1.0
+
+---
+
 ## [v3.0.0] - 2023-03-20
 
 ## What's Changed
