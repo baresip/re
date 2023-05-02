@@ -141,7 +141,7 @@ int re_alloc(struct re **rep)
 	if (!re)
 		return ENOMEM;
 
-	err = mutex_alloc(&re->mutex);
+	err = mutex_alloc_tp(&re->mutex, mtx_recursive);
 	if (err) {
 		DEBUG_WARNING("thread_init: mtx_init error\n");
 		goto out;
