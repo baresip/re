@@ -21,21 +21,40 @@ jobs:
             os: windows-2022,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja",
-            build: "Debug"
+            build: "Debug",
+            testing: true
+          }
+        - {
+            name: "Windows (VS 2022/Ninja) Debug 32-bit",
+            os: windows-2022,
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_x86.bat",
+            generators: "Ninja",
+            build: "Debug",
+            testing: true
           }
         - {
             name: "Windows (VS 2022/Ninja) Debug ARM 32-bit",
             os: windows-2022,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm.bat",
             generators: "Ninja",
-            build: "Debug"
+            build: "Debug",
+            testing: false
+          }
+        - {
+            name: "Windows (VS 2022/Ninja) Debug ARM 64-bit",
+            os: windows-2022,
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
+            generators: "Ninja",
+            build: "Debug",
+            testing: false
           }
         - {
             name: "Windows (VS 2022/Ninja) Release",
             os: windows-2022,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja",
-            build: "Release"
+            build: "Release",
+            testing: true
           }
 
     steps:
@@ -55,6 +74,7 @@ jobs:
           cmake --build build --parallel -t retest
 
       - name: retest
+        if: ${{ matrix.config.testing }}
         shell: cmd
         run: |
           build\test\retest.exe -a -v
