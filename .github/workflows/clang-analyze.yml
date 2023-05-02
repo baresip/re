@@ -26,10 +26,10 @@ jobs:
     - name: Install clang-tools
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main"
-        sudo apt-get update && sudo apt-get install -y clang-tools-14 ninja-build
+        sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main"
+        sudo apt-get update && sudo apt-get install -y clang-tools-15
 
-    - name: make
+    - name: analyze
       run: | 
-        scan-build-14 cmake -B build
-        scan-build-14 --status-bugs cmake --build build -j
+        cmake -B build -DCMAKE_C_COMPILER=clang-15
+        analyze-build --cdb build/compile_commands.json --use-analyzer /usr/bin/clang-15
