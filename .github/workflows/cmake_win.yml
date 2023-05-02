@@ -24,6 +24,13 @@ jobs:
             build: "Debug"
           }
         - {
+            name: "Windows (VS 2022/Ninja) Debug ARM 32-bit",
+            os: windows-2022,
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm.bat",
+            generators: "Ninja",
+            build: "Debug"
+          }
+        - {
             name: "Windows (VS 2022/Ninja) Release",
             os: windows-2022,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
