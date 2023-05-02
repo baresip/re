@@ -54,8 +54,7 @@ LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 		re_fprintf(stderr, "%H\n", btrace_println, &bt);
 	}
 	else {
-		re_fprintf(stderr, "stack overflow: %p\n",
-			  (void *)ExceptionInfo->ContextRecord->Rip);
+		re_fprintf(stderr, "stack overflow\n");
 	}
 
 	switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
