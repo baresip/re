@@ -271,6 +271,22 @@ int uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg)
 }
 
 
+/**
+ * Escape user part of SIP URI
+ *
+ * @param pf   Print function to encode into
+ * @param user User part of SIP URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_escape_user(struct re_printf *pf, const char *user)
+{
+	struct pl pl;
+	pl_set_str(&pl, user);
+	return uri_user_escape(pf, &pl);
+}
+
+
 static int uri_escape_helper(struct re_printf *pf, const struct pl *pl,
 			     bool unescape)
 {

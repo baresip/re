@@ -122,9 +122,7 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 	dlg->cpos = dlg->mb->pos;
 	err |= mbuf_printf(dlg->mb, "From: ");
 	if (from_name) {
-		pl_set_str(&pl, from_name);
-		err |= mbuf_printf(dlg->mb, "\"%H\" ", uri_display_name_escape,
-				   &pl);
+		err |= mbuf_printf(dlg->mb, "\"%s\" ", from_name);
 	}
 	err |= mbuf_printf(dlg->mb, "<%H>", uri_escape, from_uri);
 	err |= mbuf_printf(dlg->mb, ";tag=%016llx\r\n", ltag);
