@@ -36,7 +36,7 @@ static void mutex_destructor(void *data)
 }
 
 
-int mutex_alloc(mtx_t **mtx)
+static int _mutex_alloc(mtx_t **mtx, int type)
 {
 	mtx_t *m;
 	int err;
@@ -48,7 +48,7 @@ int mutex_alloc(mtx_t **mtx)
 	if (!m)
 		return ENOMEM;
 
-	err = mtx_init(m, mtx_plain) != thrd_success;
+	err = mtx_init(m, type) != thrd_success;
 	if (err) {
 		err = ENOMEM;
 		goto out;
@@ -63,6 +63,18 @@ out:
 		mem_deref(m);
 
 	return err;
+}
+
+
+int mutex_alloc(mtx_t **mtx)
+{
+	return _mutex_alloc(mtx, mtx_plain);
+}
+
+
+int mutex_alloc_tp(mtx_t **mtx, int type)
+{
+	return _mutex_alloc(mtx, type);
 }
 
 

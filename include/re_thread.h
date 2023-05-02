@@ -291,6 +291,7 @@ void tss_delete(tss_t key);
  * @return 0 if success, otherwise errorcode
  */
 int mutex_alloc(mtx_t **mtx);
+int mutex_alloc_tp(mtx_t **mtx, int type);
 
 
 /**
