@@ -515,7 +515,7 @@ static int test_unit(const char *name, bool verbose)
 		for (i=0; i<RE_ARRAY_SIZE(tests); i++) {
 
 			if (verbose) {
-				re_printf("test %u -- %s\n",
+				re_printf("test %zu -- %s\n",
 					  i, tests[i].name);
 			}
 
@@ -804,8 +804,8 @@ int test_multithread(void)
 
 	memset(threadv, 0, sizeof(threadv));
 
-	(void)re_fprintf(stderr, "multithread: %u tests"
-			 " with %d repeats (total %u threads): ",
+	(void)re_fprintf(stderr, "multithread: %zu tests"
+			 " with %d repeats (total %zu threads): ",
 			 RE_ARRAY_SIZE(tests), NUM_REPEAT, NUM_TOTAL);
 
 	for (i=0; i<RE_ARRAY_SIZE(threadv); i++) {
