@@ -757,6 +757,11 @@ install(FILES cmake/re-config.cmake
   COMPONENT Development
 )
 
+install(FILES cmake/libre-config.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
+  COMPONENT Development
+)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
   COMPONENT Development
