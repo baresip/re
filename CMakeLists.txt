@@ -680,6 +680,7 @@ if(LIBRE_BUILD_SHARED)
     ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
   set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
   set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
+  add_library(libre::shared ALIAS re-shared)
 endif()
 
 
@@ -694,6 +695,7 @@ if(LIBRE_BUILD_STATIC)
   target_link_libraries(re PUBLIC ${LINKLIBS})
   target_include_directories(re PUBLIC include)
   set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
+  add_library(libre::static ALIAS re)
 
   if(MSVC)
     set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
@@ -719,6 +721,7 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 
 
 install(TARGETS ${RE_INSTALL_TARGETS}
+  EXPORT libre
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Libraries
@@ -729,6 +732,11 @@ install(TARGETS ${RE_INSTALL_TARGETS}
   PUBLIC_HEADER
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
     COMPONENT Development
+)
+
+install(EXPORT libre
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
+  NAMESPACE libre::
 )
 
 if(LIBRE_BUILD_SHARED)
