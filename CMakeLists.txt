@@ -666,7 +666,9 @@ target_include_directories(re-objs PRIVATE .)
 target_include_directories(re-objs PRIVATE
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_include_directories(re-objs PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
 
 
 ##############################################################################
@@ -682,7 +684,6 @@ if(LIBRE_BUILD_SHARED)
     ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
   set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
   set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
-  set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${HEADERS}")
   add_library(libre::re-shared ALIAS re-shared)
 endif()
 
@@ -697,7 +698,6 @@ if(LIBRE_BUILD_STATIC)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
   add_library(libre::re ALIAS re)
-  set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
   if(MSVC)
     set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
@@ -731,11 +731,13 @@ install(TARGETS ${RE_INSTALL_TARGETS}
   ARCHIVE
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Development
-  PUBLIC_HEADER
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
-    COMPONENT Development
   INCLUDES
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+)
+
+install(FILES ${HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+  COMPONENT Development
 )
 
 install(EXPORT libre
