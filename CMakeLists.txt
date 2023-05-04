@@ -683,7 +683,7 @@ if(LIBRE_BUILD_SHARED)
   set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
   set_target_properties(re-shared PROPERTIES OUTPUT_NAME "re")
   set_target_properties(re-shared PROPERTIES PUBLIC_HEADER "${HEADERS}")
-  add_library(libre::shared ALIAS re-shared)
+  add_library(libre::re-shared ALIAS re-shared)
 endif()
 
 
@@ -696,7 +696,7 @@ if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
-  add_library(libre::static ALIAS re)
+  add_library(libre::re ALIAS re)
   set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
   if(MSVC)
