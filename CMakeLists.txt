@@ -693,7 +693,7 @@ if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
-  target_include_directories(re PUBLIC include)
+  target_include_directories(re PRIVATE include)
   set_target_properties(re PROPERTIES PUBLIC_HEADER "${HEADERS}")
   add_library(libre::static ALIAS re)
 
