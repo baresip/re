@@ -122,6 +122,7 @@ static const struct test tests[] = {
 	TEST(test_ice_loop),
 	TEST(test_jbuf),
 	TEST(test_jbuf_adaptive),
+	TEST(test_jbuf_adaptive_video),
 	TEST(test_json),
 	TEST(test_json_file),
 	TEST(test_json_unicode),

@@ -229,6 +229,7 @@ int test_ice_loop(void);
 int test_ice_cand(void);
 int test_jbuf(void);
 int test_jbuf_adaptive(void);
+int test_jbuf_adaptive_video(void);
 int test_json(void);
 int test_json_bad(void);
 int test_json_file(void);
