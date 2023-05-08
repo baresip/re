@@ -444,20 +444,29 @@ static void http_conn_handler(struct tcp_conn *tc, struct tls_conn *sc,
 }
 
 
-int websock_connect(struct websock_conn **connp, struct websock *sock,
-		    struct http_cli *cli, const char *uri, unsigned kaint,
-		    websock_estab_h *estabh, websock_recv_h *recvh,
-		    websock_close_h *closeh, void *arg,
-		    const char *fmt, ...)
+static int ws_connect(struct websock_conn **connp, const char *proto,
+			  struct websock *sock, struct http_cli *cli,
+			  const char *uri, unsigned kaint,
+			  websock_estab_h *estabh, websock_recv_h *recvh,
+			  websock_close_h *closeh, void *arg, const char *fmt,
+			  va_list *ap)
 {
 	struct websock_conn *conn;
 	uint8_t nonce[16];
-	va_list ap;
+	char proto_hdr[64];
 	size_t len;
-	int err;
+	int err, ret;
 
 	if (!connp || !sock || !cli || !uri || !estabh || !recvh || !closeh)
 		return EINVAL;
+
+	if (proto) {
+		ret = re_snprintf(proto_hdr, sizeof(proto_hdr),
+			   "Sec-WebSocket-Protocol: %s\r\n", proto);
+
+		if (ret == -1)
+			return EINVAL;
+	}
 
 	conn = mem_zalloc(sizeof(*conn), conn_destructor);
 	if (!conn)
@@ -482,18 +491,18 @@ int websock_connect(struct websock_conn **connp, struct websock *sock,
 	conn->active = true;
 
 	/* Protocol Handshake */
-	va_start(ap, fmt);
 	err = http_request(&conn->req, cli, "GET", uri,
 			   http_resp_handler, NULL, NULL, conn,
 			   "Upgrade: websocket\r\n"
 			   "Connection: upgrade\r\n"
 			   "Sec-WebSocket-Key: %b\r\n"
 			   "Sec-WebSocket-Version: 13\r\n"
+			   "%s"
 			   "%v"
 			   "\r\n",
 			   conn->nonce, sizeof(conn->nonce),
-			   fmt, &ap);
-	va_end(ap);
+			   proto ? proto_hdr : "",
+			   fmt, ap);
 	if (err)
 		goto out;
 
@@ -509,17 +518,73 @@ int websock_connect(struct websock_conn **connp, struct websock *sock,
 }
 
 
+int websock_connect(struct websock_conn **connp, struct websock *sock,
+		    struct http_cli *cli, const char *uri, unsigned kaint,
+		    websock_estab_h *estabh, websock_recv_h *recvh,
+		    websock_close_h *closeh, void *arg, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = ws_connect(connp, NULL, sock, cli, uri, kaint, estabh, recvh,
+			 closeh, arg, fmt, &ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+int websock_connect_proto(struct websock_conn **connp, const char *proto,
+			  struct websock *sock, struct http_cli *cli,
+			  const char *uri, unsigned kaint,
+			  websock_estab_h *estabh, websock_recv_h *recvh,
+			  websock_close_h *closeh, void *arg, const char *fmt,
+			  ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = ws_connect(connp, proto, sock, cli, uri, kaint, estabh, recvh,
+			 closeh, arg, fmt, &ap);
+	va_end(ap);
+
+	return err;
+}
+
+
 int websock_accept(struct websock_conn **connp, struct websock *sock,
 		   struct http_conn *htconn, const struct http_msg *msg,
 		   unsigned kaint, websock_recv_h *recvh,
 		   websock_close_h *closeh, void *arg)
 {
+	return websock_accept_proto(connp, NULL, sock, htconn, msg, kaint,
+				    recvh, closeh, arg);
+}
+
+
+int websock_accept_proto(struct websock_conn **connp, const char *proto,
+			 struct websock *sock, struct http_conn *htconn,
+			 const struct http_msg *msg, unsigned kaint,
+			 websock_recv_h *recvh, websock_close_h *closeh,
+			 void *arg)
+{
 	const struct http_hdr *key;
 	struct websock_conn *conn;
-	int err;
+	char proto_hdr[64];
+	int err, ret;
 
 	if (!connp || !sock || !htconn || !msg || !recvh || !closeh)
 		return EINVAL;
+
+	if (proto) {
+		ret = re_snprintf(proto_hdr, sizeof(proto_hdr),
+			   "Sec-WebSocket-Protocol: %s\r\n", proto);
+
+		if (ret == -1)
+			return EINVAL;
+	}
 
 	if (!http_msg_hdr_has_value(msg, HTTP_HDR_UPGRADE, "websocket"))
 		return EBADMSG;
@@ -542,8 +607,10 @@ int websock_accept(struct websock_conn **connp, struct websock *sock,
 			 "Upgrade: websocket\r\n"
 			 "Connection: Upgrade\r\n"
 			 "Sec-WebSocket-Accept: %H\r\n"
+			 "%s"
 			 "\r\n",
-			 accept_print, &key->val);
+			 accept_print, &key->val,
+			 proto ? proto_hdr : "");
 	if (err)
 		goto out;
 
