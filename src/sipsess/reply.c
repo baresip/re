@@ -108,15 +108,6 @@ static bool cancel_1xx_timers(struct le *le, void *arg)
 }
 
 
-static bool is_1xx_reply(struct le *le, void *arg)
-{
-	struct sipsess_reply *reply = le->data;
-	(void)arg;
-
-	return reply->scode > 100 && reply->scode < 200;
-}
-
-
 int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		      uint16_t scode, const char *reason, struct mbuf *desc,
 		      const char *fmt, va_list *ap)
@@ -137,7 +128,6 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 
 		list_append(&sess->replyl, &reply->le, reply);
 
-		reply->rel_seq = 0;
 		reply->seq  = msg->cseq.num;
 		reply->msg  = mem_ref((void *)msg);
 		reply->scode = scode;
@@ -197,7 +187,6 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		      enum rel100_mode rel100, struct mbuf *desc,
 		      const char *fmt, va_list *ap)
 {
-	struct sipsess_reply *prev;
 	struct sipsess_reply *reply;
 	struct sip_contact contact;
 	char rseq_header[64];
@@ -234,8 +223,6 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (!reply)
 		goto out;
 
-	prev = list_ledata(list_apply(&sess->replyl, false, is_1xx_reply,
-			    NULL));
 	list_append(&sess->replyl, &reply->le, reply);
 	reply->seq  = msg->cseq.num;
 	reply->msg  = mem_ref((void *)msg);
@@ -244,7 +231,8 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 	if (reliably) {
-		reply->rel_seq = prev ? prev->rel_seq+1 : rand_u16();
+		sess->rel_seq = sess->rel_seq ? sess->rel_seq+1 : rand_u16();
+		reply->rel_seq = sess->rel_seq;
 		re_snprintf(rseq_header, sizeof(rseq_header),
 					"%d", reply->rel_seq);
 	}
@@ -262,7 +250,7 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 			  require_header.p ? require_header.p : "",
 			  reliably ? "RSeq: " : "",
 			  reliably ? rseq_header : "",
-			  reliably ? "\n" : "",
+			  reliably ? "\r\n" : "",
 			  desc ? "Content-Type: " : "",
 			  desc ? sess->ctype : "",
 			  desc ? "\r\n" : "",
