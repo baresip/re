@@ -1148,8 +1148,8 @@ static void http_req_handler(struct http_conn *hc, const struct http_msg *msg,
 	conn->sip   = transp->sip;
 	conn->tp    = transp->tp;
 
-	err = websock_accept(&conn->websock_conn, transp->sip->websock,
-			     hc, msg, 15000,
+	err = websock_accept_proto(&conn->websock_conn, "sip",
+                             transp->sip->websock, hc, msg, 15000,
                              websock_recv_handler, websock_close_handler,
                              conn);
 	if (err)
