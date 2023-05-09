@@ -1160,9 +1160,6 @@ static void http_req_handler(struct http_conn *hc, const struct http_msg *msg,
 	if (err)
 		goto out;
 
-	tmr_start(&conn->tmr, TCP_ACCEPT_TIMEOUT * 1000,
-		  conn_tmr_handler, conn);
-
  out:
 	if (err) {
 		(void)http_reply(hc, 500, "Server Error", NULL);
