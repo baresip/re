@@ -28,12 +28,11 @@ struct aubuf {
 	bool started;
 	uint64_t ts;
 
-#if AUBUF_DEBUG
 	struct {
 		size_t or;
 		size_t ur;
 	} stats;
-#endif
+
 	enum aubuf_mode mode;
 	struct ajb *ajb;         /**< Adaptive jitter buffer statistics      */
 	double silence;          /**< Silence volume in negative [dB]        */
@@ -272,8 +271,8 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 	ab->wr_sz += sz;
 
 	if (ab->max_sz && ab->cur_sz > ab->max_sz) {
-#if AUBUF_DEBUG
 		++ab->stats.or;
+#if AUBUF_DEBUG
 		(void)re_printf("aubuf: %p overrun (cur=%zu/%zu)\n",
 				ab, ab->cur_sz, ab->max_sz);
 #endif
@@ -367,16 +366,17 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 	}
 
 	if (ab->fill_sz || ab->cur_sz < sz) {
-#if AUBUF_DEBUG
 		if (!ab->fill_sz) {
 			++ab->stats.ur;
+#if AUBUF_DEBUG
 			(void)re_printf("aubuf: %p underrun "
 					"(cur=%zu, sz=%zu)\n",
 					ab, ab->cur_sz, sz);
 			fflush(stdout);
 			plot_underrun(ab->ajb);
-		}
 #endif
+		}
+
 		if (!ab->fill_sz)
 			ajb_set_ts0(ab->ajb, 0);
 
@@ -505,13 +505,10 @@ int aubuf_debug(struct re_printf *pf, const struct aubuf *ab)
 		return 0;
 
 	mtx_lock(ab->lock);
-	err = re_hprintf(pf, "wish_sz=%zu cur_sz=%zu fill_sz=%zu",
+	err  = re_hprintf(pf, "wish_sz=%zu cur_sz=%zu fill_sz=%zu",
 			 ab->wish_sz, ab->cur_sz, ab->fill_sz);
-
-#if AUBUF_DEBUG
 	err |= re_hprintf(pf, " [overrun=%zu underrun=%zu]",
 			  ab->stats.or, ab->stats.ur);
-#endif
 
 	mtx_unlock(ab->lock);
 
@@ -538,6 +535,51 @@ size_t aubuf_cur_size(const struct aubuf *ab)
 	mtx_unlock(ab->lock);
 
 	return sz;
+}
+
+
+/**
+ * Get the maximum number of bytes of the audio buffer
+ *
+ * @param ab Audio buffer
+ *
+ * @return Maximum number of bytes
+ */
+size_t aubuf_maxsz(const struct aubuf *ab)
+{
+	size_t sz;
+
+	if (!ab)
+		return 0;
+
+	mtx_lock(ab->lock);
+	sz = ab->max_sz;
+	mtx_unlock(ab->lock);
+
+	return sz;
+}
+
+
+/**
+ * Returns true if the minimum size was reached and the read function returned
+ * already the first real data
+ *
+ * @param ab Audio buffer
+ *
+ * @return True if reading was started
+ */
+bool aubuf_started(const struct aubuf *ab)
+{
+	bool started;
+
+	if (!ab)
+		return false;
+
+	mtx_lock(ab->lock);
+	started = ab->started;
+	mtx_unlock(ab->lock);
+
+	return started;
 }
 
 
