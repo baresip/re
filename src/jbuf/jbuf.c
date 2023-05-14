@@ -542,6 +542,17 @@ int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	*hdr = f->hdr;
 	*mem = mem_ref(f->mem);
 
+	/* decrease not equal frames */
+	if (f->le.next) {
+		struct packet *next_f = f->le.next->data;
+
+		if (f->hdr.ts != next_f->hdr.ts)
+			--jb->nf;
+	}
+	else {
+		--jb->nf;
+	}
+
 	packet_deref(jb, f);
 
 out:
