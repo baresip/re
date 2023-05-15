@@ -113,19 +113,16 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 	}
 
 	for (i=0; i<routec; i++) {
-		err |= mbuf_printf(dlg->mb, "Route: <%H;lr>\r\n", uri_escape,
-				   routev[i]);
+		err |= mbuf_printf(dlg->mb, "Route: <%s;lr>\r\n", routev[i]);
 		if (i == 0)
 			rend = dlg->mb->pos - 2;
 	}
-	err |= mbuf_printf(dlg->mb, "To: <%H>\r\n", uri_escape, to_uri);
+	err |= mbuf_printf(dlg->mb, "To: <%s>\r\n", to_uri);
 	dlg->cpos = dlg->mb->pos;
-	err |= mbuf_printf(dlg->mb, "From: ");
-	if (from_name) {
-		err |= mbuf_printf(dlg->mb, "\"%s\" ", from_name);
-	}
-	err |= mbuf_printf(dlg->mb, "<%H>", uri_escape, from_uri);
-	err |= mbuf_printf(dlg->mb, ";tag=%016llx\r\n", ltag);
+	err |= mbuf_printf(dlg->mb, "From: %s%s%s<%s>;tag=%016llx\r\n",
+			   from_name ? "\"" : "", from_name,
+			   from_name ? "\" " : "",
+			   from_uri, ltag);
 	if (err)
 		goto out;
 
@@ -159,7 +156,7 @@ static bool record_route_handler(const struct sip_hdr *hdr,
 	struct route_enc *renc = arg;
 	(void)msg;
 
-	if (mbuf_printf(renc->mb, "Route: %H\r\n", uri_escape_pl, &hdr->val))
+	if (mbuf_printf(renc->mb, "Route: %r\r\n", &hdr->val))
 		return true;
 
 	if (!renc->end)
