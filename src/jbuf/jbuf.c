@@ -408,15 +408,18 @@ success:
 	f->hdr = *hdr;
 	f->mem = mem_ref(mem);
 
-	/* Count not equal timestamp frames (e.g. video) */
-	if (f->le.prev) {
-		struct packet *pre_f = f->le.prev->data;
+	jb->nf = 1;
+	LIST_FOREACH(&jb->packetl, le)
+	{
+		struct packet *cur_p = le->data;
+		if (!le->next)
+			break;
 
-		if (f->hdr.ts != pre_f->hdr.ts)
+		struct packet *next_p = le->next->data;
+
+		/* Count not equal timestamp frames (e.g. video) */
+		if (cur_p->hdr.ts != next_p->hdr.ts)
 			++jb->nf;
-	}
-	else {
-		++jb->nf;
 	}
 
 out:
