@@ -1160,6 +1160,8 @@ static void http_req_handler(struct http_conn *hc, const struct http_msg *msg,
 	if (err)
 		goto out;
 
+	conn->established = true;
+
  out:
 	if (err) {
 		(void)http_reply(hc, 500, "Server Error", NULL);
