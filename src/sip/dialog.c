@@ -31,6 +31,7 @@ struct sip_dialog {
 	char *ltag;
 	char *rtag;
 	char *uri;
+	char *route_str;
 	uint32_t hash;
 	uint32_t lseq;
 	uint32_t rseq;
@@ -54,6 +55,7 @@ static void destructor(void *arg)
 	mem_deref(dlg->rtag);
 	mem_deref(dlg->uri);
 	mem_deref(dlg->mb);
+	mem_deref(dlg->route_str);
 }
 
 
@@ -182,9 +184,12 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 	struct sip_addr addr;
 	struct pl pl;
 	int err;
+	struct mbuf route_mb;
 
 	if (!dlgp || !msg || !msg->req)
 		return EINVAL;
+
+	mbuf_init(&route_mb);
 
 	contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
 
@@ -244,12 +249,31 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 		err = sip_addr_decode(&addr, &pl);
 		dlg->route = addr.uri;
 	}
+	else if (fmt_param_exists(&addr.uri.params, "ob")
+		||   msg->tp == SIP_TRANSP_WS
+		||   msg->tp == SIP_TRANSP_WSS)
+	{
+		// from RFC 7118: WebSocket as a Transport for SIP
+		// The Contact URI provided by SIP UAs requesting (and receiving)
+		// Outbound support is not used for routing requests to those UAs, [...]
+
+		err |= mbuf_printf(&route_mb, "sip:%J%s", &msg->src, sip_transp_param(msg->tp));
+		mbuf_set_pos(&route_mb, 0);
+		err |= mbuf_strdup(&route_mb, &dlg->route_str, mbuf_get_left(&route_mb));
+		if (err)
+			goto out;
+
+		pl.p = dlg->route_str;
+		pl.l = route_mb.end;
+		err = uri_decode(&dlg->route, &pl);
+	}
 	else {
 		pl_set_str(&pl, dlg->uri);
 		err = uri_decode(&dlg->route, &pl);
 	}
 
  out:
+	mbuf_reset(&route_mb);
 	if (err)
 		mem_deref(dlg);
 	else
