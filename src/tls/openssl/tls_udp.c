@@ -286,6 +286,7 @@ static int tls_connect(struct tls_conn *tc)
 	r = SSL_connect(tc->ssl);
 	if (r <= 0) {
 		const int ssl_err = SSL_get_error(tc->ssl, r);
+		int en = errno;
 
 		tls_flush_error();
 
@@ -294,8 +295,9 @@ static int tls_connect(struct tls_conn *tc)
 		case SSL_ERROR_WANT_READ:
 			break;
 
+		case SSL_ERROR_SYSCALL:
 		default:
-			DEBUG_WARNING("connect error: %i\n", ssl_err);
+			DEBUG_WARNING("connect error: %i, errno: %d\n", ssl_err, en);
 			return EPROTO;
 		}
 	}
