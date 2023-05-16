@@ -74,7 +74,7 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 	va_list ap;
 	int err;
 
-	if (!sessp || !sock || !msg || scode < 101 || scode > 299 ||
+	if (!sessp || !sock || !msg || scode < 100 || scode > 299 ||
 	    !cuser || !ctype)
 		return EINVAL;
 
@@ -101,7 +101,7 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	va_start(ap, fmt);
 
-	if (scode > 100 && scode < 200) {
+	if (scode >= 100 && scode < 200) {
 		err = sipsess_reply_1xx(sess, msg, scode, reason, rel100, desc,
 					fmt, &ap);
 	}
