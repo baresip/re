@@ -20,7 +20,8 @@ static void *handler(void *p)
 
 	mem_deref(p);
 
-	return (void *)(intptr_t)th.func(th.arg);
+	int r = th.func(th.arg);
+	return (void *)(intptr_t)r;
 }
 
 
