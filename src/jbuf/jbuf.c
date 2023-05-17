@@ -254,6 +254,7 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 	int32_t adiff;
 	int32_t s;                         /**< EMA coefficient              */
 	uint32_t wish;
+	uint32_t max = jb->max;
 	bool down = false;
 
 	if (jb->jbtype != JBUF_ADAPTIVE)
@@ -262,6 +263,12 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 	if (!jb->seq_get)
 		return;
 
+	uint32_t fpr = jb->n / jb->nf; /* frame packet ratio */
+	if (!fpr)
+		fpr = 1;
+
+	max = max / fpr;
+
 	rdiff = (int16_t)(jb->seq_put + 1 - seq);
 	adiff = abs(rdiff * JBUF_RDIFF_EMA_COEFF);
 	s = adiff > jb->rdiff ? JBUF_RDIFF_UP_SPEED :
@@ -269,12 +276,12 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 		jb->wish > 1  ? 2 : 3;
 	jb->rdiff += (adiff - jb->rdiff) * s / JBUF_RDIFF_EMA_COEFF;
 
-	wish = (uint32_t) (jb->rdiff / JBUF_RDIFF_EMA_COEFF);
+	wish = (uint32_t) (jb->rdiff / JBUF_RDIFF_EMA_COEFF / fpr);
 	if (wish < jb->min)
 		wish = jb->min;
 
-	if (wish >= jb->max)
-		wish = jb->max - 1;
+	if (wish >= max)
+		wish = max - 1;
 
 	if (wish > jb->wish) {
 		DEBUG_INFO("wish size changed %u --> %u\n", jb->wish, wish);
