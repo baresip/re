@@ -28,7 +28,7 @@ static void pace_next(struct icem *icem)
 
 	icem_conncheck_schedule_check(icem);
 
-	if (icem->state == ICE_CHECKLIST_FAILED)
+	if (icem->state != ICE_CHECKLIST_RUNNING)
 		return;
 
 	icem_checklist_update(icem);
