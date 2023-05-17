@@ -49,13 +49,11 @@ int test_jbuf(void)
 	hdr.seq = 160;
 	hdr.ts = 1;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if ((EALREADY != jbuf_put(jb, &hdr, frv[0]))) {err = EINVAL; goto out;}
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (160 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
@@ -65,25 +63,23 @@ int test_jbuf(void)
 
 	/* Two frames */
 	DEBUG_INFO("test frame: Two frames\n");
+
 	hdr.seq = 320;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 480;
 	err = jbuf_put(jb, &hdr, frv[1]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (320 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (480 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[1]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
@@ -95,34 +91,30 @@ int test_jbuf(void)
 	DEBUG_INFO("test frame: Three frames\n");
 	hdr.seq = 800;
 	err = jbuf_put(jb, &hdr, frv[1]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 640;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 960;
 	err = jbuf_put(jb, &hdr, frv[2]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (640 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (800 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[1]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (960 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[2]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
