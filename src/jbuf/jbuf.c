@@ -504,7 +504,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	packet_deref(jb, f);
 
-	if (jb->jbtype == JBUF_ADAPTIVE && jb->nf > jb->wish) {
+	if (jb->nf > jb->wish) {
 		DEBUG_INFO("reducing jitter buffer "
 			   "(nf=%u min=%u wish=%u max=%u)\n",
 			   jb->nf, jb->min, jb->wish, jb->max);
