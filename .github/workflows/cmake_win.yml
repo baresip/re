@@ -30,13 +30,21 @@ jobs:
             generators: "Ninja",
             build: "Release"
           }
+        - {
+            name: "Windows (VS 2022/Ninja) Debug 32-bit",
+            os: windows-2022,
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_x86.bat",
+            generators: "Ninja",
+            build: "Debug",
+            choco: "--x86"
+          }
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Install deps
         run: |
-          choco install --no-progress openssl
+          choco install --no-progress ${{ matrix.config.choco }} openssl
 
       - name: Build
         shell: cmd
