@@ -83,11 +83,11 @@ int base64_encode(const uint8_t *in, size_t ilen, char *out, size_t *olen)
  */
 int base64url_encode(const uint8_t *in, size_t ilen, char *out, size_t *olen)
 {
-	const uint8_t *in_end = in + ilen;
-	const char *o = out;
-
 	if (!in || !out || !olen)
 		return EINVAL;
+
+	const uint8_t *in_end = in + ilen;
+	const char *o = out;
 
 	if (*olen < 4 * ((ilen+2)/3))
 		return EOVERFLOW;
@@ -185,11 +185,11 @@ static inline uint32_t b64val(char c)
  */
 int base64_decode(const char *in, size_t ilen, uint8_t *out, size_t *olen)
 {
-	const char *in_end = in + ilen;
-	const uint8_t *o = out;
-
 	if (!in || !out || !olen)
 		return EINVAL;
+
+	const char *in_end = in + ilen;
+	const uint8_t *o = out;
 
 	if (*olen < 3 * (ilen/4))
 		return EOVERFLOW;
