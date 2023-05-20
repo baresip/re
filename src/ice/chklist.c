@@ -181,7 +181,7 @@ int icem_checklist_form(struct icem *icem)
 	/* 4. prune the pairs */
 	candpair_prune(icem);
 
-	return err;
+	return 0;
 }
 
 

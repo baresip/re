@@ -245,7 +245,7 @@ static int start_sending(struct pcp_request *req)
 			  timeout_duration, req);
 	}
 
-	return err;
+	return 0;
 }
 
 

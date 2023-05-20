@@ -483,14 +483,14 @@ static int test_av1_packetize(void)
 		return err;
 
 	err = str_hex(buf, sizeof(buf), pkt_beach);
-	TEST_ERR(err);
+	if (err)
+		return err;
 
 	err = test_av1_packetize_base(3, 2, 2, 100, buf, sizeof(buf));
 	if (err)
 		return err;
 
- out:
-	return err;
+	return 0;
 }
 
 

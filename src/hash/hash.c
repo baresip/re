@@ -232,7 +232,7 @@ uint32_t hash_valid_size(uint32_t size)
 	for (x=0; (uint32_t)1<<x < size && x < 31; x++)
 		;
 
-	return 1<<x;
+	return 1u<<x;
 }
 
 
