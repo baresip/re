@@ -567,7 +567,7 @@ static int conn_connect(struct http_req *req)
 	struct conn *conn;
 	struct sa *laddr = NULL;
 	int err = 0;
-	
+
 	if (!req || !req->cli)
 		return EINVAL;
 
