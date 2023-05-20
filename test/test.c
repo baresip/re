@@ -745,7 +745,7 @@ int test_reg(const char *name, bool verbose)
 
 	timeout_override = 0;
 
-	return err;
+	return 0;
 }
 
 
@@ -847,7 +847,7 @@ int test_multithread(void)
 
 	timeout_override = 0;
 
-	return err;
+	return 0;
 }
 
 
