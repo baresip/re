@@ -284,12 +284,10 @@ static int send_sdp(struct agent *agent)
 	TEST_ASSERT(!icem_selected_laddr(agent->icem, agent->compid));
 
 	err = agent_encode_sdp(agent);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = agent_verify_outgoing_sdp(agent);
-	if (err)
-		return err;
+	TEST_ERR(err);
 
  out:
 	return err;
