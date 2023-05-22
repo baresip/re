@@ -315,9 +315,11 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 {
 	struct packet *f;
+	struct packet *fc;
 	struct le *le, *tail;
 	uint16_t seq;
 	uint64_t tr, dt;
+	bool equal;
 	int err = 0;
 
 	if (!jb || !hdr)
@@ -418,19 +420,18 @@ success:
 	f->hdr = *hdr;
 	f->mem = mem_ref(mem);
 
-	jb->nf = 1;
-	LIST_FOREACH(&jb->packetl, le)
-	{
-		struct packet *cur_p = le->data;
-		if (!le->next)
-			break;
-
-		struct packet *next_p = le->next->data;
-
-		/* Count not equal timestamp frames (e.g. video) */
-		if (cur_p->hdr.ts != next_p->hdr.ts)
-			++jb->nf;
+	equal = false;
+	if (f->le.prev) {
+		fc = f->le.prev->data;
+		equal = (fc->hdr.ts == f->hdr.ts);
 	}
+	else if (f->le.next) {
+		fc = f->le.next->data;
+		equal = (fc->hdr.ts == f->hdr.ts);
+	}
+
+	if (!equal)
+		++jb->nf;
 
 out:
 	mtx_unlock(jb->lock);
