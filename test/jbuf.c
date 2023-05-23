@@ -312,6 +312,36 @@ int test_jbuf_adaptive_video(void)
 	TEST_EQUALS(3, jbuf_frames(jb));
 	TEST_EQUALS(5, jbuf_packets(jb));
 
+	/* --- Test late packet, unique frame --- */
+	jbuf_flush(jb);
+
+	hdr.seq = 1;
+	hdr.ts = 100;
+	err = jbuf_put(jb, &hdr, frv[0]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(1, jbuf_packets(jb));
+
+	hdr.seq = 2;
+	hdr.ts = 100; /* Same frame */
+	err = jbuf_put(jb, &hdr, frv[1]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(2, jbuf_packets(jb));
+
+	hdr.seq = 4;
+	hdr.ts = 300;
+	err = jbuf_put(jb, &hdr, frv[2]);
+	TEST_ERR(err);
+	TEST_EQUALS(2, jbuf_frames(jb));
+	TEST_EQUALS(3, jbuf_packets(jb));
+
+	hdr.seq = 3; /* unordered late packet */
+	hdr.ts = 200;
+	err = jbuf_put(jb, &hdr, frv[3]);
+	TEST_ERR(err);
+	TEST_EQUALS(3, jbuf_frames(jb));
+	TEST_EQUALS(4, jbuf_packets(jb));
 
 	/* --- Test lost get --- */
 	jbuf_flush(jb);
