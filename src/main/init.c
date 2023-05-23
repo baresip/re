@@ -36,7 +36,7 @@ static void signal_handler(int sig)
 		   &bt);
 	fflush(stderr);
 
-	exit(128 + sig);
+	(void)signal(sig, NULL);
 }
 
 
