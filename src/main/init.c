@@ -28,6 +28,8 @@ static void signal_handler(int sig)
 {
 	struct btrace bt;
 
+	(void)signal(sig, NULL);
+
 	if (!exception_btrace)
 		return;
 
@@ -35,8 +37,6 @@ static void signal_handler(int sig)
 	re_fprintf(stderr, "Error: Signal (%d) %H\n", sig, btrace_println,
 		   &bt);
 	fflush(stderr);
-
-	exit(128 + sig);
 }
 
 
