@@ -422,7 +422,8 @@ success:
 		fc = f->le.prev->data;
 		equal = (fc->hdr.ts == f->hdr.ts);
 	}
-	else if (f->le.next) {
+
+	if (!equal && f->le.next) {
 		fc = f->le.next->data;
 		equal = (fc->hdr.ts == f->hdr.ts);
 	}
