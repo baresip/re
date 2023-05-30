@@ -141,7 +141,7 @@ struct hash;
  * @param err   0 if success, otherwise errorcode
  * @param hdr   DNS Header
  * @param ansl  List of Answer records
- * @param authl List of Authoritive records
+ * @param authl List of Authoritative records
  * @param addl  List of Additional records
  * @param arg   Handler argument
  */

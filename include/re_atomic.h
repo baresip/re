@@ -1077,7 +1077,7 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
 /**
  * @def re_atomic_rlx_sub(_a, _v)
  *
- * Replace value from an atomic object with substraction and relaxed order
+ * Replace value from an atomic object with subtraction and relaxed order
  *
  * @param _a  pointer to the atomic object
  * @param _v  value to subtract
@@ -1129,7 +1129,7 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
 /**
  * @def re_atomic_acq_sub(_a, _v)
  *
- * Replace value from an atomic object with substraction and acquire-release
+ * Replace value from an atomic object with subtraction and acquire-release
  * order
  *
  * @param _a  pointer to the atomic object
@@ -1183,11 +1183,11 @@ static __forceinline unsigned __int64 _re_atomic_fetch_and(
 /**
  * @def re_atomic_seq_sub(_a, _v)
  *
- * Replace value from an atomic object with substraction and
+ * Replace value from an atomic object with subtraction and
  * sequentially-consistent order
  *
  * @param _a  pointer to the atomic object
- * @param _v  value to substract
+ * @param _v  value to subtract
  *
  * @return value held previously by the atomic variable
  */

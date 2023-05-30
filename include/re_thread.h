@@ -237,7 +237,7 @@ int mtx_lock(mtx_t *mtx);
  *
  * @param mtx   Pointer to the mutex
  *
- * @return thrd_success on success, thrd_busy if alread locked,
+ * @return thrd_success on success, thrd_busy if already locked,
  * otherwise thrd_error
  */
 int mtx_trylock(mtx_t *mtx);

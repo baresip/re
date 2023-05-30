@@ -77,7 +77,7 @@ typedef int(re_vprintf_h)(const char *p, size_t size, void *arg);
 /** Defines a print backend */
 struct re_printf {
 	re_vprintf_h *vph; /**< Print handler   */
-	void *arg;         /**< Handler agument */
+	void *arg;         /**< Handler argument */
 };
 
 /**
