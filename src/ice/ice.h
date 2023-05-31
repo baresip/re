@@ -181,7 +181,7 @@ int  icecomp_debug(struct re_printf *pf, const struct icem_comp *comp);
 /* conncheck */
 void icem_conncheck_schedule_check(struct icem *icem);
 void icem_conncheck_continue(struct icem *icem);
-int  icem_conncheck_send(struct ice_candpair *cp, bool use_cand, bool trigged);
+int  icem_conncheck_send(struct ice_candpair *cp, bool use_cand, bool trigger);
 
 
 /* icestr */

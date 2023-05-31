@@ -230,7 +230,7 @@ static void concluding_ice(struct icem_comp *comp)
 
 	use_cand = comp->icem->lrole == ICE_ROLE_CONTROLLING;
 
-	/* send STUN request with USE_CAND flag via triggered qeueue */
+	/* send STUN request with USE_CAND flag via triggered queue */
 	(void)icem_conncheck_send(cp, use_cand, true);
 	icem_conncheck_schedule_check(comp->icem);
 

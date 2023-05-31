@@ -1510,14 +1510,14 @@ static int convert_X509_NAME_to_mbuf(X509_NAME *field, struct mbuf *mb,
 
 
 /**
- * Extract a X509 certficate issuer/subject and write the result into an mbuf
+ * Extract a X509 certificate issuer/subject and write the result into an mbuf
  *
  * @param tls           TLS Object
  * @param mb            Memory buffer
  * @param field_getter  Functionpointer to the X509 getter function
  * @param flags         X509_NAME_print_ex flags
  *
- * @return 0 if success, othewise errorcode
+ * @return 0 if success, otherwise errorcode
  */
 static int tls_get_ca_chain_field(struct tls *tls, struct mbuf *mb,
 	tls_get_certfield_h *field_getter, unsigned long flags)

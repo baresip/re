@@ -38,7 +38,7 @@ static int wsa_init(void)
 	if (LOBYTE(wsaData.wVersion) != 2 ||
 	    HIBYTE(wsaData.wVersion) != 2 ) {
 		WSACleanup();
-		DEBUG_WARNING("Bad winsock verion (%d.%d)\n",
+		DEBUG_WARNING("Bad winsock version (%d.%d)\n",
 			      HIBYTE(wsaData.wVersion),
 			      LOBYTE(wsaData.wVersion));
 		return EINVAL;
