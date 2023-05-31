@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2010 - 2022 Alfred E. Heggestad
 # Copyright (C) 2022 Sebastian Reimers
+# Copyright (C) 2023 Christian Spielberger
 #
 
 ##############################################################################
@@ -13,13 +14,13 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(re
-  VERSION 3.1.0
+  VERSION 3.2.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 15) # bump if ABI breaks
+set(PROJECT_SOVERSION 16) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
