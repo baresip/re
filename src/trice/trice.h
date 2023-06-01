@@ -89,7 +89,7 @@ typedef bool (tcpconn_frame_h)(struct trice *icem,
 			       struct mbuf *mb, void *arg);
 
 /**
- * Defines a TCP-connection from local-adress to remote-address
+ * Defines a TCP-connection from local-address to remote-address
  *
  * - one TCP-connection can be shared by multiple candidate pairs
  *

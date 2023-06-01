@@ -82,7 +82,7 @@ static void rtcp_destructor(void *data)
  * Encode the RTCP Header
  *
  * @param mb     Buffer to encode into
- * @param count  Number of sub-elemements
+ * @param count  Number of sub-elements
  * @param type   RTCP Packet type
  * @param length Packet length in words
  *

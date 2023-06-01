@@ -26,7 +26,7 @@ ICE layer:
 - ICE-lite is NOT supported
 - agnostic to modes (Full, Trickle)
 - agnostic to nomination-type (regular, aggressive)
-- SDP encoding and decoding of ICE-relavant attributes
+- SDP encoding and decoding of ICE-relevant attributes
 - can handle between 1 and 2 components per media-stream
 - gathering: No candidate gathering, must be done in App
 - agnostic to transport protocol (should handle both UDP and TCP)
@@ -67,7 +67,7 @@ done - add support for TCP-candidates (test with Chrome)
 done - make a new test-client (reicec) and test on a public server
 done - do we need to support LITE at all? No.
 done - split EOC flag into local_eoc and remote_eoc
-done - send trigged request from stunsrv
+done - send triggered request from stunsrv
 done - new module "icesdp" for SDP encoding/decoding
 done - add a new module "shim" (RFC 4571)
      - ICE module should be Conncheck-only, no data-transport
