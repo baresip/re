@@ -57,6 +57,10 @@ int sip_via_decode(struct sip_via *via, const struct pl *pl)
 		via->tp = SIP_TRANSP_TLS;
 	else if (!pl_strcmp(&transp, "UDP"))
 		via->tp = SIP_TRANSP_UDP;
+	else if (!pl_strcmp(&transp, "WS"))
+		via->tp = SIP_TRANSP_WS;
+	else if (!pl_strcmp(&transp, "WSS"))
+		via->tp = SIP_TRANSP_WSS;
 	else
 		via->tp = SIP_TRANSP_NONE;
 

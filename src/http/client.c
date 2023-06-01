@@ -568,12 +568,12 @@ static int conn_connect(struct http_req *req)
 	struct sa *laddr = NULL;
 	int err = 0;
 
+	if (!req || !req->cli)
+		return EINVAL;
+
 	conn = list_ledata(hash_lookup(req->cli->ht_conn,
 				       sa_hash(addr, SA_ALL), conn_cmp, req));
 	if (conn) {
-		if (!req->cli)
-			return EINVAL;
-
 		err = send_req_buf(conn);
 		if (!err) {
 			tmr_start(&conn->tmr, req->cli->conf.recv_timeout,

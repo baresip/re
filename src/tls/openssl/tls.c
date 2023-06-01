@@ -2058,7 +2058,7 @@ EVP_PKEY *tls_cert_pkey(struct tls_cert *hc)
  *
  * @return The OpenSSL stack of X509
  */
-STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc)
+struct stack_st_X509 *tls_cert_chain(struct tls_cert *hc)
 {
 	return hc ? hc->chain : NULL;
 }

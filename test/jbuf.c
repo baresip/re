@@ -47,14 +47,13 @@ int test_jbuf(void)
 	DEBUG_INFO("test frame: One frame\n");
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.seq = 160;
+	hdr.ts = 1;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if ((EALREADY != jbuf_put(jb, &hdr, frv[0]))) {err = EINVAL; goto out;}
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (160 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
@@ -64,25 +63,23 @@ int test_jbuf(void)
 
 	/* Two frames */
 	DEBUG_INFO("test frame: Two frames\n");
+
 	hdr.seq = 320;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 480;
 	err = jbuf_put(jb, &hdr, frv[1]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (320 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (480 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[1]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
@@ -94,34 +91,30 @@ int test_jbuf(void)
 	DEBUG_INFO("test frame: Three frames\n");
 	hdr.seq = 800;
 	err = jbuf_put(jb, &hdr, frv[1]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 640;
 	err = jbuf_put(jb, &hdr, frv[0]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	hdr.seq = 960;
 	err = jbuf_put(jb, &hdr, frv[2]);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (640 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[0]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_EQUALS(EAGAIN, err);
 	if (800 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[1]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
 
 	err = jbuf_get(jb, &hdr2, &mem);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	if (960 != hdr2.seq) {err = EINVAL; goto out;}
 	if (mem != frv[2]) {err = EINVAL; goto out;}
 	mem = mem_deref(mem);
@@ -173,6 +166,7 @@ int test_jbuf_adaptive(void)
 	/* Two frames */
 	DEBUG_INFO("test frame: Two frames\n");
 	hdr.seq = 160;
+	hdr.ts = 160;
 	err = jbuf_put(jb, &hdr, frv[0]);
 	TEST_ERR(err);
 	TEST_EQUALS(EALREADY, jbuf_put(jb, &hdr, frv[0]));
@@ -181,6 +175,7 @@ int test_jbuf_adaptive(void)
 	TEST_EQUALS(ENOENT, jbuf_get(jb, &hdr2, &mem));
 
 	hdr.seq = 161;
+	hdr.ts = 161;
 	err = jbuf_put(jb, &hdr, frv[1]);
 	TEST_ERR(err);
 
@@ -198,38 +193,171 @@ int test_jbuf_adaptive(void)
 	/* Four  frames */
 	DEBUG_INFO("test frame: Four frames\n");
 	jbuf_flush(jb);
-	hdr.seq = 320;
+	hdr.seq = 1;
+	hdr.ts = 100;
 	err = jbuf_put(jb, &hdr, frv[0]);
 	TEST_ERR(err);
 
-	hdr.seq = 480;
+	hdr.seq = 2;
+	hdr.ts = 200;
 	err = jbuf_put(jb, &hdr, frv[1]);
 	TEST_ERR(err);
 
-	hdr.seq = 490;
+	hdr.seq = 3;
+	hdr.ts = 300;
 	err = jbuf_put(jb, &hdr, frv[2]);
 	TEST_ERR(err);
 
-	hdr.seq = 491;
+	hdr.seq = 4;
+	hdr.ts = 400;
 	err = jbuf_put(jb, &hdr, frv[3]);
 	TEST_ERR(err);
 
-	TEST_EQUALS(EAGAIN, jbuf_get(jb, &hdr2, &mem));
-	TEST_EQUALS(320, hdr2.seq);
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(EAGAIN, err);
+	TEST_EQUALS(1, hdr2.seq);
 	TEST_EQUALS(mem, frv[0]);
 	mem = mem_deref(mem);
 
-	TEST_EQUALS(EAGAIN, jbuf_get(jb, &hdr2, &mem));
-	TEST_EQUALS(480, hdr2.seq);
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(EAGAIN, err);
+	TEST_EQUALS(2, hdr2.seq);
 	TEST_EQUALS(mem, frv[1]);
 	mem = mem_deref(mem);
 
-	TEST_EQUALS(0, jbuf_get(jb, &hdr2, &mem));
-	TEST_EQUALS(490, hdr2.seq);
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(0, err);
+	TEST_EQUALS(3, hdr2.seq);
 	TEST_EQUALS(mem, frv[2]);
 	mem = mem_deref(mem);
 
-	TEST_EQUALS(ENOENT, jbuf_get(jb, &hdr2, &mem));
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(ENOENT, err);
+
+	err = 0;
+
+ out:
+	mem_deref(jb);
+	mem_deref(mem);
+	for (i=0; i<RE_ARRAY_SIZE(frv); i++)
+		mem_deref(frv[i]);
+
+	return err;
+}
+
+
+int test_jbuf_adaptive_video(void)
+{
+	struct rtp_header hdr, hdr2;
+	struct jbuf *jb = NULL;
+	char *frv[5];
+	uint32_t i;
+	void *mem = NULL;
+	int err;
+
+	memset(frv, 0, sizeof(frv));
+	memset(&hdr, 0, sizeof(hdr));
+	memset(&hdr2, 0, sizeof(hdr2));
+	hdr.ssrc = 1;
+
+	err = jbuf_alloc(&jb, 1, 10);
+	TEST_ERR(err);
+	err = jbuf_set_type(jb, JBUF_ADAPTIVE);
+	TEST_ERR(err);
+
+	for (i=0; i<RE_ARRAY_SIZE(frv); i++) {
+		frv[i] = mem_zalloc(32, NULL);
+		if (frv[i] == NULL) {
+			err = ENOMEM;
+			goto out;
+		}
+	}
+
+
+	/* --- Test unordered insert --- */
+	jbuf_flush(jb);
+
+	hdr.seq = 1;
+	hdr.ts = 100;
+	err = jbuf_put(jb, &hdr, frv[0]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(1, jbuf_packets(jb));
+
+	hdr.seq = 2;
+	hdr.ts = 100; /* Same frame */
+	err = jbuf_put(jb, &hdr, frv[1]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(2, jbuf_packets(jb));
+
+	hdr.seq = 4;
+	hdr.ts = 200;
+	err = jbuf_put(jb, &hdr, frv[2]);
+	TEST_ERR(err);
+	TEST_EQUALS(2, jbuf_frames(jb));
+	TEST_EQUALS(3, jbuf_packets(jb));
+
+	hdr.seq = 3; /* unordered late packet */
+	hdr.ts = 200;
+	err = jbuf_put(jb, &hdr, frv[3]);
+	TEST_ERR(err);
+	TEST_EQUALS(2, jbuf_frames(jb));
+	TEST_EQUALS(4, jbuf_packets(jb));
+
+	hdr.seq = 5;
+	hdr.ts = 300;
+	err = jbuf_put(jb, &hdr, frv[4]);
+	TEST_ERR(err);
+	TEST_EQUALS(3, jbuf_frames(jb));
+	TEST_EQUALS(5, jbuf_packets(jb));
+
+
+	/* --- Test lost get --- */
+	jbuf_flush(jb);
+
+	hdr.seq = 1;
+	hdr.ts = 100;
+	err = jbuf_put(jb, &hdr, frv[0]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(1, jbuf_packets(jb));
+
+	hdr.seq = 2;
+	hdr.ts = 100; /* Same frame */
+	err = jbuf_put(jb, &hdr, frv[1]);
+	TEST_ERR(err);
+	TEST_EQUALS(1, jbuf_frames(jb));
+	TEST_EQUALS(2, jbuf_packets(jb));
+
+	/* LOST hdr.seq = 3; */
+
+	hdr.seq = 4;
+	hdr.ts = 200;
+	err = jbuf_put(jb, &hdr, frv[2]);
+	TEST_ERR(err);
+	TEST_EQUALS(2, jbuf_frames(jb));
+	TEST_EQUALS(3, jbuf_packets(jb));
+
+	hdr.seq = 5;
+	hdr.ts = 300;
+	err = jbuf_put(jb, &hdr, frv[3]);
+	TEST_ERR(err);
+	TEST_EQUALS(3, jbuf_frames(jb));
+	TEST_EQUALS(4, jbuf_packets(jb));
+
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(EAGAIN, err);
+	mem = mem_deref(mem);
+	TEST_EQUALS(3, jbuf_frames(jb));
+	TEST_EQUALS(3, jbuf_packets(jb));
+
+	err = jbuf_get(jb, &hdr2, &mem);
+	TEST_EQUALS(EAGAIN, err);
+	mem = mem_deref(mem);
+	TEST_EQUALS(2, jbuf_frames(jb));
+	TEST_EQUALS(2, jbuf_packets(jb));
+
 	err = 0;
 
  out:

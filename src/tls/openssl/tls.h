@@ -13,7 +13,6 @@
  * Mapping of feature macros
  */
 
-
 #if !defined(LIBRESSL_VERSION_NUMBER)
 #define SSL_state SSL_get_state
 #define SSL_ST_OK TLS_ST_OK
@@ -29,7 +28,8 @@ void tls_flush_error(void);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
 X509 *tls_cert_x509(struct tls_cert *hc);
 EVP_PKEY *tls_cert_pkey(struct tls_cert *hc);
-STACK_OF(X509*) tls_cert_chain(struct tls_cert *hc);
+
+struct stack_st_X509 *tls_cert_chain(struct tls_cert *hc);
 const char *tls_cert_host(struct tls_cert *hc);
 const struct list *tls_certs(const struct tls *tls);
 

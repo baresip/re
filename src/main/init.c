@@ -4,9 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <stdlib.h>
-#ifdef HAVE_SIGNAL
 #include <signal.h>
-#endif
 #ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -26,10 +24,11 @@
 static bool exception_btrace = false;
 
 
-#ifdef HAVE_SIGNAL
 static void signal_handler(int sig)
 {
 	struct btrace bt;
+
+	(void)signal(sig, NULL);
 
 	if (!exception_btrace)
 		return;
@@ -38,10 +37,7 @@ static void signal_handler(int sig)
 	re_fprintf(stderr, "Error: Signal (%d) %H\n", sig, btrace_println,
 		   &bt);
 	fflush(stderr);
-
-	exit(128 + sig);
 }
-#endif
 
 
 #ifdef WIN32
@@ -58,8 +54,7 @@ LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 		re_fprintf(stderr, "%H\n", btrace_println, &bt);
 	}
 	else {
-		re_fprintf(stderr, "stack overflow: %p\n",
-			  (void *)ExceptionInfo->ContextRecord->Rip);
+		re_fprintf(stderr, "stack overflow\n");
 	}
 
 	switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -145,17 +140,14 @@ int libre_init(void)
 {
 	int err;
 
-#if defined(HAVE_SIGNAL)
 	if (exception_btrace) {
 		(void)signal(SIGSEGV, signal_handler);
 		(void)signal(SIGABRT, signal_handler);
 		(void)signal(SIGILL, signal_handler);
-	}
-#elif defined(WIN32)
-	if (exception_btrace) {
+#ifdef WIN32
 		SetUnhandledExceptionFilter(exception_handler);
-	}
 #endif
+	}
 
 #ifdef USE_OPENSSL
 	err = openssl_init();

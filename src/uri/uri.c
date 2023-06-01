@@ -272,30 +272,23 @@ int uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg)
 
 
 /**
- * Escape SIP URI
+ * Escape user part of SIP URI
  *
- * @param pf  Print function to encode into
- * @param uri URI
+ * @param pf   Print function to encode into
+ * @param user User part of SIP URI
  *
  * @return 0 if success, otherwise errorcode
  */
-int uri_escape(struct re_printf *pf, const char *uri)
+int uri_escape_user(struct re_printf *pf, const char *user)
 {
 	struct pl pl;
-	pl_set_str(&pl, uri);
-	return uri_escape_pl(pf, &pl);
+	pl_set_str(&pl, user);
+	return uri_user_escape(pf, &pl);
 }
 
 
-/**
- * Escape SIP URI
- *
- * @param pf Print function to encode into
- * @param pl URI
- *
- * @return 0 if success, otherwise errorcode
- */
-int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
+static int uri_escape_helper(struct re_printf *pf, const struct pl *pl,
+			     bool unescape)
 {
 	int err;
 	struct uri uri;
@@ -315,11 +308,13 @@ int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
 		return err;
 
 	if (pl_isset(&uri.user)) {
-		err = re_hprintf(pf, "%H", uri_user_escape, &uri.user);
+		err = re_hprintf(pf, "%H", unescape ? uri_user_unescape :
+				 uri_user_escape, &uri.user);
 
 		if (pl_isset(&uri.password))
-			err |= re_hprintf(pf, ":%H", uri_password_escape,
-					  &uri.password);
+			err |= re_hprintf(pf, ":%H", unescape ?
+					  uri_password_unescape :
+					  uri_password_escape, &uri.password);
 
 		err |= pf->vph("@", 1, pf->arg);
 		if (err)
@@ -347,4 +342,49 @@ int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
 			  &uri.headers);
 
 	return err;
+
+}
+
+
+/**
+ * Escape SIP URI
+ *
+ * @param pf  Print function to encode into
+ * @param uri URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_escape(struct re_printf *pf, const char *uri)
+{
+	struct pl pl;
+	pl_set_str(&pl, uri);
+	return uri_escape_pl(pf, &pl);
+}
+
+
+/**
+ * Escape SIP URI
+ *
+ * @param pf Print function to encode into
+ * @param pl URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_escape_pl(struct re_printf *pf, const struct pl *pl)
+{
+	return uri_escape_helper(pf, pl, false);
+}
+
+
+/**
+ * Unescape SIP URI
+ *
+ * @param pf Print function to encode into
+ * @param pl URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int uri_unescape_pl(struct re_printf *pf, const struct pl *pl)
+{
+	return uri_escape_helper(pf, pl, true);
 }

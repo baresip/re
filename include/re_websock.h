@@ -57,10 +57,21 @@ int websock_connect(struct websock_conn **connp, struct websock *sock,
 		    websock_estab_h *estabh, websock_recv_h *recvh,
 		    websock_close_h *closeh, void *arg,
 		    const char *fmt, ...);
+int websock_connect_proto(struct websock_conn **connp, const char *proto,
+			  struct websock *sock, struct http_cli *cli,
+			  const char *uri, unsigned kaint,
+			  websock_estab_h *estabh, websock_recv_h *recvh,
+			  websock_close_h *closeh, void *arg, const char *fmt,
+			  ...);
 int websock_accept(struct websock_conn **connp, struct websock *sock,
 		   struct http_conn *htconn, const struct http_msg *msg,
 		   unsigned kaint, websock_recv_h *recvh,
 		   websock_close_h *closeh, void *arg);
+int websock_accept_proto(struct websock_conn **connp, const char *proto,
+			 struct websock *sock, struct http_conn *htconn,
+			 const struct http_msg *msg, unsigned kaint,
+			 websock_recv_h *recvh, websock_close_h *closeh,
+			 void *arg);
 int websock_send(struct websock_conn *conn, enum websock_opcode opcode,
 		 const char *fmt, ...);
 int websock_close(struct websock_conn *conn, enum websock_scode scode,

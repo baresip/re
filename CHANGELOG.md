@@ -5,6 +5,50 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.2.0] - 2023-05-31
+
+## What's Changed
+* btrace: add win32 support by @sreimers in https://github.com/baresip/re/pull/767
+* cmake,thread: OpenBSD support by @landryb in https://github.com/baresip/re/pull/773
+* main/init: add exception signal handlers by @sreimers in https://github.com/baresip/re/pull/765
+* ua: unescape incoming Refer-To header by @maximilianfridrich in https://github.com/baresip/re/pull/770
+* main: add debug boolean to re\_thread\_check() by @sreimers in https://github.com/baresip/re/pull/775
+* btrace: add addr2line handling by @sreimers in https://github.com/baresip/re/pull/764
+* cmake: add optional static and shared build options by @sreimers in https://github.com/baresip/re/pull/778
+* main/init: enable win32 signal handler by @sreimers in https://github.com/baresip/re/pull/779
+* uric/contact: fix display name and contact header uri escaping by @maximilianfridrich in https://github.com/baresip/re/pull/762
+* ci/analyze: update clang and use analyze-build by @sreimers in https://github.com/baresip/re/pull/781
+* main: use mtx\_recursive by @sreimers in https://github.com/baresip/re/pull/782
+* test: fix printf formating by @alfredh in https://github.com/baresip/re/pull/783
+* main: add re\_thread\_enter/leave polling check by @sreimers in https://github.com/baresip/re/pull/784
+* main/init: remove ContextRecord-\>Rip (not available on all platforms) by @sreimers in https://github.com/baresip/re/pull/790
+* sipsess: fix RSeq header and rel\_seq numbering by @maximilianfridrich in https://github.com/baresip/re/pull/796
+* websock: add proto support by @sreimers in https://github.com/baresip/re/pull/798
+* sip/transp: fix websock\_accept proto by @sreimers in https://github.com/baresip/re/pull/800
+* sip/transp: remove unneeded websocket tcp tmr by @sreimers in https://github.com/baresip/re/pull/801
+* aubuf: activate overrun/underrun statistics by @cspiel1 in https://github.com/baresip/re/pull/803
+* cmake: add libre namespace export by @sreimers in https://github.com/baresip/re/pull/786
+* revert uri escaping commits by @maximilianfridrich in https://github.com/baresip/re/pull/802
+* jbuf: refactor frame calculation by @sreimers in https://github.com/baresip/re/pull/788
+* jbuf: frame fixes by @sreimers in https://github.com/baresip/re/pull/806
+* sip: add missing WS and WSS transport decoder for VIA headers by @pitti98 in https://github.com/baresip/re/pull/809
+* ice: Fix conncheck callback called multiple times by @pitti98 in https://github.com/baresip/re/pull/807
+* jbuf: JBUF\_FIXED should also keep min wish size by @sreimers in https://github.com/baresip/re/pull/813
+* ci: compile choco openssl with --x86 for 32-bits by @alfredh in https://github.com/baresip/re/pull/814
+* jbuf: fix possible division by zero by @sreimers in https://github.com/baresip/re/pull/815
+* fix some cppcheck warnings by @alfredh in https://github.com/baresip/re/pull/816
+* test/ice: fix cppcheck by @sreimers in https://github.com/baresip/re/pull/818
+* tls/openssl: fix cppcheck warnings by @sreimers in https://github.com/baresip/re/pull/820
+* base64: fix cppcheck warnings by @sreimers in https://github.com/baresip/re/pull/819
+* main/init: fix upper signal handling by @sreimers in https://github.com/baresip/re/pull/822
+* include: fix some typos by @alfredh in https://github.com/baresip/re/pull/825
+
+## New Contributors
+* @landryb made their first contribution in https://github.com/baresip/re/pull/773
+* @pitti98 made their first contribution in https://github.com/baresip/re/pull/809
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.1.0...v3.2.0
+
 ## [v3.1.0] - 2023-04-27
 
 ## What's Changed

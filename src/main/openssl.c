@@ -7,6 +7,7 @@
 #include <signal.h>
 #endif
 #include <openssl/ssl.h>
+#include <re_types.h>
 #include "main.h"
 
 
@@ -29,7 +30,7 @@ int openssl_init(void)
 
 	err = OPENSSL_init_ssl(OPENSSL_INIT_SSL_DEFAULT, NULL);
 	if (!err)
-		return !err;
+		return ENOSYS;
 
 	return 0;
 }

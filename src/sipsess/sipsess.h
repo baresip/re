@@ -34,6 +34,7 @@ struct sipsess {
 	sipsess_redirect_h *redirecth;
 	sipsess_prack_h *prackh;
 	void *arg;
+	uint32_t rel_seq;
 	bool owner;
 	bool sent_offer;
 	bool awaiting_answer;
