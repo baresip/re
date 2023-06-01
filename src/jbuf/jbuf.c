@@ -253,7 +253,7 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 	int32_t rdiff;
 	int32_t adiff;
 	int32_t s;                         /**< EMA coefficient              */
-	uint32_t fpr = 1;                  /**< Frame packet ratio           */
+	float ratio = 1.0;                 /**< Frame packet ratio           */
 	uint32_t wish;
 	uint32_t max = jb->max;
 	bool down = false;
@@ -265,12 +265,9 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 		return;
 
 	if (jb->nf) {
-		fpr = jb->n / jb->nf;
-		if (!fpr)
-			fpr = 1;
+		ratio = (float)jb->n / (float)jb->nf;
+		max   = (uint32_t)(max / ratio);
 	}
-
-	max = max / fpr;
 
 	rdiff = (int16_t)(jb->seq_put + 1 - seq);
 	adiff = abs(rdiff * JBUF_RDIFF_EMA_COEFF);
@@ -279,11 +276,11 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 		jb->wish > 1  ? 2 : 3;
 	jb->rdiff += (adiff - jb->rdiff) * s / JBUF_RDIFF_EMA_COEFF;
 
-	wish = (uint32_t) (jb->rdiff / JBUF_RDIFF_EMA_COEFF / fpr);
+	wish = (uint32_t)(jb->rdiff / (float)JBUF_RDIFF_EMA_COEFF / ratio);
 	if (wish < jb->min)
 		wish = jb->min;
 
-	if (wish >= max)
+	if (max && wish >= max)
 		wish = max - 1;
 
 	if (wish > jb->wish) {
