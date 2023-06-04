@@ -237,6 +237,8 @@ void fs_stdio_hide(void)
 #endif
 	(void)dup2(fd, fileno(stdout));
 	(void)dup2(fd, fileno(stderr));
+
+	close(fd);
 }
 
 
