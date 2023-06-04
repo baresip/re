@@ -563,15 +563,14 @@ static bool conn_cmp(struct le *le, void *arg)
 
 static int conn_connect(struct http_req *req)
 {
-	const struct sa *addr = &req->srvv[req->srvc];
-	struct conn *conn;
 	struct sa *laddr = NULL;
 	int err = 0;
 
 	if (!req || !req->cli)
 		return EINVAL;
 
-	conn = list_ledata(hash_lookup(req->cli->ht_conn,
+	const struct sa *addr = &req->srvv[req->srvc];
+	struct conn *conn = list_ledata(hash_lookup(req->cli->ht_conn,
 				       sa_hash(addr, SA_ALL), conn_cmp, req));
 	if (conn) {
 		err = send_req_buf(conn);
