@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Prepare
       run: cmake -B ${{github.workspace}}/build
-    - uses: sreimers/coverity-scan-action
+    - uses: vapier/coverity-scan-action@v1
       with:
         project: 'baresip%2Fre'
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
