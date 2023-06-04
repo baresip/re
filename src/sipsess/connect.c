@@ -158,13 +158,27 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (sess->terminated)
 			goto out;
 
-		err = sip_dialog_update(sess->dlg, msg);
+		const struct sip_hdr *contact;
+		struct sip_addr addr;
+		char *uri;
+
+		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
+		if (!contact) {
+			err = EBADMSG;
+			goto out;
+		}
+
+		if (sip_addr_decode(&addr, &contact->val)) {
+			err = EBADMSG;
+			goto out;
+		}
+
+		err = pl_strdup(&uri, &addr.auri);
 		if (err)
 			goto out;
 
 		if (sess->redirecth)
-			sess->redirecth(msg, sip_dialog_uri(sess->dlg),
-				        sess->arg);
+			sess->redirecth(msg, uri, sess->arg);
 	}
 	else {
 		if (sess->terminated)
