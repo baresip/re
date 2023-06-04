@@ -919,7 +919,7 @@ static void signal_handler(int sig)
 
 /**
  * Main polling loop for async I/O events. This function will only return when
- * re_cancel() is called or an error occured.
+ * re_cancel() is called or an error occurred.
  *
  * @param signalh Optional Signal handler
  *

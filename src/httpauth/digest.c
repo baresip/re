@@ -322,7 +322,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	md5(mbuf_buf(mb), mbuf_get_left(mb), ha2);
 	mbuf_skip_to_end(mb);
 
-	/* repsonse */
+	/* response */
 	p2 = mb->pos;
 	if (0 == pl_strcmp(&resp->qop, "auth-int") ||
 			0 == pl_strcmp(&resp->qop, "auth")) {
@@ -377,7 +377,7 @@ int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 	if (!resp || !mb)
 		return EINVAL;
 
-	/* lenth of string literals */
+	/* length of string literals */
 	s = 93;
 	if (pl_isset(&resp->qop))
 		s += 26;

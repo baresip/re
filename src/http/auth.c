@@ -31,7 +31,7 @@ static bool secret_set;
  * Print HTTP digest authentication challenge
  *
  * @param pf   Print function for output
- * @param auth Authentication parameteres
+ * @param auth Authentication parameters
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -104,7 +104,7 @@ static int chk_nonce(const struct pl *nonce, uint32_t expires)
  *
  * @param hval   Authorization header value
  * @param method Request method
- * @param auth   Authentication parameteres
+ * @param auth   Authentication parameters
  * @param authh  Authentication handler
  * @param arg    Authentication handler argument
  *
@@ -144,7 +144,7 @@ bool http_auth_check(const struct pl *hval, const struct pl *method,
  * Check HTTP digest authorization of an HTTP request
  *
  * @param msg   HTTP message
- * @param auth  Authentication parameteres
+ * @param auth  Authentication parameters
  * @param authh Authentication handler
  * @param arg   Authentication handler argument
  *
