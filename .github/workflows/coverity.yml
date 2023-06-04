@@ -6,6 +6,7 @@ on:
       - "*"
     branches:
       - coverity
+    workflow_dispatch:
 
 jobs:
   coverity:
@@ -13,9 +14,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: sreimers/coverity-scan-action@v0
+    - name: Prepare
+      run: cmake -B ${{github.workspace}}/build
+    - uses: vapier/coverity-scan-action@v1
       with:
         project: 'baresip%2Fre'
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
-        command: cmake -B build && cmake --build build -j
+        command: make -C ${{github.workspace}}/build
         email: 'hallo@studio-link.de'
