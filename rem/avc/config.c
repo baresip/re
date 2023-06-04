@@ -81,7 +81,9 @@ int avc_config_decode(struct avc_config *conf, struct mbuf *mb)
 	if (mbuf_get_left(mb) < conf->sps_len)
 		return EBADMSG;
 
-	mbuf_read_mem(mb, conf->sps, conf->sps_len);
+	int err = mbuf_read_mem(mb, conf->sps, conf->sps_len);
+	if (err)
+		return err;
 
 	/* PPS */
 	if (mbuf_get_left(mb) < 3)
@@ -96,7 +98,9 @@ int avc_config_decode(struct avc_config *conf, struct mbuf *mb)
 	if (mbuf_get_left(mb) < conf->pps_len)
 		return EBADMSG;
 
-	mbuf_read_mem(mb, conf->pps, conf->pps_len);
+	err = mbuf_read_mem(mb, conf->pps, conf->pps_len);
+	if (err)
+		return err;
 
 	return 0;
 }
