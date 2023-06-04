@@ -62,13 +62,13 @@ static inline void clear_frame(struct vidframe *vf)
 
 static void clear_all(struct vidmix *mix)
 {
-	struct le *le;
-
-	for (le=mix->srcl.head; le; le=le->next) {
+	for (struct le *le=mix->srcl.head; le; le=le->next) {
 
 		struct vidmix_source *src = le->data;
 
+		mtx_lock(&src->mutex);
 		src->clear = true;
+		mtx_unlock(&src->mutex);
 	}
 }
 
