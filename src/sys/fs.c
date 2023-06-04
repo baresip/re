@@ -235,6 +235,9 @@ void fs_stdio_hide(void)
 #else
 	int fd = open("/dev/null", O_WRONLY);
 #endif
+	if (fd < 0)
+		return;
+
 	(void)dup2(fd, fileno(stdout));
 	(void)dup2(fd, fileno(stderr));
 
