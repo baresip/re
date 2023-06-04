@@ -79,6 +79,9 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	struct sipsess *sess = arg;
 	struct mbuf *desc = NULL;
 	bool sdp;
+	const struct sip_hdr *contact;
+	struct sip_addr addr;
+	char *uri;
 
 	if (!sess)
 		return;
@@ -158,10 +161,6 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (sess->terminated)
 			goto out;
 
-		const struct sip_hdr *contact;
-		struct sip_addr addr;
-		char *uri;
-
 		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
 		if (!contact) {
 			err = EBADMSG;
@@ -179,6 +178,8 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 		if (sess->redirecth)
 			sess->redirecth(msg, uri, sess->arg);
+
+		mem_deref(uri);
 	}
 	else {
 		if (sess->terminated)
@@ -207,6 +208,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		sipsess_terminate(sess, err, msg);
 	else
 		mem_deref(sess);
+
 }
 
 
