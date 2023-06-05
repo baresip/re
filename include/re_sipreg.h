@@ -35,3 +35,4 @@ void sipreg_incfailc(struct sipreg *reg);
 
 int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint);
 void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport);
+int sipreg_set_contact_params(struct sipreg *reg, const char *cparams);

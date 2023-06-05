@@ -508,6 +508,7 @@ struct sip_server {
 	bool terminate;
 
 	unsigned n_register_req;
+	struct sip_msg *sip_msgs[16];
 };
 
 int sip_server_alloc(struct sip_server **srvp);
