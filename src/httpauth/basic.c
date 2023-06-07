@@ -123,3 +123,119 @@ int httpauth_basic_encode(const struct httpauth_basic *basic, struct mbuf *mb)
 	mbuf_set_pos(mb, 0);
 	return 0;
 }
+
+/* HTTPAUTH BASIC REQUESTS*/
+
+static void httpauth_basic_request_destructor(void *arg)
+{
+	struct httpauth_basic_req *req = arg;
+
+	mem_deref(req->realm);
+	mem_deref(req->charset);
+}
+
+
+int httpauth_basic_request_print(struct re_printf *pf,
+	const struct httpauth_basic_req *req)
+{
+	if (!req)
+		return 0;
+
+	if (req->charset && str_len(req->charset))
+		return re_hprintf(pf, "Basic realm=\"%s\", charset=\"%s\"",
+			req->realm, req->charset);
+	else
+		return re_hprintf(pf, "Basic realm=\"%s\"", req->realm);
+}
+
+
+/**
+ * Verify received credentials
+ *
+ * @param user   user name (may be an UTF-8 string)
+ * @param passwd user password (may be an UTF-8 string)
+ *
+ * @return 0 if successfully verified, otherwise errorcode
+ */
+int httpauth_basic_verify(const struct pl *hval, const char *user,
+	const char *passwd)
+{
+	struct pl b64c = PL_INIT;
+	struct mbuf *mb = NULL;
+	char *c = NULL;
+	size_t clen = 0;
+	int err = 0;
+
+	if (!hval || !user || !passwd)
+		return EINVAL;
+
+	mb = mbuf_alloc(str_len(user) + str_len(passwd) + 1);
+	if (!mb)
+		return ENOMEM;
+
+	if (re_regex(hval->p, hval->l, "[ \t\r\n]*Basic[ \t\r\n]+[~ \t\r\n]*",
+		NULL, NULL, &b64c) || !pl_isset(&b64c)) {
+		err = EBADMSG;
+		goto out;
+	}
+
+	clen = b64c.l;
+	c = mem_zalloc(clen, NULL);
+	if (!c) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	err = base64_decode(b64c.p, b64c.l, (uint8_t *) c, &clen);
+	if (err)
+		goto out;
+
+	err = mbuf_printf(mb, "%b:%b",
+		user, str_len(user), passwd, str_len(passwd));
+	if (err)
+		goto out;
+
+	if (memcmp(mb->buf, c, clen) != 0)
+		err = EACCES;
+
+out:
+	mem_deref(c);
+	mem_deref(mb);
+
+	return err;
+}
+
+
+/**
+ * Create a Basic Authentication Request
+ *
+ * @param preq    httpauth_basic_req object ptr
+ * @param realm   realm
+ * @param charset optional charset
+ *
+ * @return 0 if successful, otherwise errorcode
+ */
+int httpauth_basic_request(struct httpauth_basic_req **preq,
+	const char *realm, const char *charset)
+{
+	struct httpauth_basic_req *req = NULL;
+	int err = 0;
+
+	if (!preq || !realm)
+		return EINVAL;
+
+	req = mem_zalloc(sizeof(*req), httpauth_basic_request_destructor);
+	if (!req)
+		return ENOMEM;
+
+	err = str_dup(&req->realm, realm);
+	if (str_isset(charset) && str_casecmp(charset, "UTF-8") == 0)
+		err |= str_dup(&req->charset, charset);
+
+	if (err)
+		mem_deref(req);
+	else
+		*preq = req;
+
+	return err;
+}
