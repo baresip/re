@@ -225,6 +225,7 @@ int test_https_conn_post_handshake(void);
 #endif
 int test_httpauth_chall(void);
 int test_httpauth_resp(void);
+int test_httpauth_basic_request(void);
 int test_ice_loop(void);
 int test_ice_cand(void);
 int test_jbuf(void);

@@ -118,6 +118,7 @@ static const struct test tests[] = {
 #endif
 	TEST(test_httpauth_chall),
 	TEST(test_httpauth_resp),
+	TEST(test_httpauth_basic_request),
 	TEST(test_ice_cand),
 	TEST(test_ice_loop),
 	TEST(test_jbuf),
