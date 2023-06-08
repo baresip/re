@@ -156,30 +156,41 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	}
 	else if (msg->scode < 400) {
 
-		/* Redirect to first Contact */
-
 		if (sess->terminated)
 			goto out;
 
-		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
-		if (!contact) {
-			err = EBADMSG;
-			goto out;
-		}
+		if (sess->redirecth) {
 
-		if (sip_addr_decode(&addr, &contact->val)) {
-			err = EBADMSG;
-			goto out;
-		}
+			contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
+			if (!contact) {
+				err = EBADMSG;
+				goto out;
+			}
+			if (sip_addr_decode(&addr, &contact->val)) {
+				err = EBADMSG;
+				goto out;
+			}
+			err = pl_strdup(&uri, &addr.auri);
+			if (err)
+				goto out;
 
-		err = pl_strdup(&uri, &addr.auri);
-		if (err)
-			goto out;
-
-		if (sess->redirecth)
 			sess->redirecth(msg, uri, sess->arg);
 
-		mem_deref(uri);
+			mem_deref(uri);
+		}
+		else {
+			/* Redirect to first Contact */
+
+			err = sip_dialog_update(sess->dlg, msg);
+			if (err)
+				goto out;
+
+			err = invite(sess);
+			if (err)
+				goto out;
+
+			return;
+		}
 	}
 	else {
 		if (sess->terminated)
