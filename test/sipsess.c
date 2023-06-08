@@ -496,18 +496,6 @@ static void conn_transfer_handler(const struct sip_msg *msg, void *arg)
 }
 
 
-static void redirect_handler(const struct sip_msg *msg, const char *uri,
-	void *arg)
-{
-	struct test *test = arg;
-
-	(void) msg;
-	(void) uri;
-
-	test->blind_transfer = true;
-}
-
-
 int test_sipsess(void)
 {
 	struct test test;
@@ -718,8 +706,7 @@ int test_sipsess_blind_transfer(void)
 	mem_deref(callid);
 	TEST_ERR(err);
 
-	err = sipsess_set_redirect_handler(test.a, redirect_handler);
-	TEST_ERR(err);
+	test.blind_transfer = true;
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
