@@ -109,6 +109,8 @@ static void sip_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	re_cancel();
 }
 
+#define CPARAMS "some-param=test;other-param=123;"
+
 
 static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 {
@@ -116,6 +118,7 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 	struct sip_server *srv = NULL;
 	struct sipreg *reg = NULL;
 	struct sip *sip = NULL;
+	const struct sip_hdr *contact_hdr = NULL;
 	char reg_uri[256];
 	int err;
 
@@ -148,6 +151,8 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 			      "sip:x@test",
 			      3600, "x", NULL, 0, 0, NULL, NULL, false,
 			      sip_resp_handler, &test, NULL, NULL);
+		err |= sipreg_set_contact_params(reg, CPARAMS);
+
 		if (srcport)
 			sipreg_set_srcport(reg, srcport);
 
@@ -167,6 +172,16 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 
 	TEST_ASSERT(srv->n_register_req > 0);
 	TEST_ASSERT(test.n_resp > 0);
+
+	if (!deprecated) {
+		contact_hdr = sip_msg_hdr(
+				srv->sip_msgs[srv->n_register_req - 1],
+				SIP_HDR_CONTACT);
+		err = re_regex(contact_hdr->val.p, contact_hdr->val.l,
+			";" CPARAMS ">;expires=", NULL);
+		TEST_ERR(err);
+	}
+
 
  out:
 	mem_deref(reg);
