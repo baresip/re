@@ -36,6 +36,7 @@ struct sipreg {
 	struct sip_auth *auth;
 	struct mbuf *hdrs;
 	char *cuser;
+	char *cparams;
 	sip_resp_h *resph;
 	void *arg;
 	uint32_t expires;
@@ -93,6 +94,7 @@ static void destructor(void *arg)
 	mem_deref(reg->sip);
 	mem_deref(reg->hdrs);
 	mem_deref(reg->params);
+	mem_deref(reg->cparams);
 }
 
 
@@ -299,8 +301,10 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 		sa_set_port(src, reg->srcport);
 
 	reg->laddr = *src;
-	err = mbuf_printf(mb, "Contact: <sip:%s@%J%s>;expires=%u%s%s",
+	err = mbuf_printf(mb, "Contact: <sip:%s@%J%s%s%s>;expires=%u%s%s",
 			  reg->cuser, &reg->laddr, sip_transp_param(reg->tp),
+			  reg->cparams ? ";" : "",
+			  reg->cparams ? reg->cparams : "",
 			  reg->expires,
 			  reg->params ? ";" : "",
 			  reg->params ? reg->params : "");
@@ -618,4 +622,19 @@ void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
 		return;
 
 	reg->srcport = srcport;
+}
+
+
+/**
+ * Set contact URI optional parameters
+ *
+ * @param reg      SIP registration client
+ * @param cparams  Contact URI optional parameters
+ */
+int sipreg_set_contact_params(struct sipreg *reg, const char *cparams)
+{
+	if (!reg)
+		return EINVAL;
+
+	return str_dup(&reg->cparams, cparams);
 }

@@ -304,5 +304,5 @@ out:
 	else
 		*mbp = mb;
 
-	return 0;
+	return err;
 }

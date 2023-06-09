@@ -23,6 +23,13 @@ static bool sip_msg_handler(const struct sip_msg *msg, void *arg)
 	int err;
 
 	if (0 == pl_strcmp(&msg->met, "REGISTER")) {
+		mbuf_set_pos(msg->mb, 0);
+		if (sip_msg_decode(&srv->sip_msgs[srv->n_register_req],
+					msg->mb)) {
+			DEBUG_NOTICE("sip message cannot be parsed (%r)\n",
+					&msg->met);
+			return false;
+		}
 		++srv->n_register_req;
 	}
 	else {
@@ -55,6 +62,8 @@ static void destructor(void *arg)
 	srv->terminate = true;
 
 	sip_close(srv->sip, false);
+	for (unsigned i=0; i<RE_ARRAY_SIZE(srv->sip_msgs); i++)
+	    mem_deref(srv->sip_msgs[i]);
 	mem_deref(srv->sip);
 }
 

@@ -79,6 +79,9 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	struct sipsess *sess = arg;
 	struct mbuf *desc = NULL;
 	bool sdp;
+	const struct sip_hdr *contact;
+	struct sip_addr addr;
+	char *uri;
 
 	if (!sess)
 		return;
@@ -153,24 +156,41 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	}
 	else if (msg->scode < 400) {
 
-		/* Redirect to first Contact */
-
 		if (sess->terminated)
 			goto out;
 
-		err = sip_dialog_update(sess->dlg, msg);
-		if (err)
-			goto out;
+		if (sess->redirecth) {
 
-		if (sess->redirecth)
-			sess->redirecth(msg, sip_dialog_uri(sess->dlg),
-				        sess->arg);
+			contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
+			if (!contact) {
+				err = EBADMSG;
+				goto out;
+			}
+			if (sip_addr_decode(&addr, &contact->val)) {
+				err = EBADMSG;
+				goto out;
+			}
+			err = pl_strdup(&uri, &addr.auri);
+			if (err)
+				goto out;
 
-		err = invite(sess);
-		if (err)
-			goto out;
+			sess->redirecth(msg, uri, sess->arg);
 
-		return;
+			mem_deref(uri);
+		}
+		else {
+			/* Redirect to first Contact */
+
+			err = sip_dialog_update(sess->dlg, msg);
+			if (err)
+				goto out;
+
+			err = invite(sess);
+			if (err)
+				goto out;
+
+			return;
+		}
 	}
 	else {
 		if (sess->terminated)
@@ -199,6 +219,7 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		sipsess_terminate(sess, err, msg);
 	else
 		mem_deref(sess);
+
 }
 
 
