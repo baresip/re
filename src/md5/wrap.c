@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#elif defined (__APPLE__)
+#include <CommonCrypto/CommonDigest.h>
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -31,6 +33,8 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	EVP_DigestUpdate(ctx, d, n);
 	EVP_DigestFinal_ex(ctx, md, NULL);
 	EVP_MD_CTX_free(ctx);
+#elif defined (__APPLE__)
+	CC_MD5(d, (unsigned int)n, md);
 #else
 #error missing MD5 backend
 #endif
