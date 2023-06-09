@@ -1,0 +1,15 @@
+name: iOS
+
+on: [push, pull_request]
+
+jobs:
+  ios:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: build
+      run: |
+        cmake -B build -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=ON -DUSE_OPENSSL=OFF -DCMAKE_C_FLAGS="-DDARWIN -Werror"
+        cmake --build build -- CODE_SIGNING_ALLOWED=NO
