@@ -129,6 +129,7 @@ static void verify_cert_done(void *arg)
 }
 
 
+#ifdef USE_TLS
 static int http_verify_handler(int ok, void *arg)
 {
 	struct http_verify_msg_d *d = arg;
@@ -146,12 +147,12 @@ static int http_verify_handler(int ok, void *arg)
 
 	return ok;
 }
+#endif
 
 
 static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 	struct http_msg *msg)
 {
-	int err;
 	enum re_https_verify_msg res;
 	struct http_verify_msg_d *d;
 
@@ -180,7 +181,8 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 		tmr_start(&conn->verify_cert_tmr, TIMEOUT_IDLE,
 			verify_cert_done, d);
 
-		err = tls_set_verify_client_handler(http_conn_tls(conn),
+#ifdef USE_TLS
+		int err = tls_set_verify_client_handler(http_conn_tls(conn),
 			-1, http_verify_handler, d);
 		if (err) {
 			res = HTTPS_MSG_IGNORE;
@@ -193,6 +195,7 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 			res = HTTPS_MSG_IGNORE;
 			goto out;
 		}
+#endif
 	}
 
 out:
