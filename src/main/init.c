@@ -41,7 +41,7 @@ static void signal_handler(int sig)
 
 
 #ifdef WIN32
-LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
+static LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	struct btrace bt;
 
