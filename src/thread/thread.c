@@ -86,6 +86,8 @@ static int handler(void *p)
 
 #ifdef HAVE_PRCTL
 	(void)prctl(PR_SET_NAME, th.name);
+#elif defined(WIN32)
+	/* Not implemented */
 #elif defined(DARWIN)
 	(void)pthread_setname_np(th.name);
 #elif defined(HAVE_PTHREAD)
