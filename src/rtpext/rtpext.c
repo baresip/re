@@ -17,13 +17,21 @@
 
 
 /*
- * RFC 5285 A General Mechanism for RTP Header Extensions
+ * RFC 8285 A General Mechanism for RTP Header Extensions
  *
  * - One-Byte Header:  Supported
  * - Two-Byte Header:  Not supported
  */
 
 
+/**
+ * Encode the One-Byte header for all RTP extensions
+ *
+ * @param mb        Buffer to encode into
+ * @param num_bytes Total size for all RTP extensions
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_hdr_encode(struct mbuf *mb, size_t num_bytes)
 {
 	int err = 0;
@@ -44,6 +52,16 @@ int rtpext_hdr_encode(struct mbuf *mb, size_t num_bytes)
 }
 
 
+/**
+ * Encode an RTP header extension with One-Byte header
+ *
+ * @param mb   Buffer to encode into
+ * @param id   Identifier
+ * @param len  Length of data field
+ * @param data Data bytes
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_encode(struct mbuf *mb, uint8_t id, size_t len,
 		  const uint8_t *data)
 {
@@ -73,6 +91,14 @@ int rtpext_encode(struct mbuf *mb, uint8_t id, size_t len,
 }
 
 
+/**
+ * Decode an RTP header extension with One-Byte header
+ *
+ * @param ext RTP Extension object
+ * @param mb  Buffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_decode(struct rtpext *ext, struct mbuf *mb)
 {
 	uint8_t v;
