@@ -92,6 +92,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()
 
+set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/re-config.cmake")
 
 list(APPEND RE_DEFINITIONS
