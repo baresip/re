@@ -92,8 +92,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   set_source_files_properties(src/mem/mem.c PROPERTIES COMPILE_FLAGS -Wpadded)
 endif()
 
-set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
-find_package(re CONFIG REQUIRED)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/re-config.cmake")
 
 list(APPEND RE_DEFINITIONS
   -DVERSION="${PROJECT_VERSION_FULL}"
@@ -642,7 +641,7 @@ if(WIN32)
     dbghelp
   )
 else()
-  list(APPEND LINKLIBS -lm)
+  list(APPEND LINKLIBS m)
 endif()
 
 if(UNIX)
@@ -668,7 +667,7 @@ target_include_directories(re-objs PRIVATE
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_include_directories(re-objs PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include> # pointless, object libs don't get installed.
   )
 
 
@@ -697,11 +696,14 @@ endif()
 if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
-  target_link_libraries(re PUBLIC ${LINKLIBS})
+  target_link_libraries(re PRIVATE ${LINKLIBS})
   add_library(libre::re ALIAS re)
 
   if(MSVC)
     set_target_properties(re PROPERTIES OUTPUT_NAME "re-static")
+    if(NOT LIBRE_BUILD_SHARED)
+      set(PC_LIBNAME "re-static")
+    endif()
   endif()
 endif()
 
@@ -714,6 +716,28 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(packaging)
 endif()
 
+if(NOT PC_LIBNAME)
+  set(PC_LIBNAME "re")
+endif()
+set(PC_REQUIRES "")
+set(PC_LINKLIBS "")
+foreach(item IN LISTS LINKLIBS)
+  if(item STREQUAL "Threads::Threads")
+    list(APPEND PC_LINKLIBS ${CMAKE_THREADS_LIBS_INIT})
+  elseif(item STREQUAL "OpenSSL::Crypto")
+    list(APPEND PC_REQUIRES "libcrypto")
+  elseif(item STREQUAL "OpenSSL::SSL")
+    list(APPEND PC_REQUIRES "libssl")
+  elseif(item STREQUAL "ZLIB::ZLIB")
+    list(APPEND PC_REQUIRES "zlib")
+  elseif(item MATCHES "^-|/")
+    list(APPEND PC_LINKLIBS "${item}")
+  else()
+    list(APPEND PC_LINKLIBS "-l${item}")
+  endif()
+endforeach()
+list(JOIN PC_LINKLIBS " " PC_LINKLIBS)
+list(JOIN PC_REQUIRES " " PC_REQUIRES)
 configure_file(packaging/libre.pc.in libre.pc @ONLY)
 
 
@@ -725,6 +749,9 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 
 install(TARGETS ${RE_INSTALL_TARGETS}
   EXPORT libre
+  RUNTIME
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Libraries
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Libraries
@@ -743,7 +770,9 @@ install(FILES ${HEADERS}
 
 install(EXPORT libre
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
+  FILE libre-targets.cmake
   NAMESPACE libre::
+  COMPONENT Development
 )
 
 if(LIBRE_BUILD_SHARED)
@@ -755,12 +784,8 @@ if(LIBRE_BUILD_SHARED)
   )
 endif()
 
-install(FILES cmake/re-config.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/re
-  COMPONENT Development
-)
-
-install(FILES cmake/libre-config.cmake
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/libre-config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake" @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake"
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
   COMPONENT Development
 )
