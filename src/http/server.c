@@ -512,7 +512,7 @@ struct tcp_sock *http_sock_tcp(struct http_sock *sock)
 /**
  * Get the TLS struct of an HTTP sock
  *
- * @param conn HTTP connection
+ * @param sock HTTP socket
  *
  * @return TLS struct
  */

@@ -1311,6 +1311,8 @@ void re_set_mutex(void *mutexp)
 /**
  * Check for NON-RE thread calls
  *
+ * @param debug True to print debug warning
+ *
  * @return 0 if success, otherwise EPERM
  */
 int re_thread_check(bool debug)

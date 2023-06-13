@@ -1028,10 +1028,13 @@ static int tls_verify_handler_ud(int ok, X509_STORE_CTX *ctx)
  * Enable request certificate from peer in TLS server connection
  * Set verify handler.
  *
- * @param tc     TLS connection
- * @param depth  Max depth certificate chain accepted.
- *               A negative depth uses default depth.
- * @param cb     SSL verify handler. If NULL default verify handler is used.
+ * @param tc      TLS connection
+ * @param depth   Max depth certificate chain accepted.
+ *                A negative depth uses default depth.
+ * @param verifyh SSL verify handler. If NULL default verify handler is used.
+ * @param arg     Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
 	int (*verifyh) (int ok, void *arg), void *arg)
