@@ -53,8 +53,8 @@ static int test_rtpext_long(void)
 {
 	static const uint8_t TEST_EXTENSION_ID_TWOBYTE = 0xf0;
 	static const size_t TEST_DATA_LENGTH = 3;
-	static const size_t NUM_BYTES = 8;
-	static const uint8_t packet[RTPEXT_HDR_SIZE + NUM_BYTES] = {
+#define NUM_BYTES_LONG 8
+	static const uint8_t packet[RTPEXT_HDR_SIZE + NUM_BYTES_LONG] = {
 		0x10, 0x00, 0x00, 0x02,
 		0xf0, 0x03, 0x01, 0x02,
 		0x03, 0x00, 0x00, 0x00
@@ -71,7 +71,7 @@ static int test_rtpext_long(void)
 
 	/* Encode packet */
 
-	int err = rtpext_hdr_encode_long(mb, NUM_BYTES);
+	int err = rtpext_hdr_encode_long(mb, NUM_BYTES_LONG);
 	ASSERT_EQ(0, err);
 
 	err = rtpext_encode_long(mb, TEST_EXTENSION_ID_TWOBYTE,
@@ -91,7 +91,7 @@ static int test_rtpext_long(void)
 	ASSERT_EQ(0, err);
 
 	ASSERT_EQ(RTPEXT_TYPE_MAGIC_LONG, hdr.type);
-	ASSERT_EQ(NUM_BYTES,              hdr.num_bytes);
+	ASSERT_EQ(NUM_BYTES_LONG,         hdr.num_bytes);
 
 	err = rtpext_decode_long(&ext, mb);
 	ASSERT_EQ(0, err);
