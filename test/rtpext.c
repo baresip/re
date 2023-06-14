@@ -52,7 +52,7 @@ static int rtpext_hdr_decode(struct rtpext_header *hdr, struct mbuf *mb)
 static int test_rtpext_long(void)
 {
 	static const uint8_t TEST_EXTENSION_ID_TWOBYTE = 0xf0;
-	static const size_t TEST_DATA_LENGTH = 3;
+#define TEST_DATA_LENGTH 3
 #define NUM_BYTES_LONG 8
 	static const uint8_t packet[RTPEXT_HDR_SIZE + NUM_BYTES_LONG] = {
 		0x10, 0x00, 0x00, 0x02,
@@ -123,12 +123,12 @@ static int test_rtpext_long(void)
 */
 static int test_rtpext_long_rfc(void)
 {
-	static const size_t NUM_BYTES = 12;
+	static const size_t NUM_BYTES_RFC = 12;
 	struct mbuf *mb = mbuf_alloc(1024);
 	if (!mb)
 		return ENOMEM;
 
-	int err = rtpext_hdr_encode_long(mb, NUM_BYTES);
+	int err = rtpext_hdr_encode_long(mb, NUM_BYTES_RFC);
 	ASSERT_EQ(0, err);
 
 	/* Encode */
@@ -145,7 +145,7 @@ static int test_rtpext_long_rfc(void)
 	err = rtpext_encode_long(mb, 0x82, 4, (uint8_t *)"ABCD" );
 	ASSERT_EQ(0, err);
 
-	static const uint8_t packet[RTPEXT_HDR_SIZE + NUM_BYTES] = {
+	static const uint8_t packet[RTPEXT_HDR_SIZE + NUM_BYTES_RFC] = {
 		0x10, 0x00, 0x00, 0x03,
 		0x80, 0x00, 0x81, 0x01,
 		0x41, 0x00, 0x82, 0x04,
@@ -164,7 +164,7 @@ static int test_rtpext_long_rfc(void)
 	ASSERT_EQ(0, err);
 
 	ASSERT_EQ(RTPEXT_TYPE_MAGIC_LONG, hdr.type);
-	ASSERT_EQ(NUM_BYTES,              hdr.num_bytes);
+	ASSERT_EQ(NUM_BYTES_RFC,          hdr.num_bytes);
 
 	struct rtpext ext;
 
