@@ -123,7 +123,7 @@ static int test_rtpext_long(void)
 */
 static int test_rtpext_long_rfc(void)
 {
-	static const size_t NUM_BYTES_RFC = 12;
+#define NUM_BYTES_RFC (12)
 	struct mbuf *mb = mbuf_alloc(1024);
 	if (!mb)
 		return ENOMEM;
