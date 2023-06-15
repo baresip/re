@@ -9,6 +9,9 @@
 #include <openssl/md5.h>
 #elif defined (__APPLE__)
 #include <CommonCrypto/CommonDigest.h>
+#elif defined (WIN32)
+#include <windows.h>
+#include <wincrypt.h>
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -35,6 +38,20 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	EVP_MD_CTX_free(ctx);
 #elif defined (__APPLE__)
 	CC_MD5(d, (unsigned int)n, md);
+
+#elif defined (WIN32)
+	HCRYPTPROV context;
+	HCRYPTHASH hash;
+	DWORD hash_size = MD5_SIZE;
+
+	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
+
+	CryptCreateHash(context, CALG_MD5, 0, 0, &hash);
+	CryptHashData(hash, d, n, 0);
+	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
+
+	CryptDestroyHash(hash);
+	CryptReleaseContext(context, 0);
 #else
 #error missing MD5 backend
 #endif
