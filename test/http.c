@@ -518,6 +518,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	if (err)
 		goto out;
 
+#ifdef USE_TLS
 	if (secure) {
 		struct tls*	 cli_tls;
 		http_client_get_tls(cli, &cli_tls);
@@ -551,6 +552,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 		if (err)
 			goto out;
 	}
+#endif
 
 	if (put)
 		http_client_set_bufsize_max(cli, REQ_BODY_CHUNK_SIZE + 128);

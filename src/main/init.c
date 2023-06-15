@@ -41,7 +41,7 @@ static void signal_handler(int sig)
 
 
 #ifdef WIN32
-LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
+static LONG WINAPI exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	struct btrace bt;
 
@@ -180,6 +180,8 @@ void libre_close(void)
 
 /**
  * Enable/Disable exception signal handling (SIGSEGV, SIGABRT, SIGILL...)
+ *
+ * @param enable True to enable, false to disable
  */
 void libre_exception_btrace(bool enable)
 {
