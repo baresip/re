@@ -18,6 +18,11 @@
 #include <re_hmac.h>
 
 
+#define DEBUG_MODULE "hmac"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
+
+
 #if !defined (USE_OPENSSL) && defined (WIN32)
 static void compute_hash(ALG_ID alg_id, const void* data, size_t dataSize,
 			 uint8_t hashBuf[64], DWORD hashSize,
@@ -45,10 +50,10 @@ static void compute_hash(ALG_ID alg_id, const void* data, size_t dataSize,
 	hmacSecretBlob->header.bVersion = CUR_BLOB_VERSION;
 	hmacSecretBlob->header.reserved = 0;
 	hmacSecretBlob->header.aiKeyAlg = CALG_RC2;
-	hmacSecretBlob->hmacSecretSize = hmacSecretSize;
+	hmacSecretBlob->hmacSecretSize = (DWORD)hmacSecretSize;
 	memcpy(hmacSecretBlob->hmacSecret, hmacSecret, hmacSecretSize);
 
-	CryptImportKey(context, blobData, hmacSecretBlobSize, 0,
+	CryptImportKey(context, blobData, (DWORD)hmacSecretBlobSize, 0,
 		       CRYPT_IPSEC_HMAC_KEY, &hmackey);
 
 	HCRYPTHASH hash;
@@ -63,7 +68,7 @@ static void compute_hash(ALG_ID alg_id, const void* data, size_t dataSize,
 		CryptGetHashParam(hash, HP_HASHSIZE,
 				  (BYTE *)&hashSize, &hashSizeSize, 0);
 		if (hashSize == 0) {
-			re_printf("INVALID HASHSIZE\n");
+			DEBUG_WARNING("INVALID HASHSIZE\n");
 		}
 
 		CryptHashData(hash, (BYTE*)data, dataSize, 0);
@@ -106,7 +111,8 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 	CCHmac(kCCHmacAlgSHA1, k, lk, d, ld, out);
 
 #elif defined (WIN32)
-	compute_hash(CALG_SHA1, d, ld, out, t, k, lk);
+	compute_hash(CALG_SHA1, d, ld,
+		     out, (DWORD)t, k, lk);
 #else
 	(void)k;
 	(void)lk;
@@ -139,7 +145,8 @@ void hmac_sha256(const uint8_t *key, size_t key_len,
 	CCHmac(kCCHmacAlgSHA256, key, key_len, data, data_len, out);
 
 #elif defined (WIN32)
-	compute_hash(CALG_SHA_256, data, data_len, out, out_len, key, key_len);
+	compute_hash(CALG_SHA_256, data, data_len,
+		     out, (DWORD)out_len, key, key_len);
 #else
 	(void)key;
 	(void)key_len;
