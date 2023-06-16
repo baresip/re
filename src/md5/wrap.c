@@ -47,7 +47,7 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
 
 	CryptCreateHash(context, CALG_MD5, 0, 0, &hash);
-	CryptHashData(hash, d, n, 0);
+	CryptHashData(hash, d, (DWORD)n, 0);
 	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
 
 	CryptDestroyHash(hash);
