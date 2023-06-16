@@ -18,7 +18,7 @@
 #include <re_sha.h>
 
 
-#ifdef WIN32
+#if !defined (USE_OPENSSL) && defined (WIN32)
 static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 			 uint8_t *md, DWORD hash_size)
 {
@@ -50,7 +50,7 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 	(void)SHA1(d, n, md);
 #elif defined (__APPLE__)
 	CC_SHA1(d, (uint32_t)n, md);
-#elif defined (_WIN32)
+#elif defined (WIN32)
 	compute_hash(CALG_SHA1, d, n, md, SHA1_DIGEST_SIZE);
 #else
 	(void)d;
