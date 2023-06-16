@@ -642,7 +642,7 @@ if(WIN32)
     dbghelp
   )
 else()
-  list(APPEND LINKLIBS -lm)
+  list(APPEND LINKLIBS m)
 endif()
 
 if(UNIX)
