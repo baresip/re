@@ -28,7 +28,7 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
 
 	CryptCreateHash(context, alg_id, 0, 0, &hash);
-	CryptHashData(hash, (BYTE*)data, data_size, 0);
+	CryptHashData(hash, (BYTE*)data, (DWORD)data_size, 0);
 	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
 
 	CryptDestroyHash(hash);
