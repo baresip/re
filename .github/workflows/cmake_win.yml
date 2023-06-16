@@ -53,4 +53,4 @@ jobs:
       - name: retest
         shell: cmd
         run: |
-          build\test\retest.exe -r -v
+          build\test\retest.exe

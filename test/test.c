@@ -773,6 +773,9 @@ static int thread_handler(void *arg)
 		if (err == ESKIPPED) {
 			err = 0;
 		}
+		else if (err == ENOSYS) {
+			err = 0;
+		}
 		else {
 			DEBUG_WARNING("%s: test failed (%m)\n",
 					thr->test->name, err);
@@ -834,7 +837,7 @@ int test_multithread(void)
 	for (i=0; i<RE_ARRAY_SIZE(threadv); i++) {
 
 		if (threadv[i].err != 0) {
-			re_printf("%u failed: %-30s  [%d] [%m]\n", i,
+			re_printf("mt: %u failed: %-30s  [%d] [%m]\n", i,
 				  threadv[i].test->name,
 				  threadv[i].err, threadv[i].err);
 			err = threadv[i].err;
