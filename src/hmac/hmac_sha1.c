@@ -71,7 +71,7 @@ static void compute_hash(ALG_ID alg_id, const void* data, size_t dataSize,
 			DEBUG_WARNING("INVALID HASHSIZE\n");
 		}
 
-		CryptHashData(hash, (BYTE*)data, dataSize, 0);
+		CryptHashData(hash, (BYTE*)data, (DWORD)dataSize, 0);
 		CryptGetHashParam(hash, HP_HASHVAL, hashBuf, &hashSize, 0);
 
 		CryptDestroyHash(hash);
