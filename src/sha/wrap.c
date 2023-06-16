@@ -11,8 +11,30 @@
 #include <openssl/sha.h>
 #elif defined (__APPLE__)
 #include <CommonCrypto/CommonDigest.h>
+#elif defined (WIN32)
+#include <windows.h>
+#include <wincrypt.h>
 #endif
 #include <re_sha.h>
+
+
+#ifdef WIN32
+static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
+			 uint8_t *md, DWORD hash_size)
+{
+	HCRYPTPROV context;
+	HCRYPTHASH hash;
+
+	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
+
+	CryptCreateHash(context, alg_id, 0, 0, &hash);
+	CryptHashData(hash, (BYTE*)data, data_size, 0);
+	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
+
+	CryptDestroyHash(hash);
+	CryptReleaseContext(context, 0);
+}
+#endif
 
 
 /**
@@ -28,6 +50,8 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 	(void)SHA1(d, n, md);
 #elif defined (__APPLE__)
 	CC_SHA1(d, (uint32_t)n, md);
+#elif defined (_WIN32)
+	compute_hash(CALG_SHA1, d, n, md, SHA1_DIGEST_SIZE);
 #else
 	(void)d;
 	(void)n;
@@ -50,6 +74,8 @@ void sha256(const uint8_t *d, size_t n, uint8_t *md)
 	(void)SHA256(d, n, md);
 #elif defined (__APPLE__)
 	CC_SHA256(d, (uint32_t)n, md);
+#elif defined (WIN32)
+	compute_hash(CALG_SHA_256, d, n, md, SHA256_DIGEST_SIZE);
 #else
 	(void)d;
 	(void)n;
