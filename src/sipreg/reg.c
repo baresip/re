@@ -630,6 +630,8 @@ void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
  *
  * @param reg      SIP registration client
  * @param cparams  Contact URI optional parameters
+ *
+ * @return 0 if success, otherwise errorcode
  */
 int sipreg_set_contact_params(struct sipreg *reg, const char *cparams)
 {

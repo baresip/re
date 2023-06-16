@@ -112,8 +112,10 @@ static void packet_alloc(struct jbuf *jb, struct packet **f)
 
 #if JBUF_STAT
 		STAT_INC(n_overflow);
-		DEBUG_INFO("drop 1 old frame seq=%u (total dropped %u)\n",
+		DEBUG_WARNING("drop 1 old frame seq=%u (total dropped %u)\n",
 			   f0->hdr.seq, jb->stat.n_overflow);
+#else
+		DEBUG_WARNING("drop 1 old frame seq=%u\n", f0->hdr.seq);
 #endif
 
 		f0->mem = mem_deref(f0->mem);

@@ -8,6 +8,7 @@
 #include <re_types.h>
 #include <re_mbuf.h>
 #include <re_net.h>
+#include <re_fmt.h>
 #include <re_rtpext.h>
 
 
@@ -17,13 +18,23 @@
 
 
 /*
- * RFC 5285 A General Mechanism for RTP Header Extensions
+ * RFC 8285 A General Mechanism for RTP Header Extensions
  *
  * - One-Byte Header:  Supported
- * - Two-Byte Header:  Not supported
+ * - Two-Byte Header:  Supported
+ *
+ * https://datatracker.ietf.org/doc/html/rfc8285
  */
 
 
+/**
+ * Encode the One-Byte header for all RTP extensions
+ *
+ * @param mb        Buffer to encode into
+ * @param num_bytes Total size for all RTP extensions
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_hdr_encode(struct mbuf *mb, size_t num_bytes)
 {
 	int err = 0;
@@ -44,6 +55,44 @@ int rtpext_hdr_encode(struct mbuf *mb, size_t num_bytes)
 }
 
 
+/**
+ * Encode the Two-Byte header for all RTP extensions
+ *
+ * @param mb        Buffer to encode into
+ * @param num_bytes Total size for all RTP extensions (multiple of 4)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int rtpext_hdr_encode_long(struct mbuf *mb, size_t num_bytes)
+{
+	int err = 0;
+
+	if (!mb || !num_bytes)
+		return EINVAL;
+
+	if (num_bytes & 0x3) {
+		DEBUG_WARNING("hdr_encode: num_bytes (%zu) must be multiple"
+			      " of 4\n", num_bytes);
+		return EINVAL;
+	}
+
+	err |= mbuf_write_u16(mb, htons(RTPEXT_TYPE_MAGIC_LONG));
+	err |= mbuf_write_u16(mb, htons((uint16_t)(num_bytes / 4)));
+
+	return err;
+}
+
+
+/**
+ * Encode an RTP header extension with One-Byte header
+ *
+ * @param mb   Buffer to encode into
+ * @param id   Identifier
+ * @param len  Length of data field
+ * @param data Data bytes
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_encode(struct mbuf *mb, uint8_t id, size_t len,
 		  const uint8_t *data)
 {
@@ -73,6 +122,14 @@ int rtpext_encode(struct mbuf *mb, uint8_t id, size_t len,
 }
 
 
+/**
+ * Decode an RTP header extension with One-Byte header
+ *
+ * @param ext RTP Extension object
+ * @param mb  Buffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int rtpext_decode(struct rtpext *ext, struct mbuf *mb)
 {
 	uint8_t v;
@@ -101,6 +158,81 @@ int rtpext_decode(struct rtpext *ext, struct mbuf *mb)
 	}
 
 	err = mbuf_read_mem(mb, ext->data, ext->len);
+	if (err)
+		return err;
+
+	/* skip padding */
+	while (mbuf_get_left(mb)) {
+		uint8_t pad = mbuf_buf(mb)[0];
+
+		if (pad != 0x00)
+			break;
+
+		mbuf_advance(mb, 1);
+	}
+
+	return 0;
+}
+
+
+/**
+ * Encode an RTP header extension with Two-Byte header
+ *
+ * @param mb   Buffer to encode into
+ * @param id   Identifier
+ * @param len  Length of data field
+ * @param data Data bytes
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t length,
+		       const uint8_t *data)
+{
+	if (!mb)
+		return EINVAL;
+
+	int err  = mbuf_write_u8(mb, id);
+	err     |= mbuf_write_u8(mb, length);
+
+	if (data && length)
+		err |= mbuf_write_mem(mb, data, length);
+
+	return err;
+}
+
+
+/**
+ * Decode an RTP header extension with Two-Byte header
+ *
+ * @param ext RTP Extension object
+ * @param mb  Buffer to decode from
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int rtpext_decode_long(struct rtpext *ext, struct mbuf *mb)
+{
+	if (!ext || !mb)
+		return EINVAL;
+
+	if (mbuf_get_left(mb) < 2)
+		return EBADMSG;
+
+	memset(ext, 0, sizeof(*ext));
+
+	ext->id  = mbuf_read_u8(mb);
+	ext->len = mbuf_read_u8(mb);
+
+	if (ext->id == 0) {
+		DEBUG_WARNING("decode_long: invalid ID %u\n", ext->id);
+		return EBADMSG;
+	}
+	if (ext->len > mbuf_get_left(mb)) {
+		DEBUG_WARNING("decode_long: short read (%zu > %zu)\n",
+			      ext->len, mbuf_get_left(mb));
+		return ENODATA;
+	}
+
+	int err = mbuf_read_mem(mb, ext->data, ext->len);
 	if (err)
 		return err;
 
