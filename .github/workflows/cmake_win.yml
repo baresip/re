@@ -48,16 +48,6 @@ jobs:
             testing: true
           }
         - {
-            name: "Windows (VS 2022/Ninja) Debug 32-bit",
-            os: windows-2022,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_x86.bat",
-            generators: "Ninja",
-            build: "Debug",
-            openssl: true,
-            disable_openssl: "OFF",
-            testing: true
-          }
-        - {
             name: "Windows (VS 2022/Ninja) Debug ARM 64-bit",
             os: windows-2022,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
