@@ -141,6 +141,38 @@ static void queueh(int id, void *data, void *arg)
 }
 
 
+static void work_destruct(void *arg)
+{
+	struct async_work *work = arg;
+	mem_deref(work->mtx);
+}
+
+
+static int work_alloc(struct async_work **workp)
+{
+	int err;
+	struct async_work *work;
+
+	work = mem_zalloc(sizeof(struct async_work), NULL);
+	if (!work) {
+		err = ENOMEM;
+		return err;
+	}
+
+	err = mutex_alloc(&work->mtx);
+	if (err) {
+		mem_deref(work);
+		return err;
+	}
+
+	mem_destructor(work, work_destruct);
+
+	*workp = work;
+
+	return 0;
+}
+
+
 /**
  * Allocate a new async object
  *
@@ -153,7 +185,7 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 {
 	int err;
 	struct re_async *async;
-	struct async_work *async_work;
+	struct async_work *work;
 
 	if (!asyncp || !workers)
 		return EINVAL;
@@ -191,13 +223,11 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 		async->workers++;
 
 		/* preallocate */
-		async_work = mem_zalloc(sizeof(struct async_work), NULL);
-		if (!async_work) {
-			err = ENOMEM;
+		err = work_alloc(&work);
+		if (err)
 			goto err;
-		}
 
-		list_append(&async->freel, &async_work->le, async_work);
+		list_append(&async->freel, &work->le, work);
 	}
 
 	tmr_start(&async->tmr, 10, worker_check, async);
@@ -209,13 +239,6 @@ int re_async_alloc(struct re_async **asyncp, uint16_t workers)
 err:
 	mem_deref(async);
 	return err;
-}
-
-
-static void work_destruct(void *arg)
-{
-	struct async_work *work = arg;
-	mem_deref(work->mtx);
 }
 
 
@@ -241,19 +264,10 @@ int re_async(struct re_async *async, intptr_t id, re_async_work_h *workh,
 
 	mtx_lock(&async->mtx);
 	if (unlikely(list_isempty(&async->freel))) {
-		work = mem_zalloc(sizeof(struct async_work), NULL);
-		if (!work) {
-			err = ENOMEM;
-			goto out;
-		}
 
-		err = mutex_alloc(&work->mtx);
-		if (err) {
-			mem_deref(work);
+		err = work_alloc(&work);
+		if (err)
 			goto out;
-		}
-
-		mem_destructor(work, work_destruct);
 	}
 	else {
 		work = list_head(&async->freel)->data;
