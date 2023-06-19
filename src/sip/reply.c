@@ -119,7 +119,7 @@ static int vreplyf(struct sip_strans **stp, struct mbuf **mbp, bool trans,
 		err = sip_strans_reply(stp, sip, msg, &dst, scode, mb);
 	}
 	else {
-		err = sip_send(sip, msg->sock, msg->tp, &dst, mb, NULL, NULL);
+		err = sip_send(sip, msg->sock, msg->tp, &dst, mb);
 	}
 
  out:

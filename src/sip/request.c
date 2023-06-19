@@ -234,8 +234,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 		goto out;
 
 	if (!req->stateful) {
-		err = sip_send(req->sip, NULL, tp, dst, mb, connect_handler,
-			       req);
+		err = sip_send_conn(req->sip, NULL, tp, dst, mb,
+				    connect_handler, req);
 	}
 	else {
 		err = sip_ctrans_request(&req->ct, req->sip, tp, dst, req->met,

@@ -251,7 +251,7 @@ static void invite_response(struct sip_ctrans *ct, const struct sip_msg *msg)
 
 			(void)request_copy(&ct->mb_ack, ct, "ACK", msg);
 			(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst,
-				       ct->mb_ack, NULL, NULL);
+				       ct->mb_ack);
 
 			ct->resph(0, msg, ct->arg);
 
@@ -268,8 +268,7 @@ static void invite_response(struct sip_ctrans *ct, const struct sip_msg *msg)
 		if (msg->scode < 300)
 			break;
 
-		(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst, ct->mb_ack,
-			       NULL, NULL);
+		(void)sip_send(ct->sip, NULL, ct->tp, &ct->dst, ct->mb_ack);
 		break;
 
 	default:

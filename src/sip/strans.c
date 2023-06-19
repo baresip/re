@@ -158,7 +158,7 @@ static void retransmit_handler(void *arg)
 	struct sip_strans *st = arg;
 
 	(void)sip_send(st->sip, st->msg->sock, st->msg->tp, &st->dst,
-		       st->mb, NULL, NULL);
+		       st->mb);
 
 	st->txc++;
 	tmr_start(&st->tmrg, MIN(SIP_T1<<st->txc, SIP_T2), retransmit_handler,
@@ -247,7 +247,7 @@ static bool request_handler(const struct sip_msg *msg, void *arg)
 		case PROCEEDING:
 		case COMPLETED:
 			(void)sip_send(st->sip, st->msg->sock, st->msg->tp,
-				       &st->dst, st->mb, NULL, NULL);
+				       &st->dst, st->mb);
 			break;
 
 		default:
@@ -352,7 +352,7 @@ int sip_strans_reply(struct sip_strans **stp, struct sip *sip,
 	st->mb = mem_ref(mb);
 	st->dst = *dst;
 
-	err = sip_send(sip, st->msg->sock, st->msg->tp, dst, mb, NULL, NULL);
+	err = sip_send(sip, st->msg->sock, st->msg->tp, dst, mb);
 
 	if (stp)
 		*stp = (err || scode >= 200) ? NULL : st;

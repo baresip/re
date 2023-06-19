@@ -83,7 +83,7 @@ static void retransmit_handler(void *arg)
 	uint32_t delay;
 
 	(void)sip_send(reply->sess->sip, reply->msg->sock, reply->msg->tp,
-		       &reply->msg->src, reply->mb, NULL, NULL);
+		       &reply->msg->src, reply->mb);
 
 	reply->txc++;
 
