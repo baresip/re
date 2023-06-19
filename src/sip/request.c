@@ -221,13 +221,14 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	req->provrecv = false;
 
 	mem_deref(req->branch);
-	req->branch = mem_alloc(24, NULL);
+	(void)re_sdprintf(&req->branch, "z9hG4bK%016llx", rand_u64());
 	mb  = mbuf_alloc(1024);
-
 	if (!req->branch || !mb)
 		goto out;
 
-	(void)re_snprintf(req->branch, 24, "z9hG4bK%016llx", rand_u64());
+
+	if (!req->branch || !mb)
+		goto out;
 
 	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
 	if (err)
