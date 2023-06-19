@@ -197,6 +197,28 @@ void sip_close(struct sip *sip, bool force)
 
 
 /**
+ * Send a SIP message and use given SIP connected handler
+ *
+ * @param sip   SIP stack instance
+ * @param sock  Optional socket to send from
+ * @param tp    SIP transport
+ * @param dst   Destination network address
+ * @param mb    Buffer containing SIP message
+ * @param connh SIP connected handler
+ * @param arg   Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_send_conn(struct sip *sip, void *sock, enum sip_transp tp,
+		  const struct sa *dst, struct mbuf *mb,
+		  sip_conn_h *connh, void *arg)
+{
+	return sip_transp_send(NULL, sip, sock, tp, dst, NULL, mb, connh, NULL,
+			       arg);
+}
+
+
+/**
  * Send a SIP message
  *
  * @param sip  SIP stack instance
@@ -210,7 +232,8 @@ void sip_close(struct sip *sip, bool force)
 int sip_send(struct sip *sip, void *sock, enum sip_transp tp,
 	     const struct sa *dst, struct mbuf *mb)
 {
-	return sip_transp_send(NULL, sip, sock, tp, dst, NULL, mb, NULL, NULL);
+	return sip_transp_send(NULL, sip, sock, tp, dst, NULL, mb, NULL, NULL,
+			       NULL);
 }
 
 
