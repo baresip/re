@@ -166,22 +166,17 @@ static int connect_handler(struct sa *src, const struct sa *dst,
 	struct sip_request *req = arg;
 	struct mbuf *mbs  = NULL;
 	struct mbuf *cont = NULL;
-	struct sa laddr;
 	int err;
 
 	if (!sa_isset(src, SA_ALL))
 		return EINVAL;
-
-	err = sip_transp_laddr(req->sip, &laddr, req->tp, dst);
-	if (err)
-		goto out;
 
 	mbuf_set_posend(mb, 0, 0);
 	mbs = mbuf_alloc(256);
 	if (!mbs)
 		return ENOMEM;
 
-	err = req->sendh ? req->sendh(req->tp, &laddr, dst, mbs, &cont,
+	err = req->sendh ? req->sendh(req->tp, src, dst, mbs, &cont,
 				      req->arg) : 0;
 	if (err)
 		goto out;
