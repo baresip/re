@@ -1,10 +1,15 @@
 #!/bin/bash
 
-#target=192.168.110.192
-#netif=eno1
-target=10.1.0.215
-netif=enp8s0
-once=true
+if [ ! -f .env ]; then
+    echo ".env is missing. Copy and edit env-template!"
+    exit 1
+fi
+
+export `cat .env`
+
+echo "target: $target"
+echo "netif:  $netif"
+echo "once:   $once"
 
 function init_jitter () {
     sudo ip link add ifb1 type ifb || :
