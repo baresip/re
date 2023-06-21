@@ -7,8 +7,8 @@ audio_buffer   60-160
 audio_buffer_mode	adaptive
 audio_silence		0.0
 
-jitter_buffer_type	adaptive
-jitter_buffer_delay   0-20
+audio_jitter_buffer_type	adaptive
+audio_jitter_buffer_delay	0-20
 
 module_path		/usr/local/lib/baresip/modules
 
@@ -22,9 +22,7 @@ module			g711.so
 module			auconv.so
 module			auresamp.so
 
-module			alsa.so
 module			pulse.so
-module			pulse_async.so
 
 
 module_app		account.so
