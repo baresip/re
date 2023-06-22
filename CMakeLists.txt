@@ -668,7 +668,6 @@ target_include_directories(re-objs PRIVATE
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_include_directories(re-objs PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
   )
 
 
