@@ -45,7 +45,6 @@ struct vidmix_source {
 	unsigned fint;
 	bool selfview;
 	bool content;
-	bool clear;
 	bool run;
 };
 
@@ -57,19 +56,6 @@ static inline void source_mix_full(struct vidframe *mframe,
 static inline void clear_frame(struct vidframe *vf)
 {
 	vidframe_fill(vf, 0, 0, 0);
-}
-
-
-static void clear_all(struct vidmix *mix)
-{
-	for (struct le *le=mix->srcl.head; le; le=le->next) {
-
-		struct vidmix_source *src = le->data;
-
-		mtx_lock(&src->mutex);
-		src->clear = true;
-		mtx_unlock(&src->mutex);
-	}
 }
 
 
@@ -91,7 +77,6 @@ static void source_destructor(void *arg)
 	if (src->le.list) {
 		mtx_lock(&src->mix->rwlock);
 		list_unlink(&src->le);
-		clear_all(src->mix);
 		mtx_unlock(&src->mix->rwlock);
 	}
 
@@ -219,10 +204,7 @@ static int vidmix_thread(void *arg)
 
 		mtx_lock(&mix->rwlock);
 
-		if (src->clear) {
-			clear_frame(src->frame_tx);
-			src->clear = false;
-		}
+		clear_frame(src->frame_tx);
 
 		for (le=mix->srcl.head, n=0; le; le=le->next) {
 
@@ -511,8 +493,6 @@ void vidmix_source_enable(struct vidmix_source *src, bool enable)
 		list_unlink(&src->le);
 	}
 
-	clear_all(src->mix);
-
 	mtx_unlock(&src->mix->rwlock);
 }
 
@@ -629,7 +609,6 @@ void vidmix_source_set_content_hide(struct vidmix_source *src, bool hide)
 
 	mtx_lock(&src->mutex);
 	src->content_hide = hide;
-	src->clear = true;
 	mtx_unlock(&src->mutex);
 }
 
@@ -646,7 +625,6 @@ void vidmix_source_toggle_selfview(struct vidmix_source *src)
 
 	mtx_lock(&src->mutex);
 	src->selfview = !src->selfview;
-	src->clear = true;
 	mtx_unlock(&src->mutex);
 }
 
@@ -668,7 +646,6 @@ void vidmix_source_set_focus(struct vidmix_source *src,
 	mtx_lock(&src->mutex);
 	src->focus_full = focus_full;
 	src->focus = (void *)focus_src;
-	src->clear = true;
 	mtx_unlock(&src->mutex);
 }
 
@@ -717,7 +694,6 @@ void vidmix_source_set_focus_idx(struct vidmix_source *src, uint32_t pidx)
 	mtx_lock(&src->mutex);
 	src->focus_full = focus_full;
 	src->focus = focus;
-	src->clear = true;
 	mtx_unlock(&src->mutex);
 }
 
@@ -746,8 +722,6 @@ void vidmix_source_put(struct vidmix_source *src, const struct vidframe *frame)
 
 		mem_deref(src->frame_rx);
 		src->frame_rx = frm;
-
-		clear_all(src->mix);
 
 		mtx_unlock(&src->mix->rwlock);
 	}
