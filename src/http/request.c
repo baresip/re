@@ -319,7 +319,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 			mbuf_printf(clbuf, "Content-Length: %llu\r\n",
 				    conn->bodyl);
 		else
-			mbuf_printf(clbuf, "Content-Length: %lu\r\n",
+			mbuf_printf(clbuf, "Content-Length: %zu\r\n",
 				    mbuf_get_left(conn->body));
 
 		mbuf_set_pos(clbuf, 0);
@@ -333,7 +333,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 		pl_set_mbuf(&ct, ctbuf);
 	}
 
-	DEBUG_INFO("send %s uri=%s path=%s len=%lu %s auth.\n",
+	DEBUG_INFO("send %s uri=%s path=%s len=%zu %s auth.\n",
 			conn->met, conn->uri, conn->path,
 			mbuf_get_left(conn->body),
 			auth ? "with" : "without");
