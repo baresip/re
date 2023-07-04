@@ -5,6 +5,49 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v3.3.0] - 2023-07-05
+
+## What's Changed
+* jbuf: use float ratio by @sreimers in https://github.com/baresip/re/pull/817
+* src: fix some typos by @alfredh in https://github.com/baresip/re/pull/828
+* jbuf: constant jbuf_put() by @cspiel1 in https://github.com/baresip/re/pull/821
+* ci/coverity: split up prepare and make steps by @sreimers in https://github.com/baresip/re/pull/832
+* vidmix: coverity fix by @alfredh in https://github.com/baresip/re/pull/830
+* sys/fs: fix fs_stdio_hide resource leak by @sreimers in https://github.com/baresip/re/pull/833
+* http: coverity fix by @alfredh in https://github.com/baresip/re/pull/834
+* avc: fix coverity by @alfredh in https://github.com/baresip/re/pull/835
+* sys: fix return value by @alfredh in https://github.com/baresip/re/pull/836
+* Do not automatically make new call when 3xx response is received by @juha-h in https://github.com/baresip/re/pull/829
+* sipreg: supports PNS custom contact URI by @codyit in https://github.com/baresip/re/pull/837
+* ci: add iOS platform by @alfredh in https://github.com/baresip/re/pull/838
+* ci/mingw: use cv2pdb for debug info conversion by @sreimers in https://github.com/baresip/re/pull/839
+* main: fix warning on Windows by @alfredh in https://github.com/baresip/re/pull/842
+* http: add compile-time check for USE_TLS by @alfredh in https://github.com/baresip/re/pull/841
+* test: check if USE_TLS is defined by @alfredh in https://github.com/baresip/re/pull/843
+* thread: fix WIN32 mingw warning by @sreimers in https://github.com/baresip/re/pull/844
+* src: fix doxygen warnings by @alfredh in https://github.com/baresip/re/pull/847
+* rtpext: add doxygen comments by @alfredh in https://github.com/baresip/re/pull/846
+* jbuf: enable old frame drop warnings by @sreimers in https://github.com/baresip/re/pull/848
+* md5: add support for native Windows Wincrypt API by @alfredh in https://github.com/baresip/re/pull/850
+* rtpext: add support for Two-Byte headers by @alfredh in https://github.com/baresip/re/pull/849
+* sha: add support for Windows native API by @alfredh in https://github.com/baresip/re/pull/851
+* cmake: change '-lm' to 'm' in LINKLIBS by @alfredh in https://github.com/baresip/re/pull/854
+* hmac: add support for native Windows API by @alfredh in https://github.com/baresip/re/pull/853
+* CI: Add support for building Windows ARM by @alfredh in https://github.com/baresip/re/pull/855
+* async: add work mutex handling by @sreimers in https://github.com/baresip/re/pull/857
+* SIP/TCP use source port for Via header by @cspiel1 in https://github.com/baresip/re/pull/824
+* sip: use TCP source port for Contact header by @cspiel1 in https://github.com/baresip/re/pull/858
+* cmake: remove obsolete $<INSTALL_INTERFACE:include for re-objs by @alfredh in https://github.com/baresip/re/pull/860
+* vidmix: always clear frames (avoid artifacts) by @sreimers in https://github.com/baresip/re/pull/861
+* http: use correct formatting %zu for size_t by @alfredh in https://github.com/baresip/re/pull/866
+
+## New Contributors
+* @codyit made their first contribution in https://github.com/baresip/re/pull/837
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.2.0...v3.3.0
+
+
 ## [v3.2.0] - 2023-05-31
 
 ## What's Changed
