@@ -185,17 +185,17 @@ int rtpext_decode(struct rtpext *ext, struct mbuf *mb)
  *
  * @return 0 if success, otherwise errorcode
  */
-int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t length,
+int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t len,
 		       const uint8_t *data)
 {
 	if (!mb)
 		return EINVAL;
 
 	int err  = mbuf_write_u8(mb, id);
-	err     |= mbuf_write_u8(mb, length);
+	err     |= mbuf_write_u8(mb, len);
 
-	if (data && length)
-		err |= mbuf_write_mem(mb, data, length);
+	if (data && len)
+		err |= mbuf_write_mem(mb, data, len);
 
 	return err;
 }
