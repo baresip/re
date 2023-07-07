@@ -27,6 +27,7 @@ struct vidmix {
 	struct list srcl;
 	bool initialized;
 	uint32_t next_pidx;
+	enum vidfmt fmt;
 };
 
 struct vidmix_source {
@@ -329,6 +330,7 @@ int vidmix_alloc(struct vidmix **mixp)
 		goto out;
 	}
 
+	mix->fmt	 = VID_FMT_YUV420P;
 	mix->initialized = true;
 
  out:
@@ -338,6 +340,21 @@ int vidmix_alloc(struct vidmix **mixp)
 		*mixp = mix;
 
 	return err;
+}
+
+
+/**
+ * Set video mixer pixel format
+ *
+ * @param mix Video mixer
+ * @param fmt Pixel format
+ */
+void vidmix_set_fmt(struct vidmix *mix, enum vidfmt fmt)
+{
+	if (!mix)
+		return;
+
+	mix->fmt = fmt;
 }
 
 
@@ -382,7 +399,7 @@ int vidmix_source_alloc(struct vidmix_source **srcp, struct vidmix *mix,
 	}
 
 	if (sz) {
-		err = vidframe_alloc(&src->frame_tx, VID_FMT_YUV420P, sz);
+		err = vidframe_alloc(&src->frame_tx, mix->fmt, sz);
 		if (err)
 			goto out;
 
@@ -564,7 +581,7 @@ int vidmix_source_set_size(struct vidmix_source *src, const struct vidsz *sz)
 	if (src->frame_tx && vidsz_cmp(&src->frame_tx->size, sz))
 		return 0;
 
-	err = vidframe_alloc(&frame, VID_FMT_YUV420P, sz);
+	err = vidframe_alloc(&frame, src->mix->fmt, sz);
 	if (err)
 		return err;
 
@@ -706,7 +723,7 @@ void vidmix_source_set_focus_idx(struct vidmix_source *src, uint32_t pidx)
  */
 void vidmix_source_put(struct vidmix_source *src, const struct vidframe *frame)
 {
-	if (!src || !frame || frame->fmt != VID_FMT_YUV420P)
+	if (!src || !frame || frame->fmt != src->mix->fmt)
 		return;
 
 	if (!src->frame_rx || !vidsz_cmp(&src->frame_rx->size, &frame->size)) {
@@ -714,7 +731,7 @@ void vidmix_source_put(struct vidmix_source *src, const struct vidframe *frame)
 		struct vidframe *frm;
 		int err;
 
-		err = vidframe_alloc(&frm, VID_FMT_YUV420P, &frame->size);
+		err = vidframe_alloc(&frm, src->mix->fmt, &frame->size);
 		if (err)
 			return;
 
