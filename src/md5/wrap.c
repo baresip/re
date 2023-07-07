@@ -12,6 +12,9 @@
 #elif defined (WIN32)
 #include <windows.h>
 #include <wincrypt.h>
+#elif defined (USE_MBEDTLS)
+#include <mbedtls/md5.h>
+#include <mbedtls/error.h>
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
@@ -19,6 +22,10 @@
 #include <re_mbuf.h>
 #include <re_md5.h>
 
+
+#define DEBUG_MODULE "md5"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 /**
  * Calculate the MD5 hash from a buffer
@@ -52,6 +59,13 @@ void md5(const uint8_t *d, size_t n, uint8_t *md)
 
 	CryptDestroyHash(hash);
 	CryptReleaseContext(context, 0);
+#elif defined (MBEDTLS_MD_C)
+	int err;
+
+	err = mbedtls_md5(d, n, md);
+	if (err)
+		DEBUG_WARNING("mbedtls_md5: %s\n",
+			      mbedtls_high_level_strerr(err));
 #else
 #error missing MD5 backend
 #endif
