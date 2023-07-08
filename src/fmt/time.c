@@ -127,5 +127,5 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 #endif
 	(void)arg;
 
-	return re_hprintf(pf, "%02u:%02u:%02u.%03d", h, m, s, ms);
+	return re_hprintf(pf, "%02u:%02u:%02u.%03llu", h, m, s, ms);
 }
