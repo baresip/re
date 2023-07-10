@@ -6,10 +6,10 @@ find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(ZLIB)
 find_package(OpenSSL "1.1.1")
-find_package(MbedTLS)
+find_package(MBEDTLS)
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
-option(USE_MBEDTLS "Enable MbedTLS" ${MbedTLS_FOUND})
+option(USE_MBEDTLS "Enable MbedTLS" ${MBEDTLS_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
 option(USE_TRACE "Enable Tracing helpers" OFF)
 

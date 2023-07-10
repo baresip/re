@@ -16,7 +16,7 @@ find_library(MBEDTLS_LIBRARY
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(MbedTLS DEFAULT_MSG
+find_package_handle_standard_args(MBEDTLS DEFAULT_MSG
     MBEDTLS_INCLUDE_DIR MBEDTLS_LIBRARY)
 
 if(MBEDTLS_FOUND)
