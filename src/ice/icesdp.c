@@ -3,6 +3,10 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#ifndef WIN32
+#include <netdb.h>
+#endif
+
 #include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
@@ -14,6 +18,7 @@
 #include <re_net.h>
 #include <re_stun.h>
 #include <re_ice.h>
+#include <re_main.h>
 #include "ice.h"
 
 
@@ -32,6 +37,19 @@ const char ice_attr_mismatch[]    = "ice-mismatch";
 
 static const char rel_addr_str[] = "raddr";
 static const char rel_port_str[] = "rport";
+
+
+struct rcand {
+	struct icem *icem;
+	enum ice_cand_type type;
+	unsigned cid;
+	uint32_t prio;
+	uint32_t port;
+	struct sa caddr;
+	struct sa rel_addr;
+	struct pl foundation;
+	char domain[128];
+};
 
 
 /* Encode SDP Attributes */
@@ -186,6 +204,67 @@ static int media_pwd_decode(struct icem *icem, const char *value)
 }
 
 
+static int getaddr_rcand(void *arg)
+{
+	struct rcand *rcand = arg;
+	struct addrinfo *res, *res0 = NULL;
+	struct addrinfo hints;
+	int err;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_flags	= AI_V4MAPPED | AI_ADDRCONFIG;
+
+	err = getaddrinfo(rcand->domain, NULL, &hints, &res0);
+	if (err)
+		return EADDRNOTAVAIL;
+
+	for (res = res0; res; res = res->ai_next) {
+
+		err = sa_set_sa(&rcand->caddr, res->ai_addr);
+		if (err)
+			continue;
+
+		break;
+	}
+
+	sa_set_port(&rcand->caddr, rcand->port);
+
+	freeaddrinfo(res);
+
+	return 0;
+}
+
+
+static void delayed_rcand(int err, void *arg)
+{
+	struct rcand *rcand = arg;
+
+	if (err)
+		goto out;
+
+	/* add only if not exist */
+	if (icem_cand_find(&rcand->icem->rcandl, rcand->cid, &rcand->caddr))
+		goto out;
+
+	icem_rcand_add(rcand->icem, rcand->type, rcand->cid, rcand->prio,
+		       &rcand->caddr, &rcand->rel_addr, &rcand->foundation);
+
+out:
+	mem_deref(rcand);
+}
+
+
+static void rcand_dealloc(void *arg)
+{
+	struct rcand *rcand = arg;
+
+	mem_deref(rcand->icem);
+	mem_deref((char *)rcand->foundation.p);
+	mem_deref(rcand->domain);
+}
+
+
 static int cand_decode(struct icem *icem, const char *val)
 {
 	struct pl foundation, compid, transp, prio, addr, port, cand_type;
@@ -233,17 +312,40 @@ static int cand_decode(struct icem *icem, const char *val)
 		}
 	}
 
-	err = sa_set(&caddr, &addr, pl_u32(&port));
-	if (err)
-		return err;
-
+	(void)pl_strcpy(&cand_type, type, sizeof(type));
 	cid = pl_u32(&compid);
+
+	err = sa_set(&caddr, &addr, pl_u32(&port));
+	if (err) {
+		if (err != EINVAL)
+			return err;
+
+		/* try non blocking getaddr mdns resolution */
+		struct rcand *rcand =
+			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
+		if (!rcand)
+			return ENOMEM;
+
+		rcand->icem	= mem_ref(icem);
+		rcand->type	= ice_cand_name2type(type);
+		rcand->cid	= cid;
+		rcand->prio	= pl_u32(&prio);
+		rcand->port	= pl_u32(&port);
+		rcand->rel_addr = rel_addr;
+
+		pl_dup(&rcand->foundation, &foundation);
+		(void)pl_strcpy(&addr, rcand->domain, sizeof(rcand->domain));
+
+		err = re_thread_async(getaddr_rcand, delayed_rcand, rcand);
+		if (err)
+			mem_deref(rcand);
+
+		return err;
+	}
 
 	/* add only if not exist */
 	if (icem_cand_find(&icem->rcandl, cid, &caddr))
 		return 0;
-
-	(void)pl_strcpy(&cand_type, type, sizeof(type));
 
 	return icem_rcand_add(icem, ice_cand_name2type(type), cid,
 			      pl_u32(&prio), &caddr, &rel_addr, &foundation);
