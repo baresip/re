@@ -152,6 +152,7 @@ int httpauth_basic_request_print(struct re_printf *pf,
 /**
  * Verify received credentials
  *
+ * @param hval   http authentication header value containing the credentials
  * @param user   user name (may be an UTF-8 string)
  * @param passwd user password (may be an UTF-8 string)
  *
