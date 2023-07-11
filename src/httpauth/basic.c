@@ -138,14 +138,16 @@ static void httpauth_basic_request_destructor(void *arg)
 int httpauth_basic_request_print(struct re_printf *pf,
 	const struct httpauth_basic_req *req)
 {
-	if (!req)
-		return 0;
+	int err = 0;
 
-	if (req->charset && str_len(req->charset))
-		return re_hprintf(pf, "Basic realm=\"%s\", charset=\"%s\"",
-			req->realm, req->charset);
-	else
-		return re_hprintf(pf, "Basic realm=\"%s\"", req->realm);
+	if (!pf || !req)
+		return EINVAL;
+
+	err = re_hprintf(pf, "Basic realm=\"%s\"", req->realm);
+	if (str_isset(req->charset))
+		err |= re_hprintf(pf, ", charset=\"%s\"", req->charset);
+
+	return err;
 }
 
 
