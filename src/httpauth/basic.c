@@ -193,15 +193,20 @@ int httpauth_basic_verify(const struct pl *hval, const char *user,
 	if (err)
 		goto out;
 
-	err = mbuf_printf(mb, "%b:%b",
-		user, str_len(user), passwd, str_len(passwd));
+	err = mbuf_printf(mb, "%s:%s", user, passwd);
 	if (err)
 		goto out;
 
-	if (memcmp(mb->buf, c, clen) != 0)
+	if (mem_seccmp(mb->buf, (uint8_t *)c, clen) != 0)
 		err = EACCES;
 
 out:
+	if (c)
+		mem_secclean(c, clen);
+
+	if (mb)
+		mem_secclean(mb->buf, mb->size);
+
 	mem_deref(c);
 	mem_deref(mb);
 
