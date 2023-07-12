@@ -34,8 +34,9 @@ enum rel100_state {
 enum connect_action {
 	CONN_PROGRESS = 1,
 	CONN_PROGR_ANS = 2,
-	CONN_ANSWER = 4,
-	CONN_BUSY = 8
+	CONN_PROGR_UPD = 4,
+	CONN_ANSWER = 8,
+	CONN_BUSY = 16
 };
 
 
@@ -408,7 +409,8 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	test->desc = desc;
 
 	if (test->conn_action & CONN_PROGRESS
-	    || test->conn_action & CONN_PROGR_ANS) {
+	    || test->conn_action & CONN_PROGR_ANS
+	    || test->conn_action & CONN_PROGR_UPD) {
 		err = sipsess_accept(&test->b, test->sock, msg, 183,
 				"Progress", test->rel100_b, "b",
 				"application/sdp", desc, NULL, NULL, false,
@@ -434,6 +436,20 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 			test->answ_ret_code = err;
 			goto out;
 		}
+	}
+	else if (test->conn_action & CONN_PROGR_UPD) {
+		mem_deref(desc);
+		desc = mbuf_alloc(0);
+		if (!desc) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		mbuf_set_pos(desc, 0);
+		test->desc = desc;
+
+		err = sipsess_modify(test->b, desc);
+		TEST_ERR(err);
 	}
 	else if (test->conn_action & CONN_ANSWER) {
 		err = sipsess_accept(&test->b, test->sock, msg, 200, "OK",
@@ -1289,6 +1305,89 @@ int test_sipsess_update_uas(void)
 	ASSERT_TRUE(test.progr_a);
 	ASSERT_TRUE(test.upd_a);
 	ASSERT_TRUE(!test.upd_b);
+
+out:
+	tmr_cancel(&test.ans_tmr);
+	test.a = mem_deref(test.a);
+	test.b = mem_deref(test.b);
+
+	sipsess_close_all(test.sock);
+	test.sock = mem_deref(test.sock);
+
+	sip_close(test.sip, false);
+	test.sip = mem_deref(test.sip);
+
+	mem_deref(desc_a);
+	mem_deref(test.desc);
+
+	return err;
+}
+
+
+int test_sipsess_update_no_sdp(void)
+{
+	struct test test;
+	struct sa laddr;
+	char to_uri[256];
+	struct mbuf *desc_a = NULL;
+	int err;
+	uint16_t port;
+	char *callid;
+
+	memset(&test, 0, sizeof(test));
+
+	test.rel100_a = REL100_DISABLED;
+	test.rel100_b = REL100_DISABLED;
+	test.conn_action = CONN_PROGR_UPD;
+
+	err = sip_alloc(&test.sip, NULL, 32, 32, 32,
+			"retest", exit_handler, NULL);
+	TEST_ERR(err);
+
+	(void)sa_set_str(&laddr, "127.0.0.1", 0);
+	err = sip_transp_add(test.sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(test.sip, &laddr, SIP_TRANSP_UDP, NULL);
+	TEST_ERR(err);
+
+	port = sa_port(&laddr);
+
+	err = sipsess_listen(&test.sock, test.sip, 32, conn_handler,
+			     &test);
+	TEST_ERR(err);
+
+	err = str_x64dup(&callid, rand_u64());
+	TEST_ERR(err);
+
+	/* Connect to "b" */
+	(void)re_snprintf(to_uri, sizeof(to_uri), "sip:b@127.0.0.1:%u", port);
+	err = sipsess_connect(&test.a, test.sock, to_uri, NULL,
+			      "sip:a@127.0.0.1", "a", NULL, 0,
+			      "application/sdp", NULL, NULL, false,
+			      callid, desc_handler_a,
+			      offer_handler_a, answer_handler_a,
+			      progr_handler_a, estab_handler_a, NULL,
+			      NULL, close_handler, &test, NULL);
+	mem_deref(callid);
+	TEST_ERR(err);
+
+	err = re_main_timeout(200);
+	TEST_ERR(err);
+
+	if (test.err) {
+		err = test.err;
+		TEST_ERR(err);
+	}
+
+	/* okay here -- verify */
+	ASSERT_TRUE(test.estab_a);
+	ASSERT_TRUE(test.estab_b);
+	ASSERT_TRUE(test.answr_a);
+	ASSERT_TRUE(test.answr_b);
+	ASSERT_TRUE(!test.offer_a);
+	ASSERT_TRUE(test.offer_b);
+	ASSERT_TRUE(test.progr_a);
 
 out:
 	tmr_cancel(&test.ans_tmr);

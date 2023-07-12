@@ -154,10 +154,6 @@ int sipsess_update(struct sipsess *sess)
 	if (!sess || sess->terminated || !sess->ctype || !sess->desc)
 		return EINVAL;
 
-	if ((!sess->established && !sess->refresh_allowed)
-	    || sess->awaiting_answer)
-		return EPROTO;
-
 	err = sipsess_request_alloc(&req, sess, sess->ctype, sess->desc, NULL,
 				    NULL);
 	if (err)
