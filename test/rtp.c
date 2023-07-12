@@ -636,12 +636,11 @@ int test_rtcp_twcc(void)
 	};
 
 	struct mbuf *buf = mbuf_alloc(sizeof(packets));
+	if (!buf)
+		return ENOMEM;
 
 	struct rtcp_msg *msg = NULL;
 	int err = 0;
-
-	if (!buf)
-		return ENOMEM;
 
 	mbuf_write_mem(buf, packets, sizeof(packets));
 	mbuf_set_pos(buf, 0);
