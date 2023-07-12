@@ -14,9 +14,17 @@
 #elif defined (WIN32)
 #include <windows.h>
 #include <wincrypt.h>
+#elif defined (USE_MBEDTLS)
+#include <mbedtls/sha1.h>
+#include <mbedtls/sha256.h>
+#include <mbedtls/error.h>
 #endif
 #include <re_sha.h>
 
+
+#define DEBUG_MODULE "sha"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 #if !defined (USE_OPENSSL) && defined (WIN32)
 static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
@@ -52,6 +60,13 @@ void sha1(const uint8_t *d, size_t n, uint8_t *md)
 	CC_SHA1(d, (uint32_t)n, md);
 #elif defined (WIN32)
 	compute_hash(CALG_SHA1, d, n, md, SHA1_DIGEST_SIZE);
+#elif defined (MBEDTLS_MD_C)
+	int err;
+
+	err = mbedtls_sha1(d, n, md);
+	if (err)
+		DEBUG_WARNING("mbedtls_sha1: %s\n",
+			      mbedtls_high_level_strerr(err));
 #else
 	(void)d;
 	(void)n;
@@ -76,6 +91,13 @@ void sha256(const uint8_t *d, size_t n, uint8_t *md)
 	CC_SHA256(d, (uint32_t)n, md);
 #elif defined (WIN32)
 	compute_hash(CALG_SHA_256, d, n, md, SHA256_DIGEST_SIZE);
+#elif defined (MBEDTLS_MD_C)
+	int err;
+
+	err = mbedtls_sha256(d, n, md, 0);
+	if (err)
+		DEBUG_WARNING("mbedtls_sha256: %s\n",
+			      mbedtls_high_level_strerr(err));
 #else
 	(void)d;
 	(void)n;

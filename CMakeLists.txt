@@ -535,6 +535,7 @@ else()
   list(APPEND SRCS
     src/aes/stub.c
     src/hmac/hmac.c
+    src/tls/stub.c
   )
 endif()
 
