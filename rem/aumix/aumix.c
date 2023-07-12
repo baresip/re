@@ -31,6 +31,8 @@ struct aumix {
 	uint32_t srate;
 	uint8_t ch;
 	aumix_record_h *recordh;
+	aumix_record_h *record_sumh;
+	struct auframe rec_sum;
 	bool run;
 };
 
@@ -202,6 +204,38 @@ static int aumix_thread(void *arg)
 			src->fh(mix_frame, mix->frame_size, src->arg);
 		}
 
+		if (mix->record_sumh) {
+			struct le *cle;
+
+			memcpy(mix_frame, base_frame, mix->frame_size * 2);
+
+			LIST_FOREACH(&mix->srcl, cle)
+			{
+				struct aumix_source *csrc = cle->data;
+				int32_t sample;
+
+				if (csrc->muted)
+					continue;
+
+				for (size_t i = 0; i < mix->frame_size; i++) {
+					sample = mix_frame[i] + csrc->frame[i];
+
+					/* soft clipping */
+					if (sample >= 32767)
+						sample = 32767;
+					if (sample <= -32767)
+						sample = -32767;
+
+					mix_frame[i] = (int16_t)sample;
+				}
+			}
+
+			mix->rec_sum.timestamp = now;
+			mix->rec_sum.sampv     = mix_frame;
+
+			mix->record_sumh(&mix->rec_sum);
+		}
+
 		ts += mix->ptime;
 	}
 
@@ -245,6 +279,10 @@ int aumix_alloc(struct aumix **mixp, uint32_t srate,
 	mix->ch         = ch;
 	mix->recordh    = NULL;
 
+	mix->rec_sum.ch	  = ch;
+	mix->rec_sum.srate = srate;
+	mix->rec_sum.sampc = mix->frame_size;
+
 	err = mtx_init(&mix->mutex, mtx_plain) != thrd_success;
 	if (err) {
 		err = ENOMEM;
@@ -276,7 +314,7 @@ int aumix_alloc(struct aumix **mixp, uint32_t srate,
 
 
 /**
- * Add record handler
+ * Add mulitrack record handler (each source can be identified by auframe->id)
  *
  * @param mix      Audio mixer
  * @param recordh  Record Handler
@@ -288,6 +326,23 @@ void aumix_recordh(struct aumix *mix, aumix_record_h *recordh)
 
 	mtx_lock(&mix->mutex);
 	mix->recordh = recordh;
+	mtx_unlock(&mix->mutex);
+}
+
+
+/**
+ * Add single track record handler
+ *
+ * @param mix      Audio mixer
+ * @param recordh  Record Handler
+ */
+void aumix_record_sumh(struct aumix *mix, aumix_record_h *recordh)
+{
+	if (!mix)
+		return;
+
+	mtx_lock(&mix->mutex);
+	mix->record_sumh = recordh;
 	mtx_unlock(&mix->mutex);
 }
 
