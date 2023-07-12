@@ -643,7 +643,6 @@ int test_rtcp_twcc(void)
 	if (!buf)
 		return ENOMEM;
 
-	mbuf_rewind(buf);
 	mbuf_write_mem(buf, packets, sizeof(packets));
 	mbuf_set_pos(buf, 0);
 
