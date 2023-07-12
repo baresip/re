@@ -314,7 +314,7 @@ int aumix_alloc(struct aumix **mixp, uint32_t srate,
 
 
 /**
- * Add mulitrack record handler (each source can be identified by auframe->id)
+ * Add multitrack record handler (each source can be identified by auframe->id)
  *
  * @param mix      Audio mixer
  * @param recordh  Record Handler
