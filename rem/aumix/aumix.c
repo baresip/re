@@ -191,7 +191,7 @@ static int aumix_thread(void *arg)
 				for (size_t i = 0; i < mix->frame_size; i++) {
 					sample = mix_frame[i] + csrc->frame[i];
 
-					/* soft clipping */
+					/* hard clipping */
 					if (sample >= 32767)
 						sample = 32767;
 					if (sample <= -32767)
@@ -220,7 +220,7 @@ static int aumix_thread(void *arg)
 				for (size_t i = 0; i < mix->frame_size; i++) {
 					sample = mix_frame[i] + csrc->frame[i];
 
-					/* soft clipping */
+					/* hard clipping */
 					if (sample >= 32767)
 						sample = 32767;
 					if (sample <= -32767)
@@ -331,7 +331,7 @@ void aumix_recordh(struct aumix *mix, aumix_record_h *recordh)
 
 
 /**
- * Add single track record handler
+ * Add sum record handler
  *
  * @param mix      Audio mixer
  * @param recordh  Record Handler
