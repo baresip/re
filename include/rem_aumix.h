@@ -21,6 +21,7 @@ typedef void (aumix_read_h)(struct auframe *af, void *arg);
 int aumix_alloc(struct aumix **mixp, uint32_t srate,
 		uint8_t ch, uint32_t ptime);
 void aumix_recordh(struct aumix *mix, aumix_record_h *recordh);
+void aumix_record_sumh(struct aumix *mix, aumix_record_h *recordh);
 int aumix_playfile(struct aumix *mix, const char *filepath);
 uint32_t aumix_source_count(const struct aumix *mix);
 int aumix_source_alloc(struct aumix_source **srcp, struct aumix *mix,
