@@ -31,8 +31,8 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-#ifndef VERSION
-#define VERSION "???"
+#ifndef RE_VERSION
+#define RE_VERSION "???"
 #endif
 
 
@@ -358,7 +358,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 			(conn->bodyh || conn->body) ? req_body_handler : NULL,
 			conn,
 			"%r%s"
-			"User-Agent: re " VERSION "\r\n"
+			"User-Agent: re " RE_VERSION "\r\n"
 			"%r"
 			"%r"
 			"%r"

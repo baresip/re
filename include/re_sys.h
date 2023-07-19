@@ -5,8 +5,8 @@
  */
 #include <stdio.h>
 
-#ifndef VERSION
-#define VERSION "?"
+#ifndef RE_VERSION
+#define RE_VERSION "?"
 #endif
 
 /**

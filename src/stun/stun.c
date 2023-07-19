@@ -18,7 +18,7 @@
 #include "stun.h"
 
 
-const char *stun_software = "libre v" VERSION " (" ARCH "/" OS ")";
+const char *stun_software = "libre v" RE_VERSION " (" ARCH "/" OS ")";
 
 
 static const struct stun_conf conf_default = {
