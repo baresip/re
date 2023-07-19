@@ -25,7 +25,7 @@
 #include <re_dbg.h>
 
 
-static const char *sw = "ice stunsrv v" VERSION " (" ARCH "/" OS ")";
+static const char *sw = "ice stunsrv v" RE_VERSION " (" ARCH "/" OS ")";
 
 
 /*
