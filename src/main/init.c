@@ -4,7 +4,9 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <stdlib.h>
+#ifdef HAVE_SIGNAL
 #include <signal.h>
+#endif
 #ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -24,6 +26,7 @@
 static bool exception_btrace = false;
 
 
+#ifdef HAVE_SIGNAL
 static void signal_handler(int sig)
 {
 	struct btrace bt;
@@ -38,6 +41,7 @@ static void signal_handler(int sig)
 		   &bt);
 	fflush(stderr);
 }
+#endif
 
 
 #ifdef WIN32
@@ -141,9 +145,11 @@ int libre_init(void)
 	int err;
 
 	if (exception_btrace) {
+#ifdef HAVE_SIGNAL
 		(void)signal(SIGSEGV, signal_handler);
 		(void)signal(SIGABRT, signal_handler);
 		(void)signal(SIGILL, signal_handler);
+#endif
 #ifdef WIN32
 		SetUnhandledExceptionFilter(exception_handler);
 #endif
