@@ -49,6 +49,7 @@ int      pl_cmp(const struct pl *pl1, const struct pl *pl2);
 int      pl_casecmp(const struct pl *pl1, const struct pl *pl2);
 const char *pl_strchr(const struct pl *pl, char c);
 const char *pl_strrchr(const struct pl *pl, char c);
+const char *pl_strstr(const struct pl *pl, const char *str);
 int      pl_trim(struct pl *pl);
 int      pl_ltrim(struct pl *pl);
 int      pl_rtrim(struct pl *pl);

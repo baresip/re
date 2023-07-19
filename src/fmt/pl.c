@@ -656,6 +656,39 @@ const char *pl_strrchr(const struct pl *pl, char c)
 
 
 /**
+ * Locate the fist substring in a pointer-length string
+ *
+ * @param pl  Pointer-length string
+ * @param str Substring to locate
+ *
+ * @return Pointer to first char if substring is found, otherwise NULL
+ */
+const char *pl_strstr(const struct pl *pl, const char *str)
+{
+	unsigned int i;
+
+	/*case pl not set & pl is not long enough*/
+	if (!pl_isset(pl) || pl->l < str_len(str))
+		return NULL;
+
+	/*case str is empty or just '\0'*/
+	if (!str_len(str))
+		return pl->p;
+
+	for (i = 0; i < pl->l; ++i) {
+		/*case rest of pl is not long enough*/
+		if (pl->l - i < str_len(str))
+			return NULL;
+
+		if (!memcmp(pl->p + i, str, str_len(str)))
+			return pl->p + i;
+	}
+
+	return NULL;
+}
+
+
+/**
  * Trim white space characters at start of pointer-length string
  *
  * @param pl Pointer-length string
