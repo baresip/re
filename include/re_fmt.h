@@ -39,6 +39,7 @@ uint64_t pl_u64(const struct pl *pl);
 uint64_t pl_x64(const struct pl *pl);
 double   pl_float(const struct pl *pl);
 int      pl_bool(bool *val, const struct pl *pl);
+int      pl_hex(const struct pl *pl, uint8_t *hex, unsigned int len);
 bool     pl_isset(const struct pl *pl);
 int      pl_strcpy(const struct pl *pl, char *str, size_t size);
 int      pl_strdup(char **dst, const struct pl *src);

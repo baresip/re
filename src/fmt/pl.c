@@ -356,6 +356,31 @@ int pl_bool(bool *val, const struct pl *pl)
 
 
 /**
+ * Convert an ASCII hex string as a pointer-length object to binary format
+ *
+ * @param pl  Pointer-length object
+ * @param hex Destination binary buffer
+ * @param len Length of binary buffer
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int pl_hex(const struct pl *pl, uint8_t *hex, unsigned int len)
+{
+	unsigned int i;
+
+	if (!pl_isset(pl) || !hex || (pl->l != (2 * len)))
+		return EINVAL;
+
+	for (i = 0; i < pl->l; i += 2) {
+		hex[i/2]  = ch_hex(*(pl->p + i)) << 4;
+		hex[i/2] += ch_hex(*(pl->p + i +1));
+	}
+
+	return 0;
+}
+
+
+/**
  * Check if pointer-length object is set
  *
  * @param pl Pointer-length object
