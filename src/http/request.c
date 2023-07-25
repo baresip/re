@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include <re_types.h>
+#include <re_sys.h>
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_sa.h>
@@ -30,10 +31,6 @@
 #define DEBUG_MODULE "reqconn"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
-
-#ifndef RE_VERSION
-#define RE_VERSION "???"
-#endif
 
 
 enum {
