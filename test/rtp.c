@@ -632,7 +632,18 @@ int test_rtcp_twcc(void)
 		0xfa, 0x17, 0x00, 0x00, 0x00,
 		0x02, 0x00, 0x2a, 0x00, 0x0b, 0x00,
 		0x42, 0x6e, 0x02, 0x9b, 0xf8,
-		0xb8, 0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+		0xb8, 0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+
+		/* Chrome 114 */
+		0x8f, 0xcd, 0x00, 0x08,
+		0xfa, 0x17, 0xfa, 0x17,
+		0x4f, 0x10, 0x01, 0x6f,
+		0x00, 0x08, 0x00, 0x0e,
+		0x25, 0x27, 0x0c, 0x02,
+		0x20, 0x0e, 0xb9, 0x0b,
+		0x27, 0x00, 0x15, 0x0b,
+		0x0a, 0x00, 0x00, 0x10,
+		0x0b, 0x10, 0x10, 0x1d
 	};
 
 	struct mbuf *buf = mbuf_alloc(sizeof(packets));
@@ -689,6 +700,26 @@ int test_rtcp_twcc(void)
 	ASSERT_EQ(msg->r.fb.fci.twccv->fbcount, 2);
 	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 2);
 	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 9);
+	msg = mem_deref(msg);
+
+	/* Chrome 114 */
+	err = rtcp_decode(&msg, buf);
+	TEST_ERR(err);
+	ASSERT_TRUE(!msg->hdr.p);
+	ASSERT_EQ(RTCP_RTPFB_TWCC, msg->hdr.count);
+	ASSERT_EQ(205, msg->hdr.pt);
+	ASSERT_EQ(8, msg->hdr.length);
+	ASSERT_EQ(0xfa17fa17, msg->r.fb.ssrc_packet);
+	ASSERT_EQ(0x4f10016f, msg->r.fb.ssrc_media);
+	ASSERT_EQ(6, msg->r.fb.n);
+	const struct twcc *twcc = msg->r.fb.fci.twccv;
+	ASSERT_TRUE(twcc != NULL);
+	ASSERT_EQ(8, twcc->seq);
+	ASSERT_EQ(14, twcc->count);
+	ASSERT_EQ(2434828, twcc->reftime);
+	ASSERT_EQ(2, twcc->fbcount);
+	ASSERT_EQ(2, mbuf_get_left(twcc->chunks));
+	ASSERT_EQ(14, mbuf_get_left(twcc->deltas));
 	msg = mem_deref(msg);
 
 	/* Assert we have processed everything. */
