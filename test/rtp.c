@@ -649,50 +649,50 @@ int test_rtcp_twcc(void)
 	   (with padding 00 00 03) */
 	err = rtcp_decode(&msg, buf);
 	TEST_ERR(err);
-	EXPECT_EQ(err, 0);
-	EXPECT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
-	EXPECT_EQ(msg->r.fb.n, 5);
-	EXPECT_TRUE(msg->r.fb.fci.twccv != NULL);
-	EXPECT_EQ(msg->r.fb.fci.twccv->seq, 3);
-	EXPECT_EQ(msg->r.fb.fci.twccv->count, 9);
-	EXPECT_EQ(msg->r.fb.fci.twccv->reftime, 17005);
-	EXPECT_EQ(msg->r.fb.fci.twccv->fbcount, 0);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 2);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 7);
+	ASSERT_EQ(err, 0);
+	ASSERT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
+	ASSERT_EQ(msg->r.fb.n, 5);
+	ASSERT_TRUE(msg->r.fb.fci.twccv != NULL);
+	ASSERT_EQ(msg->r.fb.fci.twccv->seq, 3);
+	ASSERT_EQ(msg->r.fb.fci.twccv->count, 9);
+	ASSERT_EQ(msg->r.fb.fci.twccv->reftime, 17005);
+	ASSERT_EQ(msg->r.fb.fci.twccv->fbcount, 0);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 2);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 7);
 	msg = mem_deref(msg);
 
 	/* TWCC n=10 base=12 count=30 reftime=17005 fbcount=1 chunks=6
 	   deltas=23 (with padding 00 00 03) */
 	err = rtcp_decode(&msg, buf);
 	TEST_ERR(err);
-	EXPECT_EQ(err, 0);
-	EXPECT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
-	EXPECT_EQ(msg->r.fb.n, 10);
-	EXPECT_EQ(msg->r.fb.fci.twccv->seq, 12);
-	EXPECT_EQ(msg->r.fb.fci.twccv->count, 30);
-	EXPECT_EQ(msg->r.fb.fci.twccv->reftime, 17005);
-	EXPECT_EQ(msg->r.fb.fci.twccv->fbcount, 1);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 6);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 23);
+	ASSERT_EQ(err, 0);
+	ASSERT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
+	ASSERT_EQ(msg->r.fb.n, 10);
+	ASSERT_EQ(msg->r.fb.fci.twccv->seq, 12);
+	ASSERT_EQ(msg->r.fb.fci.twccv->count, 30);
+	ASSERT_EQ(msg->r.fb.fci.twccv->reftime, 17005);
+	ASSERT_EQ(msg->r.fb.fci.twccv->fbcount, 1);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 6);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 23);
 	msg = mem_deref(msg);
 
 	/* TWCC n=5 base=42 count=11 reftime=17006 fbcount=2 chunks=2
 	   deltas=9 (with padding 01) */
 	err = rtcp_decode(&msg, buf);
 	TEST_ERR(err);
-	EXPECT_EQ(err, 0);
-	EXPECT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
-	EXPECT_EQ(msg->r.fb.n, 5);
-	EXPECT_EQ(msg->r.fb.fci.twccv->seq, 42);
-	EXPECT_EQ(msg->r.fb.fci.twccv->count, 11);
-	EXPECT_EQ(msg->r.fb.fci.twccv->reftime, 17006);
-	EXPECT_EQ(msg->r.fb.fci.twccv->fbcount, 2);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 2);
-	EXPECT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 9);
+	ASSERT_EQ(err, 0);
+	ASSERT_EQ(msg->hdr.count, RTCP_RTPFB_TWCC);
+	ASSERT_EQ(msg->r.fb.n, 5);
+	ASSERT_EQ(msg->r.fb.fci.twccv->seq, 42);
+	ASSERT_EQ(msg->r.fb.fci.twccv->count, 11);
+	ASSERT_EQ(msg->r.fb.fci.twccv->reftime, 17006);
+	ASSERT_EQ(msg->r.fb.fci.twccv->fbcount, 2);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->chunks), 2);
+	ASSERT_EQ(mbuf_get_left(msg->r.fb.fci.twccv->deltas), 9);
 	msg = mem_deref(msg);
 
 	/* Assert we have processed everything. */
-	EXPECT_EQ(mbuf_get_left(buf), 0);
+	ASSERT_EQ(mbuf_get_left(buf), 0);
 
  out:
 	mem_deref(buf);

@@ -392,7 +392,7 @@ static void stun_resp_handler(int err, uint16_t scode, const char *reason,
 	++test->n_resp;
 
 	/* verify STUN response */
-	EXPECT_EQ(0, scode);
+	ASSERT_EQ(0, scode);
 	TEST_EQUALS(0x0101, stun_msg_type(msg));
 	TEST_EQUALS(STUN_CLASS_SUCCESS_RESP, stun_msg_class(msg));
 	TEST_EQUALS(STUN_METHOD_BINDING, stun_msg_method(msg));
