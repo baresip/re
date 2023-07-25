@@ -310,6 +310,7 @@ int test_sipsess_100rel_420(void);
 int test_sipsess_100rel_421(void);
 int test_sipsess_update_uac(void);
 int test_sipsess_update_uas(void);
+int test_sipsess_update_no_sdp(void);
 int test_srtp(void);
 int test_srtcp(void);
 int test_srtp_gcm(void);

@@ -161,9 +161,13 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
  */
 int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 {
-	if (!sess || (!sess->established && !sess->refresh_allowed)
-	    || sess->terminated || sess->awaiting_answer)
+	if (!sess || sess->terminated || sess->awaiting_answer
+	    || !sip_dialog_established(sess->dlg))
 		return EINVAL;
+
+	if (!sess->established && !sess->refresh_allowed
+	    && mbuf_get_left(desc))
+		return EPROTO;
 
 	mem_deref(sess->desc);
 	sess->desc = mem_ref(desc);
@@ -175,5 +179,6 @@ int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 		sess->modify_pending = true;
 		return 0;
 	}
+
 	return sipsess_reinvite(sess, true);
 }
