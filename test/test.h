@@ -152,9 +152,6 @@ extern enum test_mode test_mode;
 		goto out;					\
 	}
 
-#define EXPECT_EQ    ASSERT_EQ
-#define EXPECT_TRUE  ASSERT_TRUE
-
 
 /* Module API */
 int test_aac(void);
