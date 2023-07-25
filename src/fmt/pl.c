@@ -679,7 +679,7 @@ const char *pl_strrchr(const struct pl *pl, char c)
 
 
 /**
- * Locate the fist substring in a pointer-length string
+ * Locate the first substring in a pointer-length string
  *
  * @param pl  Pointer-length string
  * @param str Substring to locate
