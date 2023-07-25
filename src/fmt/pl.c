@@ -364,14 +364,12 @@ int pl_bool(bool *val, const struct pl *pl)
  *
  * @return 0 if success, otherwise errorcode
  */
-int pl_hex(const struct pl *pl, uint8_t *hex, unsigned int len)
+int pl_hex(const struct pl *pl, uint8_t *hex, size_t len)
 {
-	unsigned int i;
-
 	if (!pl_isset(pl) || !hex || (pl->l != (2 * len)))
 		return EINVAL;
 
-	for (i = 0; i < pl->l; i += 2) {
+	for (size_t i = 0; i < pl->l; i += 2) {
 		hex[i/2]  = ch_hex(*(pl->p + i)) << 4;
 		hex[i/2] += ch_hex(*(pl->p + i +1));
 	}
@@ -690,22 +688,22 @@ const char *pl_strrchr(const struct pl *pl, char c)
  */
 const char *pl_strstr(const struct pl *pl, const char *str)
 {
-	unsigned int i;
+	size_t len = str_len(str);
 
 	/*case pl not set & pl is not long enough*/
-	if (!pl_isset(pl) || pl->l < str_len(str))
+	if (!pl_isset(pl) || pl->l < len)
 		return NULL;
 
 	/*case str is empty or just '\0'*/
-	if (!str_len(str))
+	if (!len)
 		return pl->p;
 
-	for (i = 0; i < pl->l; ++i) {
+	for (size_t i = 0; i < pl->l; ++i) {
 		/*case rest of pl is not long enough*/
-		if (pl->l - i < str_len(str))
+		if (pl->l - i < len)
 			return NULL;
 
-		if (!memcmp(pl->p + i, str, str_len(str)))
+		if (!memcmp(pl->p + i, str, len))
 			return pl->p + i;
 	}
 
