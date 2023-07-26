@@ -253,11 +253,6 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 		return;
 	}
 
-	if (got_offer && !sess->refresh_allowed) {
-		(void)sip_reply(sip, msg, 488, "Not Acceptable Here");
-		return;
-	}
-
 	if (is_invite || got_offer) {
 		err = sess->offerh(&desc, msg, sess->arg);
 		if (err) {
