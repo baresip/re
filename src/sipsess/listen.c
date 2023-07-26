@@ -253,7 +253,7 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 		return;
 	}
 
-	if (got_offer && !sess->refresh_allowed) {
+	if (got_offer && !sipsess_refresh_allowed(sess)) {
 		(void)sip_reply(sip, msg, 488, "Not Acceptable Here");
 		return;
 	}
