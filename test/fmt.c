@@ -30,6 +30,8 @@ int test_fmt_pl(void)
 	const struct pl pl4  = PL("rattarei4");
 	const char str0[] = "rattarei";
 	const char str1[] = "rattaray";
+	const char str2[] = "foo";
+	const char str3[] = "bar";
 	struct pl pl5, pl6;
 	const struct pl pl7   = PL("hei");
 	const struct pl pl7_  = PL("Hei");
@@ -114,6 +116,20 @@ int test_fmt_pl(void)
 	if (NULL != pl_strrchr(&pl0, 'B'))
 		goto out;
 	if (NULL != pl_strrchr(&pl_empty, 'r'))
+		goto out;
+
+	/* pl_strstr() */
+	if (pl.p != pl_strstr(&pl, str0))
+		goto out;
+	if (pl1.p != pl_strstr(&pl1, str2))
+		goto out;
+	if (pl1.p + 3 != pl_strstr(&pl1, str3))
+		goto out;
+	if (NULL != pl_strstr(&pl, str1))
+		goto out;
+	if (pl.p != pl_strstr(&pl, ""))
+		goto out;
+	if (NULL != pl_strstr(&pl1, str0))
 		goto out;
 
 	return 0;
