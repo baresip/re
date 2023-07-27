@@ -664,12 +664,9 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
-target_include_directories(re-objs PRIVATE .)
+target_include_directories(re-objs PRIVATE include)
 target_include_directories(re-objs PRIVATE
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
-target_include_directories(re-objs PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  )
 
 
 ##############################################################################
@@ -698,6 +695,9 @@ if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
+  target_include_directories(re PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
   add_library(libre::re ALIAS re)
 
   if(MSVC)
