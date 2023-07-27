@@ -356,6 +356,29 @@ int pl_bool(bool *val, const struct pl *pl)
 
 
 /**
+ * Convert an ASCII hex string as a pointer-length object to binary format
+ *
+ * @param pl  Pointer-length object
+ * @param hex Destination binary buffer
+ * @param len Length of binary buffer
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int pl_hex(const struct pl *pl, uint8_t *hex, size_t len)
+{
+	if (!pl_isset(pl) || !hex || (pl->l != (2 * len)))
+		return EINVAL;
+
+	for (size_t i = 0; i < pl->l; i += 2) {
+		hex[i/2]  = ch_hex(*(pl->p + i)) << 4;
+		hex[i/2] += ch_hex(*(pl->p + i +1));
+	}
+
+	return 0;
+}
+
+
+/**
  * Check if pointer-length object is set
  *
  * @param pl Pointer-length object
@@ -649,6 +672,39 @@ const char *pl_strrchr(const struct pl *pl, char c)
 	for (p = end; p >= pl->p; p--) {
 		if (*p == c)
 			return p;
+	}
+
+	return NULL;
+}
+
+
+/**
+ * Locate the first substring in a pointer-length string
+ *
+ * @param pl  Pointer-length string
+ * @param str Substring to locate
+ *
+ * @return Pointer to first char if substring is found, otherwise NULL
+ */
+const char *pl_strstr(const struct pl *pl, const char *str)
+{
+	size_t len = str_len(str);
+
+	/*case pl not set & pl is not long enough*/
+	if (!pl_isset(pl) || pl->l < len)
+		return NULL;
+
+	/*case str is empty or just '\0'*/
+	if (!len)
+		return pl->p;
+
+	for (size_t i = 0; i < pl->l; ++i) {
+		/*case rest of pl is not long enough*/
+		if (pl->l - i < len)
+			return NULL;
+
+		if (!memcmp(pl->p + i, str, len))
+			return pl->p + i;
 	}
 
 	return NULL;

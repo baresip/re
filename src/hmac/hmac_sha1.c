@@ -14,6 +14,9 @@
 #elif defined (WIN32)
 #include <windows.h>
 #include <wincrypt.h>
+#elif defined (USE_MBEDTLS)
+#include <mbedtls/md.h>
+#include <mbedtls/error.h>
 #endif
 #include <re_hmac.h>
 
@@ -113,6 +116,16 @@ void hmac_sha1(const uint8_t *k,  /* secret key */
 #elif defined (WIN32)
 	compute_hash(CALG_SHA1, d, ld,
 		     out, (DWORD)t, k, lk);
+#elif defined (MBEDTLS_MD_C)
+	int err;
+	(void)t;
+
+	err = mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1),
+			      k, lk, d, ld, out);
+	if (err)
+		DEBUG_WARNING("mbedtls_md_hmac: %s\n",
+			      mbedtls_high_level_strerr(err));
+
 #else
 	(void)k;
 	(void)lk;
@@ -147,6 +160,15 @@ void hmac_sha256(const uint8_t *key, size_t key_len,
 #elif defined (WIN32)
 	compute_hash(CALG_SHA_256, data, data_len,
 		     out, (DWORD)out_len, key, key_len);
+#elif defined (MBEDTLS_MD_C)
+	int err;
+	(void)out_len;
+
+	err = mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+			      key, key_len, data, data_len, out);
+	if (err)
+		DEBUG_WARNING("mbedtls_md_hmac: %s\n",
+			      mbedtls_high_level_strerr(err));
 #else
 	(void)key;
 	(void)key_len;

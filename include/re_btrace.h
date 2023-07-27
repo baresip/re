@@ -25,7 +25,9 @@ static inline int btrace(struct btrace *bt)
 	return 0;
 }
 #elif defined(WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 static inline int btrace(struct btrace *bt)
 {

@@ -139,8 +139,8 @@ const char *sys_os_get(void)
  */
 const char *sys_libre_version_get(void)
 {
-#ifdef VERSION
-	return VERSION;
+#ifdef RE_VERSION
+	return RE_VERSION;
 #else
 	return "?";
 #endif

@@ -2,7 +2,125 @@
  * @file ajb.c  Adaptive Jitter Buffer algorithm
  *
  * Copyright (C) 2022 Commend.com - c.spielberger@commend.com
+ *
+ * The adaptive jitter buffer algorithm (ajb) for audio buffer can be activated
+ * by invoking `aubuf_set_mode(ab, AUBUF_ADAPTIVE)`. The ajb algorithm
+ * increases the number of packets in the audio buffer during periods of high
+ * network jitter. It reduces the number of packets if the network condition
+ * improves.
+ *
+ * @section jitter Computing the jitter
+ *
+ * The jitter \f$j\f$ is the moving mean absolute deviation (MAD) of the
+ * time period buffered in `aubuf` \f$D\f$. It is estimated by the iterative
+ * formula
+ *
+ * \f$j_n = j_{n-1} + (|D - \overline{D}| - j_{n-1})\kappa\f$
+ *
+ * where \f$\kappa\f$ is the weight that influences how fast the jitter value
+ * changes.
+ *
+ * We choose a higher value for the weight \f$\kappa\f$ if
+ * \f$|D - \overline{D}| > j_{n-1}\f$. Thus the jitter rises fast if e.g.
+ * suddenly a network jitter appears. In contrast when the network condition
+ * improves the jitter value slowly shrinks. The reason for different
+ * rising and falling speed is that we have to react fast to avoid buffer
+ * under-runs, whereas reducing of the latency is not so time-critical.
+ *
+ * In the following sections we will describe how the computed jitter is used
+ * to detect situations where the buffered packets should be increased due to
+ * a high jitter. We call this situation **Low** situation. When the jitter
+ * shrinks below some specific value it is a good idea to reduce the buffer in
+ * order to reduce the audio latency. We call this situation **High**
+ * situation. Surely, the Low/High situations have to be decided somehow.
+ *
+ * @section reduce_increase Reduce/Increase buffered packets
+ *
+ * When a Low situation is detected we increase the number of packets in
+ * `aubuf` by holding back a packet during one call to function
+ * `aubuf_read_auframe()`. While when a High situation is detected we reduce
+ * the number of packets by reading another audio frame. This overwrites one
+ * frame. By means of a silence detection `aubuf` is able to drop frames that
+ * are not important for the speech quality. This reduces the audio latency
+ * down to the value before the High situation.
+ *
+ * @section smooth_latency Computing a smooth latency
+ *
+ * The audio frames that are buffered at a concrete point in time in `aubuf`
+ * lead to a temporary latency value \f$D\f$. Let \f$f_0, ..., f_m\f$ be the
+ * audio frames currently stored in `aubuf`. Then
+ *
+ * \f$D = t_m - t_0 + D_p\f$
+ *
+ * where \f$t_i\f$ is the timestamp of frame \f$f_i\f$ and \f$D_p\f$ is the
+ * packet time `ptime`. The packet time is a constant that is specified at the
+ * beginning of a SIP call.
+ *
+ * The temporary latency \f$D\f$ is discontinuous over time and not adequate
+ * for deciding or detecting Low or High situations. Therefore we again use an
+ * exponential moving average (EMA) to smooth \f$D\f$. Let \f$\kappa\f$ be an
+ * adequate moving average speed factor, then the smoothed latency
+ *
+ * \f$l_n = l_{n-1} + (D - l_{n-1})\kappa\f$.
+ *
+ * We use \f$l_n\f$ to estimate the average buffer time \f$\overline{D}\f$.
+ * Low/High situations are decided when the smoothed latency \f$l_n\f$ runs out
+ * of some boundaries that are computed from the jitter.
+ *
+ * @section low_high Deciding Low/High situations
+ *
+ * During each iteration (each call to `aubuf_write_frame()`) the jitter and
+ * the latency are computed. Additionally we compute the bottom boundary
+ * \f$D_b\f$ and the top boundary \f$D_t\f$ with
+ *
+ * \f$D_b = max(m . l_n, \frac{2}{3} D_p)\f$ and
+ *
+ * \f$D_t = max(M . l_n, D_b + D_p)\f$,
+ *
+ * where \f$1 < m < M\f$.
+ *
+ * Finally we have everything for deciding Low and High situations. That is if
+ * \f$l_n\f$ moves out of the boundaries
+ *
+ * \f$D_b < l_n < D_t\f$,
+ *
+ * then we fire a Low/High.
+ *
+ * @section early_adjustment Early adjustment of the latency
+ *
+ * If we detect a Low/High situation we increase/reduce the number of packets.
+ * Now we immediately increment/decrement the smoothed latency \f$l_n\f$ by
+ * \f$D_p\f$.
+ * Thus early adjustment for a Low situation is
+ *
+ * \f$l_{n+1} = l_n + D_p\f$
+ *
+ * and for a High situation
+ *
+ * \f$l_{n+1} = l_n - D_p\f$.
+ *
+ * This avoids multiple Low/High detections in a row.
+ *
+ * @section silence Silence detection
+ *
+ * It is preferable to drop an audio frame only if it contains nearly silence.
+ *
+ * @section symbols Math symbols vs. C-variables
+ *
+ * In order to avoid float computation we use micro seconds to measure the time
+ * differences, the jitter and buffer time. Symbols used in this document are
+ * mapped to the C-variables in `src/aubuf/ajb.c` like this table shows:
+ *
+ * Symbol  |Variable
+ * --------|--------
+ *  \f$j_n\f$   | `jitter`
+ *  \f$D\f$     | `buftime`
+ *  \f$l_n\f$   | `avbuftime`
+ *  \f$D_b\f$   | `bufmin`
+ *  \f$D_t\f$   | `bufmax`
+ *  \f$D_p\f$   | `ptime`
  */
+
 #include <stdlib.h>
 #include <re.h>
 #include <rem_au.h>
@@ -14,12 +132,13 @@
 #define DEBUG_LEVEL 5
 
 /**
- * @brief The adaptive jitter computation is done by means of an exponential
+ * @defgroup The adaptive jitter computation is done by means of an exponential
  * moving average (EMA).
  *￼j_i = j_{i-1} + a (c - j_{i-1})
  *
  * Where $a$ ist the EMA coefficient and $c$ is the current value.
  */
+
 enum {
 	JITTER_EMA_COEFF   = 512,  /* Divisor for jitter EMA coefficient */
 	JITTER_UP_SPEED    = 64,   /* 64 times faster up than down       */

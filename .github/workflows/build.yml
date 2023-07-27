@@ -56,7 +56,7 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build && cmake --build build -t retest
+        cmake -B build -Werror -DCMAKE_C_FLAGS="-Werror" && cmake --build build -t retest
     
     - name: retest
       run: |

@@ -100,6 +100,14 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				goto out;
 		}
 
+		if (pl_isset(&msg->to.tag)) {
+			err = sip_dialog_established(sess->dlg) ?
+					sip_dialog_update(sess->dlg, msg) :
+					sip_dialog_create(sess->dlg, msg);
+			if (err)
+				goto out;
+		}
+
 		if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")
 				&& sess->rel100_supported) {
 			if (sdp && !sess->sent_offer) {
@@ -107,9 +115,6 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				err = sess->offerh(&desc, msg, sess->arg);
 			}
 
-			err |= sip_dialog_established(sess->dlg) ?
-					sip_dialog_update(sess->dlg, msg) :
-					sip_dialog_create(sess->dlg, msg);
 			err |= sipsess_prack(sess, msg->cseq.num, msg->rel_seq,
 					     &msg->cseq.met, desc);
 			mem_deref(desc);

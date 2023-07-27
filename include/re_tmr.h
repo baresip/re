@@ -5,7 +5,7 @@
  */
 
 
-#include <re_thread.h>
+#include "re_thread.h"
 
 /**
  * Defines the timeout handler

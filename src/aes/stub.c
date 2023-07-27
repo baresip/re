@@ -9,7 +9,7 @@
 
 int aes_alloc(struct aes **stp, enum aes_mode mode,
 	      const uint8_t *key, size_t key_bits,
-	      const uint8_t iv[AES_BLOCK_SIZE])
+	      const uint8_t *iv)
 {
 	(void)stp;
 	(void)mode;
@@ -20,9 +20,9 @@ int aes_alloc(struct aes **stp, enum aes_mode mode,
 }
 
 
-void aes_set_iv(struct aes *st, const uint8_t iv[AES_BLOCK_SIZE])
+void aes_set_iv(struct aes *aes, const uint8_t *iv)
 {
-	(void)st;
+	(void)aes;
 	(void)iv;
 }
 

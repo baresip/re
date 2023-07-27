@@ -37,7 +37,7 @@ int rtpext_hdr_encode(struct mbuf *mb, size_t num_bytes);
 int rtpext_hdr_encode_long(struct mbuf *mb, size_t num_bytes);
 int rtpext_encode(struct mbuf *mb, uint8_t id, size_t len,
 		  const uint8_t *data);
-int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t length,
+int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t len,
 		       const uint8_t *data);
 int rtpext_decode(struct rtpext *ext, struct mbuf *mb);
 int rtpext_decode_long(struct rtpext *ext, struct mbuf *mb);

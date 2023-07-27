@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include <re_types.h>
+#include <re_sys.h>
 #include <re_mem.h>
 #include <re_mbuf.h>
 #include <re_sa.h>
@@ -30,10 +31,6 @@
 #define DEBUG_MODULE "reqconn"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
-
-#ifndef VERSION
-#define VERSION "???"
-#endif
 
 
 enum {
@@ -358,7 +355,7 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 			(conn->bodyh || conn->body) ? req_body_handler : NULL,
 			conn,
 			"%r%s"
-			"User-Agent: re " VERSION "\r\n"
+			"User-Agent: re " RE_VERSION "\r\n"
 			"%r"
 			"%r"
 			"%r"

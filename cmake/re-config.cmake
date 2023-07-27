@@ -2,10 +2,17 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 
+option(USE_MBEDTLS "Enable MbedTLS" OFF)
+
 find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(ZLIB)
+
+if (USE_MBEDTLS)
+find_package(MBEDTLS)
+else()
 find_package(OpenSSL "1.1.1")
+endif()
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
@@ -132,6 +139,12 @@ if(USE_OPENSSL)
     -DUSE_OPENSSL_HMAC
     -DUSE_OPENSSL_SRTP
     -DUSE_TLS
+  )
+endif()
+
+if(USE_MBEDTLS)
+  list(APPEND RE_DEFINITIONS
+    -DUSE_MBEDTLS
   )
 endif()
 

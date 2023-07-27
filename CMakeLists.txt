@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(re
-  VERSION 3.2.0
+  VERSION 3.3.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
@@ -96,7 +96,7 @@ set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(re CONFIG REQUIRED)
 
 list(APPEND RE_DEFINITIONS
-  -DVERSION="${PROJECT_VERSION_FULL}"
+  -DRE_VERSION="${PROJECT_VERSION_FULL}"
   -DVER_MAJOR=${PROJECT_VERSION_MAJOR}
   -DVER_MINOR=${PROJECT_VERSION_MINOR}
   -DVER_PATCH=${PROJECT_VERSION_PATCH}
@@ -535,6 +535,7 @@ else()
   list(APPEND SRCS
     src/aes/stub.c
     src/hmac/hmac.c
+    src/tls/stub.c
   )
 endif()
 

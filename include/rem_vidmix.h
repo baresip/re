@@ -19,6 +19,7 @@ typedef void (vidmix_frame_h)(uint64_t ts, const struct vidframe *frame,
 			      void *arg);
 
 int  vidmix_alloc(struct vidmix **mixp);
+void vidmix_set_fmt(struct vidmix *mix, enum vidfmt fmt);
 int  vidmix_source_alloc(struct vidmix_source **srcp, struct vidmix *mix,
 			 const struct vidsz *sz, unsigned fps, bool content,
 			 vidmix_frame_h *fh, void *arg);
