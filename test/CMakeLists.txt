@@ -55,7 +55,6 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 include_directories(
-  ../include
   .
 )
 
