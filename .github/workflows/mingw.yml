@@ -50,7 +50,7 @@ jobs:
       run: |
         curl -sL https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1-linux-x86_64.sh -o cmakeinstall.sh \
         && chmod +x cmakeinstall.sh \
-        && ./cmakeinstall.sh --prefix=/usr/local --exclude-subdir \
+        && sudo ./cmakeinstall.sh --prefix=/usr/local --exclude-subdir \
         && rm cmakeinstall.sh
     
     - name: "build"
