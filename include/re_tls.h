@@ -82,7 +82,7 @@ bool tls_get_session_reuse(const struct tls_conn *tc);
 int tls_reuse_session(const struct tls_conn *tc);
 bool tls_session_reused(const struct tls_conn *tc);
 int tls_update_sessions(const struct tls_conn *tc);
-void tls_set_posthandshake_auth(struct tls *tls, int enabled);
+void tls_set_posthandshake_auth(struct tls *tls, int value);
 
 /* TCP */
 
