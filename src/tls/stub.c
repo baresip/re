@@ -100,10 +100,10 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 }
 
 
-int tls_set_certificate(struct tls *tls, const char *cert, size_t len)
+int tls_set_certificate(struct tls *tls, const char *pem, size_t len)
 {
 	(void)tls;
-	(void)cert;
+	(void)pem;
 	(void)len;
 	return ENOSYS;
 }
@@ -298,10 +298,10 @@ int tls_update_sessions(const struct tls_conn *tc)
 }
 
 
-void tls_set_posthandshake_auth(struct tls *tls, int enabled)
+void tls_set_posthandshake_auth(struct tls *tls, int value)
 {
 	(void)tls;
-	(void)enabled;
+	(void)value;
 }
 
 
