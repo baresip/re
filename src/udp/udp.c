@@ -965,6 +965,14 @@ int udp_send_helper(struct udp_sock *us, const struct sa *dst,
 }
 
 
+/**
+ * Receive a UDP Datagram on this UDP helper layer.
+ *
+ * @param us  UDP Socket
+ * @param src Source network address
+ * @param mb  Buffer to receive
+ * @param uhx UDP Helper
+ */
 void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb, struct udp_helper *uhx)
 {
@@ -1061,6 +1069,13 @@ void udp_flush(const struct udp_sock *us)
 }
 
 
+/**
+ * Receive a UDP Datagram on this UDP socket. All helpers are processed.
+ *
+ * @param us  UDP Socket
+ * @param src Source network address
+ * @param mb  Buffer to receive
+ */
 void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb)
 {
