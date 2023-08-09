@@ -366,8 +366,8 @@ typedef int re_sock_t;
 #define RE_VA_ARG(ap, val, type, safe)                                        \
 	if ((safe)) {                                                         \
 		size_t sz = va_arg((ap), size_t);                             \
-		assert(sz && "RE_VA_ARG: no more arguments");                 \
-		assert(sz <= sizeof(type) &&                                  \
+		re_assert(sz && "RE_VA_ARG: no more arguments");              \
+		re_assert(sz <= sizeof(type) &&                               \
 		       "RE_VA_ARG: arg is not compatible");                   \
 		if (!sz || sz > sizeof(type)) {                               \
 			err = EINVAL;                                         \
