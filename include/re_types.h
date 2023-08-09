@@ -296,7 +296,7 @@ typedef int re_sock_t;
 
 #if defined(RELEASE) || defined(NDEBUG)
 #define re_assert(expr) (void)0
-#define re_assert_se(expr) do(expr) while(false)
+#define re_assert_se(expr) do{(void)(expr);} while(false)
 #else
 #define re_assert(expr) assert(expr)
 #define re_assert_se(expr) assert(expr)
