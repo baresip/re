@@ -5,6 +5,38 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.4.0] - 2023-08-09
+
+## What's Changed
+* rtpext: uniform parameter name fixes doxygen warning by @cspiel1 in https://github.com/baresip/re/pull/868
+* mk: add rem to doxygen inputs by @cspiel1 in https://github.com/baresip/re/pull/869
+* vidmix: allow different pixel format by @sreimers in https://github.com/baresip/re/pull/864
+* ajb doxygen by @cspiel1 in https://github.com/baresip/re/pull/870
+* aes: correct parameters for stub by @cspiel1 in https://github.com/baresip/re/pull/872
+* ci/build: fail on cmake and compile warnings by @sreimers in https://github.com/baresip/re/pull/873
+* fmt: fix format string in fmt_timestamp() by @alfredh in https://github.com/baresip/re/pull/874
+* hmac,md5,sha: add mbedtls backend by @cspiel1 in https://github.com/baresip/re/pull/871
+* test: no need to rewind freshly allocated mbuf by @alfredh in https://github.com/baresip/re/pull/876
+* httpauth: basic challenge creation and verification functions by @cHuberCoffee in https://github.com/baresip/re/pull/875
+* Fix include of re_thread.h in re_tmr.h by @nielsavonds in https://github.com/baresip/re/pull/879
+* btrace: fix WIN32_LEAN_AND_MEAN macro redefine by @jobo-zt in https://github.com/baresip/re/pull/880
+* aumix: add record sum handler by @sreimers in https://github.com/baresip/re/pull/877
+* ci/win: disable x86 testing by @sreimers in https://github.com/baresip/re/pull/883
+* sipsess: allow UPDATE and INFO in early dialog by @maximilianfridrich in https://github.com/baresip/re/pull/878
+* prefix macro VERSION by @cspiel1 in https://github.com/baresip/re/pull/882
+* main: use HAVE_SIGNAL in init.c by @cspiel1 in https://github.com/baresip/re/pull/881
+* test: change to ASSERT_XXX macros, remove EXPECT_XXX macros by @alfredh in https://github.com/baresip/re/pull/885
+* fmt: handy functions for pointer-length objects by @cHuberCoffee in https://github.com/baresip/re/pull/884
+* test: add TWCC test from Chrome 114 packet by @alfredh in https://github.com/baresip/re/pull/886
+* sipsess/listen: Fix target_refresh_handler by @maximilianfridrich in https://github.com/baresip/re/pull/888
+* ci/mingw: downgrade cmake by @sreimers in https://github.com/baresip/re/pull/890
+* cmake: fix target include path for subdir projects by @sreimers in https://github.com/baresip/re/pull/891
+
+## New Contributors
+* @nielsavonds made their first contribution in https://github.com/baresip/re/pull/879
+* @jobo-zt made their first contribution in https://github.com/baresip/re/pull/880
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.3.0...v3.4.0
 
 ## [v3.3.0] - 2023-07-05
 
