@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#include <assert.h>
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -269,4 +270,34 @@ typedef size_t re_sock_t;
 #define RE_ERRNO_SOCK errno
 #define RE_BAD_SOCK -1
 typedef int re_sock_t;
+#endif
+
+
+/* re_assert helpers */
+
+/**
+ * @def re_assert(expr)
+ *
+ * If expression is false, prints error and calls abort() (not in
+ * RELEASE/NDEBUG builds)
+ *
+ * @param expr   expression
+ */
+
+
+/**
+ * @def re_assert_se(expr)
+ *
+ * If expression is false, prints error and calls abort(),
+ * in RELEASE/NDEBUG builds expression is always executed and keeps side effect
+ *
+ * @param expr   expression
+ */
+
+#if defined(RELEASE) || defined(NDEBUG)
+#define re_assert(expr) (void)0
+#define re_assert_se(expr) do(expr) while(false)
+#else
+#define re_assert(expr) assert(expr)
+#define re_assert_se(expr) assert(expr)
 #endif
