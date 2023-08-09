@@ -144,6 +144,7 @@ static const struct test tests[] = {
 	TEST(test_odict_array),
 	TEST(test_pcp),
 	TEST(test_remain),
+	TEST(test_re_assert_se),
 	TEST(test_rtmp_play),
 	TEST(test_rtmp_publish),
 #ifdef USE_TLS
