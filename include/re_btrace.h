@@ -2,7 +2,7 @@
  * @file re_btrace.h  Backtrace API (Linux/Unix only)
  *
  */
-#define BTRACE_SZ 10
+#define BTRACE_SZ 16
 
 struct btrace {
 	void *stack[BTRACE_SZ];
