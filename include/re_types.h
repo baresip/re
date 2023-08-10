@@ -361,7 +361,7 @@ typedef int re_sock_t;
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
 #define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
 #define RE_VA_ARGS(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
-#endif
+#endif /* End RE_VA_ARG SIZE helpers */
 
 #define RE_VA_ARG(ap, val, type, safe)                                        \
 	if (likely((safe))) {                                                 \
