@@ -253,6 +253,7 @@ int test_trice_candpair(void);
 int test_trice_checklist(void);
 int test_trice_loop(void);
 int test_remain(void);
+int test_re_assert_se(void);
 int test_rtmp_play(void);
 int test_rtmp_publish(void);
 #ifdef USE_TLS

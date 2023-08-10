@@ -68,10 +68,10 @@ find_package(re CONFIG REQUIRED HINTS ../cmake)
 set(SRCS
   aac.c
   aes.c
+  async.c
   aubuf.c
   aulevel.c
   auresamp.c
-  async.c
   av1.c
   base64.c
   bfcp.c
@@ -134,6 +134,7 @@ set(SRCS
   trace.c
   trice.c
   turn.c
+  types.c
   udp.c
   unixsock.c
   uri.c
