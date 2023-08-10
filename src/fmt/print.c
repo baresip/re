@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
-#include <assert.h>
 #include <string.h>
 #include <re_types.h>
 #include <re_sa.h>
