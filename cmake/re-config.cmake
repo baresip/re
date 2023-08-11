@@ -188,3 +188,10 @@ else()
     set(CMAKE_ENABLE_EXPORTS ON)
   endif()
 endif()
+
+# Enable 64-bit time on 32-bit, to enable glibc >=2.34 2038 suppport
+check_symbol_exists("__GLIBC__" "stdlib.h" LIBC_IS_GLIBC)
+if(LIBC_IS_GLIBC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  list(APPEND RE_DEFINITIONS -D_FILE_OFFSET_BITS=64)
+  list(APPEND RE_DEFINITIONS -D_TIME_BITS=64)
+endif()
