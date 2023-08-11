@@ -342,13 +342,13 @@ static int gen_nonce(char **noncep, time_t ts, const struct sa *src,
 	if (!mb)
 		return ENOMEM;
 
-	err = mbuf_printf(mb,"%lu%j%s", (long unsigned)ts, src, realm);
+	err = mbuf_printf(mb,"%llu%j%s", ts, src, realm);
 	if (err)
 		goto out;
 
 	md5(mb->buf, mb->end, key);
 	mbuf_rewind(mb);
-	err = mbuf_printf(mb,"%w%016lx", key, sizeof(key), (long unsigned)ts);
+	err = mbuf_printf(mb,"%w%016llx", key, sizeof(key), ts);
 	if (err)
 		goto out;
 
