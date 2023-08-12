@@ -45,7 +45,7 @@ jobs:
         tar -xzf openssl-3.1.0.tar.gz
         mv openssl-3.1.0 baresip-win32/openssl
         make -j$(nproc) -C baresip-win32 openssl
-    
+
     - name: "build"
       run: |
         cd baresip-win32 && make retest

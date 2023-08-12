@@ -131,36 +131,8 @@ static size_t local_ftoa(char *buf, double n, size_t dp)
 }
 
 
-/**
- * Print a formatted string
- *
- * @param fmt Formatted string
- * @param ap  Variable argument
- * @param vph Print handler
- * @param arg Handler argument
- *
- * @return 0 if success, otherwise errorcode
- *
- * Extensions:
- *
- * <pre>
- *   %b  (char *, size_t)        Buffer string with pointer and length
- *   %r  (struct pl)             Pointer-length object
- *   %w  (uint8_t *, size_t)     Binary buffer to hexadecimal format
- *   %j  (struct sa *)           Socket address - address part only
- *   %J  (struct sa *)           Socket address and port - like 1.2.3.4:1234
- *   %H  (re_printf_h *, void *) Print handler with argument
- *   %v  (char *fmt, va_list *)  Variable argument list
- *   %m  (int)                   Describe an error code
- * </pre>
- *
- * Reserved for the future:
- *
- *   %k
- *   %y
- *
- */
-int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
+static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
+		    bool safe)
 {
 	uint8_t base, *bptr;
 	char pch = 0, ch, num[NUM_SIZE], addr[64], msg[256];
@@ -188,7 +160,6 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 	pf.arg = arg;
 
 	for (;*p && !err; p++) {
-
 		if (!fm) {
 			if (*p != '%')
 				continue;
@@ -230,15 +201,15 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'b':
-			str = va_arg(ap, const char *);
-			len = va_arg(ap, size_t);
+			RE_VA_ARG(ap, str, const char *, safe);
+			RE_VA_ARG(ap, len, size_t, safe);
 
 			err |= write_padded(str, str ? len : 0, pad, ' ',
 					    plr, NULL, vph, arg);
 			break;
 
 		case 'c':
-			ch = va_arg(ap, int);
+			RE_VA_ARG(ap, ch, int, safe);
 
 			err |= write_padded(&ch, 1, pad, ' ', plr, NULL,
 					    vph, arg);
@@ -249,20 +220,20 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				sn = va_arg(ap, ssize_t);
+				RE_VA_ARG(ap, sn, ssize_t, safe);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				sn = va_arg(ap, signed long long);
+				RE_VA_ARG(ap, sn, signed long long, safe);
 				break;
 
 			case LENMOD_LONG:
-				sn = va_arg(ap, signed long);
+				RE_VA_ARG(ap, sn, signed long, safe);
 				break;
 
 			case LENMOD_NONE:
-				sn = va_arg(ap, signed);
+				RE_VA_ARG(ap, sn, signed, safe);
 				break;
 			}
 
@@ -277,7 +248,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 
 		case 'f':
 		case 'F':
-			dbl = va_arg(ap, double);
+			RE_VA_ARG(ap, dbl, double, safe);
 
 			if (fpad == (size_t)-1) {
 				fpad = pad;
@@ -304,8 +275,8 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'H':
-			ph     = va_arg(ap, re_printf_h *);
-			ph_arg = va_arg(ap, void *);
+			RE_VA_ARG(ap, ph, re_printf_h *, safe);
+			RE_VA_ARG(ap, ph_arg, void *, safe);
 
 			if (ph)
 				err |= ph(&pf, ph_arg);
@@ -317,13 +288,14 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'm':
-			str = str_error(va_arg(ap, int), msg, sizeof(msg));
+			RE_VA_ARG(ap, ch, int, safe);
+			str = str_error(ch, msg, sizeof(msg));
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
 
 		case 'p':
-			ptr = va_arg(ap, void *);
+			RE_VA_ARG(ap, ptr, void *, safe);
 
 			if (ptr) {
 				len = local_itoa(num, (size_t)ptr,
@@ -341,7 +313,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'r':
-			pl = va_arg(ap, const struct pl *);
+			RE_VA_ARG(ap, pl, const struct pl *, safe);
 
 			err |= write_padded(pl ? pl->p : NULL,
 					    (pl && pl->p) ? pl->l : 0,
@@ -349,7 +321,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 's':
-			str = va_arg(ap, const char *);
+			RE_VA_ARG(ap, str, char *, safe);
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
@@ -364,20 +336,20 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			switch (lenmod) {
 
 			case LENMOD_SIZE:
-				n = va_arg(ap, size_t);
+				RE_VA_ARG(ap, n, size_t, safe);
 				break;
 
 			default:
 			case LENMOD_LONG_LONG:
-				n = va_arg(ap, unsigned long long);
+				RE_VA_ARG(ap, n, unsigned long long, safe);
 				break;
 
 			case LENMOD_LONG:
-				n = va_arg(ap, unsigned long);
+				RE_VA_ARG(ap, n, unsigned long, safe);
 				break;
 
 			case LENMOD_NONE:
-				n = va_arg(ap, unsigned);
+				RE_VA_ARG(ap, n, unsigned, safe);
 				break;
 			}
 
@@ -389,8 +361,8 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'v':
-			str = va_arg(ap, char *);
-			apl = va_arg(ap, va_list *);
+			RE_VA_ARG(ap, str, char *, safe);
+			RE_VA_ARG(ap, apl, void *, safe);
 
 			if (!str || !apl)
 				break;
@@ -402,8 +374,8 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			uc = true;
 			/*@fallthrough@*/
 		case 'w':
-			bptr = va_arg(ap, uint8_t *);
-			len = va_arg(ap, size_t);
+			RE_VA_ARG(ap, bptr, void *, safe);
+			RE_VA_ARG(ap, len, size_t, safe);
 
 			len = bptr ? len : 0;
 			pch = plr ? ' ' : pch;
@@ -429,7 +401,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 			break;
 
 		case 'j':
-			sa = va_arg(ap, struct sa *);
+			RE_VA_ARG(ap, sa, struct sa *, safe);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
@@ -443,7 +415,7 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 
 
 		case 'J':
-			sa = va_arg(ap, struct sa *);
+			RE_VA_ARG(ap, sa, struct sa *, safe);
 			if (!sa)
 				break;
 			if (sa_ntop(sa, addr, sizeof(addr))) {
@@ -502,7 +474,78 @@ int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
 	if (!fm && p > p0)
 		err |= vph(p0, p - p0, arg);
 
+out:
 	return err;
+}
+
+
+/**
+ * Print a formatted string
+ *
+ * @param fmt Formatted string
+ * @param ap  Variable argument
+ * @param vph Print handler
+ * @param arg Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ *
+ * Extensions:
+ *
+ * <pre>
+ *   %b  (char *, size_t)        Buffer string with pointer and length
+ *   %r  (struct pl)             Pointer-length object
+ *   %w  (uint8_t *, size_t)     Binary buffer to hexadecimal format
+ *   %j  (struct sa *)           Socket address - address part only
+ *   %J  (struct sa *)           Socket address and port - like 1.2.3.4:1234
+ *   %H  (re_printf_h *, void *) Print handler with argument
+ *   %v  (char *fmt, va_list *)  Variable argument list
+ *   %m  (int)                   Describe an error code
+ * </pre>
+ *
+ * Reserved for the future:
+ *
+ *   %k
+ *   %y
+ *
+ */
+int re_vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
+{
+	return vhprintf(fmt, ap, vph, arg, false);
+}
+
+
+/**
+ * Print a safe formatted string
+ *
+ * @param fmt Formatted string
+ * @param ap  Variable argument
+ * @param vph Print handler
+ * @param arg Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ *
+ * Extensions:
+ *
+ * <pre>
+ *   %b  (char *, size_t)        Buffer string with pointer and length
+ *   %r  (struct pl)             Pointer-length object
+ *   %w  (uint8_t *, size_t)     Binary buffer to hexadecimal format
+ *   %j  (struct sa *)           Socket address - address part only
+ *   %J  (struct sa *)           Socket address and port - like 1.2.3.4:1234
+ *   %H  (re_printf_h *, void *) Print handler with argument
+ *   %v  (char *fmt, va_list *)  Variable argument list
+ *   %m  (int)                   Describe an error code
+ * </pre>
+ *
+ * Reserved for the future:
+ *
+ *   %k
+ *   %y
+ *
+ */
+int re_vhprintf_s(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg)
+{
+	return vhprintf(fmt, ap, vph, arg, true);
 }
 
 
@@ -591,7 +634,33 @@ int re_vfprintf(FILE *stream, const char *fmt, va_list ap)
 	sp.f = stream;
 	sp.n = 0;
 
-	if (0 != re_vhprintf(fmt, ap, print_handler_stream, &sp))
+	if (0 != vhprintf(fmt, ap, print_handler_stream, &sp, false))
+		return -1;
+
+	return (int)sp.n;
+}
+
+
+/**
+ * Print a safe formatted string to a file stream, using va_list
+ *
+ * @param stream File stream for the output
+ * @param fmt    Formatted string
+ * @param ap     Variable-arguments list
+ *
+ * @return The number of characters printed, or -1 if error
+ */
+int re_vfprintf_s(FILE *stream, const char *fmt, va_list ap)
+{
+	struct strm_print sp;
+
+	if (!stream)
+		return -1;
+
+	sp.f = stream;
+	sp.n = 0;
+
+	if (0 != vhprintf(fmt, ap, print_handler_stream, &sp, true))
 		return -1;
 
 	return (int)sp.n;
@@ -609,6 +678,20 @@ int re_vfprintf(FILE *stream, const char *fmt, va_list ap)
 int re_vprintf(const char *fmt, va_list ap)
 {
 	return re_vfprintf(stdout, fmt, ap);
+}
+
+
+/**
+ * Print a safe formatted string to stdout, using va_list
+ *
+ * @param fmt Formatted string
+ * @param ap  Variable-arguments list
+ *
+ * @return The number of characters printed, or -1 if error
+ */
+int re_vprintf_s(const char *fmt, va_list ap)
+{
+	return re_vfprintf_s(stdout, fmt, ap);
 }
 
 
@@ -634,7 +717,7 @@ int re_vsnprintf(char *re_restrict str, size_t size,
 	pl.p = str;
 	pl.l = size - 1;
 
-	err = re_vhprintf(fmt, ap, print_handler, &pl);
+	err = vhprintf(fmt, ap, print_handler, &pl, false);
 
 	str[size - pl.l - 1] = '\0';
 
@@ -643,15 +726,36 @@ int re_vsnprintf(char *re_restrict str, size_t size,
 
 
 /**
- * Print a formatted string to a dynamically allocated buffer, using va_list
+ * Print a safe formatted string to a buffer, using va_list
  *
- * @param strp Pointer for output string
+ * @param str  Buffer for output string
+ * @param size Size of buffer
  * @param fmt  Formatted string
  * @param ap   Variable-arguments list
  *
- * @return 0 if success, otherwise errorcode
+ * @return The number of characters printed, or -1 if error
  */
-int re_vsdprintf(char **strp, const char *fmt, va_list ap)
+int re_vsnprintf_s(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, va_list ap)
+{
+	struct pl pl;
+	int err;
+
+	if (!str || !size)
+		return -1;
+
+	pl.p = str;
+	pl.l = size - 1;
+
+	err = vhprintf(fmt, ap, print_handler, &pl, true);
+
+	str[size - pl.l - 1] = '\0';
+
+	return err ? -1 : (int)(size - pl.l - 1);
+}
+
+
+static int vsdprintf(char **strp, const char *fmt, va_list ap, bool safe)
 {
 	struct dyn_print dp;
 	int err;
@@ -667,7 +771,7 @@ int re_vsdprintf(char **strp, const char *fmt, va_list ap)
 	dp.p = dp.str;
 	dp.l = dp.size;
 
-	err = re_vhprintf(fmt, ap, print_handler_dyn, &dp);
+	err = vhprintf(fmt, ap, print_handler_dyn, &dp, safe);
 	if (err)
 		goto out;
 
@@ -684,6 +788,37 @@ int re_vsdprintf(char **strp, const char *fmt, va_list ap)
 
 
 /**
+ * Print a formatted string to a dynamically allocated buffer, using va_list
+ *
+ * @param strp Pointer for output string
+ * @param fmt  Formatted string
+ * @param ap   Variable-arguments list
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_vsdprintf(char **strp, const char *fmt, va_list ap)
+{
+	return vsdprintf(strp, fmt, ap, false);
+}
+
+
+/**
+ * Print a safe formatted string to a dynamically allocated buffer, using
+ * va_list
+ *
+ * @param strp Pointer for output string
+ * @param fmt  Formatted string
+ * @param ap   Variable-arguments list
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int re_vsdprintf_s(char **strp, const char *fmt, va_list ap)
+{
+	return vsdprintf(strp, fmt, ap, true);
+}
+
+
+/**
  * Print a formatted string
  *
  * @param pf  Print backend
@@ -691,7 +826,7 @@ int re_vsdprintf(char **strp, const char *fmt, va_list ap)
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_hprintf(struct re_printf *pf, const char *fmt, ...)
+int _re_hprintf(struct re_printf *pf, const char *fmt, ...)
 {
 	va_list ap;
 	int err;
@@ -708,6 +843,30 @@ int re_hprintf(struct re_printf *pf, const char *fmt, ...)
 
 
 /**
+ * Print a safe formatted string
+ *
+ * @param pf  Print backend
+ * @param fmt Formatted string
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int _re_hprintf_s(struct re_printf *pf, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	if (!pf)
+		return EINVAL;
+
+	va_start(ap, fmt);
+	err = re_vhprintf_s(fmt, ap, pf->vph, pf->arg);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
  * Print a formatted string to a file stream
  *
  * @param stream File stream for output
@@ -715,7 +874,7 @@ int re_hprintf(struct re_printf *pf, const char *fmt, ...)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_fprintf(FILE *stream, const char *fmt, ...)
+int _re_fprintf(FILE *stream, const char *fmt, ...)
 {
 	va_list ap;
 	int n;
@@ -729,19 +888,60 @@ int re_fprintf(FILE *stream, const char *fmt, ...)
 
 
 /**
+ * Print a safe formatted string to a file stream
+ *
+ * @param stream File stream for output
+ * @param fmt    Formatted string
+ *
+ * @return The number of characters printed, or -1 if error
+ */
+int _re_fprintf_s(FILE *stream, const char *fmt, ...)
+{
+	va_list ap;
+	int n;
+
+	va_start(ap, fmt);
+	n = re_vfprintf_s(stream, fmt, ap);
+	va_end(ap);
+
+	return n;
+}
+
+
+/**
  * Print a formatted string to stdout
  *
  * @param fmt    Formatted string
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_printf(const char *fmt, ...)
+int _re_printf(const char *fmt, ...)
 {
 	va_list ap;
 	int n;
 
 	va_start(ap, fmt);
 	n = re_vprintf(fmt, ap);
+	va_end(ap);
+
+	return n;
+}
+
+
+/**
+ * Print a safe formatted string to stdout
+ *
+ * @param fmt    Formatted string
+ *
+ * @return The number of characters printed, or -1 if error
+ */
+int _re_printf_s(const char *fmt, ...)
+{
+	va_list ap;
+	int n;
+
+	va_start(ap, fmt);
+	n = re_vprintf_s(fmt, ap);
 	va_end(ap);
 
 	return n;
@@ -757,7 +957,7 @@ int re_printf(const char *fmt, ...)
  *
  * @return The number of characters printed, or -1 if error
  */
-int re_snprintf(char *re_restrict str, size_t size,
+int _re_snprintf(char *re_restrict str, size_t size,
 		const char *re_restrict fmt, ...)
 {
 	va_list ap;
@@ -772,6 +972,29 @@ int re_snprintf(char *re_restrict str, size_t size,
 
 
 /**
+ * Print a safe formatted string to a buffer
+ *
+ * @param str  Buffer for output string
+ * @param size Size of buffer
+ * @param fmt  Formatted string
+ *
+ * @return The number of characters printed, or -1 if error
+ */
+int _re_snprintf_s(char *re_restrict str, size_t size,
+		const char *re_restrict fmt, ...)
+{
+	va_list ap;
+	int n;
+
+	va_start(ap, fmt);
+	n = re_vsnprintf_s(str, size, fmt, ap);
+	va_end(ap);
+
+	return n;
+}
+
+
+/**
  * Print a formatted string to a buffer
  *
  * @param strp Buffer pointer for output string
@@ -779,13 +1002,34 @@ int re_snprintf(char *re_restrict str, size_t size,
  *
  * @return 0 if success, otherwise errorcode
  */
-int re_sdprintf(char **strp, const char *fmt, ...)
+int _re_sdprintf(char **strp, const char *fmt, ...)
 {
 	va_list ap;
 	int err;
 
 	va_start(ap, fmt);
 	err = re_vsdprintf(strp, fmt, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
+ * Print a safe formatted string to a buffer
+ *
+ * @param strp Buffer pointer for output string
+ * @param fmt  Formatted string
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int _re_sdprintf_s(char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = re_vsdprintf_s(strp, fmt, ap);
 	va_end(ap);
 
 	return err;

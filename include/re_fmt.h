@@ -99,12 +99,45 @@ int re_vsnprintf(char *re_restrict str, size_t size,
 		 const char *re_restrict fmt, va_list ap);
 int re_vsdprintf(char **strp, const char *fmt, va_list ap);
 
-int re_hprintf(struct re_printf *pf, const char *fmt, ...);
-int re_fprintf(FILE *stream, const char *fmt, ...);
-int re_printf(const char *fmt, ...);
-int re_snprintf(char *re_restrict str, size_t size,
-		const char *re_restrict fmt, ...);
-int re_sdprintf(char **strp, const char *fmt, ...);
+/* Secure va_list print */
+int re_vhprintf_s(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg);
+int re_vfprintf_s(FILE *stream, const char *fmt, va_list ap);
+int re_vprintf_s(const char *fmt, va_list ap);
+int re_vsnprintf_s(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, va_list ap);
+int re_vsdprintf_s(char **strp, const char *fmt, va_list ap);
+
+#ifdef HAVE_RE_ARG
+#define re_printf(fmt, ...) _re_printf_s((fmt), RE_VA_ARGS(__VA_ARGS__))
+#define re_hprintf(pf, fmt, ...)                                              \
+	_re_hprintf_s((pf), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#define re_fprintf(stream, fmt, ...)                                          \
+	_re_fprintf_s((stream), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#define re_snprintf(str, size, fmt, ...)                                      \
+	_re_snprintf_s((str), (size), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#define re_sdprintf(strp, fmt, ...)                                           \
+	_re_sdprintf_s((strp), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#else
+#define re_printf(...) _re_printf(__VA_ARGS__)
+#define re_hprintf _re_hprintf
+#define re_fprintf _re_fprintf
+#define re_snprintf _re_snprintf
+#define re_sdprintf _re_sdprintf
+#endif
+
+int _re_printf(const char *fmt, ...);
+int _re_hprintf(struct re_printf *pf, const char *fmt, ...);
+int _re_fprintf(FILE *stream, const char *fmt, ...);
+int _re_snprintf(char *re_restrict str, size_t size,
+		 const char *re_restrict fmt, ...);
+int _re_sdprintf(char **strp, const char *fmt, ...);
+
+int _re_printf_s(const char *fmt, ...);
+int _re_hprintf_s(struct re_printf *pf, const char *fmt, ...);
+int _re_fprintf_s(FILE *stream, const char *fmt, ...);
+int _re_snprintf_s(char *re_restrict str, size_t size,
+		   const char *re_restrict fmt, ...);
+int _re_sdprintf_s(char **strp, const char *fmt, ...);
 
 
 /* Regular expressions */

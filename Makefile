@@ -8,6 +8,11 @@ ninja:
 	[ -d build ] || cmake -B build -G Ninja
 	make build
 
+.PHONY: release
+release:
+	[ -d build ] || cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+	cmake --build build --parallel
+
 .PHONY: dist
 dist: build
 	cmake --install build --prefix dist

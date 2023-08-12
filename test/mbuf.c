@@ -138,17 +138,41 @@ static int test_mbuf_shift(void)
 }
 
 
+static int test_mbuf_ptr(void)
+{
+	struct mbuf *buf;
+	int err;
+
+	buf = mbuf_alloc(1 * sizeof(void *));
+	if (!buf)
+		return ENOMEM;
+
+	err = mbuf_write_ptr(buf, (intptr_t)buf);
+
+	buf->pos = 0;
+	intptr_t p = mbuf_read_ptr(buf);
+
+	TEST_EQUALS((intptr_t)buf, p);
+
+out:
+	mem_deref(buf);
+	return err;
+}
+
+
 int test_mbuf(void)
 {
 	int err;
 
 	err = test_mbuf_basic();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
 	err = test_mbuf_shift();
-	if (err)
-		return err;
+	TEST_ERR(err);
 
-	return 0;
+	err = test_mbuf_ptr();
+	TEST_ERR(err);
+
+out:
+	return err;
 }

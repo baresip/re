@@ -60,6 +60,7 @@ int      mbuf_resize(struct mbuf *mb, size_t size);
 void     mbuf_trim(struct mbuf *mb);
 int      mbuf_shift(struct mbuf *mb, ssize_t shift);
 int      mbuf_write_mem(struct mbuf *mb, const uint8_t *buf, size_t size);
+int      mbuf_write_ptr(struct mbuf *mb, intptr_t v);
 int      mbuf_write_u8(struct mbuf *mb, uint8_t v);
 int      mbuf_write_u16(struct mbuf *mb, uint16_t v);
 int      mbuf_write_u32(struct mbuf *mb, uint32_t v);
@@ -67,6 +68,7 @@ int      mbuf_write_u64(struct mbuf *mb, uint64_t v);
 int      mbuf_write_str(struct mbuf *mb, const char *str);
 int      mbuf_write_pl(struct mbuf *mb, const struct pl *pl);
 int      mbuf_read_mem(struct mbuf *mb, uint8_t *buf, size_t size);
+intptr_t mbuf_read_ptr(struct mbuf *mb);
 uint8_t  mbuf_read_u8(struct mbuf *mb);
 uint16_t mbuf_read_u16(struct mbuf *mb);
 uint32_t mbuf_read_u32(struct mbuf *mb);
@@ -74,7 +76,17 @@ uint64_t mbuf_read_u64(struct mbuf *mb);
 int      mbuf_read_str(struct mbuf *mb, char *str, size_t size);
 int      mbuf_strdup(struct mbuf *mb, char **strp, size_t len);
 int      mbuf_vprintf(struct mbuf *mb, const char *fmt, va_list ap);
-int      mbuf_printf(struct mbuf *mb, const char *fmt, ...);
+
+#ifdef HAVE_RE_ARG
+#define mbuf_printf(mb, fmt, ...)                                             \
+	_mbuf_printf_s((mb), (fmt), RE_VA_ARGS(__VA_ARGS__))
+#else
+#define mbuf_printf _mbuf_printf
+#endif
+
+int      _mbuf_printf(struct mbuf *mb, const char *fmt, ...);
+int      _mbuf_printf_s(struct mbuf *mb, const char *fmt, ...);
+
 int      mbuf_write_pl_skip(struct mbuf *mb, const struct pl *pl,
 			    const struct pl *skip);
 int      mbuf_fill(struct mbuf *mb, uint8_t c, size_t n);

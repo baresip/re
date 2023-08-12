@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(re
-  VERSION 3.3.0
+  VERSION 3.4.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
@@ -79,7 +79,10 @@ else()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+    add_compile_options(
+      -Wshorten-64-to-32
+      -Wno-gnu-zero-variadic-macro-arguments
+    )
 endif()
 
 check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
@@ -664,12 +667,9 @@ set_target_properties(re-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_definitions(re-objs PRIVATE ${RE_DEFINITIONS})
 
-target_include_directories(re-objs PRIVATE .)
+target_include_directories(re-objs PRIVATE include)
 target_include_directories(re-objs PRIVATE
   ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
-target_include_directories(re-objs PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  )
 
 
 ##############################################################################
@@ -698,6 +698,9 @@ if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
   target_link_libraries(re PUBLIC ${LINKLIBS})
+  target_include_directories(re PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
   add_library(libre::re ALIAS re)
 
   if(MSVC)

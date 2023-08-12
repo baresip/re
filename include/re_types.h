@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#include <assert.h>
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -270,3 +271,110 @@ typedef size_t re_sock_t;
 #define RE_BAD_SOCK -1
 typedef int re_sock_t;
 #endif
+
+
+/* re_assert helpers */
+
+/**
+ * @def re_assert(expr)
+ *
+ * If expression is false, prints error and calls abort() (not in
+ * RELEASE/NDEBUG builds)
+ *
+ * @param expr   expression
+ */
+
+
+/**
+ * @def re_assert_se(expr)
+ *
+ * If expression is false, prints error and calls abort(),
+ * in RELEASE/NDEBUG builds expression is always executed and keeps side effect
+ *
+ * @param expr   expression
+ */
+
+#if defined(RELEASE) || defined(NDEBUG)
+#define re_assert(expr) (void)0
+#define re_assert_se(expr) do{(void)(expr);} while(false)
+#else
+#define re_assert(expr) assert(expr)
+#define re_assert_se(expr) assert(expr)
+#endif
+
+
+/* RE_VA_ARG SIZE helpers */
+#if !defined(DISABLE_RE_ARG) &&                                               \
+	!defined(__STRICT_ANSI__) && /* Needs ## trailing comma fix, with C23 \
+					we can use __VA_OPT__ */              \
+	__STDC_VERSION__ >= 201112L  /* _Generic C11 support required */
+
+#define HAVE_RE_ARG 1
+
+#define RE_ARG_SIZE(type)                                                     \
+	_Generic((type),                                                      \
+	bool:			sizeof(bool),                                 \
+	char:			sizeof(char),                                 \
+	unsigned char:		sizeof(unsigned char),                        \
+	short:			sizeof(short),                                \
+	unsigned short:		sizeof(unsigned short),	                      \
+	int:			sizeof(int),                                  \
+	unsigned int:		sizeof(unsigned int),                         \
+	long:			sizeof(long),                                 \
+	unsigned long:		sizeof(unsigned long),                        \
+	long long:		sizeof(long long),                            \
+	unsigned long long:	sizeof(unsigned long long),                   \
+	float:			sizeof(float),                                \
+	double:			sizeof(double),                               \
+	char const*:		sizeof(char const *),                         \
+	char*:			sizeof(char *),                               \
+	void const*:		sizeof(void const *),                         \
+	void*:			sizeof(void *),                               \
+	default: sizeof(void*)                                                \
+)
+
+#define RE_ARG_0() 0
+#define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr), 0
+#define RE_ARG_2(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_1(__VA_ARGS__)
+#define RE_ARG_3(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_2(__VA_ARGS__)
+#define RE_ARG_4(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_3(__VA_ARGS__)
+#define RE_ARG_5(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_4(__VA_ARGS__)
+#define RE_ARG_6(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_5(__VA_ARGS__)
+#define RE_ARG_7(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_6(__VA_ARGS__)
+#define RE_ARG_8(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_7(__VA_ARGS__)
+#define RE_ARG_9(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_8(__VA_ARGS__)
+#define RE_ARG_10(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_9(__VA_ARGS__)
+#define RE_ARG_11(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_10(__VA_ARGS__)
+#define RE_ARG_12(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_11(__VA_ARGS__)
+#define RE_ARG_13(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_12(__VA_ARGS__)
+#define RE_ARG_14(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_13(__VA_ARGS__)
+#define RE_ARG_15(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_14(__VA_ARGS__)
+#define RE_ARG_16(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_15(__VA_ARGS__)
+
+#define RE_ARG_VA_NUM_2(X, X16, X15, X14, X13, X12, X11, X10, X9, X8, X7, X6, \
+			X5, X4, X3, X2, X1, N, ...)                           \
+	N
+#define RE_ARG_VA_NUM(...)                                                    \
+	RE_ARG_VA_NUM_2(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, \
+			10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+
+#define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)
+#define RE_ARG_N2(N, ...) RE_ARG_N3(N, __VA_ARGS__)
+#define RE_VA_ARGS(...) RE_ARG_N2(RE_ARG_VA_NUM(__VA_ARGS__), __VA_ARGS__)
+#endif /* End RE_VA_ARG SIZE helpers */
+
+#define RE_VA_ARG(ap, val, type, safe)                                        \
+	if (likely((safe))) {                                                 \
+		size_t sz = va_arg((ap), size_t);                             \
+		if (unlikely(!sz)) {                                          \
+			re_assert(0 && "RE_VA_ARG: no more arguments");       \
+			err = EOVERFLOW;                                      \
+			goto out;                                             \
+		}                                                             \
+		if (unlikely(sz > sizeof(type))) {                            \
+			re_assert(0 && "RE_VA_ARG: arg is not compatible");   \
+			err = EOVERFLOW;                                      \
+			goto out;                                             \
+		}                                                             \
+	}                                                                     \
+	(val) = va_arg((ap), type)
