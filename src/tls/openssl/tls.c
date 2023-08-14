@@ -62,7 +62,8 @@ struct tls_cert {
 	char *host;
 };
 
-#if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+
+#if defined(TRACE_SSL)
 /**
  * Global flag if key material must be appended to file
  */
@@ -269,7 +270,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 		goto out;
 	}
 
-#if defined(TRACE_SSL) && (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+#if defined(TRACE_SSL)
 	SSL_CTX_set_keylog_callback(tls->ctx, tls_keylogger_cb);
 #endif
 
@@ -1814,11 +1815,7 @@ bool tls_session_reused(const struct tls_conn *tc)
 	if (!tc)
 		return false;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 	return SSL_session_reused(tc->ssl);
-#else
-	return false;
-#endif
 }
 
 
