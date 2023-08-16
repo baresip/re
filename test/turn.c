@@ -34,8 +34,9 @@ struct turntest {
 	struct mbuf *mb;
 	struct tmr tmr;
 	uint32_t lifetime;
-	RE_ATOMIC enum rx_state rx_state;
+	enum rx_state rx_state;
 	thrd_t thr;
+	mtx_t *mtx;
 	int proto;
 	int err;
 
@@ -60,6 +61,7 @@ static void destructor(void *arg)
 	mem_deref(tt->tc);
 	mem_deref(tt->mb);
 	mem_deref(tt->turnsrv);
+	mem_deref(tt->mtx);
 }
 
 
@@ -191,8 +193,12 @@ static void peer_udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 	TEST_MEMCMP(test_payload, strlen(test_payload),
 		    mbuf_buf(mb), mbuf_get_left(mb));
 
-	if (re_atomic_rlx(&tt->rx_state) > RX_NULL)
+	mtx_lock(tt->mtx);
+	if (tt->rx_state > RX_NULL) {
+		mtx_unlock(tt->mtx);
 		return;
+	}
+	mtx_unlock(tt->mtx);
 
  out:
 	if (err || is_complete(tt))
@@ -205,10 +211,12 @@ static void cli_udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 	struct turntest *tt = arg;
 	(void)src;
 
-	if (re_atomic_rlx(&tt->rx_state) == RX_DETACH) {
+	mtx_lock(tt->mtx);
+	if (tt->rx_state == RX_DETACH) {
 		udp_thread_detach(tt->us_cli);
-		re_atomic_rlx_set(&tt->rx_state, RX_ATTACH);
+		tt->rx_state = RX_ATTACH;
 	}
+	mtx_unlock(tt->mtx);
 
 	udp_send(tt->us_cli, src, mb);
 }
@@ -342,9 +350,15 @@ static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime)
 	struct sa laddr;
 	int err;
 
-	tt = mem_zalloc(sizeof(*tt), destructor);
+	tt = mem_zalloc(sizeof(*tt), NULL);
 	if (!tt)
 		return ENOMEM;
+
+	err = mutex_alloc(&tt->mtx);
+	if (err)
+		goto out;
+
+	mem_destructor(tt, destructor);
 
 	tt->proto    = proto;
 	tt->lifetime = lifetime;
@@ -473,13 +487,15 @@ static void tmr_handler(void *arg)
 {
 	struct turntest *tt = arg;
 
-	if (re_atomic_rlx(&tt->rx_state) == RX_CLOSE)
+	mtx_lock(tt->mtx);
+	if (tt->rx_state == RX_CLOSE)
 		re_cancel();
 
-	if (re_atomic_rlx(&tt->rx_state) == RX_ATTACH) {
+	if (tt->rx_state == RX_ATTACH) {
 		udp_thread_attach(tt->us_cli);
-		re_atomic_rlx_set(&tt->rx_state, RX_READY);
+		tt->rx_state = RX_READY;
 	}
+	mtx_unlock(tt->mtx);
 
 	tmr_start(&tt->tmr, 0, tmr_handler, tt);
 }
@@ -515,13 +531,16 @@ int test_turn_thread(void)
 	if (err)
 		return err;
 
-	re_atomic_rlx_set(&tt->rx_state, RX_DETACH);
+	tt->rx_state = RX_DETACH;
 
 	thread_create_name(&tt->thr, "test_turn_thread", turn_thread, tt);
 
 	re_main_timeout(500);
 
-	re_atomic_rlx_set(&tt->rx_state, RX_CLOSE);
+	mtx_lock(tt->mtx);
+	tt->rx_state = RX_CLOSE;
+	mtx_unlock(tt->mtx);
+
 	thrd_join(tt->thr, &err);
 	TEST_ERR(err);
 
