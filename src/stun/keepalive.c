@@ -30,8 +30,6 @@ struct stun_keepalive {
 	uint32_t interval;        /**< Refresh interval in seconds          */
 	stun_mapped_addr_h *mah;  /**< Mapped address handler               */
 	void *arg;                /**< Handler argument                     */
-	struct sa map;            /**< Mapped IP address and port           */
-	struct sa xormap;         /**< XOR-Mapped IP address and port       */
 	struct sa curmap;         /**< Currently mapped IP address and port */
 };
 
