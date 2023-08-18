@@ -234,12 +234,12 @@ int aufile_write(struct aufile *af, const uint8_t *p, size_t sz)
  *
  * @param af  Audio-file
  *
- * @return size in bytes if success, otherwise EINVAL
+ * @return size in bytes if success, otherwise 0.
  */
 size_t aufile_get_size(struct aufile *af)
 {
 	if (!af)
-		return EINVAL;
+		return 0;
 
 	return af->datasize;
 }
@@ -250,12 +250,12 @@ size_t aufile_get_size(struct aufile *af)
  * @param af  Audio-file
  * @param prm Audio file parameters from aufile_open
  *
- * @return length in ms if success, otherwise EINVAL
+ * @return length in ms if success, otherwise 0.
  */
 size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
 {
 	if (!af)
-		return EINVAL;
+		return 0;
 
 	switch (prm->fmt) {
 		case AUFMT_PCMA:
