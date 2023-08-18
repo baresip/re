@@ -406,7 +406,7 @@ int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 		return EINVAL;
 
 	err = udp_alloc(&us);
-	if (!err)
+	if (err)
 		return err;
 
 	us->fd   = fd;
