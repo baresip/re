@@ -22,10 +22,10 @@
 struct stun_keepalive {
 	struct stun_ctrans *ct;   /**< STUN client transaction              */
 	struct stun *stun;        /**< STUN instance                        */
-	struct udp_helper *uh;
-	int proto;
-	void *sock;
-	struct sa dst;
+	struct udp_helper *uh;    /**< UDP Helper                           */
+	int proto;                /**< Transport protocol                   */
+	void *sock;               /**< Transport Socket                     */
+	struct sa dst;            /**< Destination network address          */
 	struct tmr tmr;           /**< Refresh timer                        */
 	uint32_t interval;        /**< Refresh interval in seconds          */
 	stun_mapped_addr_h *mah;  /**< Mapped address handler               */
