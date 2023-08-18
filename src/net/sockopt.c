@@ -110,3 +110,30 @@ int net_sockopt_reuse_set(re_sock_t fd, bool reuse)
 	return 0;
 #endif
 }
+
+
+/**
+ * Set socket IPV6_V6ONLY option (not supported on OpenBSD - readonly)
+ *
+ * @param fd     Socket file descriptor
+ * @param only   true for IPv6 only, false for dual socket
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int net_sockopt_v6only(re_sock_t fd, bool only)
+{
+	int on = only;
+
+#ifndef OPENBSD
+#ifdef IPV6_V6ONLY
+	if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
+			     BUF_CAST &on, sizeof(on))) {
+		int err = RE_ERRNO_SOCK;
+		DEBUG_WARNING("IPV6_V6ONLY: %m\n", err);
+		return err;
+	}
+#endif
+#endif
+	return 0;
+}
+
