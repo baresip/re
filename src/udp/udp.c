@@ -66,14 +66,12 @@ struct udp_sock {
 	udp_error_h *eh;     /**< Error handler               */
 	void *arg;           /**< Handler argument            */
 	re_sock_t fd;        /**< Socket file descriptor      */
-	re_sock_t fd6;       /**< IPv6 socket file descriptor */
 	bool conn;           /**< Connected socket flag       */
 	size_t rxsz;         /**< Maximum receive chunk size  */
 	size_t rx_presz;     /**< Preallocated rx buffer size */
 #ifdef WIN32
 	HANDLE qos;          /**< QOS subsystem handle        */
-	QOS_FLOWID qos_id;   /**< QOS IPv4 flow id            */
-	QOS_FLOWID qos_id6;  /**< QOS IPv6 flow id            */
+	QOS_FLOWID qos_id;   /**< QOS flow id                 */
 #endif
 	mtx_t *lock;         /**< A lock for helpers list     */
 };
@@ -130,8 +128,6 @@ static void udp_destructor(void *data)
 #ifdef WIN32
 	if (us->qos && us->qos_id)
 		(void)QOSRemoveSocketFromFlow(us->qos, 0, us->qos_id, 0);
-	if (us->qos && us->qos_id6)
-		(void)QOSRemoveSocketFromFlow(us->qos, 0, us->qos_id6, 0);
 	if (us->qos)
 		(void)QOSCloseHandle(us->qos);
 #endif
@@ -139,11 +135,6 @@ static void udp_destructor(void *data)
 	if (RE_BAD_SOCK != us->fd) {
 		fd_close(us->fd);
 		(void)close(us->fd);
-	}
-
-	if (RE_BAD_SOCK != us->fd6) {
-		fd_close(us->fd6);
-		(void)close(us->fd6);
 	}
 }
 
@@ -223,16 +214,6 @@ static void udp_read_handler(int flags, void *arg)
 }
 
 
-static void udp_read_handler6(int flags, void *arg)
-{
-	struct udp_sock *us = arg;
-
-	(void)flags;
-
-	udp_read(us, us->fd6);
-}
-
-
 static int udp_alloc(struct udp_sock **usp)
 {
 	int err;
@@ -285,7 +266,6 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 		return err;
 
 	us->fd  = RE_BAD_SOCK;
-	us->fd6 = RE_BAD_SOCK;
 
 	if (local) {
 		af = sa_af(local);
@@ -342,34 +322,15 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 			continue;
 		}
 
+		/* use dual socket */
+		if (r->ai_family == AF_INET6)
+			(void)net_sockopt_v6only(fd, false);
+
 		if (bind(fd, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
 			err = RE_ERRNO_SOCK;
 			DEBUG_INFO("listen: bind(): %m (%J)\n", err, local);
 			(void)close(fd);
 			continue;
-		}
-
-		/* Can we do both IPv4 and IPv6 on same socket? */
-		if (AF_INET6 == r->ai_family) {
-			struct sa sa;
-			int on = 1;  /* assume v6only */
-
-#if defined (IPPROTO_IPV6) && defined (IPV6_V6ONLY)
-			socklen_t on_len = sizeof(on);
-			if (0 != getsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
-					    (char *)&on, &on_len)) {
-				on = 1;
-			}
-#endif
-			/* Extra check for unspec addr - MAC OS X/Solaris */
-			if (0==sa_set_sa(&sa, r->ai_addr) && sa_is_any(&sa)) {
-				on = 1;
-			}
-			DEBUG_INFO("socket %d: IPV6_V6ONLY is %d\n", fd, on);
-			if (on) {
-				us->fd6 = fd;
-				continue;
-			}
 		}
 
 		/* OK */
@@ -380,7 +341,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 	freeaddrinfo(res);
 
 	/* We must have at least one socket */
-	if (RE_BAD_SOCK == us->fd && RE_BAD_SOCK == us->fd6) {
+	if (RE_BAD_SOCK == us->fd) {
 		if (0 == err)
 			err = EADDRNOTAVAIL;
 		goto out;
@@ -418,7 +379,6 @@ int udp_alloc_sockless(struct udp_sock **usp,
 		return err;
 
 	us->fd    = RE_BAD_SOCK;
-	us->fd6   = RE_BAD_SOCK;
 	us->sendh = sendh;
 	us->rh    = recvh ? recvh : dummy_udp_recv_handler;
 	us->arg   = arg;
@@ -444,7 +404,6 @@ int udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
 		return err;
 
 	us->fd   = fd;
-	us->fd6  = RE_BAD_SOCK;
 	us->rh   = recvh ? recvh : dummy_udp_recv_handler;
 	us->arg  = arg;
 	us->rxsz = UDP_RXSZ_DEFAULT;
@@ -476,7 +435,6 @@ int udp_open(struct udp_sock **usp, int af)
 		return err;
 
 	us->fd  = RE_BAD_SOCK;
-	us->fd6 = RE_BAD_SOCK;
 
 	fd = socket(af, SOCK_DGRAM, IPPROTO_UDP);
 	if (fd == RE_BAD_SOCK) {
@@ -484,10 +442,7 @@ int udp_open(struct udp_sock **usp, int af)
 		goto out;
 	}
 
-	if (af == AF_INET)
-		us->fd = fd;
-	else
-		us->fd6 = fd;
+	us->fd = fd;
 
  out:
 	if (err)
@@ -510,18 +465,10 @@ int udp_open(struct udp_sock **usp, int af)
  */
 int udp_connect(struct udp_sock *us, const struct sa *peer)
 {
-	re_sock_t fd;
-
 	if (!us || !peer)
 		return EINVAL;
 
-	/* choose a socket */
-	if (AF_INET6 == sa_af(peer) && RE_BAD_SOCK != us->fd6)
-		fd = us->fd6;
-	else
-		fd = us->fd;
-
-	if (0 != connect(fd, &peer->u.sa, peer->len))
+	if (0 != connect(us->fd, &peer->u.sa, peer->len))
 		return RE_ERRNO_SOCK;
 
 	us->conn = true;
@@ -535,13 +482,7 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
 {
 	struct sa hdst;
 	int err = 0;
-	re_sock_t fd;
-
-	/* choose a socket */
-	if (AF_INET6 == sa_af(dst) && RE_BAD_SOCK != us->fd6)
-		fd = us->fd6;
-	else
-		fd = us->fd;
+	re_sock_t fd = us->fd;
 
 	/* call helpers in reverse order */
 	while (le) {
@@ -624,9 +565,6 @@ int udp_local_get(const struct udp_sock *us, struct sa *local)
 	if (0 == getsockname(us->fd, &local->u.sa, &local->len))
 		return 0;
 
-	if (0 == getsockname(us->fd6, &local->u.sa, &local->len))
-		return 0;
-
 	return RE_ERRNO_SOCK;
 }
 
@@ -652,12 +590,6 @@ int udp_setsockopt(struct udp_sock *us, int level, int optname,
 
 	if (RE_BAD_SOCK != us->fd) {
 		if (0 != setsockopt(us->fd, level, optname,
-				    BUF_CAST optval, optlen))
-			err |= RE_ERRNO_SOCK;
-	}
-
-	if (RE_BAD_SOCK != us->fd6) {
-		if (0 != setsockopt(us->fd6, level, optname,
 				    BUF_CAST optval, optlen))
 			err |= RE_ERRNO_SOCK;
 	}
@@ -720,16 +652,6 @@ int udp_settos(struct udp_sock *us, uint8_t tos)
 				qos_type,
 				QOS_NON_ADAPTIVE_FLOW,
 				&us->qos_id);
-		if (!err)
-			return WSAGetLastError();
-	}
-
-	us->qos_id6 = 0;
-	if (RE_BAD_SOCK != us->fd6) {
-		err = QOSAddSocketToFlow(us->qos, us->fd6, NULL,
-				qos_type,
-				QOS_NON_ADAPTIVE_FLOW,
-				&us->qos_id6);
 		if (!err)
 			return WSAGetLastError();
 	}
@@ -805,21 +727,17 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
  * Get the File Descriptor from a UDP Socket
  *
  * @param us  UDP Socket
- * @param af  Address Family
+ * @param af  Address Family [deprecated, ignored]
  *
  * @return File Descriptor, or RE_BAD_SOCK for errors
  */
 re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
 {
+	(void)af;
 	if (!us)
 		return RE_BAD_SOCK;
 
-	switch (af) {
-
-	default:
-	case AF_INET:  return us->fd;
-	case AF_INET6: return (us->fd6 != RE_BAD_SOCK) ? us->fd6 : us->fd;
-	}
+	return us->fd;
 }
 
 
@@ -839,12 +757,6 @@ int udp_thread_attach(struct udp_sock *us)
 
 	if (RE_BAD_SOCK != us->fd) {
 		err = fd_listen(us->fd, FD_READ, udp_read_handler, us);
-		if (err)
-			goto out;
-	}
-
-	if (RE_BAD_SOCK != us->fd6) {
-		err = fd_listen(us->fd6, FD_READ, udp_read_handler6, us);
 		if (err)
 			goto out;
 	}
@@ -869,9 +781,6 @@ void udp_thread_detach(struct udp_sock *us)
 
 	if (RE_BAD_SOCK != us->fd)
 		fd_close(us->fd);
-
-	if (RE_BAD_SOCK != us->fd6)
-		fd_close(us->fd6);
 }
 
 
@@ -1055,14 +964,6 @@ void udp_flush(const struct udp_sock *us)
 		uint8_t buf[4096];
 
 		while (recvfrom(us->fd, BUF_CAST buf, sizeof(buf),
-				0, NULL, 0) > 0)
-			;
-	}
-
-	if (RE_BAD_SOCK != us->fd6) {
-		uint8_t buf[4096];
-
-		while (recvfrom(us->fd6, BUF_CAST buf, sizeof(buf),
 				0, NULL, 0) > 0)
 			;
 	}
