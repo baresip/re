@@ -741,6 +741,9 @@ int tcp_sock_bind(struct tcp_sock *ts, const struct sa *local)
 
 	err = EINVAL;
 	for (r = res; r; r = r->ai_next) {
+		/* use dual socket */
+		if (r->ai_family == AF_INET6)
+			(void)net_sockopt_v6only(ts->fd, false);
 
 		if (bind(ts->fd, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
 			err = RE_ERRNO_SOCK;
@@ -975,6 +978,10 @@ int tcp_conn_bind(struct tcp_conn *tc, const struct sa *local)
 	for (r = res; r; r = r->ai_next) {
 
 		(void)net_sockopt_reuse_set(tc->fdc, true);
+
+		/* use dual socket */
+		if (r->ai_family == AF_INET6)
+			(void)net_sockopt_v6only(tc->fdc, false);
 
 		/* bind to local address */
 		if (bind(tc->fdc, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
