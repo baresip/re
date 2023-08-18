@@ -245,7 +245,7 @@ size_t aufile_get_size(struct aufile *af)
 }
 
 /**
- * Get size of a WAV file in bytes
+ * Get length of a WAV file in ms
  *
  * @param af  Audio-file
  * @param prm Audio file parameters from aufile_open
