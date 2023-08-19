@@ -24,7 +24,5 @@ int aufile_open(struct aufile **afp, struct aufile_prm *prm,
 		const char *filename, enum aufile_mode mode);
 int aufile_read(struct aufile *af, uint8_t *p, size_t *sz);
 int aufile_write(struct aufile *af, const uint8_t *p, size_t sz);
-// return the size in bytes
 size_t aufile_get_size(struct aufile *af);
-// return the length in ms
 size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm);
