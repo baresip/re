@@ -51,6 +51,7 @@ void net_sock_close(void);
 /* Net socket options */
 int net_sockopt_blocking_set(re_sock_t fd, bool blocking);
 int net_sockopt_reuse_set(re_sock_t fd, bool reuse);
+int net_sockopt_v6only(re_sock_t fd, bool only);
 
 
 /* Net interface (if.c) */
