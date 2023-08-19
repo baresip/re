@@ -228,3 +228,53 @@ int aufile_write(struct aufile *af, const uint8_t *p, size_t sz)
 
 	return 0;
 }
+
+/**
+ * Get size of a WAV file in bytes
+ *
+ * @param af  Audio-file
+ *
+ * @return size in bytes if success, otherwise 0.
+ */
+size_t aufile_get_size(struct aufile *af)
+{
+	if (!af)
+		return 0;
+
+	return af->datasize;
+}
+
+/**
+ * Get length of a WAV file in ms
+ *
+ * @param af  Audio-file
+ * @param prm Audio file parameters from aufile_open
+ *
+ * @return length in ms if success, otherwise 0.
+ */
+size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
+{
+	if (!af)
+		return 0;
+
+	switch (prm->fmt) {
+		case AUFMT_PCMA:
+		case AUFMT_PCMU:
+			return af->datasize * prm->channels * prm->srate
+				/ 1000;
+		case AUFMT_S16LE:
+			return af->datasize * 2 * prm->channels * prm->srate
+				/ 1000;
+		case AUFMT_S24_3LE:
+			return af->datasize * 3 * prm->channels * prm->srate
+				/ 1000;
+		case AUFMT_S32LE:
+		case AUFMT_FLOAT:
+			return af->datasize * 4 * prm->channels * prm->srate
+			/ 1000;
+		default:
+			return 0;
+	}
+
+	return 0;
+}
