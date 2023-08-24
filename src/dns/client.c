@@ -88,7 +88,7 @@ struct dnsquery {
 	char *name;
 	uint16_t type;
 	uint16_t dnsclass;
-	struct list *rrlv[RRLV_MAX];
+	struct list *rrlv;
 	bool cache;
 	struct dnsc *dnsc; /* parent */
 };
@@ -847,18 +847,18 @@ static int async_getaddrinfo(void *arg)
 			sa_in6(&sa, rr->rdata.aaaa.addr);
 		}
 
-		le = list_apply(dq->rrlv[0], false, getaddr_dup, rr);
+		le = list_apply(dq->rrlv, false, getaddr_dup, rr);
 		if (le) {
 			mem_deref(rr);
 			continue;
 		}
 
-		list_append(dq->rrlv[0], &rr->le_priv, rr);
+		list_append(dq->rrlv, &rr->le_priv, rr);
 	}
 
 out:
 	if (err)
-		list_flush(dq->rrlv[0]);
+		list_flush(dq->rrlv);
 
 	freeaddrinfo(res0);
 
@@ -872,8 +872,8 @@ static void getaddrinfo_h(int err, void *arg)
 	struct dns_query *q;
 
 	if (err == ESHUTDOWN) {
-		list_flush(dq->rrlv[0]);
-		mem_deref(dq->rrlv[0]);
+		list_flush(dq->rrlv);
+		mem_deref(dq->rrlv);
 		goto out;
 	}
 
@@ -882,13 +882,13 @@ static void getaddrinfo_h(int err, void *arg)
 				    query_cmp_handler, dq));
 	if (!q) {
 		DEBUG_WARNING("dnsc/getaddrinfo: no query found\n");
-		list_flush(dq->rrlv[0]);
-		mem_deref(dq->rrlv[0]);
+		list_flush(dq->rrlv);
+		mem_deref(dq->rrlv);
 		goto out;
 	}
 
 	mem_deref(q->rrlv[0]);
-	q->rrlv[0] = dq->rrlv[0];
+	q->rrlv[0] = dq->rrlv;
 
 	const bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
@@ -935,8 +935,8 @@ static int query_getaddrinfo(struct dns_query *q)
 	dq->dnsclass   = q->dnsclass;
 	dq->dnsc       = q->dnsc;
 
-	dq->rrlv[0] = mem_alloc(sizeof(struct list), NULL);
-	list_init(dq->rrlv[0]);
+	dq->rrlv = mem_alloc(sizeof(struct list), NULL);
+	list_init(dq->rrlv);
 
 	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, dq);
 	if (err)
