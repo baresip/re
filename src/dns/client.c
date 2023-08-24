@@ -88,7 +88,9 @@ struct dnsquery {
 	char *name;
 	uint16_t type;
 	uint16_t dnsclass;
+	struct list *rrlv[RRLV_MAX];
 	bool cache;
+	struct dnsc *dnsc; /* parent */
 };
 
 
@@ -794,7 +796,7 @@ static bool getaddr_dup(struct le *le, void *arg)
 
 static int async_getaddrinfo(void *arg)
 {
-	struct dns_query *q = arg;
+	struct dnsquery *dq = arg;
 	int err;
 	struct addrinfo *res0 = NULL;
 	struct addrinfo *res;
@@ -803,13 +805,13 @@ static int async_getaddrinfo(void *arg)
 
 	memset(&hints, 0, sizeof(hints));
 
-	if (q->type == DNS_TYPE_A)
+	if (dq->type == DNS_TYPE_A)
 		hints.ai_family = AF_INET;
-	if (q->type == DNS_TYPE_AAAA)
+	if (dq->type == DNS_TYPE_AAAA)
 		hints.ai_family = AF_INET6;
 	hints.ai_flags = AI_ADDRCONFIG;
 
-	err = getaddrinfo(q->name, NULL, &hints, &res0);
+	err = getaddrinfo(dq->name, NULL, &hints, &res0);
 	if (err)
 		return EADDRNOTAVAIL;
 
@@ -822,7 +824,7 @@ static int async_getaddrinfo(void *arg)
 			goto out;
 		}
 
-		str_dup(&rr->name, q->name);
+		str_dup(&rr->name, dq->name);
 
 		rr->dnsclass = DNS_CLASS_IN;
 		rr->ttl	     = GETADDRINFO_TTL;
@@ -845,18 +847,18 @@ static int async_getaddrinfo(void *arg)
 			sa_in6(&sa, rr->rdata.aaaa.addr);
 		}
 
-		le = list_apply(q->rrlv[0], false, getaddr_dup, rr);
+		le = list_apply(dq->rrlv[0], false, getaddr_dup, rr);
 		if (le) {
 			mem_deref(rr);
 			continue;
 		}
 
-		list_append(q->rrlv[0], &rr->le_priv, rr);
+		list_append(dq->rrlv[0], &rr->le_priv, rr);
 	}
 
 out:
 	if (err)
-		list_flush(q->rrlv[0]);
+		list_flush(dq->rrlv[0]);
 
 	freeaddrinfo(res0);
 
@@ -866,7 +868,28 @@ out:
 
 static void getaddrinfo_h(int err, void *arg)
 {
-	struct dns_query *q = arg;
+	struct dnsquery *dq = arg;
+	struct dns_query *q;
+
+	if (err == ESHUTDOWN) {
+		list_flush(dq->rrlv[0]);
+		mem_deref(dq->rrlv[0]);
+		goto out;
+	}
+
+	q = list_ledata(hash_lookup(dq->dnsc->ht_query,
+				    hash_joaat_str_ci(dq->name),
+				    query_cmp_handler, dq));
+	if (!q) {
+		DEBUG_WARNING("dnsc/getaddrinfo: no query found\n");
+		list_flush(dq->rrlv[0]);
+		mem_deref(dq->rrlv[0]);
+		goto out;
+	}
+
+	mem_deref(q->rrlv[0]);
+	q->rrlv[0] = dq->rrlv[0];
+
 	const bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
 	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d %s ---\n", q->id,
@@ -884,12 +907,16 @@ static void getaddrinfo_h(int err, void *arg)
 
 	if (err || !cache) {
 		mem_deref(q);
-		return;
+		goto out;
 	}
 
 	hash_append(q->dnsc->ht_query_cache, hash_joaat_str_ci(q->name),
 		    &q->le, q);
 	tmr_start(&q->tmr_ttl, GETADDRINFO_TTL * 1000, ttl_timeout_handler, q);
+
+out:
+	mem_deref(dq->name);
+	mem_deref(dq);
 }
 
 
@@ -897,7 +924,21 @@ static int query_getaddrinfo(struct dns_query *q)
 {
 	int err;
 
-	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, q);
+	struct dnsquery *dq = mem_zalloc(sizeof(struct dnsquery), NULL);
+	if (!dq)
+		return ENOMEM;
+
+	str_dup(&dq->name, q->name);
+	dq->type       = q->type;
+	dq->hdr.id     = q->id;
+	dq->hdr.opcode = q->opcode;
+	dq->dnsclass   = q->dnsclass;
+	dq->dnsc       = q->dnsc;
+
+	dq->rrlv[0] = mem_alloc(sizeof(struct list), NULL);
+	list_init(dq->rrlv[0]);
+
+	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, dq);
 	if (err)
 		DEBUG_WARNING("re_thread_async: %m\n", err);
 
