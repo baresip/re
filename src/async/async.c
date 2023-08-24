@@ -96,6 +96,21 @@ static void async_destructor(void *data)
 		thrd_join(async->thrd[i], NULL);
 	}
 
+	/* Notify worker callbacks (so they can call destructors) */
+	struct le *le;
+	LIST_FOREACH(&async->workl, le)
+	{
+		struct async_work *work = le->data;
+		if (work->cb)
+			work->cb(ESHUTDOWN, work->arg);
+	}
+	LIST_FOREACH(&async->curl, le)
+	{
+		struct async_work *work = le->data;
+		if (work->cb)
+			work->cb(ESHUTDOWN, work->arg);
+	}
+
 	list_flush(&async->workl);
 	list_flush(&async->curl);
 	list_flush(&async->freel);

@@ -242,6 +242,10 @@ typedef SSIZE_T ssize_t;
 #define EKEYREJECTED 129
 #endif
 
+/* Cannot send after transport endpoint shutdown */
+#ifndef ESHUTDOWN
+#define ESHUTDOWN 108
+#endif
 
 /*
  * Give the compiler a hint which branch is "likely" or "unlikely" (inspired
