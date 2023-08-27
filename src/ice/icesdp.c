@@ -212,7 +212,7 @@ static int getaddr_rcand(void *arg)
 	int err;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_flags	= AI_V4MAPPED | AI_ADDRCONFIG;
 
 	err = getaddrinfo(rcand->domain, NULL, &hints, &res0);
