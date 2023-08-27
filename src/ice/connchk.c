@@ -400,6 +400,14 @@ static void pace_timeout(void *arg)
 }
 
 
+static void rcand_wait_timeout(void *arg)
+{
+	struct icem *icem = arg;
+
+	icem_conncheck_start(icem);
+}
+
+
 /**
  * Scheduling Checks
  *
@@ -413,6 +421,9 @@ int icem_conncheck_start(struct icem *icem)
 
 	if (!icem)
 		return EINVAL;
+
+	if (icem->rcand_wait)
+		tmr_start(&icem->tmr_rcand, 100, rcand_wait_timeout, icem);
 
 	err = icem_checklist_form(icem);
 	if (err)

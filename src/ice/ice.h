@@ -59,6 +59,7 @@ struct icem {
 	bool rmode_lite;             /**< Remote mode is Lite                */
 	enum ice_role lrole;         /**< Local role                         */
 	struct tmr tmr_pace;         /**< Timer for pacing STUN requests     */
+	struct tmr tmr_rcand;        /**< Timer for remote candidate wait    */
 	int proto;                   /**< Transport protocol                 */
 	int layer;                   /**< Protocol layer                     */
 	enum ice_checkl_state state; /**< State of the checklist             */
@@ -70,6 +71,7 @@ struct icem {
 	ice_connchk_h *chkh;         /**< Connectivity check handler         */
 	void *arg;                   /**< Handler argument                   */
 	char name[32];               /**< Name of the media stream           */
+	bool rcand_wait;             /**< Waiting for remote candidated      */
 };
 
 /** Defines a candidate */

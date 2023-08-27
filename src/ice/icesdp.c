@@ -251,6 +251,7 @@ static void delayed_rcand(int err, void *arg)
 		       &rcand->caddr, &rcand->rel_addr, &rcand->foundation);
 
 out:
+	rcand->icem->rcand_wait = false;
 	mem_deref(rcand);
 }
 
@@ -335,6 +336,8 @@ static int cand_decode(struct icem *icem, const char *val)
 
 		pl_dup(&rcand->foundation, &foundation);
 		(void)pl_strcpy(&addr, rcand->domain, sizeof(rcand->domain));
+
+		icem->rcand_wait = true;
 
 		err = re_thread_async(getaddr_rcand, delayed_rcand, rcand);
 		if (err)
