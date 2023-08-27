@@ -315,8 +315,8 @@ static int cand_decode(struct icem *icem, const char *val)
 	(void)pl_strcpy(&cand_type, type, sizeof(type));
 	cid = pl_u32(&compid);
 
-	err = sa_set(&caddr, &addr, pl_u32(&port));
-	if (err) {
+	/* check for mdns .local address */
+	if (pl_strstr(&addr, ".local") != NULL) {
 		/* try non blocking getaddr mdns resolution */
 		struct rcand *rcand =
 			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
@@ -341,6 +341,10 @@ static int cand_decode(struct icem *icem, const char *val)
 
 		return err;
 	}
+
+	err = sa_set(&caddr, &addr, pl_u32(&port));
+	if (err)
+		return err;
 
 	/* add only if not exist */
 	if (icem_cand_find(&icem->rcandl, cid, &caddr))
