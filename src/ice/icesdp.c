@@ -208,14 +208,9 @@ static int getaddr_rcand(void *arg)
 {
 	struct rcand *rcand = arg;
 	struct addrinfo *res, *res0 = NULL;
-	struct addrinfo hints;
 	int err;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags	= AI_V4MAPPED | AI_ADDRCONFIG;
-
-	err = getaddrinfo(rcand->domain, NULL, &hints, &res0);
+	err = getaddrinfo(rcand->domain, NULL, NULL, &res0);
 	if (err)
 		return EADDRNOTAVAIL;
 
