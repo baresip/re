@@ -71,7 +71,7 @@ struct icem {
 	ice_connchk_h *chkh;         /**< Connectivity check handler         */
 	void *arg;                   /**< Handler argument                   */
 	char name[32];               /**< Name of the media stream           */
-	bool rcand_wait;             /**< Waiting for remote candidated      */
+	bool rcand_wait;             /**< Waiting for remote candidate       */
 };
 
 /** Defines a candidate */
