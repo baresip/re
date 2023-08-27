@@ -317,9 +317,6 @@ static int cand_decode(struct icem *icem, const char *val)
 
 	err = sa_set(&caddr, &addr, pl_u32(&port));
 	if (err) {
-		if (err != EINVAL)
-			return err;
-
 		/* try non blocking getaddr mdns resolution */
 		struct rcand *rcand =
 			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
