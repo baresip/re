@@ -422,8 +422,11 @@ int icem_conncheck_start(struct icem *icem)
 	if (!icem)
 		return EINVAL;
 
-	if (icem->rcand_wait)
+	if (icem->rcand_wait) {
+		icem_printf(icem, "conncheck_start: "
+				  "waiting for remote candidate...");
 		tmr_start(&icem->tmr_rcand, 100, rcand_wait_timeout, icem);
+	}
 
 	err = icem_checklist_form(icem);
 	if (err)
