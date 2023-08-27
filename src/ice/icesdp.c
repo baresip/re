@@ -262,7 +262,6 @@ static void rcand_dealloc(void *arg)
 
 	mem_deref(rcand->icem);
 	mem_deref((char *)rcand->foundation.p);
-	mem_deref(rcand->domain);
 }
 
 
