@@ -424,7 +424,7 @@ int icem_conncheck_start(struct icem *icem)
 
 	if (icem->rcand_wait) {
 		icem_printf(icem, "conncheck_start: "
-				  "waiting for remote candidate...");
+				  "waiting mDNS for remote candidate...\n");
 		tmr_start(&icem->tmr_rcand, 100, rcand_wait_timeout, icem);
 	}
 
