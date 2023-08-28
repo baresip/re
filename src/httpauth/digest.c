@@ -449,9 +449,10 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	}
 
 	if (str_isset(secret))
-		err = mbuf_printf(mb, "%lu:%s:%s", ts, etag, secret);
+		err = mbuf_printf(mb, "%lu:%s:%s",
+			(long unsigned)ts, etag, secret);
 	else
-		err = mbuf_printf(mb, "%lu:%s", ts, etag);
+		err = mbuf_printf(mb, "%lu:%s", (long unsigned)ts, etag);
 
 	if (err)
 		goto out;
@@ -459,7 +460,7 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	sha256(mb->buf, mb->end, hash);
 	mbuf_rewind(mb);
 
-	err = mbuf_printf(mb, "%w%016lx", hash, hashlen, ts);
+	err = mbuf_printf(mb, "%w%016lx", hash, hashlen, (long unsigned)ts);
 	if (err)
 		goto out;
 
