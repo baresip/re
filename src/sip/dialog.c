@@ -36,6 +36,7 @@ struct sip_dialog {
 	uint32_t rseq;
 	size_t cpos;
 	enum sip_transp tp;
+	uint32_t srcport;
 };
 
 
@@ -575,6 +576,37 @@ int sip_dialog_set_callid(struct sip_dialog *dlg, const char *callid)
 {
 	dlg->callid = mem_deref(dlg->callid);
 	return str_dup(&dlg->callid, callid);
+}
+
+
+/**
+ * Set TCP source port for a SIP Dialog
+ *
+ * @param dlg  SIP Dialog
+ * @param srcport The TCP source port to be used
+ */
+void sip_dialog_set_srcport(struct sip_dialog *dlg, uint16_t srcport)
+{
+	if (!dlg)
+		return;
+
+	dlg->srcport = srcport;
+}
+
+
+/**
+ * Get TCP source port for a SIP Dialog
+ *
+ * @param dlg  SIP Dialog
+ *
+ * @return TCP source port
+ */
+uint16_t sip_dialog_srcport(struct sip_dialog *dlg)
+{
+	if (!dlg)
+		return 0;
+
+	return dlg->srcport;
 }
 
 
