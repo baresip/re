@@ -313,6 +313,7 @@ static int cand_decode(struct icem *icem, const char *val)
 	/* check for mdns .local address */
 	if (pl_strstr(&addr, ".local") != NULL) {
 		/* try non blocking getaddr mdns resolution */
+		icem_printf(icem, "mDNS remote cand: %r\n", &addr);
 		struct rcand *rcand =
 			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
 		if (!rcand)
