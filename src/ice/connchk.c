@@ -426,6 +426,7 @@ int icem_conncheck_start(struct icem *icem)
 		icem_printf(icem, "conncheck_start: "
 				  "waiting mDNS for remote candidate...\n");
 		tmr_start(&icem->tmr_rcand, 100, rcand_wait_timeout, icem);
+		return 0;
 	}
 
 	err = icem_checklist_form(icem);
