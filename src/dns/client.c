@@ -871,17 +871,11 @@ static void getaddrinfo_h(int err, void *arg)
 	struct dnsquery *dq = arg;
 	struct dns_query *q;
 
-	if (err == ESHUTDOWN) {
-		list_flush(dq->rrlv);
-		mem_deref(dq->rrlv);
-		goto out;
-	}
-
 	q = list_ledata(hash_lookup(dq->dnsc->ht_query,
 				    hash_joaat_str_ci(dq->name),
 				    query_cmp_handler, dq));
 	if (!q) {
-		DEBUG_WARNING("dnsc/getaddrinfo: no query found\n");
+		DEBUG_WARNING("getaddrinfo_h: no query found\n");
 		list_flush(dq->rrlv);
 		mem_deref(dq->rrlv);
 		goto out;
@@ -895,7 +889,10 @@ static void getaddrinfo_h(int err, void *arg)
 	DEBUG_INFO("--- ANSWER SECTION (getaddrinfo) id: %d %s ---\n", q->id,
 		   cache ? "(caching)" : "");
 
-	if (!err) {
+	if (err) {
+		DEBUG_WARNING("getaddrinfo_h: err %m\n", err);
+	}
+	else {
 		struct le *le;
 		LIST_FOREACH(q->rrlv[0], le)
 		{
