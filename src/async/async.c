@@ -102,13 +102,13 @@ static void async_destructor(void *data)
 	{
 		struct async_work *work = le->data;
 		if (work->cb)
-			work->cb(ESHUTDOWN, work->arg);
+			work->cb(ECANCELED, work->arg);
 	}
 	LIST_FOREACH(&async->curl, le)
 	{
 		struct async_work *work = le->data;
 		if (work->cb)
-			work->cb(ESHUTDOWN, work->arg);
+			work->cb(ECANCELED, work->arg);
 	}
 
 	list_flush(&async->workl);
