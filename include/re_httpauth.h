@@ -83,9 +83,9 @@ int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 
 int httpauth_digest_chall_req_print(struct re_printf *pf,
 	const struct httpauth_digest_chall_req *req);
-int httpauth_digest_min_chall_request(struct httpauth_digest_chall_req **preq,
-	const char *realm, const char *etag, const char *qop);
 int httpauth_digest_chall_request(struct httpauth_digest_chall_req **preq,
+	const char *realm, const char *etag, const char *qop);
+int httpauth_digest_chall_request_full(struct httpauth_digest_chall_req **preq,
 	const char *real, const char *domain, const char *etag,
 	const char *opaque, const bool stale, const char *algo,
 	const char *qop, const char *charset, const bool userhash);

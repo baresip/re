@@ -520,7 +520,7 @@ int httpauth_digest_chall_req_print(struct re_printf *pf,
 
 
 /**
- * Minimal requirement digest authentication request
+ * Create a digest authentication request
  *
  * @param preq  Httpauth_digest_chall_req object ptr
  * @param realm Realm
@@ -530,16 +530,16 @@ int httpauth_digest_chall_req_print(struct re_printf *pf,
  *
  * @return 0 if success, otherwise errorcode
  */
-int httpauth_digest_min_chall_request(struct httpauth_digest_chall_req **preq,
+int httpauth_digest_chall_request(struct httpauth_digest_chall_req **preq,
 	const char *realm, const char *etag, const char *qop)
 {
-	return httpauth_digest_chall_request(preq, realm, NULL, etag, NULL,
-		false, NULL, qop, NULL, false);
+	return httpauth_digest_chall_request_full(preq, realm, NULL, etag,
+		NULL, false, NULL, qop, NULL, false);
 }
 
 
 /**
- * Create a digest authentication request
+ * Create a full configurable digest authentication request
  *
  * @param preq      Httpauth_digest_chall_req object ptr
  * @param realm     Realm
@@ -555,7 +555,7 @@ int httpauth_digest_min_chall_request(struct httpauth_digest_chall_req **preq,
  *
  * @return 0 if success, otherwise errorcode
  */
-int httpauth_digest_chall_request(struct httpauth_digest_chall_req **preq,
+int httpauth_digest_chall_request_full(struct httpauth_digest_chall_req **preq,
 	const char *realm, const char *domain, const char *etag,
 	const char *opaque, const bool stale, const char *algo,
 	const char *qop, const char *charset, const bool userhash)
