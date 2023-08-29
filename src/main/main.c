@@ -163,7 +163,7 @@ int re_alloc(struct re **rep)
 	if (!re)
 		return ENOMEM;
 
-	re->fhsld = mbuf_alloc(32 * sizeof(void *));
+	re->fhsld = mbuf_alloc(64 * sizeof(void *));
 	if (!re->fhsld) {
 		err = ENOMEM;
 		goto out;
