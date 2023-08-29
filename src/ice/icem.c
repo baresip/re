@@ -51,6 +51,7 @@ static void icem_destructor(void *data)
 {
 	struct icem *icem = data;
 
+	tmr_cancel(&icem->tmr_rcand);
 	tmr_cancel(&icem->tmr_pace);
 	list_flush(&icem->compl);
 	list_flush(&icem->validl);
@@ -105,6 +106,7 @@ int  icem_alloc(struct icem **icemp, enum ice_role role, int proto, int layer,
 	icem->conf = conf_default;
 
 	tmr_init(&icem->tmr_pace);
+	tmr_init(&icem->tmr_rcand);
 	list_init(&icem->lcandl);
 	list_init(&icem->rcandl);
 	list_init(&icem->checkl);
