@@ -642,12 +642,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 	/* Stop listening */
 	if (!flags && fhs->flags) {
 		fhs->fh = NULL;
-		if (re_atomic_rlx(&re->polling)) {
-			mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
-		}
-		else {
-			mem_deref(fhs);
-		}
+		mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
 		--re->nfds;
 	}
 
