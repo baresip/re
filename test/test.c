@@ -861,7 +861,7 @@ void test_listcases(void)
 	n = RE_ARRAY_SIZE(tests);
 	nh = (n+1)/2;
 
-	(void)re_printf("\n%u test cases:\n", n);
+	(void)re_printf("\n%zu test cases:\n", n);
 
 	for (i=0; i<nh; i++) {
 
