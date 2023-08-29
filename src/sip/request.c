@@ -211,7 +211,6 @@ static int request(struct sip_request *req, enum sip_transp tp,
 {
 	struct mbuf *mb   = NULL;
 	int err = ENOMEM;
-	struct sa laddr;
 
 	req->provrecv = false;
 
@@ -223,10 +222,6 @@ static int request(struct sip_request *req, enum sip_transp tp,
 
 
 	if (!req->branch || !mb)
-		goto out;
-
-	err = sip_transp_laddr(req->sip, &laddr, tp, dst);
-	if (err)
 		goto out;
 
 	if (!req->stateful) {

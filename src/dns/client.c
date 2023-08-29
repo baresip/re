@@ -32,7 +32,7 @@
 
 
 enum {
-	NTX_MAX = 20,
+	NTX_MAX = 4,
 	QUERY_HASH_SIZE = 16,
 	TCP_HASH_SIZE = 2,
 	CONN_TIMEOUT = 10 * 1000,
@@ -698,15 +698,17 @@ static void udp_timeout_handler(void *arg)
 	struct dns_query *q = arg;
 	int err = ETIMEDOUT;
 
-	if (q->ntx >= NTX_MAX)
+	if (q->ntx >= NTX_MAX * *q->srvc)
 		goto out;
 
 	err = send_udp(q);
 	if (err)
 		goto out;
 
-	tmr_start(&q->tmr, 1000<<MIN(2, q->ntx - 2),
-		  udp_timeout_handler, q);
+	int timeout = 500 << MIN(2, (q->ntx - 1) / *q->srvc);
+
+	DEBUG_INFO("waiting udp timeout: %dms\n", timeout);
+	tmr_start(&q->tmr, timeout, udp_timeout_handler, q);
 
  out:
 	if (err) {
