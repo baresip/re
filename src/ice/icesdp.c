@@ -225,7 +225,7 @@ static int getaddr_rcand(void *arg)
 
 	sa_set_port(&rcand->caddr, rcand->port);
 
-	freeaddrinfo(res);
+	freeaddrinfo(res0);
 
 	return 0;
 }
