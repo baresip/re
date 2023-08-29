@@ -594,21 +594,6 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 	if (!fhsp)
 		return EINVAL;
 
-	fhs = *fhsp;
-
-	if (!fhs) {
-		fhs = mem_zalloc(sizeof(struct re_fhs), NULL);
-		if (!fhs)
-			return ENOMEM;
-
-		fhs->fd = RE_BAD_SOCK;
-		fhs->index = -1;
-
-		*fhsp = fhs;
-	}
-
-	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
-
 #ifndef RELEASE
 	err = re_thread_check(true);
 	if (err)
@@ -625,6 +610,21 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 		if (err)
 			return err;
 	}
+
+	fhs = *fhsp;
+
+	if (!fhs) {
+		fhs = mem_zalloc(sizeof(struct re_fhs), NULL);
+		if (!fhs)
+			return ENOMEM;
+
+		fhs->fd = RE_BAD_SOCK;
+		fhs->index = -1;
+
+		*fhsp = fhs;
+	}
+
+	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
 
 	/* allow setting fd only once, new fd needs new fhs allocation */
 	if (fhs->fd == RE_BAD_SOCK)
@@ -643,20 +643,18 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 	if (!flags && fhs->flags) {
 		fhs->fh = NULL;
 		if (re_atomic_rlx(&re->polling)) {
-			if (mem_nrefs(fhs) > 1)
-				mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
+			mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
 		}
 		else {
-			if (mem_nrefs(fhs) > 1)
-				mem_deref(fhs);
+			mem_deref(fhs);
 		}
 		--re->nfds;
 	}
 
 	/* Start listening */
-	if (flags && !fhs->flags){
-		if (mem_nrefs(fhs) == 1)
-			mem_ref(fhs);
+	if (flags && !fhs->flags) {
+		/* reference for poll loop - avoid dangling pointer */
+		mem_ref(fhs);
 		++re->nfds;
 	}
 
@@ -687,6 +685,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 
 	if (err && flags) {
 		fd_close(fhs);
+		*fhsp = mem_deref(fhs);
 		DEBUG_WARNING("fd_listen: fd=%d flags=0x%02x (%m)\n", fd,
 			      flags, err);
 		return err;
