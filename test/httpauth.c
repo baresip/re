@@ -443,7 +443,7 @@ int test_httpauth_digest_request(void)
 			goto for_out;
 		}
 
-		err = httpauth_digest_chall_request(&req, testv[i].realm,
+		err = httpauth_digest_chall_request_full(&req, testv[i].realm,
 			testv[i].domain, testv[i].etag, testv[i].opaque,
 			testv[i].stale, testv[i].algorithm, testv[i].qop,
 			testv[i].charset, testv[i].userhash);
