@@ -317,18 +317,18 @@ typedef int re_sock_t;
 
 #define RE_ARG_SIZE(type)                                                     \
 	_Generic((type),                                                      \
-	bool:			sizeof(bool),                                 \
-	char:			sizeof(char),                                 \
-	unsigned char:		sizeof(unsigned char),                        \
-	short:			sizeof(short),                                \
-	unsigned short:		sizeof(unsigned short),	                      \
+	bool:			sizeof(int),                                  \
+	char:			sizeof(int),                                  \
+	unsigned char:		sizeof(unsigned int),                         \
+	short:			sizeof(int),                                  \
+	unsigned short:		sizeof(unsigned int),	                      \
 	int:			sizeof(int),                                  \
 	unsigned int:		sizeof(unsigned int),                         \
 	long:			sizeof(long),                                 \
 	unsigned long:		sizeof(unsigned long),                        \
 	long long:		sizeof(long long),                            \
 	unsigned long long:	sizeof(unsigned long long),                   \
-	float:			sizeof(float),                                \
+	float:			sizeof(double),                               \
 	double:			sizeof(double),                               \
 	char const*:		sizeof(char const *),                         \
 	char*:			sizeof(char *),                               \
@@ -375,7 +375,7 @@ typedef int re_sock_t;
 			err = EOVERFLOW;                                      \
 			goto out;                                             \
 		}                                                             \
-		if (unlikely(sz > sizeof(type))) {                            \
+		if (unlikely(sz != sizeof(type))) {                           \
 			re_assert(0 && "RE_VA_ARG: arg is not compatible");   \
 			err = EOVERFLOW;                                      \
 			goto out;                                             \
