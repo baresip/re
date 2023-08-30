@@ -4,11 +4,11 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+#include <math.h>
 #include <re_types.h>
 #include <re_sa.h>
 #include <re_fmt.h>
 #include <re_mem.h>
-#include <math.h>
 #ifdef _MSC_VER
 #include <float.h>
 #ifndef isinf
@@ -26,6 +26,9 @@
 #define isnan(a) isnand((a))
 #endif
 
+#define DEBUG_MODULE "print"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 enum length_modifier {
 	LENMOD_NONE      = 0,
@@ -489,6 +492,17 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 		err |= vph(p0, p - p0, arg);
 
 out:
+#ifndef RELEASE
+	if (err == ENODATA) {
+		DEBUG_WARNING("Format: \"%b<-- NO ARG\n", fmt, p - fmt + 1);
+		re_assert(0 && "RE_VA_ARG: no more arguments");
+	}
+	if (err == EOVERFLOW) {
+		DEBUG_WARNING("Format: \"%b<-- SIZE ERROR\n", fmt,
+			      p - fmt + 1);
+		re_assert(0 && "RE_VA_ARG: arg is not compatible");
+	}
+#endif
 	return err;
 }
 
