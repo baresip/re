@@ -442,10 +442,9 @@ static int generate_nonce(char **pnonce, const time_t ts,
 		return ENOMEM;
 
 	if (str_isset(secret))
-		err = mbuf_printf(mb, "%"PRIu64":%s:%s",
-			(uint64_t)ts, etag, secret);
+		err = mbuf_printf(mb, "%Lu:%s:%s", (uint64_t)ts, etag, secret);
 	else
-		err = mbuf_printf(mb, "%"PRIu64":%s", (uint64_t)ts, etag);
+		err = mbuf_printf(mb, "%Lu:%s", (uint64_t)ts, etag);
 
 	if (err)
 		goto out;
@@ -453,8 +452,7 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	sha256(mb->buf, mb->end, hash);
 	mbuf_rewind(mb);
 
-	err = mbuf_printf(mb, "%w%016"PRIx64"", hash, sizeof(hash),
-		(uint64_t)ts);
+	err = mbuf_printf(mb, "%w%016Lx", hash, sizeof(hash), (uint64_t)ts);
 	if (err)
 		goto out;
 
