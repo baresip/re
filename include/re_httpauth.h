@@ -5,6 +5,21 @@
  */
 
 
+/** HTTP digest request challenge */
+struct httpauth_digest_chall_req {
+	char *realm;
+	char *domain;
+	char *nonce;
+	char *opaque;
+	bool stale;
+	char *algorithm;
+	char *qop;
+
+	/* optional */
+	char *charset;
+	bool userhash;
+};
+
 /** HTTP Digest Challenge */
 struct httpauth_digest_chall {
 	struct pl realm;
@@ -15,6 +30,9 @@ struct httpauth_digest_chall {
 	struct pl stale;
 	struct pl algorithm;
 	struct pl qop;
+	struct pl domain;
+	struct pl charset;
+	struct pl userhash;
 };
 
 /** HTTP Digest response */
@@ -61,6 +79,17 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **resp,
 		const char *pwd, struct mbuf *body);
 int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 				  struct mbuf *mb);
+
+
+int httpauth_digest_chall_req_print(struct re_printf *pf,
+	const struct httpauth_digest_chall_req *req);
+int httpauth_digest_chall_request(struct httpauth_digest_chall_req **preq,
+	const char *realm, const char *etag, const char *qop);
+int httpauth_digest_chall_request_full(struct httpauth_digest_chall_req **preq,
+	const char *real, const char *domain, const char *etag,
+	const char *opaque, const bool stale, const char *algo,
+	const char *qop, const char *charset, const bool userhash);
+
 
 struct httpauth_basic *httpauth_basic_alloc(void);
 int httpauth_basic_decode(struct httpauth_basic *basic,

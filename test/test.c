@@ -119,6 +119,7 @@ static const struct test tests[] = {
 	TEST(test_httpauth_chall),
 	TEST(test_httpauth_resp),
 	TEST(test_httpauth_basic_request),
+	TEST(test_httpauth_digest_request),
 	TEST(test_ice_cand),
 	TEST(test_ice_loop),
 	TEST(test_jbuf),
@@ -861,7 +862,7 @@ void test_listcases(void)
 	n = RE_ARRAY_SIZE(tests);
 	nh = (n+1)/2;
 
-	(void)re_printf("\n%u test cases:\n", n);
+	(void)re_printf("\n%zu test cases:\n", n);
 
 	for (i=0; i<nh; i++) {
 

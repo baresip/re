@@ -31,6 +31,7 @@ enum length_modifier {
 	LENMOD_NONE      = 0,
 	LENMOD_LONG      = 1,
 	LENMOD_LONG_LONG = 2,
+	LENMOD_INT64     = 3,
 	LENMOD_SIZE      = 42,
 };
 
@@ -219,6 +220,10 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 		case 'i':
 			switch (lenmod) {
 
+			case LENMOD_INT64:
+				RE_VA_ARG(ap, sn, int64_t, safe);
+				break;
+
 			case LENMOD_SIZE:
 				RE_VA_ARG(ap, sn, ssize_t, safe);
 				break;
@@ -335,6 +340,10 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 		case 'u':
 			switch (lenmod) {
 
+			case LENMOD_INT64:
+				RE_VA_ARG(ap, n, uint64_t, safe);
+				break;
+
 			case LENMOD_SIZE:
 				RE_VA_ARG(ap, n, size_t, safe);
 				break;
@@ -397,6 +406,11 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 
 		case 'z':
 			lenmod = LENMOD_SIZE;
+			fm = true;
+			break;
+
+		case 'L':
+			lenmod = LENMOD_INT64;
 			fm = true;
 			break;
 
@@ -500,6 +514,7 @@ out:
  *   %H  (re_printf_h *, void *) Print handler with argument
  *   %v  (char *fmt, va_list *)  Variable argument list
  *   %m  (int)                   Describe an error code
+ *   %L  (uint64_t/int64_t)      64-bit length modifier for %i, %d, %x and %u
  * </pre>
  *
  * Reserved for the future:

@@ -295,6 +295,7 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 	int err;
 
 	(void)contp;
+	(void)dst;
 
 	reg->tp = tp;
 	if (reg->srcport && tp != SIP_TRANSP_UDP)
@@ -313,14 +314,6 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 		err |= mbuf_printf(mb, ";reg-id=%d", reg->regid);
 
 	err |= mbuf_printf(mb, "\r\n");
-
-	if (reg->srcport) {
-		struct sip_conncfg cfg;
-		memset(&cfg, 0, sizeof(cfg));
-		cfg.srcport = reg->srcport;
-		err = sip_conncfg_set(reg->sip, dst, &cfg);
-	}
-
 	return err;
 }
 
@@ -618,10 +611,12 @@ int sipreg_set_fbregint(struct sipreg *reg, uint32_t fbregint)
  */
 void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
 {
-	if (!reg)
+	if (!reg || !reg->dlg)
 		return;
 
 	reg->srcport = srcport;
+
+	sip_dialog_set_srcport(reg->dlg, srcport);
 }
 
 

@@ -86,6 +86,9 @@ int test_httpauth_chall(void)
 			 PL("123"),
 			 PL("true"),
 			 PL("MD5"),
+			 PL_INIT,
+			 PL_INIT,
+			 PL_INIT,
 			 PL_INIT},
 			0
 		},
@@ -98,13 +101,15 @@ int test_httpauth_chall(void)
 			 PL("9c916919cbc6ad7f54a4f64e5b5115074ee109fa"),
 			 PL_INIT, PL_INIT, PL_INIT,
 			 PL("auth"),
+			 PL_INIT, PL_INIT, PL_INIT
 			},
 			0
 		},
 
 		{
 			"Basic bogus",
-			{PL_INIT, PL_INIT, PL_INIT, PL_INIT, PL_INIT, PL_INIT},
+			{PL_INIT, PL_INIT, PL_INIT, PL_INIT, PL_INIT, PL_INIT,
+			 PL_INIT, PL_INIT, PL_INIT},
 			EBADMSG
 		},
 	};
@@ -325,6 +330,176 @@ int test_httpauth_basic_request(void) {
 		}
 
 		mem_deref(req);
+	}
+
+	return err;
+}
+
+
+int test_httpauth_digest_request(void)
+{
+	static const struct {
+		const char *hval_fmt;
+		const char *realm;
+		const char *domain;
+		const char *etag;
+		const char *opaque;
+		const bool stale;
+		const char *algorithm;
+		const char *qop;
+		const char *charset;
+		const bool userhash;
+		int err;
+	} testv [] = {
+		{
+			"",
+			NULL, NULL, "", NULL, false, NULL, "auth", NULL, false,
+			EINVAL
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"\","
+			" nonce=\"%s\", algorithm=MD5",
+			"/my/home", NULL, "localhost:5060", NULL, false,
+			NULL, "", NULL, false,
+			0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"\","
+			" nonce=\"%s\", algorithm=MD5",
+			"/my/home", NULL, "localhost:5060", NULL, false,
+			NULL, "", NULL, false, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth\","
+			" nonce=\"%s\", algorithm=SHA256",
+			"/my/home", NULL, "localhost:5060", NULL, false,
+			"SHA256", "auth", NULL, false, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth\","
+			" nonce=\"%s\", algorithm=SHA256-sess, stale=true",
+			"/my/home", NULL, "localhost:5060", NULL, true,
+			"SHA256-sess", "auth", NULL, false, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth\","
+			" nonce=\"%s\", algorithm=SHA1,"
+			" stale=true, userhash=true",
+			"/my/home", NULL, "localhost:5060", NULL, true,
+			"SHA1", "auth", NULL, true, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth\","
+			" nonce=\"%s\", algorithm=SHA1-sess,"
+			" domain=\"example.com\", stale=true,"
+			" charset=\"UTF-8\", userhash=true",
+			"/my/home", "example.com", "localhost:5060", NULL,
+			true, "SHA1-sess", "auth", "UTF-8", true, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth\","
+			" nonce=\"%s\", algorithm=SHA256,"
+			" domain=\"example.com\", stale=true,"
+			" charset=\"UTF-8\", userhash=true",
+			"/my/home", "example.com", "localhost:5060", NULL,
+			true, "SHA256", "auth", "UTF-8", true, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth-int\","
+			" nonce=\"%s\", algorithm=MD5-sess,"
+			" domain=\"example.com\", stale=true,"
+			" charset=\"UTF-8\", userhash=true",
+			"/my/home", "example.com", "localhost:5060", NULL,
+			true, "MD5-sess", "auth-int", "UTF-8", true, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth-int\","
+			" nonce=\"%s\", algorithm=SHA1-sess,"
+			" domain=\"example.com\", stale=true,"
+			" charset=\"UTF-8\", userhash=true",
+			"/my/home", "example.com", "213579023", NULL,
+			true, "SHA1-sess", "auth-int", "UTF-8", true, 0
+		},
+		{
+			"Digest realm=\"/my/home\", qop=\"auth-int\","
+			" nonce=\"%s\", algorithm=MD5,"
+			" domain=\"example.com\", stale=true,"
+			" charset=\"UTF-8\", userhash=true",
+			"/my/home", "example.com", "129842", NULL,
+			true, NULL, "auth-int", "UTF-8", true, 0
+		},
+	};
+
+	int err = 0;
+	for (unsigned int i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+		struct httpauth_digest_chall_req *req = NULL;
+		struct mbuf *mb_refval = NULL;
+		struct mbuf *mb_printed = NULL;
+
+		mb_refval = mbuf_alloc(512);
+		mb_printed = mbuf_alloc(512);
+		if (!mb_refval || !mb_printed) {
+			err = ENOMEM;
+			goto for_out;
+		}
+
+		err = httpauth_digest_chall_request_full(&req, testv[i].realm,
+			testv[i].domain, testv[i].etag, testv[i].opaque,
+			testv[i].stale, testv[i].algorithm, testv[i].qop,
+			testv[i].charset, testv[i].userhash);
+		if (err == ENOMEM) {
+			goto for_out;
+		}
+		else if (err != testv[i].err) {
+			DEBUG_WARNING("[%d]"
+				" Expected return value %m, got %m\n",
+				i, testv[i].err, err);
+		}
+		else if (err) {
+			goto for_continue;
+		}
+
+		err = mbuf_printf(mb_refval, testv[i].hval_fmt, req->nonce);
+		if (err) {
+			DEBUG_WARNING("[%d]"
+				" No reference created %m\n", i, err);
+			goto for_out;
+		}
+
+		err = mbuf_printf(mb_printed, "%H",
+			httpauth_digest_chall_req_print, req);
+		if (err) {
+			DEBUG_WARNING("[%d]"
+				" Digest request print error %m\n", i, err);
+			goto for_out;
+		}
+
+		if (mb_refval->end != mb_printed->end) {
+			DEBUG_WARNING("[%d] Expected header len %d, got %d\n",
+				i, mb_refval->end, mb_printed->end);
+				err = EINVAL;
+				goto for_out;
+		}
+
+		if (memcmp(mb_refval->buf, mb_printed->buf, mb_refval->end)) {
+			DEBUG_WARNING("[%d] Expected header %b, got %b\n", i,
+				mb_refval->buf, mb_refval->end,
+				mb_printed->buf, mb_printed->end);
+			err = EINVAL;
+			goto for_out;
+		}
+
+for_continue:
+		mem_deref(req);
+		mem_deref(mb_refval);
+		mem_deref(mb_printed);
+		continue;
+
+for_out:
+		mem_deref(req);
+		mem_deref(mb_refval);
+		mem_deref(mb_printed);
+		break;
 	}
 
 	return err;
