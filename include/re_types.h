@@ -371,12 +371,10 @@ typedef int re_sock_t;
 	if (likely((safe))) {                                                 \
 		size_t sz = va_arg((ap), size_t);                             \
 		if (unlikely(!sz)) {                                          \
-			re_assert(0 && "RE_VA_ARG: no more arguments");       \
-			err = EOVERFLOW;                                      \
+			err = ENODATA;                                        \
 			goto out;                                             \
 		}                                                             \
 		if (unlikely(sz != sizeof(type))) {                           \
-			re_assert(0 && "RE_VA_ARG: arg is not compatible");   \
 			err = EOVERFLOW;                                      \
 			goto out;                                             \
 		}                                                             \
