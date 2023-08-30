@@ -616,8 +616,7 @@ void sipreg_set_srcport(struct sipreg *reg, uint16_t srcport)
 
 	reg->srcport = srcport;
 
-	if (srcport)
-		sip_dialog_set_srcport(reg->dlg, srcport);
+	sip_dialog_set_srcport(reg->dlg, srcport);
 }
 
 
