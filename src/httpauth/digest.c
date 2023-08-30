@@ -1,14 +1,17 @@
 /**
- * @file digest.c  HTTP Digest authentication (RFC 2617)
+ * @file digest.c  HTTP Digest authentication (RFC 2617) - obsolete
+ *                 HTTP Digest authentication (RFC 7616) - wip
  *
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+#include <time.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mbuf.h>
 #include <re_mem.h>
 #include <re_md5.h>
+#include <re_sha.h>
 #include <re_sys.h>
 #include <re_httpauth.h>
 
@@ -408,5 +411,185 @@ int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 	}
 
 	mbuf_set_pos(mb, 0);
+	return err;
+}
+
+
+static void httpauth_digest_chall_req_destructor(void *arg)
+{
+	struct httpauth_digest_chall_req *req = arg;
+
+	mem_deref(req->realm);
+	mem_deref(req->domain);
+	mem_deref(req->nonce);
+	mem_deref(req->opaque);
+	mem_deref(req->algorithm);
+	mem_deref(req->qop);
+	mem_deref(req->charset);
+}
+
+
+static int generate_nonce(char **pnonce, const time_t ts,
+	const char *etag, const char *secret)
+{
+	struct mbuf *mb = NULL;
+	char *nonce = NULL;
+	uint8_t hash [SHA256_DIGEST_LENGTH];
+	int err = 0;
+
+	mb = mbuf_alloc(32);
+	if (!mb)
+		return ENOMEM;
+
+	if (str_isset(secret))
+		err = mbuf_printf(mb, "%"PRIu64":%s:%s",
+			(uint64_t)ts, etag, secret);
+	else
+		err = mbuf_printf(mb, "%"PRIu64":%s", (uint64_t)ts, etag);
+
+	if (err)
+		goto out;
+
+	sha256(mb->buf, mb->end, hash);
+	mbuf_rewind(mb);
+
+	err = mbuf_printf(mb, "%w%016"PRIx64"", hash, sizeof(hash),
+		(uint64_t)ts);
+	if (err)
+		goto out;
+
+	mbuf_set_pos(mb, 0);
+	err = mbuf_strdup(mb, &nonce, mbuf_get_left(mb));
+
+out:
+	if (err)
+		mem_deref(nonce);
+	else
+		*pnonce = nonce;
+
+	mem_deref(mb);
+
+	return err;
+}
+
+
+/**
+ * Prints / encodes an HTTP digest request challenge
+ *
+ * @param pf  Re_printf object
+ * @param req Request to print
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_chall_req_print(struct re_printf *pf,
+	const struct httpauth_digest_chall_req *req)
+{
+	int err = 0;
+
+	if (!req)
+		return EINVAL;
+
+	/* historical reason quoted strings:   */
+	/*   realm, domain, nonce, opaque, qop */
+	/* historical reason unquoted strings: */
+	/*   stale, algorithm                  */
+	err = re_hprintf(pf, "Digest realm=\"%s\", "
+		"qop=\"%s\", nonce=\"%s\", algorithm=%s",
+		req->realm, req->qop, req->nonce, req->algorithm);
+
+	if (str_isset(req->opaque))
+		err |= re_hprintf(pf, ", opaque=\"%s\"", req->opaque);
+	if (str_isset(req->domain))
+		err |= re_hprintf(pf, ", domain=\"%s\"", req->domain);
+	if (req->stale)
+		err |= re_hprintf(pf, ", stale=true");
+	if (str_isset(req->charset))
+		err |= re_hprintf(pf, ", charset=\"%s\"", req->charset);
+	if (req->userhash)
+		err |= re_hprintf(pf, ", userhash=true");
+
+	return err;
+}
+
+
+/**
+ * Create a digest authentication request
+ *
+ * @param preq  Httpauth_digest_chall_req object ptr
+ * @param realm Realm
+ * @param etag  Changing data for nonce creation
+ *              (HTTP ETag header / SIP msg src address)
+ * @param qop   Quality of protection
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_chall_request(struct httpauth_digest_chall_req **preq,
+	const char *realm, const char *etag, const char *qop)
+{
+	return httpauth_digest_chall_request_full(preq, realm, NULL, etag,
+		NULL, false, NULL, qop, NULL, false);
+}
+
+
+/**
+ * Create a full configurable digest authentication request
+ *
+ * @param preq      Httpauth_digest_chall_req object ptr
+ * @param realm     Realm
+ * @param domain    Domain (not used in SIP)
+ * @param etag      Changing data for nonce creation
+ *                  (HTTP ETag header / SIP msg src address)
+ * @param opaque    Opaque
+ * @param stale     Stale
+ * @param algo      Supported algorithm (MD5, SHA1, SHA256 and sess versions)
+ * @param qop       Quality of protection
+ * @param charset   Character set used (not used in SIP)
+ * @param userhash  Userhash support (not used in SIP)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_chall_request_full(struct httpauth_digest_chall_req **preq,
+	const char *realm, const char *domain, const char *etag,
+	const char *opaque, const bool stale, const char *algo,
+	const char *qop, const char *charset, const bool userhash)
+{
+	struct httpauth_digest_chall_req *req = NULL;
+	int err = 0;
+
+	if (!preq || !realm || !etag || !qop)
+		return EINVAL;
+
+	req = mem_zalloc(sizeof(*req), httpauth_digest_chall_req_destructor);
+	if (!req)
+		return ENOMEM;
+
+	req->stale    = stale;
+	req->userhash = userhash;
+	err  = str_dup(&req->realm, realm);
+	err |= str_dup(&req->qop, qop);
+
+	if (str_isset(algo))
+		err |= str_dup(&req->algorithm, algo);
+	else
+		err |= str_dup(&req->algorithm, "MD5");
+
+	if (str_isset(domain))
+		err |= str_dup(&req->domain, domain);
+	if (str_isset(opaque))
+		err |= str_dup(&req->opaque, opaque);
+	if (str_isset(charset) && str_casecmp(charset, "UTF-8") == 0)
+		err |= str_dup(&req->charset, charset);
+
+	if (err)
+		goto out;
+
+	err = generate_nonce(&req->nonce, time(NULL), etag, NULL);
+
+out:
+	if (err)
+		mem_deref(req);
+	else
+		*preq = req;
+
 	return err;
 }
