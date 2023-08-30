@@ -435,7 +435,7 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	struct mbuf *mb = NULL;
 	char *nonce = NULL;
 	uint8_t *hash = NULL;
-	uint8_t hashlen = SHA256_DIGEST_LENGTH;
+	size_t hashlen = SHA256_DIGEST_LENGTH;
 	int err = 0;
 
 	mb = mbuf_alloc(32);
@@ -449,10 +449,10 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	}
 
 	if (str_isset(secret))
-		err = mbuf_printf(mb, "%lu:%s:%s",
-			(long unsigned)ts, etag, secret);
+		err = mbuf_printf(mb, "%"PRIu64":%s:%s",
+			(uint64_t)ts, etag, secret);
 	else
-		err = mbuf_printf(mb, "%lu:%s", (long unsigned)ts, etag);
+		err = mbuf_printf(mb, "%"PRIu64":%s", (uint64_t)ts, etag);
 
 	if (err)
 		goto out;
@@ -460,7 +460,7 @@ static int generate_nonce(char **pnonce, const time_t ts,
 	sha256(mb->buf, mb->end, hash);
 	mbuf_rewind(mb);
 
-	err = mbuf_printf(mb, "%w%016lx", hash, hashlen, (long unsigned)ts);
+	err = mbuf_printf(mb, "%w%016"PRIx64"", hash, hashlen, (uint64_t)ts);
 	if (err)
 		goto out;
 
