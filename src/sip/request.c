@@ -228,6 +228,8 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	if (req->srcport) {
 		struct sip_conncfg cfg = {.srcport = req->srcport};
 		err = sip_conncfg_set(req->sip, dst, &cfg);
+		if (err)
+			goto out;
 	}
 
 	if (!req->stateful) {
