@@ -514,7 +514,7 @@ out:
  *   %H  (re_printf_h *, void *) Print handler with argument
  *   %v  (char *fmt, va_list *)  Variable argument list
  *   %m  (int)                   Describe an error code
- *   %L  (uint64_t/int64_t)      64-bit length modifier for %i, %d and %u
+ *   %L  (uint64_t/int64_t)      64-bit length modifier for %i, %d, %x and %u
  * </pre>
  *
  * Reserved for the future:
