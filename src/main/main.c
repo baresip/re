@@ -571,7 +571,8 @@ static int poll_setup(struct re *re)
 /**
  * Listen for events on a file descriptor
  *
- * @param fhs    File descriptor handler struct pointer
+ * @param fhs    File descriptor handler struct pointer (don't use mem_deref(),
+ *               use fd_close() instead)
  * @param fd     File descriptor
  * @param flags  Wanted event flags
  * @param fh     Event handler
@@ -643,6 +644,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 	if (!flags && fhs->flags) {
 		fhs->fh = NULL;
 		mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
+		*fhsp = mem_deref(fhs);
 		--re->nfds;
 	}
 
@@ -679,9 +681,8 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 	}
 
 	if (err && flags) {
-		fd_close(fhs);
-		*fhsp = mem_deref(fhs);
-		DEBUG_WARNING("fd_listen: fd=%d flags=0x%02x (%m)\n", fd,
+		fd_close(fhsp);
+		DEBUG_WARNING("fd_listen err: fd=%d flags=0x%02x (%m)\n", fd,
 			      flags, err);
 		return err;
 	}
@@ -695,12 +696,12 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
  *
  * @param fd     File descriptor
  */
-void fd_close(struct re_fhs *fhs)
+void fd_close(struct re_fhs **fhs)
 {
 	if (!fhs)
 		return;
 
-	(void)fd_listen(&fhs, fhs->fd, 0, NULL, NULL);
+	(void)fd_listen(fhs, (*fhs)->fd, 0, NULL, NULL);
 }
 
 

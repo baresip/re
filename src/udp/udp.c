@@ -134,11 +134,9 @@ static void udp_destructor(void *data)
 #endif
 
 	if (RE_BAD_SOCK != us->fd) {
-		fd_close(us->fhs);
+		fd_close(&us->fhs);
 		(void)close(us->fd);
 	}
-
-	mem_deref(us->fhs);
 }
 
 
@@ -785,7 +783,7 @@ void udp_thread_detach(struct udp_sock *us)
 		return;
 
 	if (RE_BAD_SOCK != us->fd)
-		fd_close(us->fhs);
+		fd_close(&us->fhs);
 }
 
 
