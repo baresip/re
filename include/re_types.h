@@ -334,6 +334,7 @@ typedef int re_sock_t;
 	char*:			sizeof(char *),                               \
 	void const*:		sizeof(void const *),                         \
 	void*:			sizeof(void *),                               \
+	struct pl:		sizeof(struct pl),                            \
 	default: sizeof(void*)                                                \
 )
 
