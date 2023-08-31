@@ -14,8 +14,9 @@ jobs:
     strategy:
       matrix:
         platform: [linux/386, linux/amd64]
-    container: 
-      image: alpine:latest
+
+    container:
+      image: alpine
       options: --platform ${{ matrix.platform }}
 
     env:
