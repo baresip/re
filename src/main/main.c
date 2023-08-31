@@ -698,7 +698,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
  */
 void fd_close(struct re_fhs **fhs)
 {
-	if (!fhs)
+	if (!fhs || !*fhs)
 		return;
 
 	(void)fd_listen(fhs, (*fhs)->fd, 0, NULL, NULL);
