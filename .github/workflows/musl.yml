@@ -11,7 +11,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: alpine
+    strategy:
+      matrix:
+        platform: [linux/386, linux/amd64]
+    container: 
+      image: alpine:latest
+      options: --platform ${{ matrix.platform }}
 
     env:
       CMAKE_GENERATOR: Ninja
@@ -26,3 +31,7 @@ jobs:
       run: |
         cmake -B build -DCMAKE_C_FLAGS="-Werror"
         cmake --build build -j
+
+    - name: run tests
+      run: |
+        ./build/test/retest -r -v
