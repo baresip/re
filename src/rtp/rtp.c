@@ -743,7 +743,7 @@ int rtp_debug(struct re_printf *pf, const struct rtp_sock *rs)
 		return EINVAL;
 
 	err  = re_hprintf(pf, "RTP debug:\n");
-	err |= re_hprintf(pf, " Encode: seq=%u ssrc=0x%lx\n",
+	err |= re_hprintf(pf, " Encode: seq=%u ssrc=0x%x\n",
 			  rs->enc.seq, rs->enc.ssrc);
 
 	if (rs->rtcp)
