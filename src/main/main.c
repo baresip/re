@@ -1251,46 +1251,6 @@ void re_thread_leave(void)
 
 
 /**
- * Attach the current thread to re context
- *
- * @param context Re context
- *
- * @return 0 if success, otherwise errorcode
- */
-int re_thread_attach(struct re *context)
-{
-	struct re *re;
-
-	if (!context)
-		return EINVAL;
-
-	call_once(&flag, re_once);
-
-	re = tss_get(key);
-	if (re) {
-		if (re != context)
-			return EALREADY;
-		return 0;
-	}
-
-	tss_set(key, context);
-
-	return 0;
-}
-
-
-/**
- * Detach the current thread from re context
- */
-void re_thread_detach(void)
-{
-	call_once(&flag, re_once);
-
-	tss_set(key, NULL);
-}
-
-
-/**
  * Set an external mutex for this thread
  *
  * @param mutexp Pointer to external mutex, NULL to use internal

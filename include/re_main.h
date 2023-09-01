@@ -50,8 +50,6 @@ int   re_debug(struct re_printf *pf, void *unused);
 int   re_nfds(void);
 
 int  re_alloc(struct re **rep);
-int  re_thread_attach(struct re *re);
-void re_thread_detach(void);
 
 int  re_thread_init(void);
 void re_thread_close(void);
