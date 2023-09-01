@@ -210,21 +210,15 @@ static struct re *re_get(void)
 
 static inline void re_lock(struct re *re)
 {
-	int err;
-
-	err = mtx_lock(re->mutexp) != thrd_success;
-	if (err)
-		DEBUG_WARNING("re_lock err\n");
+	if (thrd_success != mtx_lock(re->mutexp))
+		DEBUG_WARNING("re_lock error\n");
 }
 
 
 static inline void re_unlock(struct re *re)
 {
-	int err;
-
-	err = mtx_unlock(re->mutexp) != thrd_success;
-	if (err)
-		DEBUG_WARNING("re_unlock err\n");
+	if (thrd_success != mtx_unlock(re->mutexp))
+		DEBUG_WARNING("re_unlock error\n");
 }
 
 
