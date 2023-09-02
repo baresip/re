@@ -616,7 +616,7 @@ static int testcase_perf(const struct test *test, double *usec_avgp)
 	if (usec_avgp)
 		*usec_avgp = usec_avg;
 
-	re_printf("%-32s:  %10.2f usec  [%6u repeats]\n",
+	re_printf("%-32s:  %10.2f usec  [%6zu repeats]\n",
 		  test->name, usec_avg, i);
 
 	return 0;
