@@ -26,7 +26,7 @@ void hexdump(FILE *f, const void *p, size_t len)
 
 	for (i=0; i < len; i += 16) {
 
-		(void)re_fprintf(f, "%08x ", i);
+		(void)re_fprintf(f, "%08zx ", i);
 
 		for (j=0; j<16; j++) {
 			const size_t pos = i+j;
