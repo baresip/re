@@ -1123,3 +1123,16 @@ out:
 	mem_deref(s2);
 	return err;
 }
+
+
+int test_fmt_hexdump(void)
+{
+	const char buf[] =
+		"0lnmdj2ihickdspjkm2ffd0jcpbk5l1n"
+		"8abcjt5m950gxvkuvippcvt60me9z5zh"
+		;
+
+	hexdump(stdout, buf, str_len(buf));
+
+	return 0;
+}
