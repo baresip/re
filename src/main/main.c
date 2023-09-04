@@ -715,10 +715,12 @@ void *fd_close(struct re_fhs *fhs)
 		break;
 	}
 
-	if (err)
+	if (err) {
 		DEBUG_WARNING("fd_close err: fd=%d (%m)\n", fhs->fd, err);
-	else
+	}
+	else {
 		DEBUG_INFO("fd_close: fd=%d\n", fhs->fd);
+	}
 
 	mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
 	--re->nfds;
