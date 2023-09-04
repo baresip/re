@@ -444,7 +444,7 @@ static int poll_init(struct re *re)
 		if (re->fhsl)
 			return 0;
 
-		re->fhsl = mem_zalloc(re->maxfds * sizeof(re->fhsl), NULL);
+		re->fhsl = mem_zalloc(re->maxfds * sizeof(void *), NULL);
 		if (!re->fhsl)
 			return ENOMEM;
 		break;
