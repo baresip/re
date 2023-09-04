@@ -278,3 +278,18 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
 
 	return 0;
 }
+
+/**
+ * Set initial playing position of a WAV file in ms
+ *
+ * @param af  Audio-file
+ * @param prm Audio file parameters from aufile_open
+ *
+ * @return position in bytes or (size_t)-1 in case of an error.
+ */
+size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm, size_t pos_ms)
+{
+	size_t pos = prm->srate * aufmt_sample_size(prm->fmt) * prm->channels * pos_ms / 1000;
+
+	return fseek(af->f, pos, SEEK_SET);
+}

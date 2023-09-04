@@ -26,3 +26,4 @@ int aufile_read(struct aufile *af, uint8_t *p, size_t *sz);
 int aufile_write(struct aufile *af, const uint8_t *p, size_t sz);
 size_t aufile_get_size(struct aufile *af);
 size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm);
+size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm, size_t pos_ms);
