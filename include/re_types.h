@@ -142,6 +142,11 @@ typedef SSIZE_T ssize_t;
 
 /* Duplication of error codes. Values are from linux asm-generic/errno.h */
 
+/** No data available */
+#ifndef ENODATA
+#define ENODATA 200
+#endif
+
 /** Accessing a corrupted shared library */
 #ifndef ELIBBAD
 #define ELIBBAD 204
