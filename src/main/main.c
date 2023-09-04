@@ -680,7 +680,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
  *
  * @return always NULL
  */
-void *fd_close(struct re_fhs *fhs)
+struct re_fhs *fd_close(struct re_fhs *fhs)
 {
 	struct re *re = re_get();
 	int err	      = 0;
