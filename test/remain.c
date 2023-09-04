@@ -16,6 +16,7 @@
 
 struct data {
 	thrd_t tid;
+	thrd_t tid_timer;
 	mtx_t *mutex;
 	bool thread_started;
 	bool thread_exited;
@@ -27,18 +28,11 @@ struct data {
 static void tmr_handler(void *arg)
 {
 	struct data *data = arg;
-	int err = 0;
 
 	mtx_lock(data->mutex);
 
-	/* verify that timer is called from the new thread */
-	TEST_ASSERT(0 != thrd_equal(data->tid, thrd_current()));
-
+	data->tid_timer = thrd_current();
 	++data->tmr_called;
-
- out:
-	if (err)
-		data->err = err;
 
 	mtx_unlock(data->mutex);
 
@@ -131,6 +125,9 @@ static int test_remain_thread(void)
 	TEST_ASSERT(data.thread_exited);
 	TEST_EQUALS(1, data.tmr_called);
 	TEST_EQUALS(0, data.err);
+
+	/* verify that timer is called from the new thread */
+	TEST_ASSERT(0 != thrd_equal(data.tid, data.tid_timer));
 
  out:
 	mem_deref(data.mutex);
