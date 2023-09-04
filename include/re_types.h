@@ -147,21 +147,6 @@ typedef SSIZE_T ssize_t;
 #define ENODATA 200
 #endif
 
-/** Protocol error */
-#ifndef EPROTO
-#define EPROTO 201
-#endif
-
-/** Not a data message */
-#ifndef EBADMSG
-#define EBADMSG 202
-#endif
-
-/** Value too large for defined data type */
-#ifndef EOVERFLOW
-#define EOVERFLOW 203
-#endif
-
 /** Accessing a corrupted shared library */
 #ifndef ELIBBAD
 #define ELIBBAD 204
