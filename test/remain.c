@@ -17,9 +17,11 @@
 struct data {
 	thrd_t tid;
 	mtx_t *mutex;
+	struct mqueue *mq;
 	bool thread_started;
 	bool thread_exited;
 	unsigned tmr_called;
+	unsigned mqueue_called;
 	int err;
 };
 
@@ -137,11 +139,83 @@ static int test_remain_thread(void)
 }
 
 
+static void mqueue_handler(int id, void *dat, void *arg)
+{
+	struct data *data = arg;
+	(void)id;
+	(void)dat;
+
+	DEBUG_NOTICE("mqueue_handler\n");
+
+	++data->mqueue_called;
+
+	/* Stop re_main loop */
+	re_cancel();
+}
+
+
+static int enterleave_thread_handler(void *arg)
+{
+	struct data *data = arg;
+	int err;
+
+	DEBUG_NOTICE("thread start\n");
+
+	/* Enter an 're' thread */
+	re_thread_enter();
+
+	/* note: allocated from this thread */
+	err = mqueue_alloc(&data->mq, mqueue_handler, data);
+
+	/* Leave an 're' thread */
+	re_thread_leave();
+
+	if (err)
+		return err;
+
+	err = mqueue_push(data->mq, 0, NULL);
+
+	DEBUG_NOTICE("thread stop\n");
+
+	return err;
+}
+
+
+static int test_remain_enterleave(void)
+{
+	struct data data = {0};
+
+	int err = thread_create_name(&data.tid, "enter-leave",
+				     enterleave_thread_handler, &data);
+	TEST_ERR(err);
+
+	DEBUG_NOTICE("starting re_main loop..\n");
+
+	/* run re_main event loop */
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	/* wait for thread to end */
+	thrd_join(data.tid, &err);
+
+	TEST_EQUALS(1, data.mqueue_called);
+
+ out:
+	mem_deref(data.mq);
+	return err;
+}
+
+
 int test_remain(void)
 {
 	int err = 0;
 
 	err = test_remain_thread();
+	TEST_ERR(err);
 
+	err = test_remain_enterleave();
+	TEST_ERR(err);
+
+ out:
 	return err;
 }
