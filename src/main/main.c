@@ -581,7 +581,7 @@ static int poll_setup(struct re *re)
  * @return 0 if success, otherwise errorcode
  */
 int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
-		  void *arg)
+	      void *arg)
 {
 	struct re *re = re_get();
 	struct re_fhs *fhs;
@@ -592,7 +592,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 		return EINVAL;
 	}
 
-	if (!fhsp)
+	if (!fhsp || !flags || !fh)
 		return EINVAL;
 
 #ifndef RELEASE
@@ -606,57 +606,36 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 		return EBADF;
 	}
 
-	if (flags || fh) {
-		err = poll_setup(re);
-		if (err)
-			return err;
-	}
+	err = poll_setup(re);
+	if (err)
+		return err;
 
 	fhs = *fhsp;
-
 	if (!fhs) {
 		fhs = mem_zalloc(sizeof(struct re_fhs), NULL);
 		if (!fhs)
 			return ENOMEM;
 
-		fhs->fd = RE_BAD_SOCK;
+		fhs->fd	   = fd;
 		fhs->index = -1;
 
-		*fhsp = fhs;
-	}
+		DEBUG_INFO("fd_listen/new: fd=%d flags=0x%02x\n", fd, flags);
 
-	DEBUG_INFO("fd_listen: fd=%d flags=0x%02x\n", fd, flags);
-
-	/* allow setting fd only once, new fd needs new fhs allocation */
-	if (fhs->fd == RE_BAD_SOCK)
-		fhs->fd = fd;
-
-	if (fhs->fd != fd) {
-		DEBUG_WARNING("fd_listen: fhs reuse conflict %d\n", fd);
-		return EBADF;
-	}
-
-	/* Update fhs */
-	fhs->fh	 = fh;
-	fhs->arg = arg;
-
-	/* Stop listening */
-	if (!flags && fhs->flags) {
-		fhs->fh = NULL;
-		mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
-		*fhsp = mem_deref(fhs);
-		--re->nfds;
-	}
-
-	/* Start listening */
-	if (flags && !fhs->flags) {
-		/* reference for poll loop - avoid dangling pointer */
-		mem_ref(fhs);
 		++re->nfds;
 	}
+	else {
+		if (unlikely(fhs->fd != fd)) {
+			DEBUG_WARNING("fd_listen: fhs reuse conflict %d\n",
+				      fd);
+			return EBADF;
+		}
+		DEBUG_INFO("fd_listen/update: fd=%d flags=0x%02x\n", fd,
+			   flags);
+	}
 
-	/* Update listening flags */
 	fhs->flags = flags;
+	fhs->fh	   = fh;
+	fhs->arg   = arg;
 
 	switch (re->method) {
 #ifdef HAVE_SELECT
@@ -677,14 +656,17 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 #endif
 
 	default:
+		err = ENOTSUP;
 		break;
 	}
 
-	if (err && flags) {
-		fd_close(fhsp);
+	if (err) {
+		mem_deref(fhs);
 		DEBUG_WARNING("fd_listen err: fd=%d flags=0x%02x (%m)\n", fd,
 			      flags, err);
-		return err;
+	}
+	else {
+		*fhsp = fhs;
 	}
 
 	return err;
@@ -692,16 +674,56 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 
 
 /**
- * Stop listening for events on a file descriptor
+ * Stop and destruct listening for events on a file descriptor
  *
- * @param fd     File descriptor
+ * @param fhs  File descriptor handler struct pointer
+ *
+ * @return always NULL
  */
-void fd_close(struct re_fhs **fhs)
+void *fd_close(struct re_fhs *fhs)
 {
-	if (!fhs || !*fhs)
-		return;
+	struct re *re = re_get();
+	int err	      = 0;
 
-	(void)fd_listen(fhs, (*fhs)->fd, 0, NULL, NULL);
+	if (!fhs || !re)
+		return NULL;
+
+	fhs->flags = 0;
+	fhs->fh	   = NULL;
+	fhs->arg   = NULL;
+
+	switch (re->method) {
+#ifdef HAVE_SELECT
+	case METHOD_SELECT:
+		err = set_select_fds(re, fhs);
+		break;
+#endif
+#ifdef HAVE_EPOLL
+	case METHOD_EPOLL:
+		err = set_epoll_fds(re, fhs);
+		break;
+#endif
+
+#ifdef HAVE_KQUEUE
+	case METHOD_KQUEUE:
+		err = set_kqueue_fds(re, fhs);
+		break;
+#endif
+
+	default:
+		err = ENOTSUP;
+		break;
+	}
+
+	if (err)
+		DEBUG_WARNING("fd_close err: fd=%d (%m)\n", fhs->fd, err);
+	else
+		DEBUG_INFO("fd_close: fd=%d\n", fhs->fd);
+
+	mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
+	--re->nfds;
+
+	return NULL;
 }
 
 

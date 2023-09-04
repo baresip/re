@@ -38,7 +38,7 @@ typedef void (re_signal_h)(int sig);
 
 int   fd_listen(struct re_fhs **fhs, re_sock_t fd, int flags, fd_h *fh,
 		void *arg);
-void  fd_close(struct re_fhs **fhs);
+void  *fd_close(struct re_fhs *fhs);
 int   fd_setsize(int maxfds);
 
 int   libre_init(void);

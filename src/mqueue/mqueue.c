@@ -51,7 +51,7 @@ static void destructor(void *arg)
 	struct mqueue *q = arg;
 
 	if (q->pfd[0] != RE_BAD_SOCK) {
-		fd_close(&q->fhs);
+		q->fhs = fd_close(q->fhs);
 		(void)close(q->pfd[0]);
 	}
 	if (q->pfd[1] != RE_BAD_SOCK)
