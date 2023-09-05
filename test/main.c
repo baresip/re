@@ -53,10 +53,11 @@ static void usage(void)
 #endif
 
 
-static void dbg_handler(int level, const char *p, size_t len, void *arg)
+static void dbg_handler(uintptr_t id, int level, const char *p, size_t len, void *arg)
 {
 	(void)level;
 	(void)arg;
+	(void)id;
 
 	printf("%.*s", (int)len, p);
 }

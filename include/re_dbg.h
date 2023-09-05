@@ -44,6 +44,9 @@ enum {
 #endif
 
 
+#define DEBUG_ID(id) dbg_set_id(id)
+#define DEBUG_RESET_ID dbg_set_id(0)
+
 /**
  * @def DEBUG_WARNING(...)
  *
@@ -110,9 +113,12 @@ enum dbg_flags {
  * @param len   String length
  * @param arg   Handler argument
  */
-typedef void (dbg_print_h)(int level, const char *p, size_t len, void *arg);
+typedef void(dbg_print_h)(uintptr_t id, int level, const char *p, size_t len,
+			  void *arg);
 
 void dbg_init(int level, enum dbg_flags flags);
+int dbg_set_id(uintptr_t id);
+uintptr_t dbg_get_id(void);
 void dbg_close(void);
 int  dbg_logfile_set(const char *name);
 void dbg_handler_set(dbg_print_h *ph, void *arg);

@@ -40,17 +40,19 @@ static struct {
 
 static once_flag flag = ONCE_FLAG_INIT;
 static mtx_t mtx;
+static tss_t dbg_id;
 
 
-static void mem_lock_init(void)
+static void once_dbg_init(void)
 {
 	mtx_init(&mtx, mtx_plain);
+	tss_create(&dbg_id, NULL);
 }
 
 
 static inline void dbg_lock(void)
 {
-	call_once(&flag, mem_lock_init);
+	call_once(&flag, once_dbg_init);
 	mtx_lock(&mtx);
 }
 
@@ -74,6 +76,30 @@ void dbg_init(int level, enum dbg_flags flags)
 	dbg.level = level;
 	dbg.flags = flags;
 	dbg_unlock();
+}
+
+
+/**
+ * Set debug identifier
+ *
+ * @param id identifier
+ */
+int dbg_set_id(uintptr_t id)
+{
+	return tss_set(dbg_id, (void *)id);
+}
+
+
+/**
+ * Get debug identifier
+ *
+ * @param id identifier
+ */
+uintptr_t dbg_get_id(void)
+{
+	void *id = tss_get(dbg_id);
+
+	return (uintptr_t)id;
 }
 
 
@@ -171,6 +197,10 @@ static void dbg_vprintf(int level, const char *fmt, va_list ap)
 		(void)re_fprintf(stderr, "[%09llu] ", ticks - dbg.tick);
 	}
 
+	uintptr_t id = dbg_get_id();
+	if (id)
+		(void)re_fprintf(stderr, "{%" PRIuPTR "} ", id);
+
 	(void)re_vfprintf(stderr, fmt, ap);
 
 	if (dbg.flags & DBG_ANSI && level < DBG_DEBUG)
@@ -201,7 +231,7 @@ static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 
 	/* Print handler? */
 	if (dbg.ph) {
-		dbg.ph(level, buf, len, dbg.arg);
+		dbg.ph(dbg_get_id(), level, buf, len, dbg.arg);
 	}
 
 	/* Output to file */
