@@ -1316,16 +1316,21 @@ int re_thread_check(bool debug)
 	if (!re)
 		return EINVAL;
 
-	if (re_atomic_rlx(&re->thread_enter))
+	bool te = re_atomic_rlx(&re->thread_enter);
+	if (te)
 		return 0;
 
-	if (thrd_equal(re->tid, thrd_current()))
+	thrd_t cur = thrd_current();
+	bool eq = 0 != thrd_equal(re->tid, cur);
+	if (eq)
 		return 0;
 
 	if (debug) {
 		DEBUG_WARNING(
 			"thread check: called from a NON-RE thread without "
-			"thread_enter()!\n");
+			"thread_enter()! [te=%d, eq=%d]\n", te, eq);
+		fprintf(stderr, ".... tid=%lu\n", re->tid);
+		fprintf(stderr, ".... cur=%lu\n", cur);
 
 #if DEBUG_LEVEL > 5
 		struct btrace trace;
