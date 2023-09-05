@@ -1329,8 +1329,8 @@ int re_thread_check(bool debug)
 		DEBUG_WARNING(
 			"thread check: called from a NON-RE thread without "
 			"thread_enter()! [te=%d, eq=%d]\n", te, eq);
-		fprintf(stderr, ".... tid=%lu\n", re->tid);
-		fprintf(stderr, ".... cur=%lu\n", cur);
+		fprintf(stderr, ".... tid=%zu\n", (size_t)re->tid);
+		fprintf(stderr, ".... cur=%zu\n", (size_t)cur);
 
 #if DEBUG_LEVEL > 5
 		struct btrace trace;
