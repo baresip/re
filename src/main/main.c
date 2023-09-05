@@ -754,7 +754,7 @@ static int fd_poll(struct re *re)
 #ifdef HAVE_SELECT
 	case METHOD_SELECT: {
 		struct timeval tv;
-		int max_fd = 0;
+		int max_fd_plus_1 = 0;
 		int cfds = 0;
 
 		/* Clear and update fd sets */
@@ -777,22 +777,22 @@ static int fd_poll(struct re *re)
 				FD_SET(fd, &wfds);
 			if (fhs->flags & FD_EXCEPT)
 				FD_SET(fd, &efds);
-#if !defined(WIN32)
-			max_fd = max(max_fd, fd + 1);
-#endif
+
+			max_fd_plus_1 = max(max_fd_plus_1, fd + 1);
 		}
+
+		nfds = re->maxfds;
 
 #ifdef WIN32
 		tv.tv_sec  = (long) to / 1000;
-		nfds = i;
 #else
 		tv.tv_sec  = (time_t) to / 1000;
-		nfds = max_fd;
 #endif
 		tv.tv_usec = (uint32_t) (to % 1000) * 1000;
 
 		re_unlock(re);
-		n = select(max_fd, &rfds, &wfds, &efds, to ? &tv : NULL);
+		n = select(max_fd_plus_1, &rfds, &wfds, &efds,
+			   to ? &tv : NULL);
 		re_lock(re);
 	}
 		break;
