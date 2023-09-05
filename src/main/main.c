@@ -778,7 +778,7 @@ static int fd_poll(struct re *re)
 			if (fhs->flags & FD_EXCEPT)
 				FD_SET(fd, &efds);
 
-			max_fd_plus_1 = max(max_fd_plus_1, fd + 1);
+			max_fd_plus_1 = max(max_fd_plus_1, (int)(fd + 1));
 		}
 
 		nfds = re->maxfds;
