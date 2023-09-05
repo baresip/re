@@ -35,6 +35,28 @@ struct httpauth_digest_chall {
 	struct pl userhash;
 };
 
+struct httpauth_digest_enc_resp {
+	char *realm;
+	char *nonce;
+	char *opaque;
+	char *algorithm;
+	char *qop;
+
+	/* response specific */
+	char *response;
+	char *username;
+	char *username_star;
+	char *uri;
+	char *cnonce;
+	char *nc;
+
+	/* optional */
+	char *charset;
+	bool userhash;
+	void (*hash_function)(const uint8_t *, size_t, uint8_t *);
+	size_t hash_length;
+};
+
 /** HTTP Digest response */
 struct httpauth_digest_resp {
 	struct pl realm;
@@ -80,6 +102,21 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **resp,
 int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
 				  struct mbuf *mb);
 
+
+int httpauth_digest_response_print(struct re_printf *pf,
+	const struct httpauth_digest_enc_resp *resp);
+int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *user,	const char *passwd, const char *entitybody,
+	const uint32_t cnonce, const uint32_t nc_);
+int httpauth_digest_response(struct httpauth_digest_enc_resp **presp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *uri, const char *user, const char *passwd, const char *qop,
+	const char *entitybody);
+int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *uri, const char *user, const char *passwd, const char *qop,
+	const char *entitybody, const char *charset, const bool userhash);
 
 int httpauth_digest_chall_req_print(struct re_printf *pf,
 	const struct httpauth_digest_chall_req *req);

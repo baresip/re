@@ -16,21 +16,37 @@
 #include <re_httpauth.h>
 
 
+enum {
+	CNONCE_NC_LENGTH = 9, /* 8 characters + '\0' */
+};
+
+
 typedef void (digest_decode_h)(const struct pl *name, const struct pl *val,
 			       void *arg);
 
 
-static const struct pl param_algorithm = PL("algorithm");
-static const struct pl param_cnonce    = PL("cnonce");
-static const struct pl param_nc        = PL("nc");
+/* General fields   */
+static const struct pl param_realm     = PL("realm");
 static const struct pl param_nonce     = PL("nonce");
 static const struct pl param_opaque    = PL("opaque");
+static const struct pl param_algorithm = PL("algorithm");
 static const struct pl param_qop       = PL("qop");
-static const struct pl param_realm     = PL("realm");
+static const struct pl param_stale     = PL("stale");
+
+/* Challenge fields */
+static const struct pl param_domain    = PL("domain");
+
+/* Response fields  */
 static const struct pl param_response  = PL("response");
 static const struct pl param_uri       = PL("uri");
 static const struct pl param_username  = PL("username");
-static const struct pl param_stale     = PL("stale");
+/* static const struct pl param_userstar  = PL("username*"); future use */
+static const struct pl param_cnonce    = PL("cnonce");
+static const struct pl param_nc        = PL("nc");
+
+/* Optional fields  */
+static const struct pl param_charset   = PL("charset");
+static const struct pl param_userhash  = PL("userhash");
 
 
 static void challenge_decode(const struct pl *name, const struct pl *val,
@@ -40,6 +56,8 @@ static void challenge_decode(const struct pl *name, const struct pl *val,
 
 	if (!pl_casecmp(name, &param_realm))
 		chall->realm = *val;
+	else if (!pl_casecmp(name, &param_domain))
+		chall->domain = *val;
 	else if (!pl_casecmp(name, &param_nonce))
 		chall->nonce = *val;
 	else if (!pl_casecmp(name, &param_opaque))
@@ -50,6 +68,10 @@ static void challenge_decode(const struct pl *name, const struct pl *val,
 		chall->algorithm = *val;
 	else if (!pl_casecmp(name, &param_qop))
 		chall->qop = *val;
+	else if (!pl_casecmp(name, &param_charset))
+		chall->charset = *val;
+	else if (!pl_casecmp(name, &param_userhash))
+		chall->userhash = *val;
 }
 
 
@@ -588,6 +610,408 @@ out:
 		mem_deref(req);
 	else
 		*preq = req;
+
+	return err;
+}
+
+
+static void httpauth_digest_response_destructor(void *arg)
+{
+	struct httpauth_digest_enc_resp *resp = arg;
+
+	mem_deref(resp->realm);
+	mem_deref(resp->nonce);
+	mem_deref(resp->opaque);
+	mem_deref(resp->algorithm);
+	mem_deref(resp->qop);
+	mem_deref(resp->response);
+	mem_deref(resp->username);
+	mem_deref(resp->username_star);
+	mem_deref(resp->uri);
+	mem_deref(resp->cnonce);
+	mem_deref(resp->nc);
+	mem_deref(resp->charset);
+}
+
+
+static int digest_response(struct httpauth_digest_enc_resp *resp,
+	const struct httpauth_digest_chall *chall,
+	const struct pl *method, const char *user,
+	const char *passwd, const char *entitybody)
+{
+	uint8_t *hash1 = NULL;
+	uint8_t *hash2 = NULL;
+	struct mbuf *mb = NULL;
+	size_t hashstringl = (resp->hash_length * 2) + 1;
+	int err = 0, n = 0;
+
+	mb = mbuf_alloc(str_len(user) + str_len(passwd) + chall->realm.l + 2);
+	if (!mb)
+		return ENOMEM;
+
+	hash1 = mem_zalloc(resp->hash_length, NULL);
+	hash2 = mem_zalloc(resp->hash_length, NULL);
+	if (!resp->response)
+		resp->response = mem_zalloc(hashstringl, NULL);
+
+	if (!resp->response || !hash1 || !hash2) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	/* HASH A2 */
+	if (str_isset(resp->qop) && str_str(resp->qop, "auth-int")) {
+		if (!entitybody || str_casecmp(entitybody, "") == 0) {
+			resp->hash_function((uint8_t *)"", str_len(""), hash1);
+		}
+		else {
+			resp->hash_function((uint8_t *)entitybody,
+				str_len(entitybody), hash1);
+		}
+
+		err = mbuf_printf(mb, "%r:%s:%w",
+			method, resp->uri, hash1, resp->hash_length);
+	}
+	else {
+		err = mbuf_printf(mb, "%r:%s", method, resp->uri);
+	}
+
+	if (err)
+		goto out;
+
+	resp->hash_function(mb->buf, mb->end, hash2);
+	mbuf_rewind(mb);
+
+	/* HASH A1 */
+	if (resp->userhash) {
+		if (!resp->username)
+			resp->username = mem_zalloc(hashstringl, NULL);
+
+		if (!resp->username) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		err = mbuf_printf(mb, "%s:%s", user, resp->realm);
+		if (err)
+			goto out;
+
+		resp->hash_function(mb->buf, mb->end, hash1);
+		n = re_snprintf(resp->username, hashstringl, "%w",
+			hash1, hashstringl);
+		if (n == -1 || n != (int)hashstringl -1) {
+			err = ERANGE;
+			goto out;
+		}
+
+		mbuf_rewind(mb);
+		err = mbuf_printf(mb, "%w:%s:%s",
+			hash1, resp->hash_length, resp->realm, passwd);
+	}
+	else {
+		err  = mbuf_printf(mb, "%s:%s:%s", user, resp->realm, passwd);
+		resp->username = mem_deref(resp->username);
+		err |= str_dup(&resp->username, user);
+	}
+
+	if (err)
+		goto out;
+
+	resp->hash_function(mb->buf, mb->end, hash1);
+	mbuf_rewind(mb);
+
+	if (str_str(resp->algorithm, "-sess")) {
+		err = mbuf_printf(mb, "%w:%s:%s",
+			hash1, resp->hash_length, resp->nonce, resp->cnonce);
+		if (err)
+			goto out;
+
+		resp->hash_function(mb->buf, mb->end, hash1);
+		mbuf_rewind(mb);
+	}
+
+	/* DIGEST */
+	if (str_isset(resp->qop)) {
+		err = mbuf_printf(mb, "%w:%s:%s:%s:%s:%w",
+			hash1, resp->hash_length, resp->nonce, resp->nc,
+			resp->cnonce, resp->qop, hash2, resp->hash_length);
+	}
+	else {
+		err = mbuf_printf(mb, "%w:%s:%w", hash1, resp->hash_length,
+			resp->nonce, hash2, resp->hash_length);
+	}
+
+	if (err)
+		goto out;
+
+	resp->hash_function(mb->buf, mb->end, hash1);
+	n = re_snprintf(resp->response, hashstringl, "%w",
+		hash1, resp->hash_length);
+	if (n == -1 || n != (int)hashstringl - 1)
+		err = ERANGE;
+
+out:
+	mem_deref(mb);
+	mem_deref(hash1);
+	mem_deref(hash2);
+
+	return err;
+}
+
+
+/**
+ * Prints / encodes an HTTP digest response
+ *
+ * @param pf   Re_printf object
+ * @param resp Response to print
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_response_print(struct re_printf *pf,
+	const struct httpauth_digest_enc_resp *resp)
+{
+	int err = 0;
+
+	if (!resp)
+		return EINVAL;
+
+	/* historical reason quoted strings:   */
+	/*   username, realm, nonce, uri,      */
+	/*   response, cnonce, opaque          */
+	/* historical reason unquoted strings: */
+	/*   qop, algorithm, nc                */
+	err = re_hprintf(pf, "Digest realm=\"%s\","
+		" nonce=\"%s\", username=\"%s\", uri=\"%s\","
+		" response=\"%s\"",
+		resp->realm, resp->nonce, resp->username,
+		resp->uri, resp->response);
+
+	if (str_isset(resp->opaque))
+		err |= re_hprintf(pf, ", opaque=\"%s\"", resp->opaque);
+	if (str_isset(resp->algorithm))
+		err |= re_hprintf(pf, ", algorithm=%s", resp->algorithm);
+	if (str_isset(resp->qop))
+		err |= re_hprintf(pf, ", qop=%s, cnonce=\"%s\", nc=\"%s\"",
+			resp->qop, resp->cnonce, resp->nc);
+
+	if (resp->userhash)
+		err |= re_hprintf(pf, ", userhash=true");
+	if (str_isset(resp->charset))
+		err |= re_hprintf(pf, ", charset=\"%s\"", resp->charset);
+
+	return err;
+}
+
+
+/**
+ * Set cnonce and nc and recalculate the response value.
+ * This function should be used only for unit tests
+ *
+ * @param resp       Httpauth_new_digest_response object pointer
+ * @param chall      Received and decoded digest challenge
+ * @param method     Used method
+ * @param user       Username
+ * @param passwd     User password
+ * @param entitybody Entitybody if qop=auth-int
+ * @param cnonce     Cnonce
+ * @param nc_        Nonce counter
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *user,	const char *passwd, const char *entitybody,
+	const uint32_t cnonce, const uint32_t nc_)
+{
+	int err = 0, n = 0;
+
+	if (!resp || !chall || !method || !passwd)
+		return EINVAL;
+
+	n = re_snprintf(resp->cnonce, CNONCE_NC_LENGTH, "%08x", cnonce);
+	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+		err = ERANGE;
+		goto out;
+	}
+
+	n = re_snprintf(resp->nc, CNONCE_NC_LENGTH, "%08x", nc_);
+	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+		err = ERANGE;
+		goto out;
+	}
+
+	err = digest_response(resp, chall, method,
+		user, passwd, entitybody);
+
+out:
+	return err;
+}
+
+
+/**
+ * Create a digest authentication response
+ *
+ * @param presp      Httpauth_new_digest_response object pointer
+ * @param chall      Received and decoded digest challenge
+ * @param method     Used method
+ * @param uri        Accessed uri
+ * @param user       Username
+ * @param passwd     User password
+ * @param qop        Quality of protection
+ * @param entitybody Entitybody if qop=auth-int
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_response(struct httpauth_digest_enc_resp **presp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *uri, const char *user, const char *passwd, const char *qop,
+	const char *entitybody)
+{
+	return httpauth_digest_response_full(presp, chall, method, uri,
+		user, passwd, qop, entitybody, NULL, false);
+}
+
+
+/**
+ * Create a full configurable digest authentication response
+ *
+ * @param presp      Httpauth_new_digest_response object pointer
+ * @param chall      Received and decoded digest challenge
+ * @param method     Used method
+ * @param uri        Accessed uri
+ * @param user       Username
+ * @param passwd     User password
+ * @param qop        Quality of protection
+ * @param entitybody Entitybody if qop=auth-int
+ * @param charset    Used character set (only UTF-8 or NULL allowed)
+ * @param userhash   Enable hashed usernames
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
+	const struct httpauth_digest_chall *chall, const struct pl *method,
+	const char *uri, const char *user, const char *passwd, const char *qop,
+	const char *entitybody, const char *charset, const bool userhash)
+{
+	struct httpauth_digest_enc_resp *resp = NULL;
+	uint32_t cnonce = rand_u32();
+	int err = 0, n = 0;
+
+	if (!presp || !chall || !method || !uri || !user || !passwd)
+		return EINVAL;
+
+	resp = mem_zalloc(sizeof(*resp), httpauth_digest_response_destructor);
+	if (!resp) {
+		return ENOMEM;
+	}
+
+	resp->cnonce = mem_zalloc(CNONCE_NC_LENGTH, NULL);
+	resp->nc = mem_zalloc(CNONCE_NC_LENGTH, NULL);
+	if (!resp->cnonce || !resp->nc) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	/* copy fields */
+	err = pl_strdup(&resp->realm, &chall->realm);
+	err |= pl_strdup(&resp->nonce, &chall->nonce);
+	err |= pl_strdup(&resp->opaque, &chall->opaque);
+	if (err) {
+		goto out;
+	}
+
+	/* userhash supported by server */
+	if (userhash && (pl_strcasecmp(&chall->userhash, "true") == 0))
+		resp->userhash = true;
+
+	/* only allowed qop Nothing, "auth" or "auth-int" */
+	if (str_isset(qop) && (str_casecmp(qop, "auth")) &&
+		(str_casecmp(qop, "auth-int"))) {
+		err = EPROTONOSUPPORT;
+		goto out;
+	}
+
+	/* qop supported by server */
+	if (pl_isset(&chall->qop) && str_isset(qop) &&
+		pl_strstr(&chall->qop, qop)) {
+		err = str_dup(&resp->qop, qop);
+		if (err)
+			goto out;
+	}
+
+	/* only allowed charset Nothing or "UTF-8" */
+	if (str_isset(charset) && str_casecmp(charset, "UTF-8")) {
+		err = EPROTONOSUPPORT;
+		goto out;
+	}
+
+	/* charset supported by server */
+	if (pl_isset(&chall->charset) && str_isset(charset) &&
+		pl_strstr(&chall->charset, charset) == 0) {
+		err = str_dup(&resp->charset, charset);
+		if (err)
+			goto out;
+	}
+
+	err = str_dup(&resp->uri, uri);
+	if (err)
+		goto out;
+
+	n = re_snprintf(resp->cnonce, CNONCE_NC_LENGTH, "%08x", cnonce);
+	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+		err = ERANGE;
+		goto out;
+	}
+
+	n = re_snprintf(resp->nc, CNONCE_NC_LENGTH, "%08x", nc++);
+	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+		err = ERANGE;
+		goto out;
+	}
+
+	if (pl_strstr(&chall->algorithm, "SHA256-sess")) {
+		resp->hash_function = &sha256;
+		resp->hash_length = SHA256_DIGEST_LENGTH;
+		err = str_dup(&resp->algorithm, "SHA256-sess");
+	}
+	else if (pl_strstr(&chall->algorithm, "SHA256")) {
+		resp->hash_function = &sha256;
+		resp->hash_length = SHA256_DIGEST_LENGTH;
+		err = str_dup(&resp->algorithm, "SHA256");
+	}
+	else if (pl_strstr(&chall->algorithm, "SHA1-sess")) {
+		resp->hash_function = &sha1;
+		resp->hash_length = SHA_DIGEST_LENGTH;
+		err = str_dup(&resp->algorithm, "SHA1-sess");
+	}
+	else if (pl_strstr(&chall->algorithm, "SHA1")) {
+		resp->hash_function = &sha1;
+		resp->hash_length = SHA_DIGEST_LENGTH;
+		err = str_dup(&resp->algorithm, "SHA1");
+	}
+	else if (pl_strstr(&chall->algorithm, "MD5-sess")) {
+		resp->hash_function = &md5;
+		resp->hash_length = MD5_SIZE;
+		err = str_dup(&resp->algorithm, "MD5-sess");
+	}
+	else if (!pl_isset(&chall->algorithm) ||
+		pl_strstr(&chall->algorithm, "MD5")) {
+		resp->hash_function = &md5;
+		resp->hash_length = MD5_SIZE;
+		err = str_dup(&resp->algorithm, "MD5");
+	}
+	else {
+		err = EPROTONOSUPPORT;
+		goto out;
+	}
+
+	err = digest_response(resp, chall, method, user, passwd, entitybody);
+
+out:
+	if (err)
+		mem_deref(resp);
+	else
+		*presp = resp;
 
 	return err;
 }
