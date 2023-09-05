@@ -183,6 +183,13 @@ static int enterleave_thread_handler(void *arg)
 
 static int test_remain_enterleave(void)
 {
+	/*
+	 * re_thread_enter() and re_thread_leave() works only
+	 * with one re poll thread (re_global).
+	 */
+	if (test_mode == TEST_THREAD)
+		return ESKIPPED;
+
 	struct data data = {0};
 
 	int err = thread_create_name(&data.tid, "enter-leave",
