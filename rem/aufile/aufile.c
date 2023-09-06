@@ -288,11 +288,12 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
  * @return position in bytes or (size_t)-1 in case of an error.
  */
 size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
-						   size_t pos_ms)
+						   off_t pos_ms)
 {
 	struct wav_fmt fmt;
 	int err;
-	size_t pos;
+	off_t pos;
+	size_t datasize;
 
 	if (!af || !prm) {
 		return EINVAL;
@@ -304,7 +305,7 @@ size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 	}
 	/* this is only used for the side effect of moving the file ptr to the
 	   first data block. */
-	err = wav_header_decode(&fmt, &pos, af->f);
+	err = wav_header_decode(&fmt, &datasize, af->f);
 	if (err) {
 		return err;
 	}
