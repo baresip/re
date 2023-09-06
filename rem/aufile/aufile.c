@@ -310,8 +310,8 @@ size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 		return err;
 	}
 
-	pos = prm->srate * aufmt_sample_size(prm->fmt)
-		* prm->channels * pos_ms / 1000;
+	pos = (off_t)(prm->srate * aufmt_sample_size(prm->fmt)
+		* prm->channels * pos_ms / 1000);
 
 	if (fseek(af->f, pos, SEEK_CUR) < 0) {
 		return errno;
