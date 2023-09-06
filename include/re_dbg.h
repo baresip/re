@@ -117,10 +117,6 @@ void dbg_close(void);
 int  dbg_logfile_set(const char *name);
 void dbg_handler_set(dbg_print_h *ph, void *arg);
 void dbg_printf(int level, const char *fmt, ...);
-void dbg_noprintf(const char *fmt, ...);
-void dbg_warning(const char *fmt, ...);
-void dbg_notice(const char *fmt, ...);
-void dbg_info(const char *fmt, ...);
 const char *dbg_level_str(int level);
 
 #ifdef __cplusplus
