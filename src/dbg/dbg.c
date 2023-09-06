@@ -130,7 +130,7 @@ void dbg_handler_set(dbg_print_h *ph, void *arg)
 
 
 /* NOTE: This function should not allocate memory */
-static void dbg_vprintf(int level, const char *fmt, va_list ap)
+static void dbg_vprintf(struct pl *id, int level, const char *fmt, va_list ap)
 {
 	dbg_lock();
 
@@ -171,6 +171,9 @@ static void dbg_vprintf(int level, const char *fmt, va_list ap)
 		(void)re_fprintf(stderr, "[%09llu] ", ticks - dbg.tick);
 	}
 
+	if (pl_isset(id))
+		(void)re_fprintf(stderr, "{%r} ", id);
+
 	(void)re_vfprintf(stderr, fmt, ap);
 
 	if (dbg.flags & DBG_ANSI && level < DBG_DEBUG)
@@ -181,7 +184,8 @@ out:
 
 
 /* Formatted output to print handler and/or logfile */
-static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
+static void dbg_fmt_vprintf(struct pl *id, int level, const char *fmt,
+			    va_list ap)
 {
 	char buf[256];
 	int len;
@@ -201,7 +205,7 @@ static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 
 	/* Print handler? */
 	if (dbg.ph) {
-		dbg.ph(level, buf, len, dbg.arg);
+		dbg.ph(id, level, buf, len, dbg.arg);
 	}
 
 	/* Output to file */
@@ -226,11 +230,31 @@ void dbg_printf(int level, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	dbg_vprintf(level, fmt, ap);
+	dbg_vprintf(NULL, level, fmt, ap);
 	va_end(ap);
 
 	va_start(ap, fmt);
-	dbg_fmt_vprintf(level, fmt, ap);
+	dbg_fmt_vprintf(NULL, level, fmt, ap);
+	va_end(ap);
+}
+
+
+/**
+ * Print a formatted debug message
+ *
+ * @param level Debug level
+ * @param fmt   Formatted string
+ */
+void dbg_printf_id(struct pl *id, int level, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	dbg_vprintf(id, level, fmt, ap);
+	va_end(ap);
+
+	va_start(ap, fmt);
+	dbg_fmt_vprintf(id, level, fmt, ap);
 	va_end(ap);
 }
 
