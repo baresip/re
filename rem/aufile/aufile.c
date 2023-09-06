@@ -298,12 +298,12 @@ size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 		return EINVAL;
 	}
 
-	// Seek to the beginning of the file
+	/* Seek to the beginning of the file */
 	if (fseek(af->f, 0, SEEK_SET) < 0) {
 		return errno;
 	}
-	// this is only used for the side effect of moving the file ptr to the
-	// first data block.
+	/* this is only used for the side effect of moving the file ptr to the
+	   first data block. */
 	err = wav_header_decode(&fmt, &pos, af->f);
 	if (err) {
 		return err;
