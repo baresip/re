@@ -287,9 +287,34 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
  *
  * @return position in bytes or (size_t)-1 in case of an error.
  */
-size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm, size_t pos_ms)
+size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
+						   size_t pos_ms)
 {
-	size_t pos = prm->srate * aufmt_sample_size(prm->fmt) * prm->channels * pos_ms / 1000;
+	struct wav_fmt fmt;
+	int err;
+	size_t pos;
 
-	return fseek(af->f, pos, SEEK_SET);
+	if (!af || !prm) {
+		return EINVAL;
+	}
+
+	// Seek to the beginning of the file
+	if (fseek(af->f, 0, SEEK_SET) < 0) {
+		return errno;
+	}
+	// this is only used for the side effect of moving the file ptr to the
+	// first data block.
+	err = wav_header_decode(&fmt, &pos, af->f);
+	if (err) {
+		return err;
+	}
+
+	pos = prm->srate * aufmt_sample_size(prm->fmt)
+		* prm->channels * pos_ms / 1000;
+
+	if (fseek(af->f, pos, SEEK_CUR) < 0) {
+		return errno;
+	}
+
+	return 0;
 }
