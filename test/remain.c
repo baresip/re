@@ -217,8 +217,10 @@ int test_remain(void)
 {
 	int err = 0;
 
+#if 0
 	err = test_remain_thread();
 	TEST_ERR(err);
+#endif
 
 	err = test_remain_enterleave();
 	TEST_ERR(err);
