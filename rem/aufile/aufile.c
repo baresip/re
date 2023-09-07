@@ -299,7 +299,6 @@ size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 		return EINVAL;
 	}
 
-	/* Seek to the beginning of the file */
 	if (fseek(af->f, 0, SEEK_SET) < 0) {
 		return errno;
 	}
