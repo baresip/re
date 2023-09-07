@@ -1221,7 +1221,8 @@ void re_thread_enter(void)
 
 	/* set only for non-re threads */
 	if (!thrd_equal(re->tid, thrd_current())) {
-		DEBUG_NOTICE("re_thread_enter: setting THREAD_ENTER to True\n");
+		DEBUG_NOTICE("re_thread_enter:"
+				" setting THREAD_ENTER to True\n");
 		re_atomic_rlx_set(&re->thread_enter, true);
 	}
 }
