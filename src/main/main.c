@@ -1211,12 +1211,6 @@ void re_thread_enter(void)
 		return;
 	}
 
-	if (!re_atomic_rlx(&re->polling)) {
-
-		DEBUG_NOTICE("re_thread_enter: Not Polling\n");
-		return;
-	}
-
 	re_lock(re);
 
 	/* set only for non-re threads */
@@ -1239,9 +1233,6 @@ void re_thread_leave(void)
 		DEBUG_WARNING("re_thread_leave: re not ready\n");
 		return;
 	}
-
-	if (!re_atomic_rlx(&re->polling))
-		return;
 
 	/* Dummy async event, to ensure timers are properly handled */
 	if (re->async)
