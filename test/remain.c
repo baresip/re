@@ -146,8 +146,6 @@ static void mqueue_handler(int id, void *dat, void *arg)
 	(void)id;
 	(void)dat;
 
-	DEBUG_NOTICE("mqueue_handler\n");
-
 	++data->mqueue_called;
 
 	/* Stop re_main loop */
@@ -179,20 +177,11 @@ static int enterleave_thread_handler(void *arg)
 
 static int test_remain_enterleave(void)
 {
-	/*
-	 * re_thread_enter() and re_thread_leave() works only
-	 * with one re poll thread (re_global).
-	 */
-	if (test_mode == TEST_THREAD)
-		return ESKIPPED;
-
 	struct data data = {0};
 
 	int err = thread_create_name(&data.tid, "enter-leave",
 				     enterleave_thread_handler, &data);
 	TEST_ERR(err);
-
-	DEBUG_NOTICE("starting re_main loop..\n");
 
 	/* run re_main event loop */
 	err = re_main_timeout(1000);
@@ -214,13 +203,17 @@ int test_remain(void)
 {
 	int err = 0;
 
-	if (1) {
-		err = test_remain_thread();
+	err = test_remain_thread();
+	TEST_ERR(err);
+
+	/*
+	 * re_thread_enter() and re_thread_leave() works only
+	 * with one re poll thread (re_global).
+	 */
+	if (test_mode != TEST_THREAD) {
+		err = test_remain_enterleave();
 		TEST_ERR(err);
 	}
-
-	err = test_remain_enterleave();
-	TEST_ERR(err);
 
  out:
 	return err;

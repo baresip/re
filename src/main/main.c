@@ -1233,7 +1233,6 @@ void re_thread_leave(void)
 	/* Dummy async event, to ensure timers are properly handled */
 	if (re->async)
 		re_thread_async(NULL, NULL, NULL);
-
 	re_atomic_rlx_set(&re->thread_enter, false);
 	re_unlock(re);
 }
@@ -1311,8 +1310,7 @@ int re_thread_check(bool debug)
 	if (!re)
 		return EINVAL;
 
-	bool te = re_atomic_rlx(&re->thread_enter);
-	if (te)
+	if (re_atomic_rlx(&re->thread_enter))
 		return 0;
 
 	if (thrd_equal(re->tid, thrd_current()))
@@ -1321,7 +1319,7 @@ int re_thread_check(bool debug)
 	if (debug) {
 		DEBUG_WARNING(
 			"thread check: called from a NON-RE thread without "
-			"thread_enter()! [thread_enter=%d]\n", te);
+			"thread_enter()!\n");
 
 #if DEBUG_LEVEL > 5
 		struct btrace trace;
