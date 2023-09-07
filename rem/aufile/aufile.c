@@ -285,7 +285,7 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
  * @param af  Audio-file
  * @param prm Audio file parameters from aufile_open
  *
- * @return position in bytes or (size_t)-1 in case of an error.
+ * @return 0 if success, otherwise errorcode
  */
 size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 						   off_t pos_ms)
