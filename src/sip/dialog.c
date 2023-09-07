@@ -35,6 +35,7 @@ struct sip_dialog {
 	uint32_t lseq;
 	uint32_t rseq;
 	size_t cpos;
+	size_t rpos;
 	enum sip_transp tp;
 	uint32_t srcport;
 };
@@ -119,7 +120,7 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 			rend = dlg->mb->pos - 2;
 	}
 	err |= mbuf_printf(dlg->mb, "To: <%s>\r\n", to_uri);
-	dlg->cpos = dlg->mb->pos;
+	dlg->cpos = dlg->rpos = dlg->mb->pos;
 	err |= mbuf_printf(dlg->mb, "From: %s%s%s<%s>;tag=%016llx\r\n",
 			   from_name ? "\"" : "", from_name,
 			   from_name ? "\" " : "",
@@ -308,6 +309,7 @@ int sip_dialog_create(struct sip_dialog *dlg, const struct sip_msg *msg)
 			   msg->req ? &msg->from.val : &msg->to.val);
 
 	dlg->mb->pos = dlg->cpos;
+	dlg->rpos = renc.mb->pos;
 	err |= mbuf_write_mem(renc.mb, mbuf_buf(dlg->mb),
 			      mbuf_get_left(dlg->mb));
 	dlg->mb->pos = 0;
@@ -462,6 +464,8 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 {
 	const struct sip_hdr *contact;
 	struct sip_addr addr;
+	struct route_enc renc;
+	struct pl pl;
 	char *uri;
 	int err;
 
@@ -475,14 +479,43 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 	if (sip_addr_decode(&addr, &contact->val))
 		return EBADMSG;
 
+	renc.mb = mbuf_alloc(512);
+	if (!renc.mb)
+		return ENOMEM;
+
 	err = pl_strdup(&uri, &addr.auri);
 	if (err)
 		return err;
 
-	if (dlg->route.scheme.p == dlg->uri) {
+	renc.end = 0;
 
+	err |= sip_msg_hdr_apply(msg, msg->req, SIP_HDR_RECORD_ROUTE,
+				 record_route_handler, &renc) ? EINVAL : 0;
+	err |= mbuf_printf(renc.mb, "To: %r\r\n",
+			   msg->req ? &msg->from.val : &msg->to.val);
+
+	dlg->mb->pos = dlg->rpos;
+	dlg->rpos = renc.mb->pos;
+	err |= mbuf_write_mem(renc.mb, mbuf_buf(dlg->mb),
+			      mbuf_get_left(dlg->mb));
+	dlg->mb->pos = 0;
+
+	if (err)
+		goto out;
+
+	renc.mb->pos = 0;
+
+	if (renc.end) {
+		pl.p = (const char *)mbuf_buf(renc.mb) + ROUTE_OFFSET;
+		pl.l = renc.end - ROUTE_OFFSET;
+		err = sip_addr_decode(&addr, &pl);
+		if (err)
+			goto out;
+
+		dlg->route = addr.uri;
+	}
+	else {
 		struct uri tmp;
-		struct pl pl;
 
 		pl_set_str(&pl, uri);
 		err = uri_decode(&tmp, &pl);
@@ -492,10 +525,14 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 		dlg->route = tmp;
 	}
 
+	mem_deref(dlg->mb);
 	mem_deref(dlg->uri);
+
+	dlg->mb   = mem_ref(renc.mb);
 	dlg->uri = mem_ref(uri);
 
  out:
+	mem_deref(renc.mb);
 	mem_deref(uri);
 
 	return err;
