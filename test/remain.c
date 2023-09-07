@@ -158,15 +158,12 @@ static void mqueue_handler(int id, void *dat, void *arg)
 static int enterleave_thread_handler(void *arg)
 {
 	struct data *data = arg;
-	int err;
-
-	DEBUG_NOTICE("thread start\n");
 
 	/* Enter an 're' thread */
 	re_thread_enter();
 
 	/* note: allocated from this thread */
-	err = mqueue_alloc(&data->mq, mqueue_handler, data);
+	int err = mqueue_alloc(&data->mq, mqueue_handler, data);
 
 	/* Leave an 're' thread */
 	re_thread_leave();
@@ -175,8 +172,6 @@ static int enterleave_thread_handler(void *arg)
 		return err;
 
 	err = mqueue_push(data->mq, 0, NULL);
-
-	DEBUG_NOTICE("thread stop\n");
 
 	return err;
 }
@@ -206,6 +201,7 @@ static int test_remain_enterleave(void)
 	/* wait for thread to end */
 	thrd_join(data.tid, &err);
 
+	TEST_EQUALS(0, data.tmr_called);
 	TEST_EQUALS(1, data.mqueue_called);
 
  out:
@@ -218,9 +214,9 @@ int test_remain(void)
 {
 	int err = 0;
 
-	if (0) {
+	if (1) {
 		err = test_remain_thread();
-	TEST_ERR(err);
+		TEST_ERR(err);
 	}
 
 	err = test_remain_enterleave();

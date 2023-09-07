@@ -1202,8 +1202,6 @@ void re_thread_close(void)
  */
 void re_thread_enter(void)
 {
-	DEBUG_NOTICE("re_thread_enter\n");
-
 	struct re *re = re_get();
 
 	if (!re) {
@@ -1215,8 +1213,6 @@ void re_thread_enter(void)
 
 	/* set only for non-re threads */
 	if (!thrd_equal(re->tid, thrd_current())) {
-		DEBUG_NOTICE("re_thread_enter:"
-				" setting THREAD_ENTER to True\n");
 		re_atomic_rlx_set(&re->thread_enter, true);
 	}
 }
@@ -1238,9 +1234,7 @@ void re_thread_leave(void)
 	if (re->async)
 		re_thread_async(NULL, NULL, NULL);
 
-	DEBUG_NOTICE("re_thread_leave: setting THREAD_ENTER to false\n");
 	re_atomic_rlx_set(&re->thread_enter, false);
-
 	re_unlock(re);
 }
 
@@ -1321,18 +1315,13 @@ int re_thread_check(bool debug)
 	if (te)
 		return 0;
 
-	thrd_t cur = thrd_current();
-	bool eq = 0 != thrd_equal(re->tid, cur);
-	if (eq)
+	if (thrd_equal(re->tid, thrd_current()))
 		return 0;
 
 	if (debug) {
 		DEBUG_WARNING(
 			"thread check: called from a NON-RE thread without "
 			"thread_enter()! [thread_enter=%d]\n", te);
-		fprintf(stderr, ".... tid=%zu\n", (size_t)re->tid);
-		fprintf(stderr, ".... cur=%zu\n", (size_t)cur);
-		re_printf("%H\n", re_debug, NULL);
 
 #if DEBUG_LEVEL > 5
 		struct btrace trace;
