@@ -185,10 +185,17 @@ static int test_remain_enterleave(void)
 
 	/* run re_main event loop */
 	err = re_main_timeout(1000);
-	TEST_ERR(err);
 
 	/* wait for thread to end */
-	thrd_join(data.tid, &err);
+	int terr=0;
+	thrd_join(data.tid, &terr);
+
+	TEST_ERR(err);
+	if (terr) {
+		err = terr;
+		DEBUG_WARNING("error in thread (%m)\n", err);
+		goto out;
+	}
 
 	TEST_EQUALS(0, data.tmr_called);
 	TEST_EQUALS(1, data.mqueue_called);
