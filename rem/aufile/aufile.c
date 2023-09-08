@@ -287,7 +287,7 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
  *
  * @return 0 if success, otherwise errorcode
  */
-size_t aufile_set_position(struct aufile *af, struct aufile_prm *prm,
+int aufile_set_position(struct aufile *af, struct aufile_prm *prm,
 						   off_t pos_ms)
 {
 	struct wav_fmt fmt;
