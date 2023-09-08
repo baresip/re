@@ -18,6 +18,12 @@ option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
 option(USE_UNIXSOCK "Enable Unix Domain Sockets" ON)
 option(USE_TRACE "Enable Tracing helpers" OFF)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Setting build type to 'Debug' as none was specified.")
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build."
+        FORCE)
+endif()
+    
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
   list(APPEND RE_DEFINITIONS -DHAVE_ARC4RANDOM)
@@ -178,11 +184,10 @@ endif()
 list(APPEND RE_DEFINITIONS
   -DARCH="${CMAKE_SYSTEM_PROCESSOR}"
   -DOS="${CMAKE_SYSTEM_NAME}"
+  $<$<NOT:$<CONFIG:DEBUG>>:-DRELEASE>
 )
 
-if(${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
-  list(APPEND RE_DEFINITIONS -DRELEASE)
-else()
+if(NOT ${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
   if(Backtrace_FOUND)
     set(CMAKE_ENABLE_EXPORTS ON)
   endif()
