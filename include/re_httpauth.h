@@ -53,7 +53,7 @@ struct httpauth_digest_enc_resp {
 	/* optional */
 	char *charset;
 	bool userhash;
-	void (*hash_function)(const uint8_t *, size_t, uint8_t *);
+	void (*hashh)(const uint8_t *, size_t, uint8_t *);
 	size_t hash_length;
 };
 

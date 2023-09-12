@@ -17,7 +17,7 @@
 
 
 enum {
-	CNONCE_NC_LENGTH = 9, /* 8 characters + '\0' */
+	CNONCE_NC_SIZE = 9, /* 8 characters + '\0' */
 };
 
 
@@ -645,6 +645,9 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	size_t hashstringl = (resp->hash_length * 2) + 1;
 	int err = 0, n = 0;
 
+	if (!resp || !resp->hashh)
+		return EINVAL;
+
 	mb = mbuf_alloc(str_len(user) + str_len(passwd) + chall->realm.l + 2);
 	if (!mb)
 		return ENOMEM;
@@ -662,10 +665,10 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	/* HASH A2 */
 	if (str_isset(resp->qop) && str_str(resp->qop, "auth-int")) {
 		if (!entitybody || str_casecmp(entitybody, "") == 0) {
-			resp->hash_function((uint8_t *)"", str_len(""), hash1);
+			resp->hashh((uint8_t *)"", 0, hash1);
 		}
 		else {
-			resp->hash_function((uint8_t *)entitybody,
+			resp->hashh((uint8_t *)entitybody,
 				str_len(entitybody), hash1);
 		}
 
@@ -679,7 +682,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	if (err)
 		goto out;
 
-	resp->hash_function(mb->buf, mb->end, hash2);
+	resp->hashh(mb->buf, mb->end, hash2);
 	mbuf_rewind(mb);
 
 	/* HASH A1 */
@@ -696,7 +699,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 		if (err)
 			goto out;
 
-		resp->hash_function(mb->buf, mb->end, hash1);
+		resp->hashh(mb->buf, mb->end, hash1);
 		n = re_snprintf(resp->username, hashstringl, "%w",
 			hash1, hashstringl);
 		if (n == -1 || n != (int)hashstringl -1) {
@@ -717,7 +720,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	if (err)
 		goto out;
 
-	resp->hash_function(mb->buf, mb->end, hash1);
+	resp->hashh(mb->buf, mb->end, hash1);
 	mbuf_rewind(mb);
 
 	if (str_str(resp->algorithm, "-sess")) {
@@ -726,7 +729,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 		if (err)
 			goto out;
 
-		resp->hash_function(mb->buf, mb->end, hash1);
+		resp->hashh(mb->buf, mb->end, hash1);
 		mbuf_rewind(mb);
 	}
 
@@ -744,7 +747,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	if (err)
 		goto out;
 
-	resp->hash_function(mb->buf, mb->end, hash1);
+	resp->hashh(mb->buf, mb->end, hash1);
 	n = re_snprintf(resp->response, hashstringl, "%w",
 		hash1, resp->hash_length);
 	if (n == -1 || n != (int)hashstringl - 1)
@@ -807,35 +810,35 @@ int httpauth_digest_response_print(struct re_printf *pf,
  * Set cnonce and nc and recalculate the response value.
  * This function should be used only for unit tests
  *
- * @param resp       Httpauth_new_digest_response object pointer
- * @param chall      Received and decoded digest challenge
- * @param method     Used method
- * @param user       Username
- * @param passwd     User password
- * @param entitybody Entitybody if qop=auth-int
- * @param cnonce     Cnonce
- * @param nc_        Nonce counter
+ * @param resp          Httpauth_new_digest_response object pointer
+ * @param chall         Received and decoded digest challenge
+ * @param method        Used method
+ * @param user          Username
+ * @param passwd        User password
+ * @param entitybody    Entitybody if qop=auth-int
+ * @param cnonce        Cnonce
+ * @param nonce_counter Nonce counter
  *
  * @return 0 if success, otherwise errorcode
  */
 int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
 	const char *user,	const char *passwd, const char *entitybody,
-	const uint32_t cnonce, const uint32_t nc_)
+	const uint32_t cnonce, const uint32_t nonce_counter)
 {
 	int err = 0, n = 0;
 
 	if (!resp || !chall || !method || !passwd)
 		return EINVAL;
 
-	n = re_snprintf(resp->cnonce, CNONCE_NC_LENGTH, "%08x", cnonce);
-	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+	n = re_snprintf(resp->cnonce, CNONCE_NC_SIZE, "%08x", cnonce);
+	if (n == -1 || n != CNONCE_NC_SIZE -1) {
 		err = ERANGE;
 		goto out;
 	}
 
-	n = re_snprintf(resp->nc, CNONCE_NC_LENGTH, "%08x", nc_);
-	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+	n = re_snprintf(resp->nc, CNONCE_NC_SIZE, "%08x", nonce_counter);
+	if (n == -1 || n != CNONCE_NC_SIZE -1) {
 		err = ERANGE;
 		goto out;
 	}
@@ -905,8 +908,8 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 		return ENOMEM;
 	}
 
-	resp->cnonce = mem_zalloc(CNONCE_NC_LENGTH, NULL);
-	resp->nc = mem_zalloc(CNONCE_NC_LENGTH, NULL);
+	resp->cnonce = mem_zalloc(CNONCE_NC_SIZE, NULL);
+	resp->nc = mem_zalloc(CNONCE_NC_SIZE, NULL);
 	if (!resp->cnonce || !resp->nc) {
 		err = ENOMEM;
 		goto out;
@@ -957,46 +960,46 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 	if (err)
 		goto out;
 
-	n = re_snprintf(resp->cnonce, CNONCE_NC_LENGTH, "%08x", cnonce);
-	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+	n = re_snprintf(resp->cnonce, CNONCE_NC_SIZE, "%08x", cnonce);
+	if (n == -1 || n != CNONCE_NC_SIZE -1) {
 		err = ERANGE;
 		goto out;
 	}
 
-	n = re_snprintf(resp->nc, CNONCE_NC_LENGTH, "%08x", nc++);
-	if (n == -1 || n != CNONCE_NC_LENGTH -1) {
+	n = re_snprintf(resp->nc, CNONCE_NC_SIZE, "%08x", nc++);
+	if (n == -1 || n != CNONCE_NC_SIZE -1) {
 		err = ERANGE;
 		goto out;
 	}
 
 	if (pl_strstr(&chall->algorithm, "SHA256-sess")) {
-		resp->hash_function = &sha256;
+		resp->hashh = &sha256;
 		resp->hash_length = SHA256_DIGEST_LENGTH;
 		err = str_dup(&resp->algorithm, "SHA256-sess");
 	}
 	else if (pl_strstr(&chall->algorithm, "SHA256")) {
-		resp->hash_function = &sha256;
+		resp->hashh = &sha256;
 		resp->hash_length = SHA256_DIGEST_LENGTH;
 		err = str_dup(&resp->algorithm, "SHA256");
 	}
 	else if (pl_strstr(&chall->algorithm, "SHA1-sess")) {
-		resp->hash_function = &sha1;
+		resp->hashh = &sha1;
 		resp->hash_length = SHA_DIGEST_LENGTH;
 		err = str_dup(&resp->algorithm, "SHA1-sess");
 	}
 	else if (pl_strstr(&chall->algorithm, "SHA1")) {
-		resp->hash_function = &sha1;
+		resp->hashh = &sha1;
 		resp->hash_length = SHA_DIGEST_LENGTH;
 		err = str_dup(&resp->algorithm, "SHA1");
 	}
 	else if (pl_strstr(&chall->algorithm, "MD5-sess")) {
-		resp->hash_function = &md5;
+		resp->hashh = &md5;
 		resp->hash_length = MD5_SIZE;
 		err = str_dup(&resp->algorithm, "MD5-sess");
 	}
 	else if (!pl_isset(&chall->algorithm) ||
 		pl_strstr(&chall->algorithm, "MD5")) {
-		resp->hash_function = &md5;
+		resp->hashh = &md5;
 		resp->hash_length = MD5_SIZE;
 		err = str_dup(&resp->algorithm, "MD5");
 	}
