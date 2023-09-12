@@ -132,7 +132,8 @@ endif()
 
 if(WIN32)
   list(APPEND RE_DEFINITIONS
-    WIN32 -D_WIN32_WINNT=0x0600
+    WIN32 
+    _WIN32_WINNT=0x0600
   )
 endif()
 
