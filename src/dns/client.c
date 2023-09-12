@@ -892,7 +892,7 @@ static void getaddrinfo_h(int err, void *arg)
 		   cache ? "(caching)" : "");
 
 	if (err) {
-		DEBUG_WARNING("getaddrinfo_h: err %m\n", err);
+		DEBUG_INFO("getaddrinfo_h: err %m\n", err);
 	}
 	else {
 		struct le *le;
