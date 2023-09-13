@@ -60,7 +60,7 @@ include_directories(
 
 find_package(re CONFIG REQUIRED HINTS ../cmake)
 
-if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(HAVE_WRAP TRUE)
   list(APPEND RE_DEFINITIONS HAVE_WRAP)
 endif()
