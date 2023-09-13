@@ -288,7 +288,7 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
  * @return 0 if success, otherwise errorcode
  */
 int aufile_set_position(struct aufile *af, const struct aufile_prm *prm,
-						   off_t pos_ms)
+						   size_t pos_ms)
 {
 	if (!af || !prm)
 		return EINVAL;
