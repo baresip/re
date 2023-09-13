@@ -190,11 +190,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ${RE_DEFINITIONS})
 
 if(HAVE_WRAP)
   target_link_options(${PROJECT_NAME} PRIVATE
-    -Wl,
-    --wrap=epoll_create,
-    --wrap=epoll_ctl,
-    --wrap=getaddrinfo,
-    --wrap=freeaddrinfo
+    -Wl,--wrap=epoll_create
+    -Wl,--wrap=epoll_ctl
+    -Wl,--wrap=getaddrinfo
+    -Wl,--wrap=freeaddrinfo
   )
 endif()
 
