@@ -547,3 +547,12 @@ int dns_server_add_srv(struct dns_server *srv, const char *name,
 		       uint16_t pri, uint16_t weight, uint16_t port,
 		       const char *target);
 void dns_server_flush(struct dns_server *srv);
+
+
+/*
+ * Wrap functions
+ */
+int wrap_will_return_int(const char *func, int ret);
+int wrap_will_return_data(const char *func, void *data);
+int wrap_return_int(const char *func, int *ret);
+void *wrap_return_data(const char *func);

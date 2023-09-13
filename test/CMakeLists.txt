@@ -60,6 +60,11 @@ include_directories(
 
 find_package(re CONFIG REQUIRED HINTS ../cmake)
 
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID MATCHES "GNU")
+  set(HAVE_WRAP TRUE)
+  list(APPEND RE_DEFINITIONS HAVE_WRAP)
+endif()
+
 ##############################################################################
 #
 # Source/Header section
@@ -143,6 +148,14 @@ set(SRCS
   websock.c
 )
 
+if(HAVE_WRAP)
+  list(APPEND SRCS
+      wrap/wrap.c
+      wrap/epoll.c
+      wrap/getaddrinfo.c
+  )
+endif()
+
 if(USE_OPENSSL)
   list(APPEND SRCS
     tls.c
@@ -174,6 +187,16 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS 1)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINKLIBS})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${RE_DEFINITIONS})
+
+if(HAVE_WRAP)
+  target_link_options(${PROJECT_NAME} PRIVATE
+    -Wl,
+    --wrap=epoll_create,
+    --wrap=epoll_ctl,
+    --wrap=getaddrinfo,
+    --wrap=freeaddrinfo
+  )
+endif()
 
 if(USE_OPENSSL)
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
