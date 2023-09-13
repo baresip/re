@@ -151,9 +151,11 @@ set(SRCS
 if(HAVE_WRAP)
   list(APPEND SRCS
       wrap/wrap.c
-      wrap/epoll.c
       wrap/getaddrinfo.c
   )
+  if(HAVE_EPOLL)
+    list(APPEND SRCS wrap/epoll.c)
+  endif()
 endif()
 
 if(USE_OPENSSL)
