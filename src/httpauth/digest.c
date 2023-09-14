@@ -824,7 +824,7 @@ int httpauth_digest_response_print(struct re_printf *pf,
 int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
 	const char *user,	const char *passwd, const char *entitybody,
-	const uint32_t cnonce, const uint32_t nonce_counter)
+	uint32_t cnonce, uint32_t nonce_counter)
 {
 	int err = 0, n = 0;
 
@@ -972,25 +972,15 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 		goto out;
 	}
 
-	if (pl_strstr(&chall->algorithm, "SHA256-sess")) {
+	if (pl_strstr(&chall->algorithm, "SHA-256-sess")) {
 		resp->hashh = &sha256;
 		resp->hash_length = SHA256_DIGEST_LENGTH;
-		err = str_dup(&resp->algorithm, "SHA256-sess");
+		err = str_dup(&resp->algorithm, "SHA-256-sess");
 	}
-	else if (pl_strstr(&chall->algorithm, "SHA256")) {
+	else if (pl_strstr(&chall->algorithm, "SHA-256")) {
 		resp->hashh = &sha256;
 		resp->hash_length = SHA256_DIGEST_LENGTH;
-		err = str_dup(&resp->algorithm, "SHA256");
-	}
-	else if (pl_strstr(&chall->algorithm, "SHA1-sess")) {
-		resp->hashh = &sha1;
-		resp->hash_length = SHA_DIGEST_LENGTH;
-		err = str_dup(&resp->algorithm, "SHA1-sess");
-	}
-	else if (pl_strstr(&chall->algorithm, "SHA1")) {
-		resp->hashh = &sha1;
-		resp->hash_length = SHA_DIGEST_LENGTH;
-		err = str_dup(&resp->algorithm, "SHA1");
+		err = str_dup(&resp->algorithm, "SHA-256");
 	}
 	else if (pl_strstr(&chall->algorithm, "MD5-sess")) {
 		resp->hashh = &md5;

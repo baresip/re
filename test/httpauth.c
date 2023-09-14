@@ -374,38 +374,23 @@ int test_httpauth_digest_request(void)
 		},
 		{
 			"Digest realm=\"/my/home\", qop=\"auth\","
-			" nonce=\"%s\", algorithm=SHA256",
+			" nonce=\"%s\", algorithm=SHA-256",
 			"/my/home", NULL, "localhost:5060", NULL, false,
-			"SHA256", "auth", NULL, false, 0
+			"SHA-256", "auth", NULL, false, 0
 		},
 		{
 			"Digest realm=\"/my/home\", qop=\"auth\","
-			" nonce=\"%s\", algorithm=SHA256-sess, stale=true",
+			" nonce=\"%s\", algorithm=SHA-256-sess, stale=true",
 			"/my/home", NULL, "localhost:5060", NULL, true,
-			"SHA256-sess", "auth", NULL, false, 0
+			"SHA-256-sess", "auth", NULL, false, 0
 		},
 		{
 			"Digest realm=\"/my/home\", qop=\"auth\","
-			" nonce=\"%s\", algorithm=SHA1,"
-			" stale=true, userhash=true",
-			"/my/home", NULL, "localhost:5060", NULL, true,
-			"SHA1", "auth", NULL, true, 0
-		},
-		{
-			"Digest realm=\"/my/home\", qop=\"auth\","
-			" nonce=\"%s\", algorithm=SHA1-sess,"
+			" nonce=\"%s\", algorithm=SHA-256,"
 			" domain=\"example.com\", stale=true,"
 			" charset=\"UTF-8\", userhash=true",
 			"/my/home", "example.com", "localhost:5060", NULL,
-			true, "SHA1-sess", "auth", "UTF-8", true, 0
-		},
-		{
-			"Digest realm=\"/my/home\", qop=\"auth\","
-			" nonce=\"%s\", algorithm=SHA256,"
-			" domain=\"example.com\", stale=true,"
-			" charset=\"UTF-8\", userhash=true",
-			"/my/home", "example.com", "localhost:5060", NULL,
-			true, "SHA256", "auth", "UTF-8", true, 0
+			true, "SHA-256", "auth", "UTF-8", true, 0
 		},
 		{
 			"Digest realm=\"/my/home\", qop=\"auth-int\","
@@ -414,14 +399,6 @@ int test_httpauth_digest_request(void)
 			" charset=\"UTF-8\", userhash=true",
 			"/my/home", "example.com", "localhost:5060", NULL,
 			true, "MD5-sess", "auth-int", "UTF-8", true, 0
-		},
-		{
-			"Digest realm=\"/my/home\", qop=\"auth-int\","
-			" nonce=\"%s\", algorithm=SHA1-sess,"
-			" domain=\"example.com\", stale=true,"
-			" charset=\"UTF-8\", userhash=true",
-			"/my/home", "example.com", "213579023", NULL,
-			true, "SHA1-sess", "auth-int", "UTF-8", true, 0
 		},
 		{
 			"Digest realm=\"/my/home\", qop=\"auth-int\","
@@ -550,29 +527,7 @@ int test_httpauth_digest_response(void)
 				PL("b5c64f319d37323ac652b77012817ccaa"
 				"6e9a7e4e7563155f1f9556414dd4615"),
 				PL("324DF3428BCF42D29A"), PL_INIT,
-				PL("SHA1"), PL("auth"), PL_INIT, PL_INIT,
-				PL_INIT
-			},
-			"retest", "sec_pwd_retest", "auth", PL("GET"),
-			"example.com/my/home/something", NULL,
-			"417bd44d62c73baa0f0291fb36d4777878369544",
-
-			"Digest realm=\"/my/home\","
-			" nonce=\"b5c64f319d37323ac652b77012817ccaa6e9a"
-			"7e4e7563155f1f9556414dd4615\","" username=\"retest\","
-			" uri=\"example.com/my/home/something\","
-			" response=\"417bd44d62c73baa0f0291fb36d4777878"
-			"369544\", opaque=\"324DF3428BCF42D29A\","
-			" algorithm=SHA1, qop=auth, cnonce=\"deadbeef\","
-			" nc=\"00000001\"",
-		},
-		{
-			{
-				PL("/my/home"),
-				PL("b5c64f319d37323ac652b77012817ccaa"
-				"6e9a7e4e7563155f1f9556414dd4615"),
-				PL("324DF3428BCF42D29A"), PL_INIT,
-				PL("SHA256"), PL("auth"), PL_INIT, PL_INIT,
+				PL("SHA-256"), PL("auth"), PL_INIT, PL_INIT,
 				PL_INIT
 			},
 			"retest", "sec_pwd_retest", "auth", PL("GET"),
@@ -586,7 +541,7 @@ int test_httpauth_digest_response(void)
 			" uri=\"example.com/my/home/something\","
 			" response=\"c22b56ce81bbb59570f0fbbc0ba27210dbbfcb2b2"
 			"3fea371d214722f319dc41c\","
-			" opaque=\"324DF3428BCF42D29A\", algorithm=SHA256,"
+			" opaque=\"324DF3428BCF42D29A\", algorithm=SHA-256,"
 			" qop=auth, cnonce=\"deadbeef\", nc=\"00000001\"",
 		},
 		{
@@ -616,30 +571,8 @@ int test_httpauth_digest_response(void)
 				PL("b5c64f319d37323ac652b77012817ccaa"
 				"6e9a7e4e7563155f1f9556414dd4615"),
 				PL("324DF3428BCF42D29A"), PL_INIT,
-				PL("SHA1"), PL("auth-int"), PL_INIT, PL_INIT,
-				PL_INIT
-			},
-			"retest", "sec_pwd_retest", "auth-int", PL("GET"),
-			"example.com/my/home/something", "a text body",
-			"1565b20cc176a3eed8cd0318600cf3caf96fd23c",
-
-			"Digest realm=\"/my/home\","
-			" nonce=\"b5c64f319d37323ac652b77012817ccaa6e9a7e4e756"
-			"3155f1f9556414dd4615\", username=\"retest\","
-			" uri=\"example.com/my/home/something\","
-			" response=\"1565b20cc176a3eed8cd0318600cf3caf96f"
-			"d23c\", opaque=\"324DF3428BCF42D29A\","
-			" algorithm=SHA1, qop=auth-int, cnonce=\"deadbeef\","
-			" nc=\"00000001\"",
-		},
-		{
-			{
-				PL("/my/home"),
-				PL("b5c64f319d37323ac652b77012817ccaa"
-				"6e9a7e4e7563155f1f9556414dd4615"),
-				PL("324DF3428BCF42D29A"), PL_INIT,
-				PL("SHA256"), PL("auth-int"), PL_INIT, PL_INIT,
-				PL_INIT
+				PL("SHA-256"), PL("auth-int"), PL_INIT,
+				PL_INIT, PL_INIT
 			},
 			"retest", "sec_pwd_retest", "auth-int", PL("GET"),
 			"example.com/my/home/something", "",
@@ -652,7 +585,7 @@ int test_httpauth_digest_response(void)
 			" uri=\"example.com/my/home/something\","
 			" response=\"2c0746b7174441314164d8d9a980d8920732de32e"
 			"16303f0e6a82970230e79e4\","
-			" opaque=\"324DF3428BCF42D29A\", algorithm=SHA256,"
+			" opaque=\"324DF3428BCF42D29A\", algorithm=SHA-256,"
 			" qop=auth-int, cnonce=\"deadbeef\", nc=\"00000001\"",
 		},
 	};
