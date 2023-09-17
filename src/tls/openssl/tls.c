@@ -236,6 +236,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 {
 	struct tls *tls;
 	int r, err;
+	int min_proto = 0;
 
 	if (!tlsp)
 		return EINVAL;
@@ -250,6 +251,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	case TLS_METHOD_TLS:
 	case TLS_METHOD_SSLV23:
 		tls->ctx = SSL_CTX_new(TLS_method());
+		min_proto = TLS1_2_VERSION;
 		break;
 
 	case TLS_METHOD_DTLS:
@@ -269,6 +271,10 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 		err = ENOMEM;
 		goto out;
 	}
+
+	err = tls_set_min_proto_version(tls, min_proto);
+	if (err)
+		goto out;
 
 #if defined(TRACE_SSL)
 	SSL_CTX_set_keylog_callback(tls->ctx, tls_keylogger_cb);
