@@ -319,7 +319,7 @@ int test_sdp_parse(void)
 	struct mbuf *mb;
 	struct sa laddr;
 	uint32_t i;
-	int err;
+	int err = 0;
 
 	mb = mbuf_alloc(2048);
 	if (!mb)

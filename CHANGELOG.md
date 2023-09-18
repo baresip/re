@@ -5,6 +5,68 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.5.1] - 2023-09-12
+
+## What's Changed
+* cmake: fix RELEASE definition for older cmake releases by @sreimers in https://github.com/baresip/re/pull/953
+* ci/build: add release build check by @sreimers in https://github.com/baresip/re/pull/954
+* cmake: fix definitions for older cmake by @sreimers in https://github.com/baresip/re/pull/955
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.5.0...v3.5.1
+
+## [v3.5.0] - 2023-09-12
+
+## What's Changed
+* ci/sonar: update scanner and java version by @sreimers in https://github.com/baresip/re/pull/895
+* ci/sonar: fix java distribution by @sreimers in https://github.com/baresip/re/pull/897
+* udp: add doxygen comments by @alfredh in https://github.com/baresip/re/pull/896
+* tls: fix some doxygen warnings by @alfredh in https://github.com/baresip/re/pull/894
+* mk: add release target by @sreimers in https://github.com/baresip/re/pull/901
+* types: add re_assert and re_assert_se definition by @sreimers in https://github.com/baresip/re/pull/900
+* btrace improvements by @sreimers in https://github.com/baresip/re/pull/902
+* Safe RE_VA_ARG helpers by @sreimers in https://github.com/baresip/re/pull/758
+* mbuf: add safe mbuf_printf by @sreimers in https://github.com/baresip/re/pull/899
+* auth: cast time_t timestamp by @sreimers in https://github.com/baresip/re/pull/903
+* mbuf: add mbuf_write_ptr and mbuf_read_ptr by @sreimers in https://github.com/baresip/re/pull/898
+* ci/mingw: remove cmake workaround by @sreimers in https://github.com/baresip/re/pull/906
+* tls: assume OpenSSL version 1.1.1 or later by @alfredh in https://github.com/baresip/re/pull/907
+* cmake: cleanup, remove unused define USE_OPENSSL_DTLS by @alfredh in https://github.com/baresip/re/pull/908
+* test/turn: use mutex instead atomic  by @sreimers in https://github.com/baresip/re/pull/909
+* stun: remove unused struct members by @alfredh in https://github.com/baresip/re/pull/910
+* stun: complete doxygen for struct by @alfredh in https://github.com/baresip/re/pull/912
+* tcp,udp: full IPv6 dual-stack socket support by @sreimers in https://github.com/baresip/re/pull/911
+* aufile: add methods to get size in bytes/length in ms by @larsimmisch in https://github.com/baresip/re/pull/913
+* async: signal ESHUTDOWN to all open worker callbacks by @sreimers in https://github.com/baresip/re/pull/915
+* dns/client: fix async getaddr query abort (not thread safe) by @sreimers in https://github.com/baresip/re/pull/914
+* async,dns/client: replace ESHUTDOWN with ECANCELED and optimize err handling by @sreimers in https://github.com/baresip/re/pull/918
+* sip: remove unused local variable by @cspiel1 in https://github.com/baresip/re/pull/920
+* dns/client: optimize udp timeout by @sreimers in https://github.com/baresip/re/pull/916
+* ice: add candidate sdp mdns support by @sreimers in https://github.com/baresip/re/pull/917
+* ice/icesdp: fix freeaddrinfo by @sreimers in https://github.com/baresip/re/pull/923
+* retest: fix format string in test_listcases for size_t argument by @cHuberCoffee in https://github.com/baresip/re/pull/922
+* httpauth: http digest challenge request using RFC 7616 by @cHuberCoffee in https://github.com/baresip/re/pull/919
+* types: fix RE_ARG_SIZE default argument promotions by @sreimers in https://github.com/baresip/re/pull/924
+* sip: fix TCP source port by @cspiel1 in https://github.com/baresip/re/pull/921
+* fmt/print: add 64-bit length modifier %Li, %Ld and %Lu by @sreimers in https://github.com/baresip/re/pull/905
+* fmt/print: improve print RE_VA_ARG debugging by @sreimers in https://github.com/baresip/re/pull/925
+* sip/request: fix check return code (found by coverity) by @sreimers in https://github.com/baresip/re/pull/926
+* httpauth/digest: use %L instead of PRI*64 macros by @sreimers in https://github.com/baresip/re/pull/927
+* types: add RE_ARG_SIZE struct pl (avoids wrong print fmt %r usage) by @sreimers in https://github.com/baresip/re/pull/928
+* dns/client: fix getaddrinfo err handling and mem_ref dnsc by @sreimers in https://github.com/baresip/re/pull/929
+* rtp/rtp_debug: fix printf size format by @sreimers in https://github.com/baresip/re/pull/933
+* main: optimize re_lock and re_unlock by @alfredh in https://github.com/baresip/re/pull/935
+* hexdump: fix format and add test by @alfredh in https://github.com/baresip/re/pull/936
+* test: fix bug in performance test format by @alfredh in https://github.com/baresip/re/pull/937
+* types: remove some duplicated error codes by @alfredh in https://github.com/baresip/re/pull/939
+* test: minor improvements in remain test by @alfredh in https://github.com/baresip/re/pull/931
+* dbg: remove unused functions by @sreimers in https://github.com/baresip/re/pull/941
+* cmake/re-config: add default CMAKE_BUILD_TYPE and fix RELEASE definition by @sreimers in https://github.com/baresip/re/pull/945
+
+## New Contributors
+* @larsimmisch made their first contribution in https://github.com/baresip/re/pull/913
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.4.0...v3.5.0
+
 ## [v3.4.0] - 2023-08-09
 
 ## What's Changed

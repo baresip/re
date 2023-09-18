@@ -892,7 +892,7 @@ static void getaddrinfo_h(int err, void *arg)
 		   cache ? "(caching)" : "");
 
 	if (err) {
-		DEBUG_WARNING("getaddrinfo_h: err %m\n", err);
+		DEBUG_INFO("getaddrinfo_h: err %m\n", err);
 	}
 	else {
 		struct le *le;
@@ -914,8 +914,16 @@ static void getaddrinfo_h(int err, void *arg)
 	tmr_start(&q->tmr_ttl, GETADDRINFO_TTL * 1000, ttl_timeout_handler, q);
 
 out:
-	mem_deref(dq->name);
 	mem_deref(dq);
+}
+
+
+static void dq_deref(void *arg)
+{
+	struct dnsquery *dq = arg;
+
+	mem_deref(dq->dnsc);
+	mem_deref(dq->name);
 }
 
 
@@ -923,23 +931,35 @@ static int query_getaddrinfo(struct dns_query *q)
 {
 	int err;
 
-	struct dnsquery *dq = mem_zalloc(sizeof(struct dnsquery), NULL);
+	struct dnsquery *dq = mem_zalloc(sizeof(struct dnsquery), dq_deref);
 	if (!dq)
 		return ENOMEM;
 
-	str_dup(&dq->name, q->name);
+	err = str_dup(&dq->name, q->name);
+	if (err)
+		goto out;
+
 	dq->type       = q->type;
 	dq->hdr.id     = q->id;
 	dq->hdr.opcode = q->opcode;
 	dq->dnsclass   = q->dnsclass;
-	dq->dnsc       = q->dnsc;
+	dq->dnsc       = mem_ref(q->dnsc);
 
 	dq->rrlv = mem_alloc(sizeof(struct list), NULL);
+	if (!dq->rrlv) {
+		err = ENOMEM;
+		goto out;
+	}
+
 	list_init(dq->rrlv);
 
 	err = re_thread_async(async_getaddrinfo, getaddrinfo_h, dq);
 	if (err)
 		DEBUG_WARNING("re_thread_async: %m\n", err);
+
+out:
+	if (err)
+		mem_deref(dq);
 
 	return err;
 }

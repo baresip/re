@@ -278,3 +278,37 @@ size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
 
 	return 0;
 }
+
+/**
+ * Set initial playing position of a WAV file in ms
+ *
+ * @param af  Audio-file
+ * @param prm Audio file parameters from aufile_open
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int aufile_set_position(struct aufile *af, const struct aufile_prm *prm,
+						   size_t pos_ms)
+{
+	if (!af || !prm)
+		return EINVAL;
+
+	if (fseek(af->f, 0, SEEK_SET) < 0)
+		return errno;
+
+	/* this is only used for the side effect of moving the file ptr to the
+	   first data block. */
+	struct wav_fmt fmt;
+	size_t datasize;
+	int err = wav_header_decode(&fmt, &datasize, af->f);
+	if (err)
+		return err;
+
+	off_t pos = (off_t)(prm->srate * aufmt_sample_size(prm->fmt)
+		* prm->channels * pos_ms / 1000);
+
+	if (fseek(af->f, pos, SEEK_CUR) < 0)
+		return errno;
+
+	return 0;
+}

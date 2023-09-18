@@ -75,16 +75,16 @@ static const struct test tests[] = {
 	TEST(test_dtmf),
 	TEST(test_fir),
 	TEST(test_fmt_gmtime),
+	TEST(test_fmt_hexdump),
 	TEST(test_fmt_human_time),
-	TEST(test_fmt_timestamp),
 	TEST(test_fmt_param),
 	TEST(test_fmt_pl),
-	TEST(test_fmt_pl_u32),
-	TEST(test_fmt_pl_u64),
+	TEST(test_fmt_pl_float),
 	TEST(test_fmt_pl_i32),
 	TEST(test_fmt_pl_i64),
+	TEST(test_fmt_pl_u32),
+	TEST(test_fmt_pl_u64),
 	TEST(test_fmt_pl_x3264),
-	TEST(test_fmt_pl_float),
 	TEST(test_fmt_print),
 	TEST(test_fmt_regex),
 	TEST(test_fmt_snprintf),
@@ -93,6 +93,7 @@ static const struct test tests[] = {
 	TEST(test_fmt_str_error),
 	TEST(test_fmt_str_itoa),
 	TEST(test_fmt_str_wchar),
+	TEST(test_fmt_timestamp),
 	TEST(test_fmt_unicode),
 	TEST(test_fmt_unicode_decode),
 	TEST(test_g711_alaw),
@@ -615,7 +616,7 @@ static int testcase_perf(const struct test *test, double *usec_avgp)
 	if (usec_avgp)
 		*usec_avgp = usec_avg;
 
-	re_printf("%-32s:  %10.2f usec  [%6u repeats]\n",
+	re_printf("%-32s:  %10.2f usec  [%6zu repeats]\n",
 		  test->name, usec_avg, i);
 
 	return 0;

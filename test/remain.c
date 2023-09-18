@@ -42,6 +42,7 @@ static void tmr_handler(void *arg)
 
 	mtx_unlock(data->mutex);
 
+	/* Stop re_main loop */
 	re_cancel();
 }
 
@@ -56,11 +57,12 @@ static int thread_handler(void *arg)
 
 	tmr_init(&tmr);
 
+	/* Add a worker thread for this thread */
 	err = re_thread_init();
 	if (err) {
 		DEBUG_WARNING("re thread init: %m\n", err);
 		data->err = err;
-		return 0;
+		return err;
 	}
 
 #ifndef WIN32
@@ -80,22 +82,21 @@ out:
 		data->err = err;
 	tmr_cancel(&tmr);
 
-	/* cleanup */
 	tmr_debug();
+
+	/* Remove the worker thread for this thread */
 	re_thread_close();
 
 	data->thread_exited = true;
 
-	return 0;
+	return err;
 }
 
 
 static int test_remain_thread(void)
 {
-	struct data data;
-	int i, err;
-
-	memset(&data, 0, sizeof(data));
+	struct data data = { 0 };
+	int err;
 
 	err = mutex_alloc(&data.mutex);
 	if (err)
@@ -105,7 +106,7 @@ static int test_remain_thread(void)
 	TEST_ERR(err);
 
 	/* wait for timer to be called */
-	for (i=0; i<500; i++) {
+	for (size_t i=0; i<500; i++) {
 		mtx_lock(data.mutex);
 
 		if (data.tmr_called || data.err) {
