@@ -34,6 +34,7 @@
  */
 struct mqueue {
 	re_sock_t pfd[2];
+	struct re_fhs *fhs;
 	mqueue_h *h;
 	void *arg;
 };
@@ -50,7 +51,7 @@ static void destructor(void *arg)
 	struct mqueue *q = arg;
 
 	if (q->pfd[0] != RE_BAD_SOCK) {
-		fd_close(q->pfd[0]);
+		q->fhs = fd_close(q->fhs);
 		(void)close(q->pfd[0]);
 	}
 	if (q->pfd[1] != RE_BAD_SOCK)
@@ -108,6 +109,7 @@ int mqueue_alloc(struct mqueue **mqp, mqueue_h *h, void *arg)
 	if (!mq)
 		return ENOMEM;
 
+	mq->fhs = NULL;
 	mq->h   = h;
 	mq->arg = arg;
 
@@ -125,7 +127,7 @@ int mqueue_alloc(struct mqueue **mqp, mqueue_h *h, void *arg)
 	if (err)
 		goto out;
 
-	err = fd_listen(mq->pfd[0], FD_READ, event_handler, mq);
+	err = fd_listen(&mq->fhs, mq->pfd[0], FD_READ, event_handler, mq);
 	if (err)
 		goto out;
 
