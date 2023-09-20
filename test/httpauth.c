@@ -411,7 +411,7 @@ int test_httpauth_digest_request(void)
 	};
 
 	int err = 0;
-	for (unsigned int i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+	for (size_t i = 0; i < RE_ARRAY_SIZE(testv); i++) {
 		struct httpauth_digest_chall_req *req = NULL;
 		struct mbuf *mb_refval = NULL;
 		struct mbuf *mb_printed = NULL;
@@ -592,7 +592,7 @@ int test_httpauth_digest_response(void)
 
 	int err;
 
-	for (unsigned int i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+	for (size_t i = 0; i < RE_ARRAY_SIZE(testv); i++) {
 		struct httpauth_digest_enc_resp *resp = NULL;
 		struct mbuf *mb_printed = NULL;
 
