@@ -498,7 +498,6 @@ out:
 int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 {
 	struct packet *f;
-	uint32_t ts;
 	int err = 0;
 
 	if (!jb || !hdr || !mem)
@@ -521,7 +520,6 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	   If not, we should consider that packet lost. */
 
 	f = jb->packetl.head->data;
-	ts = f->hdr.ts;
 
 #if JBUF_STAT
 	/* Check sequence of previously played packet */
@@ -548,9 +546,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	packet_deref(jb, f);
 	if (jb->packetl.head) {
 		f = jb->packetl.head->data;
-		if (f->hdr.ts == ts)
-			err = EAGAIN;
-		else if (jb->n > jb->wish)
+		if (jb->n > jb->wish)
 			err = EAGAIN;
 	}
 
