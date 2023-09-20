@@ -17,6 +17,7 @@
 #include <re_thread.h>
 #include <re_tmr.h>
 #include <re_jbuf.h>
+#include <re_trace.h>
 
 #include <stdlib.h>
 
@@ -80,6 +81,10 @@ struct jbuf {
 #if JBUF_STAT
 	struct jbuf_stat stat; /**< Jitter buffer Statistics                 */
 #endif
+#if DEBUG_LEVEL >= 6
+	uint64_t tr00;       /**< Arrival of first packet                    */
+	char buf[136];       /**< Buffer for trace                           */
+#endif
 };
 
 
@@ -88,6 +93,56 @@ static inline bool seq_less(uint16_t x, uint16_t y)
 {
 	return ((int16_t)(x - y)) < 0;
 }
+
+
+#if DEBUG_LEVEL >= 6
+static void plot_jbuf(struct jbuf *jb, uint64_t tr)
+{
+	uint32_t treal;
+	uint32_t rdiff = (uint32_t)(jb->rdiff / (float)JBUF_RDIFF_EMA_COEFF);
+
+	if (!jb->tr00)
+		jb->tr00 = tr;
+
+	treal = (uint32_t) (tr - jb->tr00);
+	re_snprintf(jb->buf, sizeof(jb->buf),
+		    "%s, 0x%p, %u, %u, %u, %u",
+			__func__,               /* row 1  - grep */
+			jb,                     /* row 2  - grep optional */
+			treal,                  /* row 3  - plot x-axis */
+			rdiff,                  /* row 4  - plot */
+			jb->wish,               /* row 5  - plot */
+			jb->n);                 /* row 6  - plot */
+	re_trace_event("jbuf", "plot", 'P', NULL, 0, RE_TRACE_ARG_STRING_COPY,
+		       "line", jb->buf);
+}
+
+
+static void plot_jbuf_event(struct jbuf *jb, char ph)
+{
+	uint32_t treal;
+	uint64_t tr;
+
+	tr = tmr_jiffies();
+	if (!jb->tr00)
+		jb->tr00 = tr;
+
+	treal = (uint32_t) (tr - jb->tr00);
+	re_snprintf(jb->buf, sizeof(jb->buf), "%s, 0x%p, %u, %i",
+			__func__,               /* row 1  - grep */
+			jb,                     /* row 2  - grep optional */
+			treal,                  /* row 3  - plot x-axis */
+			1);                     /* row 4  - plot */
+	re_trace_event("jbuf", "plot", ph, NULL, 0, RE_TRACE_ARG_STRING_COPY,
+		       "line", jb->buf);
+}
+#else
+static void plot_jbuf_event(struct jbuf *jb, char ph)
+{
+	(void)jb;
+	(void)ph;
+}
+#endif
 
 
 /**
@@ -117,6 +172,7 @@ static void packet_alloc(struct jbuf *jb, struct packet **f)
 		DEBUG_WARNING("drop 1 old packet seq=%u\n", f0->hdr.seq);
 #endif
 
+		plot_jbuf_event(jb, 'O');
 		f0->mem = mem_deref(f0->mem);
 		list_unlink(le);
 	}
@@ -147,6 +203,9 @@ static void jbuf_destructor(void *data)
 	/* Free all packets in the pool list */
 	list_flush(&jb->pooll);
 	mem_deref(jb->lock);
+#if DEBUG_LEVEL >= 6
+	(void)re_trace_close();
+#endif
 }
 
 
@@ -207,6 +266,10 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		list_append(&jb->pooll, &f->le, f);
 		DEBUG_INFO("alloc: adding to pool list %u\n", i);
 	}
+
+#if DEBUG_LEVEL >= 6
+	(void)re_trace_init("jbuf.json");
+#endif
 
 out:
 	if (err)
@@ -345,6 +408,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 		/* Packet arrived too late to be put into buffer */
 		if (jb->seq_get && seq_less(seq, jb->seq_get + 1)) {
 			STAT_INC(n_late);
+			plot_jbuf_event(jb, 'L');
 			DEBUG_INFO("packet too late: seq=%u "
 				   "(seq_put=%u seq_get=%u)\n",
 				   seq, jb->seq_put, jb->seq_get);
@@ -383,6 +447,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 			/* Detect duplicates */
 			DEBUG_INFO("duplicate: seq=%u\n", seq);
 			STAT_INC(n_dups);
+			plot_jbuf_event(jb, 'D');
 			list_insert_after(&jb->packetl, le, &f->le, f);
 			packet_deref(jb, f);
 			err = EALREADY;
@@ -400,6 +465,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 	}
 
 	STAT_INC(n_oos);
+	plot_jbuf_event(jb, 'S');
 
 success:
 	/* Update last sequence */
@@ -411,6 +477,9 @@ success:
 	f->mem = mem_ref(mem);
 
 out:
+#if DEBUG_LEVEL >= 6
+	plot_jbuf(jb, tr);
+#endif
 	mtx_unlock(jb->lock);
 	return err;
 }
@@ -442,6 +511,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 		DEBUG_INFO("not enough buffer packets - wait.. "
 			   "(n=%u wish=%u)\n", jb->n, jb->wish);
 		STAT_INC(n_underflow);
+		plot_jbuf_event(jb, 'U');
 		err = ENOENT;
 		goto out;
 	}
@@ -462,6 +532,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 		}
 		else if (seq_diff > 1) {
 			STAT_ADD(n_lost, 1);
+			plot_jbuf_event(jb, 'T');
 			DEBUG_INFO("get: n_lost: diff=%d,seq=%u,seq_get=%u\n",
 				   seq_diff, f->hdr.seq, jb->seq_get);
 		}
@@ -567,6 +638,7 @@ void jbuf_flush(struct jbuf *jb)
 	n_flush = STAT_INC(n_flush);
 	memset(&jb->stat, 0, sizeof(jb->stat));
 	jb->stat.n_flush = n_flush;
+	plot_jbuf_event(jb, 'F');
 #endif
 	mtx_unlock(jb->lock);
 }
