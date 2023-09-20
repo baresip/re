@@ -346,7 +346,8 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 		jb->wish = wish;
 	}
 	else if (wish < jb->wish) {
-		uint32_t dt = wish + 1 == jb->wish ? 6000 : 1000;
+		uint32_t dt = wish + 1 == jb->wish ? 6000 :
+			      wish < jb->wish / 2  ? 100 : 1000;
 		if (!tmr_isrunning(&jb->tmr) || tmr_get_expire(&jb->tmr) > dt)
 			tmr_start(&jb->tmr, dt, wish_down, jb);
 
