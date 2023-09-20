@@ -329,9 +329,7 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 
 	rdiff = (int16_t)(jb->seq_put + 1 - seq);
 	adiff = abs(rdiff * JBUF_RDIFF_EMA_COEFF);
-	s = adiff > jb->rdiff ? JBUF_RDIFF_UP_SPEED :
-		jb->wish > 2  ? 1 :
-		jb->wish > 1  ? 2 : 3;
+	s = adiff > jb->rdiff ? JBUF_RDIFF_UP_SPEED : 1;
 	jb->rdiff += (adiff - jb->rdiff) * s / JBUF_RDIFF_EMA_COEFF;
 
 	wish = (uint32_t)(jb->rdiff / (float)JBUF_RDIFF_EMA_COEFF);
