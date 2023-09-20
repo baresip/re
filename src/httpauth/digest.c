@@ -628,8 +628,6 @@ static void httpauth_digest_response_destructor(void *arg)
 	mem_deref(resp->username);
 	mem_deref(resp->username_star);
 	mem_deref(resp->uri);
-	mem_deref(resp->cnonce);
-	mem_deref(resp->nc);
 	mem_deref(resp->charset);
 }
 
@@ -724,7 +722,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	mbuf_rewind(mb);
 
 	if (str_str(resp->algorithm, "-sess")) {
-		err = mbuf_printf(mb, "%w:%s:%s",
+		err = mbuf_printf(mb, "%w:%s:%08x",
 			hash1, resp->hash_length, resp->nonce, resp->cnonce);
 		if (err)
 			goto out;
@@ -735,7 +733,7 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 
 	/* DIGEST */
 	if (str_isset(resp->qop)) {
-		err = mbuf_printf(mb, "%w:%s:%s:%s:%s:%w",
+		err = mbuf_printf(mb, "%w:%s:%08x:%08x:%s:%w",
 			hash1, resp->hash_length, resp->nonce, resp->nc,
 			resp->cnonce, resp->qop, hash2, resp->hash_length);
 	}
@@ -794,7 +792,7 @@ int httpauth_digest_response_print(struct re_printf *pf,
 	if (str_isset(resp->algorithm))
 		err |= re_hprintf(pf, ", algorithm=%s", resp->algorithm);
 	if (str_isset(resp->qop))
-		err |= re_hprintf(pf, ", qop=%s, cnonce=\"%s\", nc=\"%s\"",
+		err |= re_hprintf(pf, ", qop=%s, cnonce=\"%08x\", nc=\"%08x\"",
 			resp->qop, resp->cnonce, resp->nc);
 
 	if (resp->userhash)
@@ -826,28 +824,14 @@ int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
 	const char *user,	const char *passwd, const char *entitybody,
 	uint32_t cnonce, uint32_t nonce_counter)
 {
-	int err = 0, n = 0;
-
 	if (!resp || !chall || !method || !passwd)
 		return EINVAL;
 
-	n = re_snprintf(resp->cnonce, CNONCE_NC_SIZE, "%08x", cnonce);
-	if (n == -1 || n != CNONCE_NC_SIZE -1) {
-		err = ERANGE;
-		goto out;
-	}
+	resp->cnonce = cnonce;
+	resp->nc = nonce_counter;
 
-	n = re_snprintf(resp->nc, CNONCE_NC_SIZE, "%08x", nonce_counter);
-	if (n == -1 || n != CNONCE_NC_SIZE -1) {
-		err = ERANGE;
-		goto out;
-	}
-
-	err = digest_response(resp, chall, method,
+	return digest_response(resp, chall, method,
 		user, passwd, entitybody);
-
-out:
-	return err;
 }
 
 
@@ -897,8 +881,7 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 	const char *entitybody, const char *charset, const bool userhash)
 {
 	struct httpauth_digest_enc_resp *resp = NULL;
-	uint32_t cnonce = rand_u32();
-	int err = 0, n = 0;
+	int err = 0;
 
 	if (!presp || !chall || !method || !uri || !user || !passwd)
 		return EINVAL;
@@ -908,12 +891,9 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 		return ENOMEM;
 	}
 
-	resp->cnonce = mem_zalloc(CNONCE_NC_SIZE, NULL);
-	resp->nc = mem_zalloc(CNONCE_NC_SIZE, NULL);
-	if (!resp->cnonce || !resp->nc) {
-		err = ENOMEM;
-		goto out;
-	}
+	/* create cnonce & nonce count */
+	resp->cnonce = rand_u32();
+	resp->nc = nc++;
 
 	/* copy fields */
 	err = pl_strdup(&resp->realm, &chall->realm);
@@ -959,18 +939,6 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 	err = str_dup(&resp->uri, uri);
 	if (err)
 		goto out;
-
-	n = re_snprintf(resp->cnonce, CNONCE_NC_SIZE, "%08x", cnonce);
-	if (n == -1 || n != CNONCE_NC_SIZE -1) {
-		err = ERANGE;
-		goto out;
-	}
-
-	n = re_snprintf(resp->nc, CNONCE_NC_SIZE, "%08x", nc++);
-	if (n == -1 || n != CNONCE_NC_SIZE -1) {
-		err = ERANGE;
-		goto out;
-	}
 
 	if (pl_strstr(&chall->algorithm, "SHA-256-sess")) {
 		resp->hashh = &sha256;

@@ -47,8 +47,8 @@ struct httpauth_digest_enc_resp {
 	char *username;
 	char *username_star;
 	char *uri;
-	char *cnonce;
-	char *nc;
+	uint32_t cnonce;
+	uint32_t nc;
 
 	/* optional */
 	char *charset;
