@@ -38,10 +38,14 @@
 #define STAT_INC(var)
 #endif
 
+#define JBUF_NORMAL_CONVERGE 0.2f
+#define JBUF_FAST_CONVERGE 0.4f
+
 enum {
-	JBUF_RDIFF_EMA_COEFF = 1024,
-	JBUF_RDIFF_UP_SPEED  = 512,
-	JBUF_PUT_TIMEOUT     = 400,
+	JBUF_RDIFF_EMA_COEFF  = 1024,
+	JBUF_RDIFF_UP_SPEED   = 512,
+	JBUF_PUT_TIMEOUT      = 400,
+	JBUF_FAST_CONVERGE_TR = 5,
 };
 
 
@@ -75,6 +79,9 @@ struct jbuf {
 	bool running;        /**< Jitter buffer is running                   */
 	int32_t rdiff;       /**< Average out of order reverse diff          */
 	struct tmr tmr;      /**< Rdiff down timer                           */
+	uint32_t seq_frame;  /**< Last frame sequence number                 */
+	float avg_ratio;     /**< Rolling average packets per frame ratio    */
+	uint16_t start_frame_cnt; /**< Rolling average start counter         */
 
 	mtx_t *lock;         /**< Makes jitter buffer thread safe            */
 	enum jbuf_type jbtype;  /**< Jitter buffer type                      */
@@ -250,6 +257,29 @@ static void wish_down(void *arg)
 }
 
 
+static void avg_packet_frame_ratio(struct jbuf *jb)
+{
+	if (jb->seq_get <= jb->seq_frame)
+		return;
+
+	uint32_t packets = jb->seq_get - jb->seq_frame;
+
+	if (jb->start_frame_cnt > JBUF_FAST_CONVERGE_TR) {
+		jb->avg_ratio = jb->avg_ratio * (1 - JBUF_NORMAL_CONVERGE) +
+				packets * JBUF_NORMAL_CONVERGE;
+	}
+	else if (jb->start_frame_cnt > 0) {
+		jb->avg_ratio = jb->avg_ratio * (1 - JBUF_FAST_CONVERGE) +
+				packets * JBUF_FAST_CONVERGE;
+		jb->start_frame_cnt++;
+	}
+	else {
+		jb->avg_ratio = (float)packets;
+		jb->start_frame_cnt++;
+	}
+}
+
+
 static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 {
 	int32_t rdiff;
@@ -266,8 +296,8 @@ static void calc_rdiff(struct jbuf *jb, uint16_t seq)
 	if (!jb->seq_get)
 		return;
 
-	if (jb->nf) {
-		ratio = (float)jb->n / (float)jb->nf;
+	if (jb->avg_ratio) {
+		ratio = jb->avg_ratio;
 		max   = (uint32_t)(max / ratio);
 	}
 
@@ -492,6 +522,9 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	/* Update sequence number for 'get' */
 	jb->seq_get = f->hdr.seq;
 
+	if (!jb->seq_frame)
+		jb->seq_frame = jb->seq_get;
+
 	*hdr = f->hdr;
 	*mem = mem_ref(f->mem);
 
@@ -499,8 +532,11 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	if (f->le.next) {
 		struct packet *next_f = f->le.next->data;
 
-		if (f->hdr.ts != next_f->hdr.ts)
+		if (f->hdr.ts != next_f->hdr.ts) {
 			--jb->nf;
+			avg_packet_frame_ratio(jb);
+			jb->seq_frame = jb->seq_get;
+		}
 	}
 	else {
 		--jb->nf;
