@@ -81,9 +81,13 @@ typedef SSIZE_T ssize_t;
 /** Defines a soft breakpoint */
 #if (defined(__i386__) || defined(__x86_64__))
 #define RE_BREAKPOINT __asm__("int $0x03")
-#elif defined(__has_builtin) &&  __has_builtin(__builtin_debugtrap)
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_debugtrap)
 #define RE_BREAKPOINT __builtin_debugtrap()
-#else
+#endif
+#endif
+
+#ifndef RE_BREAKPOINT
 #define RE_BREAKPOINT
 #endif
 
