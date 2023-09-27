@@ -78,7 +78,6 @@ struct jbuf {
 	uint64_t tr;         /**< Time of previous jbuf_put()                */
 	int pt;              /**< Payload type                               */
 	bool running;        /**< Jitter buffer is running                   */
-	int32_t rdiff;       /**< Average out of order reverse diff          */
 	struct tmr tmr;      /**< Rdiff down timer                           */
 
 	mtx_t *lock;         /**< Makes jitter buffer thread safe            */
@@ -136,21 +135,19 @@ static inline bool seq_less(uint16_t x, uint16_t y)
 static void plot_jbuf(struct jbuf *jb, uint64_t tr)
 {
 	uint32_t treal;
-	uint32_t rdiff = (uint32_t)(jb->rdiff / (float)JBUF_RDIFF_EMA_COEFF);
 
 	if (!jb->tr00)
 		jb->tr00 = tr;
 
 	treal = (uint32_t) (tr - jb->tr00);
 	re_snprintf(jb->buf, sizeof(jb->buf),
-		    "%s, 0x%p, %u, %u, %u, %u, %u",
+		    "%s, 0x%p, %u, %u, %u, %u",
 			__func__,               /* row 1  - grep */
 			jb,                     /* row 2  - grep optional */
 			treal,                  /* row 3  - plot x-axis */
-			rdiff,                  /* row 4  - plot */
-			jb->wish,               /* row 5  - plot */
-			jb->n,                  /* row 6  - plot */
-			jb->nf);                /* row 7  - plot */
+			jb->n,                  /* row 4  - plot */
+			jb->nf,                 /* row 5  - plot */
+			jb->ncf);               /* row 6  - plot */
 	re_trace_event("jbuf", "plot", 'P', NULL, 0, RE_TRACE_ARG_STRING_COPY,
 		       "line", jb->buf);
 }
