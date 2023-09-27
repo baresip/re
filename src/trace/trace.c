@@ -30,11 +30,11 @@
 #endif
 
 #ifndef TRACE_BUFFER_SIZE
-#define TRACE_BUFFER_SIZE 10000
+#define TRACE_BUFFER_SIZE 100000
 #endif
 
 enum {
-	TRACE_FLUSH_TMR = 1000,
+	TRACE_FLUSH_TMR = 10000,
 };
 
 #define DEBUG_MODULE "trace"
@@ -106,6 +106,7 @@ static inline int get_process_id(void)
 static int flush_worker(void *arg)
 {
 	(void)arg;
+
 	re_trace_flush();
 
 	return 0;
