@@ -556,7 +556,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	if (!jbuf_frame_ready(jb)) {
 		DEBUG_INFO("no frame ready - wait.. "
 			   "(nf=%u min=%u)\n", jb->nf, jb->min);
-		STAT_INC(n_underflow);
+		STAT_INC(n_waiting);
 		plot_jbuf_event(jb, 'U');
 		err = ENOENT;
 		goto out;
@@ -759,7 +759,7 @@ int jbuf_debug(struct re_printf *pf, const struct jbuf *jb)
 	err |= mbuf_printf(mb, " dup=%u", jb->stat.n_dups);
 	err |= mbuf_printf(mb, " late=%u", jb->stat.n_late);
 	err |= mbuf_printf(mb, " or=%u", jb->stat.n_overflow);
-	err |= mbuf_printf(mb, " ur=%u", jb->stat.n_underflow);
+	err |= mbuf_printf(mb, " wait=%u", jb->stat.n_waiting);
 	err |= mbuf_printf(mb, " flush=%u", jb->stat.n_flush);
 	err |= mbuf_printf(mb, "       put/get_ratio=%u%%", jb->stat.n_get ?
 			  100*jb->stat.n_put/jb->stat.n_get : 0);
