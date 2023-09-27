@@ -186,7 +186,7 @@ static void plot_jbuf_event(struct jbuf *jb, char ph)
 /**
  * Get a packet from the pool
  */
-static void packet_alloc(struct jbuf *jb, struct packet **f)
+static void packet_alloc(struct jbuf *jb, struct packet **pp)
 {
 	struct le *le;
 
@@ -196,38 +196,38 @@ static void packet_alloc(struct jbuf *jb, struct packet **f)
 		++jb->n;
 	}
 	else {
-		struct packet *f0;
+		struct packet *p0;
 
 		/* Steal an old packet */
 		le = jb->packetl.head;
-		f0 = le->data;
+		p0 = le->data;
 		jbuf_update_nf(jb);
 
 #if JBUF_STAT
 		STAT_INC(n_overflow);
-		DEBUG_WARNING("drop 1 old frame seq=%u (total dropped %u)\n",
-			   f0->hdr.seq, jb->stat.n_overflow);
+		DEBUG_WARNING("drop 1 old packet seq=%u (total dropped %u)\n",
+			   p0->hdr.seq, jb->stat.n_overflow);
 #else
-		DEBUG_WARNING("drop 1 old frame seq=%u\n", f0->hdr.seq);
+		DEBUG_WARNING("drop 1 old packet seq=%u\n", p0->hdr.seq);
 #endif
 
 		plot_jbuf_event(jb, 'O');
-		f0->mem = mem_deref(f0->mem);
+		p0->mem = mem_deref(p0->mem);
 		list_unlink(le);
 	}
 
-	*f = le->data;
+	*pp = le->data;
 }
 
 
 /**
  * Release a packet, put it back in the pool
  */
-static void packet_deref(struct jbuf *jb, struct packet *f)
+static void packet_deref(struct jbuf *jb, struct packet *p)
 {
-	f->mem = mem_deref(f->mem);
-	list_unlink(&f->le);
-	list_append(&jb->pooll, &f->le, f);
+	p->mem = mem_deref(p->mem);
+	list_unlink(&p->le);
+	list_append(&jb->pooll, &p->le, p);
 	--jb->n;
 }
 
@@ -317,11 +317,11 @@ int  jbuf_resize(struct jbuf *jb, uint32_t packets)
 		return EINVAL;
 
 	for (uint32_t i=jb->packets; i<packets; i++) {
-		struct packet *f = mem_zalloc(sizeof(*f), NULL);
-		if (!f)
+		struct packet *p = mem_zalloc(sizeof(*p), NULL);
+		if (!p)
 			return ENOMEM;
 
-		list_append(&jb->pooll, &f->le, f);
+		list_append(&jb->pooll, &p->le, p);
 		DEBUG_INFO("alloc: adding to pool list %u\n", i);
 	}
 
@@ -523,7 +523,7 @@ success:
 	if (tail && ((struct packet *)tail->data)->hdr.ts != hdr->ts)
 		jb->nf++;
 
-	/* Missing frame detection */
+	/* check frame completeness */
 	jbuf_move_end(jb, &p->le);
 
 out:
@@ -558,7 +558,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	if (!jbuf_frame_ready(jb)) {
 		DEBUG_INFO("no frame ready - wait.. "
-			   "(n=%u min=%u)\n", jb->n, jb->min);
+			   "(nf=%u min=%u)\n", jb->nf, jb->min);
 		STAT_INC(n_underflow);
 		plot_jbuf_event(jb, 'U');
 		err = ENOENT;
@@ -612,7 +612,7 @@ out:
  */
 int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 {
-	struct packet *f;
+	struct packet *p;
 	int err = 0;
 
 	if (!jb || !hdr || !mem)
@@ -625,20 +625,16 @@ int jbuf_drain(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 		goto out;
 	}
 
-	/* When we get one packet P[i], check that the next packet P[i+1]
-	   is present and have a seq no. of seq[i] + 1.
-	   If not, we should consider that packet lost. */
-
-	f = jb->packetl.head->data;
+	p = jb->packetl.head->data;
 
 	/* Update sequence number for 'get' */
-	jb->seq_get = f->hdr.seq;
+	jb->seq_get = p->hdr.seq;
 
-	*hdr = f->hdr;
-	*mem = mem_ref(f->mem);
+	*hdr = p->hdr;
+	*mem = mem_ref(p->mem);
 
 	jbuf_update_nf(jb);
-	packet_deref(jb, f);
+	packet_deref(jb, p);
 
 out:
 	mtx_unlock(jb->lock);
