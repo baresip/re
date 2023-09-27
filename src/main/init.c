@@ -168,7 +168,7 @@ int libre_init(void)
 		return err;
 	}
 
-#if RE_TRACE_ENABLED
+#ifdef RE_TRACE_ENABLED
 	re_trace_init("re_trace.json");
 #endif
 
@@ -184,7 +184,7 @@ int libre_init(void)
 void libre_close(void)
 {
 
-#if RE_TRACE_ENABLED
+#ifdef RE_TRACE_ENABLED
 	re_trace_close();
 #endif
 	(void)fd_setsize(0);
