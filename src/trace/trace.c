@@ -9,7 +9,9 @@
 #include <re_list.h>
 #include <re_tmr.h>
 #include <re_thread.h>
+#include <re_atomic.h>
 #include <re_sys.h>
+#include <re_main.h>
 
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
@@ -27,7 +29,17 @@
 #include <unistd.h>
 #endif
 
-#define TRACE_BUFFER_SIZE 1000000
+#ifndef TRACE_BUFFER_SIZE
+#define TRACE_BUFFER_SIZE 10000
+#endif
+
+enum {
+	TRACE_FLUSH_TMR = 1000,
+};
+
+#define DEBUG_MODULE "trace"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 struct trace_event {
 	const char *name;
@@ -47,15 +59,16 @@ struct trace_event {
 
 /** Trace configuration */
 static struct {
+	RE_ATOMIC bool init;
 	int process_id;
 	FILE *f;
 	int event_count;
 	struct trace_event *event_buffer;
 	struct trace_event *event_buffer_flush;
 	mtx_t lock;
-	bool init;
 	bool new;
 	uint64_t start_time;
+	struct tmr flush_tmr;
 } trace = {
 	.init = false
 };
@@ -90,6 +103,25 @@ static inline int get_process_id(void)
 }
 
 
+static int flush_worker(void *arg)
+{
+	(void)arg;
+	re_trace_flush();
+
+	return 0;
+}
+
+
+static void flush_tmr(void *arg)
+{
+	(void)arg;
+
+	re_thread_async(flush_worker, NULL, NULL);
+
+	tmr_start(&trace.flush_tmr, TRACE_FLUSH_TMR, flush_tmr, NULL);
+}
+
+
 /**
  * Init new trace json file
  *
@@ -108,7 +140,7 @@ int re_trace_init(const char *json_file)
 	if (!json_file)
 		return EINVAL;
 
-	if (trace.init)
+	if (re_atomic_rlx(&trace.init))
 		return EALREADY;
 
 	trace.event_buffer = mem_zalloc(
@@ -137,12 +169,15 @@ int re_trace_init(const char *json_file)
 	(void)fflush(trace.f);
 
 	trace.start_time = tmr_jiffies_usec();
-	trace.init = true;
+	re_atomic_rlx_set(&trace.init, true);
 	trace.new = true;
+
+	tmr_init(&trace.flush_tmr);
+	tmr_start(&trace.flush_tmr, TRACE_FLUSH_TMR, flush_tmr, NULL);
 
 out:
 	if (err) {
-		trace.init = false;
+		re_atomic_rlx_set(&trace.init, false);
 		mem_deref(trace.event_buffer);
 		mem_deref(trace.event_buffer_flush);
 	}
@@ -163,13 +198,14 @@ int re_trace_close(void)
 #ifndef RE_TRACE_ENABLED
 	return 0;
 #endif
+	tmr_cancel(&trace.flush_tmr);
 
 	re_trace_flush();
 
 	trace.event_buffer = mem_deref(trace.event_buffer);
 	trace.event_buffer_flush = mem_deref(trace.event_buffer_flush);
 	mtx_destroy(&trace.lock);
-	trace.init = false;
+	re_atomic_rlx_set(&trace.init, false);
 
 	(void)re_fprintf(trace.f, "\n\t]\n}\n");
 	if (trace.f)
@@ -201,7 +237,7 @@ int re_trace_flush(void)
 	return 0;
 #endif
 
-	if (!trace.init)
+	if (!re_atomic_rlx(&trace.init))
 		return 0;
 
 	mtx_lock(&trace.lock);
@@ -266,11 +302,12 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
 	return;
 #endif
 
-	if (!trace.init)
+	if (!re_atomic_rlx(&trace.init))
 		return;
 
 	mtx_lock(&trace.lock);
 	if (trace.event_count >= TRACE_BUFFER_SIZE) {
+		DEBUG_WARNING("Increase TRACE_BUFFER_SIZE\n");
 		mtx_unlock(&trace.lock);
 		return;
 	}
