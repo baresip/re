@@ -186,9 +186,6 @@ static void destructor(void *arg)
 	struct ajb *ajb = arg;
 
 	mem_deref(ajb->lock);
-#if DEBUG_LEVEL >= 6
-	(void)re_trace_close();
-#endif
 }
 
 
@@ -274,9 +271,6 @@ struct ajb *ajb_alloc(double silence, size_t wish_sz)
 	ajb->as = AJB_GOOD;
 	ajb->silence = silence;
 	ajb->wish_sz = wish_sz;
-#if DEBUG_LEVEL >= 6
-	(void)re_trace_init("ajb.json");
-#endif
 
 out:
 	if (err)
