@@ -199,14 +199,14 @@ int re_trace_close(void)
 #ifndef RE_TRACE_ENABLED
 	return 0;
 #endif
-	tmr_cancel(&trace.flush_tmr);
 
+	tmr_cancel(&trace.flush_tmr);
 	re_trace_flush();
+	re_atomic_rlx_set(&trace.init, false);
 
 	trace.event_buffer = mem_deref(trace.event_buffer);
 	trace.event_buffer_flush = mem_deref(trace.event_buffer_flush);
 	mtx_destroy(&trace.lock);
-	re_atomic_rlx_set(&trace.init, false);
 
 	(void)re_fprintf(trace.f, "\n\t]\n}\n");
 	if (trace.f)
