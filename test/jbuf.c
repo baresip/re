@@ -148,8 +148,6 @@ int test_jbuf_adaptive(void)
 
 	err = jbuf_alloc(&jb, 1, 10);
 	TEST_ERR(err);
-	err = jbuf_set_type(jb, JBUF_ADAPTIVE);
-	TEST_ERR(err);
 
 	for (i=0; i<RE_ARRAY_SIZE(frv); i++) {
 		frv[i] = mem_zalloc(32, NULL);
@@ -171,7 +169,7 @@ int test_jbuf_adaptive(void)
 	TEST_ERR(err);
 	TEST_EQUALS(EALREADY, jbuf_put(jb, &hdr, frv[0]));
 
-	/* wish size is not reached yet */
+	/* min size is not reached yet */
 	TEST_EQUALS(ENOENT, jbuf_get(jb, &hdr2, &mem));
 
 	hdr.seq = 161;
@@ -179,7 +177,7 @@ int test_jbuf_adaptive(void)
 	err = jbuf_put(jb, &hdr, frv[1]);
 	TEST_ERR(err);
 
-	/* wish size reached */
+	/* min size reached */
 	DEBUG_INFO("n > min reached, read first frame\n");
 	err = jbuf_get(jb, &hdr2, &mem);
 	TEST_ERR(err);
@@ -262,8 +260,6 @@ int test_jbuf_adaptive_video(void)
 
 	err = jbuf_alloc(&jb, 1, 10);
 	TEST_ERR(err);
-	err = jbuf_set_type(jb, JBUF_ADAPTIVE);
-	TEST_ERR(err);
 
 	for (i=0; i<RE_ARRAY_SIZE(frv); i++) {
 		frv[i] = mem_zalloc(32, NULL);
@@ -315,16 +311,16 @@ int test_jbuf_adaptive_video(void)
 
 	err = jbuf_get(jb, &hdr2, &mem); /* second packet with unique frame  */
 	mem = mem_deref(mem);
-	TEST_EQUALS(EAGAIN, err);        /* n > wish  */
+	TEST_EQUALS(EAGAIN, err);        /* n > min  */
 	TEST_EQUALS(2, hdr2.seq);
 	TEST_EQUALS(100, hdr2.ts);
 
 	err = jbuf_get(jb, &hdr2, &mem);
 	mem = mem_deref(mem);
-	TEST_EQUALS(EAGAIN, err);        /* n > wish  */
+	TEST_EQUALS(EAGAIN, err);        /* n > min  */
 	err = jbuf_get(jb, &hdr2, &mem);
 	mem = mem_deref(mem);
-	TEST_ERR(err);                   /* n == wish */
+	TEST_ERR(err);                   /* n == min */
 	TEST_EQUALS(4, hdr2.seq);
 	TEST_EQUALS(200, hdr2.ts);
 
