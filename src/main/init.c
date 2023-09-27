@@ -19,6 +19,7 @@
 #include <re_net.h>
 #include <re_sys.h>
 #include <re_main.h>
+#include <re_trace.h>
 #include <re_btrace.h>
 #include "main.h"
 
@@ -167,6 +168,10 @@ int libre_init(void)
 		return err;
 	}
 
+#if RE_TRACE_ENABLED
+	re_trace_init("re_trace.json");
+#endif
+
 	err = re_thread_init();
 
 	return err;
@@ -178,6 +183,10 @@ int libre_init(void)
  */
 void libre_close(void)
 {
+
+#if RE_TRACE_ENABLED
+	re_trace_close();
+#endif
 	(void)fd_setsize(0);
 	net_sock_close();
 	re_thread_close();

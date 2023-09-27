@@ -9,6 +9,7 @@ libre.*dylib
 libre.pc
 libre.so*
 *.gcov
+re_trace.json
 
 # Windows build folder
 Win32/*
