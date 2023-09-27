@@ -205,9 +205,6 @@ static void jbuf_destructor(void *data)
 	/* Free all packets in the pool list */
 	list_flush(&jb->pooll);
 	mem_deref(jb->lock);
-#ifdef RE_JBUF_TRACE
-	(void)re_trace_close();
-#endif
 }
 
 
@@ -268,10 +265,6 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 		list_append(&jb->pooll, &f->le, f);
 		DEBUG_INFO("alloc: adding to pool list %u\n", i);
 	}
-
-#ifdef RE_JBUF_TRACE
-	(void)re_trace_init("jbuf.json");
-#endif
 
 out:
 	if (err)
