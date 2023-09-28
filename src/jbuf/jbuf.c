@@ -78,7 +78,8 @@ struct jbuf {
 	uint64_t tr;         /**< Time of previous jbuf_put()                */
 	int pt;              /**< Payload type                               */
 	bool running;        /**< Jitter buffer is running                   */
-	struct tmr tmr;      /**< Rdiff down timer                           */
+	struct tmr tmr;      /**< Timer for EAGAIN                           */
+	bool wait;           /**< Wait flag for jbuf_get()                   */
 
 	mtx_t *lock;         /**< Makes jitter buffer thread safe            */
 	enum jbuf_type jbtype;  /**< Jitter buffer type                      */
@@ -404,6 +405,24 @@ static bool jbuf_frame_ready(struct jbuf *jb)
 }
 
 
+static void reset_wait(void *arg)
+{
+	struct jbuf *jb = arg;
+
+	jb->wait = false;
+}
+
+
+static void eagain_later(struct jbuf *jb)
+{
+	jb->wait = true;
+	if (tmr_isrunning(&jb->tmr))
+		return;
+
+	tmr_start(&jb->tmr, 250, reset_wait, jb);
+}
+
+
 /**
  * Put one packet into the jitter buffer
  *
@@ -517,8 +536,10 @@ success:
 	/* Success */
 	p->hdr = *hdr;
 	p->mem = mem_ref(mem);
-	if (tail && ((struct packet *)tail->data)->hdr.ts != hdr->ts)
+	if (tail && ((struct packet *)tail->data)->hdr.ts != hdr->ts) {
 		jb->nf++;
+		jb->wait = false;
+	}
 
 	/* check frame completeness */
 	jbuf_move_end(jb, &p->le);
@@ -539,8 +560,8 @@ out:
  * @param hdr  Returned RTP Header
  * @param mem  Pointer to memory object storage - referenced on success
  *
- * @return 0 if success, EAGAIN if it should be called again in order to avoid
- * a jitter buffer overflow, otherwise errorcode
+ * @return 0 if success, EAGAIN if it should be called again, otherwise
+ * errorcode
  */
 int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 {
@@ -553,7 +574,7 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	mtx_lock(jb->lock);
 	STAT_INC(n_get);
 
-	if (!jbuf_frame_ready(jb)) {
+	if (!jbuf_frame_ready(jb) || jb->wait) {
 		DEBUG_INFO("no frame ready - wait.. "
 			   "(nf=%u min=%u)\n", jb->nf, jb->min);
 		STAT_INC(n_waiting);
@@ -589,8 +610,13 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 	jbuf_update_nf(jb);
 	packet_deref(jb, p);
 
-	if (jbuf_frame_ready(jb))
-		err = EAGAIN;
+	if (jbuf_frame_ready(jb)) {
+		p = jb->packetl.head->data;
+		if (p->hdr.ts == hdr->ts)
+			err = EAGAIN;
+		else
+			eagain_later(jb);
+	}
 
 out:
 	mtx_unlock(jb->lock);
