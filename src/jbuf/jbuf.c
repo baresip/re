@@ -80,6 +80,7 @@ struct jbuf {
 	bool running;        /**< Jitter buffer is running                   */
 	struct tmr tmr;      /**< Timer for EAGAIN                           */
 	bool wait;           /**< Wait flag for jbuf_get()                   */
+	bool again;          /**< Again flag for jbuf_get()                  */
 
 	mtx_t *lock;         /**< Makes jitter buffer thread safe            */
 	enum jbuf_type jbtype;  /**< Jitter buffer type                      */
@@ -409,7 +410,8 @@ static void reset_wait(void *arg)
 {
 	struct jbuf *jb = arg;
 
-	jb->wait = false;
+	jb->wait  = false;
+	jb->again = true;
 }
 
 
@@ -612,8 +614,10 @@ int jbuf_get(struct jbuf *jb, struct rtp_header *hdr, void **mem)
 
 	if (jbuf_frame_ready(jb)) {
 		p = jb->packetl.head->data;
-		if (p->hdr.ts == hdr->ts)
+		if (p->hdr.ts == hdr->ts || jb->again) {
 			err = EAGAIN;
+			jb->again = false;
+		}
 		else
 			eagain_later(jb);
 	}
