@@ -1132,7 +1132,17 @@ int test_fmt_hexdump(void)
 		"8abcjt5m950gxvkuvippcvt60me9z5zh"
 		;
 
-	hexdump(stdout, buf, str_len(buf));
+#ifdef WIN32
+	FILE *f = fopen("nul", "w");
+#else
+	FILE *f = fopen("/dev/null", "w");
+#endif
+	if (!f)
+		return EINVAL;
+
+	hexdump(f, buf, str_len(buf));
+
+	fclose(f);
 
 	return 0;
 }
