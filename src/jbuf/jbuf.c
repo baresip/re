@@ -38,9 +38,8 @@
 #endif
 
 enum {
-	JBUF_RDIFF_EMA_COEFF = 1024,
-	JBUF_RDIFF_UP_SPEED  = 512,
 	JBUF_PUT_TIMEOUT     = 400,
+	JBUF_WAIT_TIMEOUT    = 1000,
 };
 
 
@@ -421,7 +420,7 @@ static void eagain_later(struct jbuf *jb)
 	if (tmr_isrunning(&jb->tmr))
 		return;
 
-	tmr_start(&jb->tmr, 250, reset_wait, jb);
+	tmr_start(&jb->tmr, JBUF_WAIT_TIMEOUT, reset_wait, jb);
 }
 
 
@@ -504,6 +503,7 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 				   " - inserting after seq=%u (seq=%u)\n",
 				   seq_le, seq);
 			list_insert_after(&jb->packetl, le, &p->le, p);
+			tmr_start(&jb->tmr, JBUF_WAIT_TIMEOUT, reset_wait, jb);
 			break;
 		}
 		else if (seq == seq_le) { /* less likely */
@@ -539,7 +539,7 @@ success:
 	p->hdr = *hdr;
 	p->mem = mem_ref(mem);
 	if (tail && ((struct packet *)tail->data)->hdr.ts != hdr->ts) {
-		jb->nf++;
+		++jb->nf;
 		jb->wait = false;
 	}
 
