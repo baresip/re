@@ -168,10 +168,6 @@ int libre_init(void)
 		return err;
 	}
 
-#ifdef RE_TRACE_ENABLED
-	re_trace_init("re_trace.json");
-#endif
-
 	err = re_thread_init();
 
 	return err;
@@ -183,10 +179,6 @@ int libre_init(void)
  */
 void libre_close(void)
 {
-
-#ifdef RE_TRACE_ENABLED
-	re_trace_close();
-#endif
 	(void)fd_setsize(0);
 	net_sock_close();
 	re_thread_close();
