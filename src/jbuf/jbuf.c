@@ -401,7 +401,7 @@ static bool jbuf_frame_ready(struct jbuf *jb)
 	if (jb->nf < jb->min)
 		return false;
 
-	return jb->ncf || jb->nf > jb->max;
+	return jb->ncf || !jb->min || jb->nf > jb->max;
 }
 
 
