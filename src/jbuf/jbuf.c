@@ -753,6 +753,26 @@ uint32_t jbuf_frames(const struct jbuf *jb)
 
 
 /**
+ * Get number of complete frames
+ *
+ * @param jb Jitter buffer
+ *
+ * @return number of frames
+ */
+uint32_t jbuf_complete_frames(const struct jbuf *jb)
+{
+       if (!jb)
+               return 0;
+
+       mtx_lock(jb->lock);
+       uint32_t n = jb->ncf;
+       mtx_unlock(jb->lock);
+
+       return n;
+}
+
+
+/**
  * Get jitter buffer statistics
  *
  * @param jb    Jitter buffer
