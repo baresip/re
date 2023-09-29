@@ -733,6 +733,26 @@ uint32_t jbuf_packets(const struct jbuf *jb)
 
 
 /**
+ * Get number of current frames
+ *
+ * @param jb Jitter buffer
+ *
+ * @return number of frames
+ */
+uint32_t jbuf_frames(const struct jbuf *jb)
+{
+       if (!jb)
+               return 0;
+
+       mtx_lock(jb->lock);
+       uint32_t n = jb->nf;
+       mtx_unlock(jb->lock);
+
+       return n;
+}
+
+
+/**
  * Get jitter buffer statistics
  *
  * @param jb    Jitter buffer
