@@ -28,6 +28,9 @@ int test_trace(void)
 	if (test_mode == TEST_THREAD)
 		return ESKIPPED;
 
+	err = re_trace_init("test_trace.json");
+	TEST_ERR(err);
+
 	RE_TRACE_PROCESS_NAME("retest");
 	RE_TRACE_THREAD_NAME("test_trace");
 	RE_TRACE_BEGIN("test", "Test Loop Start");
@@ -50,6 +53,18 @@ int test_trace(void)
 	RE_TRACE_END_FUNC();
 
 	RE_TRACE_END("test", "Test Loop End");
+
+	err = re_trace_close();
+	TEST_ERR(err);
+
+	/* Test TRACE after close - should do nothing */
+	RE_TRACE_BEGIN("test", "test after close");
+
+#ifdef WIN32
+	(void)_unlink("test_trace.json");
+#else
+	(void)unlink("test_trace.json");
+#endif
 
 out:
 	return err;
