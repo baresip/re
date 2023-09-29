@@ -29,17 +29,22 @@
 #include <unistd.h>
 #endif
 
+#define DEBUG_MODULE "trace"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
+
 #ifndef TRACE_BUFFER_SIZE
 #define TRACE_BUFFER_SIZE 100000
 #endif
 
-enum {
-	TRACE_FLUSH_TMR = 10000,
-};
+#ifndef TRACE_FLUSH_THRESHOLD
+#define TRACE_FLUSH_THRESHOLD 1000
+#endif
 
-#define DEBUG_MODULE "trace"
-#define DEBUG_LEVEL 5
-#include <re_dbg.h>
+#ifndef TRACE_FLUSH_TMR
+#define TRACE_FLUSH_TMR 1000
+#endif
+
 
 struct trace_event {
 	const char *name;
@@ -106,6 +111,13 @@ static inline int get_process_id(void)
 static int flush_worker(void *arg)
 {
 	(void)arg;
+
+	mtx_lock(&trace.lock);
+	if (trace.event_count < TRACE_FLUSH_THRESHOLD) {
+		mtx_unlock(&trace.lock);
+		return 0;
+	}
+	mtx_unlock(&trace.lock);
 
 	re_trace_flush();
 
