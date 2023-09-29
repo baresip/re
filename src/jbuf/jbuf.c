@@ -503,7 +503,6 @@ int jbuf_put(struct jbuf *jb, const struct rtp_header *hdr, void *mem)
 				   " - inserting after seq=%u (seq=%u)\n",
 				   seq_le, seq);
 			list_insert_after(&jb->packetl, le, &p->le, p);
-			tmr_start(&jb->tmr, JBUF_WAIT_TIMEOUT, reset_wait, jb);
 			break;
 		}
 		else if (seq == seq_le) { /* less likely */
