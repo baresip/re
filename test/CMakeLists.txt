@@ -91,7 +91,6 @@ set(SRCS
   http.c
   httpauth.c
   ice.c
-  jbuf.c
   json.c
   list.c
   main.c
