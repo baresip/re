@@ -33,7 +33,7 @@ else()
 endif()
 
 if(WIN32 AND NOT MINGW)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std:c11" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std:c11")
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
