@@ -113,15 +113,16 @@ static void jbuf_update_nf(struct jbuf *jb)
 		struct packet *pn = n->data;
 
 		if (p->hdr.ts != pn->hdr.ts) {
+			--jb->nf;
 			if (jb->ncf)
 				--jb->ncf;
-
-			--jb->nf;
 		}
 	}
 
-	if (jb->end == le)
+	if (jb->end == le) {
 		jb->end = NULL;
+		jb->nf  = jb->ncf = 0;
+	}
 }
 
 
@@ -289,7 +290,7 @@ int jbuf_alloc(struct jbuf **jbp, uint32_t min, uint32_t max)
 	mem_destructor(jb, jbuf_destructor);
 
 	/* Allocate all packets now */
-	err = jbuf_resize(jb, max);
+	err = jbuf_resize(jb, max + 1);
 
 out:
 	if (err)
@@ -364,8 +365,12 @@ static void jbuf_move_end(struct jbuf *jb, struct le *cur)
 		if (!cur)
 			return;
 
-		jb->end = cur;
-		cur = cur->next;
+		struct packet *pm = cur->data;
+		if (!jb->seq_get || jb->seq_get + 1 == pm->hdr.seq) {
+			jb->end = cur;
+			cur = cur->next;
+		}
+
 		if (!cur)
 			return;
 	}
@@ -401,7 +406,13 @@ static bool jbuf_frame_ready(struct jbuf *jb)
 	if (jb->nf < jb->min)
 		return false;
 
-	return jb->ncf || !jb->min || jb->nf > jb->max;
+	if (jb->nf > jb->max)
+		return true;
+
+	if (!jb->end)
+		return false;
+
+	return jb->ncf || !jb->min;
 }
 
 
