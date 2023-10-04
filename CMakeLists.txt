@@ -52,7 +52,6 @@ include(CheckCCompilerFlag)
 
 option(USE_REM "Enable Librem" ON)
 option(USE_BFCP "Enable BFCP" ON)
-option(USE_JBUF "Enable JBUF" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
@@ -142,7 +141,6 @@ set(HEADERS
   include/re_http.h
   include/re_httpauth.h
   include/re_ice.h
-  include/re_jbuf.h
   include/re_json.h
   include/re_list.h
   include/re_main.h
@@ -442,13 +440,6 @@ if(USE_BFCP)
     src/bfcp/msg.c
     src/bfcp/reply.c
     src/bfcp/request.c
-  )
-endif()
-
-
-if(USE_JBUF)
-  list(APPEND SRCS
-    src/jbuf/jbuf.c
   )
 endif()
 
