@@ -29,7 +29,7 @@ jobs:
 
     - name: make
       run: | 
-        cmake -B build -DCMAKE_C_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake -B build -DCMAKE_C_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -DUSE_TRACE=ON
         cmake --build build -j -t retest
 
     - name: retest
