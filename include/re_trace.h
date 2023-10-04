@@ -18,10 +18,6 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
 			int32_t async_id, re_trace_arg_type arg_type,
 			const char *arg_name, void *arg_value);
 
-#if !defined(RELEASE) && !defined(RE_TRACE_ENABLED)
-#define RE_TRACE_ENABLED 1
-#endif
-
 #ifdef RE_TRACE_ENABLED
 
 #define RE_TRACE_BEGIN(c, n) \

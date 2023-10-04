@@ -19,6 +19,7 @@
 #include <re_net.h>
 #include <re_sys.h>
 #include <re_main.h>
+#include <re_trace.h>
 #include <re_btrace.h>
 #include "main.h"
 

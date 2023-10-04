@@ -28,7 +28,7 @@ jobs:
 
     - name: Download pre-compiled OpenSSL/LibreSSL
       run: |
-        wget "https://github.com/baresip/ci/releases/download/v0.2/assets.tar.gz"
+        wget "https://github.com/baresip/tools/releases/download/v0.3/assets.tar.gz"
         tar -xf assets.tar.gz
     - name: make
       run: cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j

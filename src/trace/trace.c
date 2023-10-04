@@ -108,6 +108,9 @@ int re_trace_init(const char *json_file)
 	if (!json_file)
 		return EINVAL;
 
+	if (trace.init)
+		return EALREADY;
+
 	trace.event_buffer = mem_zalloc(
 		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
 	if (!trace.event_buffer)
