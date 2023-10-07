@@ -598,12 +598,19 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 
 	if (sess->srate_rx) {
 		/* Convert from wall-clock time to timestamp units */
-		hdr->ts_arrive =
-			(uint32_t)(tmr_jiffies() * sess->srate_rx / 1000);
+		hdr->ts_arrive = tmr_jiffies() * sess->srate_rx / 1000;
 
-		source_calc_jitter(mbr->s, hdr->ts, hdr->ts_arrive);
+		/*
+		 * Calculate jitter only when the timestamp is different than
+		 * last packet (see RTP FAQ
+		 * https://www.cs.columbia.edu/~hgs/rtp/faq.html#jitter).
+		 */
+		if (hdr->ts != mbr->s->last_rtp_ts)
+			source_calc_jitter(mbr->s, hdr->ts,
+					   (uint32_t)hdr->ts_arrive);
 	}
 
+	mbr->s->last_rtp_ts = hdr->ts;
 	mbr->s->rtp_rx_bytes += payload_size;
 }
 

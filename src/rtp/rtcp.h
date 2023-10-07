@@ -44,6 +44,7 @@ struct rtp_source {
 	uint64_t sr_recv;         /**< When the last SR was received       */
 	struct ntp_time last_sr;  /**< NTP Timestamp from last SR received */
 	uint32_t rtp_ts;          /**< RTP timestamp                       */
+	uint32_t last_rtp_ts;     /**< Last RTP timestamp                  */
 	uint32_t psent;           /**< RTP packets sent                    */
 	uint32_t osent;           /**< RTP octets sent                     */
 };

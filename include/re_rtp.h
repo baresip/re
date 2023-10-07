@@ -23,7 +23,7 @@ struct rtp_header {
 	uint8_t  pt;        /**< Payload type           */
 	uint16_t seq;       /**< Sequence number        */
 	uint32_t ts;        /**< Timestamp              */
-	uint32_t ts_arrive; /**< Arrival Timestamp      */
+	uint64_t ts_arrive; /**< Arrival Timestamp      */
 	uint32_t ssrc;      /**< Synchronization source */
 	uint32_t csrc[16];  /**< Contributing sources   */
 	struct {
