@@ -404,6 +404,12 @@ static void rcand_wait_timeout(void *arg)
 {
 	struct icem *icem = arg;
 
+	/* Avoid long startup delay */
+	icem->rcand_wait = false;
+
+	icem_printf(icem, "conncheck_start: "
+			"mDNS timeout for remote candidate...\n");
+
 	icem_conncheck_start(icem);
 }
 

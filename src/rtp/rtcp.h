@@ -44,6 +44,7 @@ struct rtp_source {
 	uint64_t sr_recv;         /**< When the last SR was received       */
 	struct ntp_time last_sr;  /**< NTP Timestamp from last SR received */
 	uint32_t rtp_ts;          /**< RTP timestamp                       */
+	uint32_t last_rtp_ts;     /**< Last RTP timestamp                  */
 	uint32_t psent;           /**< RTP packets sent                    */
 	uint32_t osent;           /**< RTP octets sent                     */
 };
@@ -116,6 +117,5 @@ int  rtcp_send(struct rtp_sock *rs, struct mbuf *mb);
 void rtcp_handler(struct rtcp_sess *sess, struct rtcp_msg *msg);
 void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
 		      size_t payload_size);
-void rtcp_sess_rx_rtp(struct rtcp_sess *sess, uint16_t seq, uint32_t ts,
-		      uint32_t src, size_t payload_size,
-		      const struct sa *peer);
+void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
+		      size_t payload_size, const struct sa *peer);

@@ -40,6 +40,7 @@ static const char rel_port_str[] = "rport";
 
 
 struct rcand {
+	int ai_family;
 	struct icem *icem;
 	enum ice_cand_type type;
 	unsigned cid;
@@ -208,14 +209,15 @@ static int getaddr_rcand(void *arg)
 {
 	struct rcand *rcand = arg;
 	struct addrinfo *res, *res0 = NULL;
+	struct addrinfo hints = {.ai_flags  = AI_V4MAPPED | AI_ADDRCONFIG,
+				 .ai_family = rcand->ai_family};
 	int err;
 
-	err = getaddrinfo(rcand->domain, NULL, NULL, &res0);
+	err = getaddrinfo(rcand->domain, NULL, &hints, &res0);
 	if (err)
 		return EADDRNOTAVAIL;
 
 	for (res = res0; res; res = res->ai_next) {
-
 		err = sa_set_sa(&rcand->caddr, res->ai_addr);
 		if (err)
 			continue;
@@ -238,6 +240,11 @@ static void delayed_rcand(int err, void *arg)
 	if (err)
 		goto out;
 
+	if (!rcand->icem->rcand_wait) {
+		DEBUG_WARNING("late mDNS candidate: %s\n", rcand->domain);
+		goto out;
+	}
+
 	/* add only if not exist */
 	if (icem_cand_find(&rcand->icem->rcandl, rcand->cid, &rcand->caddr))
 		goto out;
@@ -246,7 +253,6 @@ static void delayed_rcand(int err, void *arg)
 		       &rcand->caddr, &rcand->rel_addr, &rcand->foundation);
 
 out:
-	rcand->icem->rcand_wait = false;
 	mem_deref(rcand);
 }
 
@@ -314,26 +320,53 @@ static int cand_decode(struct icem *icem, const char *val)
 	if (pl_strstr(&addr, ".local") != NULL) {
 		/* try non blocking getaddr mdns resolution */
 		icem_printf(icem, "mDNS remote cand: %r\n", &addr);
+		icem->rcand_wait = true;
+
+		/* AF_INET IPv4 candidate */
 		struct rcand *rcand =
 			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
 		if (!rcand)
 			return ENOMEM;
 
-		rcand->icem	= mem_ref(icem);
-		rcand->type	= ice_cand_name2type(type);
-		rcand->cid	= cid;
-		rcand->prio	= pl_u32(&prio);
-		rcand->port	= pl_u32(&port);
-		rcand->rel_addr = rel_addr;
+		rcand->ai_family = AF_INET;
+		rcand->icem	 = mem_ref(icem);
+		rcand->type	 = ice_cand_name2type(type);
+		rcand->cid	 = cid;
+		rcand->prio	 = pl_u32(&prio);
+		rcand->port	 = pl_u32(&port);
+		rcand->rel_addr	 = rel_addr;
 
 		pl_dup(&rcand->foundation, &foundation);
 		(void)pl_strcpy(&addr, rcand->domain, sizeof(rcand->domain));
 
-		icem->rcand_wait = true;
-
 		err = re_thread_async(getaddr_rcand, delayed_rcand, rcand);
 		if (err)
 			mem_deref(rcand);
+
+		/* AF_INET6 IPv6 candidate
+		 * mDNS resolving can lead to long timeouts (~5s), so it's
+		 * better to resolve IPv4 and IPv6 separately to avoid long ice
+		 * startup delays.
+		 */
+		struct rcand *rcand6 =
+			mem_zalloc(sizeof(struct rcand), rcand_dealloc);
+		if (!rcand6)
+			return ENOMEM;
+
+		rcand6->ai_family = AF_INET6;
+		rcand6->icem	  = mem_ref(icem);
+		rcand6->type	  = ice_cand_name2type(type);
+		rcand6->cid	  = cid;
+		rcand6->prio	  = pl_u32(&prio);
+		rcand6->port	  = pl_u32(&port);
+		rcand6->rel_addr  = rel_addr;
+
+		pl_dup(&rcand6->foundation, &foundation);
+		(void)pl_strcpy(&addr, rcand6->domain, sizeof(rcand6->domain));
+
+		err = re_thread_async(getaddr_rcand, delayed_rcand, rcand6);
+		if (err)
+			mem_deref(rcand6);
 
 		return err;
 	}

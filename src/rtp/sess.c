@@ -563,49 +563,54 @@ void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
 }
 
 
-void rtcp_sess_rx_rtp(struct rtcp_sess *sess, uint16_t seq, uint32_t ts,
-		      uint32_t ssrc, size_t payload_size,
-		      const struct sa *peer)
+void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
+		      size_t payload_size, const struct sa *peer)
 {
 	struct rtp_member *mbr;
 
 	if (!sess)
 		return;
 
-	mbr = get_member(sess, ssrc);
+	mbr = get_member(sess, hdr->ssrc);
 	if (!mbr) {
-		DEBUG_NOTICE("could not add member: 0x%08x\n", ssrc);
+		DEBUG_NOTICE("could not add member: 0x%08x\n", hdr->ssrc);
 		return;
 	}
 
 	if (!mbr->s) {
 		mbr->s = mem_zalloc(sizeof(*mbr->s), NULL);
 		if (!mbr->s) {
-			DEBUG_NOTICE("could not add sender: 0x%08x\n", ssrc);
+			DEBUG_NOTICE("could not add sender: 0x%08x\n",
+				     hdr->ssrc);
 			return;
 		}
 
 		/* first packet - init sequence number */
-		source_init_seq(mbr->s, seq);
+		source_init_seq(mbr->s, hdr->seq);
 		/* probation not used */
 		sa_cpy(&mbr->s->rtp_peer, peer);
 		++sess->senderc;
 	}
 
-	if (!source_update_seq(mbr->s, seq)) {
+	if (!source_update_seq(mbr->s, hdr->seq)) {
 		DEBUG_WARNING("rtp_update_seq() returned 0\n");
 	}
 
 	if (sess->srate_rx) {
-
-		uint64_t ts_arrive;
-
 		/* Convert from wall-clock time to timestamp units */
-		ts_arrive = tmr_jiffies() * sess->srate_rx / 1000;
+		hdr->ts_arrive = tmr_jiffies() * sess->srate_rx / 1000;
 
-		source_calc_jitter(mbr->s, ts, (uint32_t)ts_arrive);
+		/*
+		 * Calculate jitter only when the timestamp is different than
+		 * last packet (see RTP FAQ
+		 * https://www.cs.columbia.edu/~hgs/rtp/faq.html#jitter).
+		 */
+		if (hdr->ts != mbr->s->last_rtp_ts)
+			source_calc_jitter(mbr->s, hdr->ts,
+					   (uint32_t)hdr->ts_arrive);
 	}
 
+	mbr->s->last_rtp_ts = hdr->ts;
 	mbr->s->rtp_rx_bytes += payload_size;
 }
 

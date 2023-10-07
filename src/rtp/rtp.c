@@ -205,10 +205,8 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 	if (err)
 		return;
 
-	if (rs->rtcp) {
-		rtcp_sess_rx_rtp(rs->rtcp, hdr.seq, hdr.ts,
-				 hdr.ssrc, mbuf_get_left(mb), src);
-	}
+	if (rs->rtcp)
+		rtcp_sess_rx_rtp(rs->rtcp, &hdr, mbuf_get_left(mb), src);
 
 	if (rs->recvh)
 		rs->recvh(src, &hdr, mb, rs->arg);
