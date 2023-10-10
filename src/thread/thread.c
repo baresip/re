@@ -2,6 +2,7 @@
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_thread.h>
+#include <re_trace.h>
 #ifdef HAVE_PRCTL
 #include <sys/prctl.h>
 #endif
@@ -97,6 +98,7 @@ static int handler(void *p)
 	(void)pthread_setname_np(*th.thr, th.name);
 #endif
 #endif
+	RE_TRACE_THREAD_NAME(th.name);
 
 	return th.func(th.arg);
 }
