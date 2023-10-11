@@ -293,7 +293,7 @@ int re_trace_flush(void)
 		re_snprintf(name, sizeof(name), "\"name\":\"%s\"", e->name);
 
 		if (e->id) {
-			re_snprintf(id_str, sizeof(id_str), "\"id\":\"%r\"",
+			re_snprintf(id_str, sizeof(id_str), ", \"id\":\"%r\"",
 				    e->id);
 			mem_deref(e->id);
 		}
