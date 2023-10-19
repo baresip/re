@@ -16,11 +16,6 @@
 #include <re_httpauth.h>
 
 
-enum {
-	CNONCE_NC_SIZE = 9, /* 8 characters + '\0' */
-};
-
-
 typedef void (digest_decode_h)(const struct pl *name, const struct pl *val,
 			       void *arg);
 
