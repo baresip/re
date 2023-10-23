@@ -354,6 +354,14 @@ bool sipsess_refresh_allowed(const struct sipsess *sess)
 }
 
 
+/**
+ * Return true if there is an open SIP Session Reply for which an ACK is
+ * expected
+ *
+ * @param sess      SIP Session
+ *
+ * @return True if ACK is pending, otherwise false
+ */
 bool sipsess_ack_pending(const struct sipsess *sess)
 {
 	return sess && sess->replyl.head ? true : false;
