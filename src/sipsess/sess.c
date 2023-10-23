@@ -352,3 +352,9 @@ bool sipsess_refresh_allowed(const struct sipsess *sess)
 	return ((sess->established || sess->refresh_allowed)
 		&& !sess->terminated && !sess->awaiting_answer);
 }
+
+
+bool sipsess_ack_pending(const struct sipsess *sess)
+{
+	return sess->replyl.head ? true : false;
+}

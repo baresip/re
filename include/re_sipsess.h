@@ -73,3 +73,4 @@ bool sipsess_refresh_allowed(const struct sipsess *sess);
 void sipsess_close_all(struct sipsess_sock *sock);
 struct sip_dialog *sipsess_dialog(const struct sipsess *sess);
 void sipsess_abort(struct sipsess *sess);
+bool sipsess_ack_pending(const struct sipsess *sess);
