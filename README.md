@@ -84,7 +84,7 @@ $ sudo ldconfig
 ### Examples
 
 Coding examples are available from the
-[redemo](http://creytiv.com/pub/redemo-0.5.0.tar.gz) project
+[redemo](https://github.com/creytiv/redemo "creytiv/redemo: Demo example applications using libre") project.
 
 
 ## License
