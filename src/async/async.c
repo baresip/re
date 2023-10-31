@@ -333,7 +333,7 @@ void re_async_cancel(struct re_async *async, intptr_t id)
 		w->workh = NULL;
 		w->cb	 = NULL;
 		w->arg	 = mem_deref(w->arg);
-		/* No move to free list since queueh must always handled */
+		list_move(&w->le, &async->freel);
 		mtx_unlock(w->mtx);
 	}
 
@@ -351,7 +351,8 @@ void re_async_cancel(struct re_async *async, intptr_t id)
 		w->workh = NULL;
 		w->cb	 = NULL;
 		w->arg	 = mem_deref(w->arg);
-		/* No move to free list since queueh must always handled */
+		/* No move to free list since queueh must always handled if
+		 * mqueu_push is called*/
 		mtx_unlock(w->mtx);
 	}
 
