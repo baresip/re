@@ -14,6 +14,7 @@
 #include <re_net.h>
 #include <re_udp.h>
 #include <re_rtp.h>
+#include <re_atomic.h>
 #include "rtcp.h"
 
 
@@ -38,7 +39,7 @@ struct rtp_sock {
 	rtcp_recv_h *rtcph;     /**< RTCP Receive handler  */
 	void *arg;              /**< Handler argument      */
 	struct rtcp_sess *rtcp; /**< RTCP Session          */
-	bool rtcp_mux;          /**< RTP/RTCP multiplexing */
+	RE_ATOMIC bool rtcp_mux;  /**< RTP/RTCP multiplexing */
 };
 
 
@@ -187,7 +188,7 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 	int err;
 
 	/* Handle RTCP multiplexed on RTP-port */
-	if (rs->rtcp_mux) {
+	if (re_atomic_rlx(&rs->rtcp_mux)) {
 		uint8_t pt;
 
 		if (mbuf_get_left(mb) < 2)
@@ -681,7 +682,7 @@ void rtcp_enable_mux(struct rtp_sock *rs, bool enabled)
 	if (!rs)
 		return;
 
-	rs->rtcp_mux = enabled;
+	re_atomic_rlx_set(&rs->rtcp_mux, enabled);
 }
 
 
@@ -699,7 +700,7 @@ int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
 	if (!rs)
 		return EINVAL;
 
-	sock = rs->rtcp_mux ? rs->sock_rtp : rs->sock_rtcp;
+	sock = re_atomic_rlx(&rs->rtcp_mux) ? rs->sock_rtp : rs->sock_rtcp;
 	if (!sock || !sa_isset(&rs->rtcp_peer, SA_ALL))
 		return EINVAL;
 
