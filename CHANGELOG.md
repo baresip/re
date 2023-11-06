@@ -5,6 +5,13 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v3.6.2] - 2023-11-06
+
+## What's Changed
+sip/transp: add win32 local transport addr fallback (fixes TCP/TLS register)
+
+
 ## [v3.6.1] - 2023-11-03
 
 ## What's Changed
