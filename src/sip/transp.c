@@ -792,8 +792,22 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 	if (err)
 		goto out;
 
-	if (connh)
+	/* Fallback check for any address win32 */
+	if (!sa_isset(&conn->laddr, SA_ALL)) {
+		uint16_t port = sa_port(&conn->laddr);
+		err = sip_transp_laddr(sip, &conn->laddr, conn->tp, dst);
+		if (err)
+			goto out;
+
+		if (port)
+			sa_set_port(&conn->laddr, port);
+	}
+
+	if (connh) {
 		err = connh(&conn->laddr, dst, mb, arg);
+		if (err)
+			goto out;
+	}
 
 	(void)tcp_conn_settos(conn->tc, sip->tos);
 #ifdef USE_TLS
