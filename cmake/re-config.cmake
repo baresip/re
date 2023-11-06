@@ -1,6 +1,7 @@
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
+include(CheckTypeSize)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
