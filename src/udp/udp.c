@@ -36,11 +36,11 @@ typedef UINT32 QOS_FLOWID;
 typedef UINT32 *PQOS_FLOWID;
 #endif
 
+#include <qos2.h>
+
 #ifndef QOS_NON_ADAPTIVE_FLOW
 #define QOS_NON_ADAPTIVE_FLOW 0x00000002
 #endif
-
-#include <qos2.h>
 #endif /*WIN32*/
 
 #define DEBUG_MODULE "udp"
