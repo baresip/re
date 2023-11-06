@@ -1,6 +1,7 @@
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
+include(CheckTypeSize)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
@@ -135,6 +136,20 @@ if(WIN32)
     WIN32 
     _WIN32_WINNT=0x0600
   )
+
+  unset(CMAKE_EXTRA_INCLUDE_FILES)
+  set(CMAKE_EXTRA_INCLUDE_FILES "winsock2.h;qos2.h")
+  check_type_size("QOS_FLOWID" HAVE_QOS_FLOWID BUILTIN_TYPES_ONLY)
+  check_type_size("PQOS_FLOWID" HAVE_PQOS_FLOWID BUILTIN_TYPES_ONLY)
+  unset(CMAKE_EXTRA_INCLUDE_FILES)
+
+  if(HAVE_QOS_FLOWID)
+    list(APPEND RE_DEFINITIONS HAVE_QOS_FLOWID)
+  endif()
+
+  if(HAVE_PQOS_FLOWID)
+    list(APPEND RE_DEFINITIONS HAVE_PQOS_FLOWID)
+  endif()
 endif()
 
 if(USE_OPENSSL)

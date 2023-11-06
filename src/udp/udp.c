@@ -28,13 +28,19 @@
 #include <re_sa.h>
 #include <re_udp.h>
 #ifdef WIN32
-#if !defined(_MSC_VER)
-typedef UINT32 QOS_FLOWID, *PQOS_FLOWID;
+#ifndef HAVE_QOS_FLOWID
+typedef UINT32 QOS_FLOWID;
+#endif
+
+#ifndef HAVE_PQOS_FLOWID
+typedef UINT32 *PQOS_FLOWID;
+#endif
+
+#include <qos2.h>
+
 #ifndef QOS_NON_ADAPTIVE_FLOW
 #define QOS_NON_ADAPTIVE_FLOW 0x00000002
 #endif
-#endif /*!_MSC_VER*/
-#include <qos2.h>
 #endif /*WIN32*/
 
 #define DEBUG_MODULE "udp"
