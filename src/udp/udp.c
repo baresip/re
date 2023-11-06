@@ -28,11 +28,11 @@
 #include <re_sa.h>
 #include <re_udp.h>
 #ifdef WIN32
-#ifndef HAS_QOS_FLOWID
+#ifndef HAVE_QOS_FLOWID
 typedef UINT32 QOS_FLOWID;
 #endif
 
-#ifndef HAS_PQOS_FLOWID
+#ifndef HAVE_PQOS_FLOWID
 typedef UINT32 *PQOS_FLOWID;
 #endif
 
