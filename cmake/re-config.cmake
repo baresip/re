@@ -70,6 +70,7 @@ endif()
 check_function_exists(thrd_create HAVE_THREADS_FUN)
 check_include_file(threads.h HAVE_THREADS_H)
 if(HAVE_THREADS_FUN AND HAVE_THREADS_H)
+  set(HAVE_THREADS true)
   list(APPEND RE_DEFINITIONS HAVE_THREADS)
 endif()
 
