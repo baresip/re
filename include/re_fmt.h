@@ -29,6 +29,7 @@ struct pl {
 
 extern const struct pl pl_null;
 
+struct pl *pl_alloc_str(const char *str);
 void     pl_set_str(struct pl *pl, const char *str);
 void     pl_set_mbuf(struct pl *pl, const struct mbuf *mb);
 int32_t  pl_i32(const struct pl *pl);

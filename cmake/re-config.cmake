@@ -1,6 +1,7 @@
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
+include(CheckTypeSize)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
@@ -66,7 +67,11 @@ else()
   set(Backtrace_LIBRARIES)
 endif()
 
-check_function_exists(thrd_create HAVE_THREADS)
+check_function_exists(thrd_create HAVE_THREADS_FUN)
+check_include_file(threads.h HAVE_THREADS_H)
+if(HAVE_THREADS_FUN AND HAVE_THREADS_H)
+  set(HAVE_THREADS CACHE BOOL true)
+endif()
 if(HAVE_THREADS)
   list(APPEND RE_DEFINITIONS HAVE_THREADS)
 endif()
@@ -135,6 +140,20 @@ if(WIN32)
     WIN32 
     _WIN32_WINNT=0x0600
   )
+
+  unset(CMAKE_EXTRA_INCLUDE_FILES)
+  set(CMAKE_EXTRA_INCLUDE_FILES "winsock2.h;qos2.h")
+  check_type_size("QOS_FLOWID" HAVE_QOS_FLOWID BUILTIN_TYPES_ONLY)
+  check_type_size("PQOS_FLOWID" HAVE_PQOS_FLOWID BUILTIN_TYPES_ONLY)
+  unset(CMAKE_EXTRA_INCLUDE_FILES)
+
+  if(HAVE_QOS_FLOWID)
+    list(APPEND RE_DEFINITIONS HAVE_QOS_FLOWID)
+  endif()
+
+  if(HAVE_PQOS_FLOWID)
+    list(APPEND RE_DEFINITIONS HAVE_PQOS_FLOWID)
+  endif()
 endif()
 
 if(USE_OPENSSL)
@@ -173,6 +192,8 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND RE_DEFINITIONS DARWIN)
   include_directories(/opt/local/include)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+  list(APPEND RE_DEFINITIONS DARWIN)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   list(APPEND RE_DEFINITIONS FREEBSD)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")

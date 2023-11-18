@@ -346,12 +346,31 @@ typedef int re_sock_t;
 #define RE_ARG_14(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_13(__VA_ARGS__)
 #define RE_ARG_15(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_14(__VA_ARGS__)
 #define RE_ARG_16(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_15(__VA_ARGS__)
+#define RE_ARG_17(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_16(__VA_ARGS__)
+#define RE_ARG_18(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_17(__VA_ARGS__)
+#define RE_ARG_19(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_18(__VA_ARGS__)
+#define RE_ARG_20(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_19(__VA_ARGS__)
+#define RE_ARG_21(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_20(__VA_ARGS__)
+#define RE_ARG_22(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_21(__VA_ARGS__)
+#define RE_ARG_23(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_22(__VA_ARGS__)
+#define RE_ARG_24(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_23(__VA_ARGS__)
+#define RE_ARG_25(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_24(__VA_ARGS__)
+#define RE_ARG_26(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_25(__VA_ARGS__)
+#define RE_ARG_27(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_26(__VA_ARGS__)
+#define RE_ARG_28(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_27(__VA_ARGS__)
+#define RE_ARG_29(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_28(__VA_ARGS__)
+#define RE_ARG_30(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_29(__VA_ARGS__)
+#define RE_ARG_31(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_30(__VA_ARGS__)
+#define RE_ARG_32(expr, ...) RE_ARG_SIZE(expr), (expr), RE_ARG_31(__VA_ARGS__)
 
-#define RE_ARG_VA_NUM_2(X, X16, X15, X14, X13, X12, X11, X10, X9, X8, X7, X6, \
-			X5, X4, X3, X2, X1, N, ...)                           \
+#define RE_ARG_VA_NUM_2(X, X32, X31, X30, X29, X28, X27, X26, X25, X24, X23,  \
+			X22, X21, X20, X19, X18, X17, X16, X15, X14, X13,     \
+			X12, X11, X10, X9, X8, X7, X6, X5, X4, X3, X2, X1, N, \
+			...)                                                  \
 	N
 #define RE_ARG_VA_NUM(...)                                                    \
-	RE_ARG_VA_NUM_2(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, \
+	RE_ARG_VA_NUM_2(0, ##__VA_ARGS__, 32, 31, 30, 29, 28, 27, 26, 25, 24, \
+			23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11,   \
 			10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 
 #define RE_ARG_N3(N, ...) RE_ARG_##N(__VA_ARGS__)

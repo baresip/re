@@ -138,6 +138,24 @@ int test_fmt_pl(void)
 }
 
 
+int test_fmt_pl_alloc_str(void)
+{
+	int err		= 0;
+	char test_str[] = "Test String";
+
+	struct pl *pl = pl_alloc_str(test_str);
+	if (!pl)
+		return ENOMEM;
+
+	TEST_MEMCMP(test_str, str_len(test_str), pl->p, pl->l);
+
+out:
+	mem_deref(pl);
+
+	return err;
+}
+
+
 int test_fmt_pl_i32(void)
 {
 	const struct {

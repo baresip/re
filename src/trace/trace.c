@@ -49,7 +49,7 @@
 struct trace_event {
 	const char *name;
 	const char *cat;
-	void *id;
+	struct pl *id;
 	uint64_t ts;
 	int pid;
 	unsigned long tid;
@@ -243,8 +243,9 @@ int re_trace_flush(void)
 	int i, flush_count;
 	struct trace_event *event_tmp;
 	struct trace_event *e;
-	char json_arg[256];
-	char name[128];
+	char json_arg[256] = {0};
+	char name[128]	   = {0};
+	char id_str[128]   = {0};
 
 #ifndef RE_TRACE_ENABLED
 	return 0;
@@ -291,12 +292,20 @@ int re_trace_flush(void)
 
 		re_snprintf(name, sizeof(name), "\"name\":\"%s\"", e->name);
 
+		if (e->id) {
+			re_snprintf(id_str, sizeof(id_str), ", \"id\":\"%r\"",
+				    e->id);
+			mem_deref(e->id);
+		}
+
 		(void)re_fprintf(trace.f,
-			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%llu,"
-			"\"ph\":\"%c\",%s%s}",
+			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%Lu,"
+			"\"ph\":\"%c\",%s%s%s}",
 			trace.new ? "" : ",\n",
 			e->cat, e->pid, e->tid, e->ts - trace.start_time,
-			e->ph, name, str_isset(json_arg) ? json_arg : "");
+			e->ph, name,
+			e->id ? id_str : "",
+			str_isset(json_arg) ? json_arg : "");
 		trace.new = false;
 	}
 
@@ -305,9 +314,9 @@ int re_trace_flush(void)
 }
 
 
-void re_trace_event(const char *cat, const char *name, char ph, void *id,
-                    int32_t custom_id, re_trace_arg_type arg_type,
-                    const char *arg_name, void *arg_value)
+void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
+		    re_trace_arg_type arg_type, const char *arg_name,
+		    void *arg_value)
 {
 	struct trace_event *e;
 
@@ -329,17 +338,12 @@ void re_trace_event(const char *cat, const char *name, char ph, void *id,
 	mtx_unlock(&trace.lock);
 
 	e->ts = tmr_jiffies_usec();
-	e->id = id;
+	e->id = mem_ref(id);
 	e->ph = ph;
 	e->cat = cat;
 	e->name = name;
 	e->pid = get_process_id();
-	if (custom_id) {
-		e->tid = custom_id;
-	}
-	else {
-		e->tid = get_thread_id();
-	}
+	e->tid = get_thread_id();
 	e->arg_type = arg_type;
 	e->arg_name = arg_name;
 

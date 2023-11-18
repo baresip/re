@@ -84,7 +84,7 @@ $ sudo ldconfig
 ### Examples
 
 Coding examples are available from the
-[redemo](http://creytiv.com/pub/redemo-0.5.0.tar.gz) project
+[redemo](https://github.com/creytiv/redemo "creytiv/redemo: Demo example applications using libre") project.
 
 
 ## License
@@ -218,6 +218,7 @@ legend:
 * [RFC 6455](https://tools.ietf.org/html/rfc6455) - The WebSocket Protocol
 * [RFC 7159](https://tools.ietf.org/html/rfc7159) - JavaScript Object Notation (JSON)
 * [RFC 7350](https://tools.ietf.org/html/rfc7350) - DTLS as Transport for STUN
+* [RFC 7616](https://tools.ietf.org/html/rfc7616) - HTTP Digest Access Authentication
 * [RFC 7714](https://tools.ietf.org/html/rfc7714) - AES-GCM Authenticated Encryption in SRTP
 
 

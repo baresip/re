@@ -5,6 +5,54 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v3.6.2] - 2023-11-06
+
+## What's Changed
+sip/transp: add win32 local transport addr fallback (fixes TCP/TLS register)
+
+
+## [v3.6.1] - 2023-11-03
+
+## What's Changed
+ice: AI_V4MAPPED doesn't exist on OpenBSD #989
+dialog: REVERT fix rtags of forking INVITE with 100rel (#947) #986
+debian: fix version number
+
+
+## [v3.6.0] - 2023-10-17
+
+## What's Changed
+* ci/coverage: increase min. coverage by @sreimers in https://github.com/baresip/re/pull/958
+* Implement aufile_set_position by @larsimmisch in https://github.com/baresip/re/pull/943
+* dialog: fix rtags of forking INVITE with 100rel by @maximilianfridrich in https://github.com/baresip/re/pull/947
+* tls/alloc: set default min proto TLS 1.2 by @sreimers in https://github.com/baresip/re/pull/948
+* test: init err to 0 in sdp test (cppcheck) by @alfredh in https://github.com/baresip/re/pull/959
+* main: fd_listen fhs alloc rewrite by @sreimers in https://github.com/baresip/re/pull/805
+* Expand RE_BREAKPOINT macro on ARM64 by @larsimmisch in https://github.com/baresip/re/pull/961
+* jbuf: trace data for plot by @cspiel1 in https://github.com/baresip/re/pull/964
+* trace: use global trace log by @sreimers in https://github.com/baresip/re/pull/965
+* main: use ifdef for RE_TRACE_ENABLED by @sreimers in https://github.com/baresip/re/pull/966
+* test/hexdump: hide output by @sreimers in https://github.com/baresip/re/pull/968
+* trace: remove global default trace json by @sreimers in https://github.com/baresip/re/pull/969
+* ci/ssl: use tools repo and new assets by @sreimers in https://github.com/baresip/re/pull/972
+* fmt: doxygen correction in print.c by @cspiel1 in https://github.com/baresip/re/pull/973
+* trace: use only explicit RE_TRACE_ENABLED by cmake by @sreimers in https://github.com/baresip/re/pull/974
+* cmake: enable C11 for Windows (not MINGW) by @alfredh in https://github.com/baresip/re/pull/970
+* ci/coverage: lower min. coverage by @sreimers in https://github.com/baresip/re/pull/975
+* jbuf: move jbuf to baresip by @cspiel1 in https://github.com/baresip/re/pull/971
+* ci/coverage: improve coverage (enable trace) by @sreimers in https://github.com/baresip/re/pull/976
+* ci: bump pr-dependency-action@v0.6 by @sreimers in https://github.com/baresip/re/pull/977
+* ice: mDNS refactoring by @sreimers in https://github.com/baresip/re/pull/934
+* trace: add flush worker and optimize memory usage by @sreimers in https://github.com/baresip/re/pull/967
+* rtp: fix video jitter calculation and add arrival time rtp header by @sreimers in https://github.com/baresip/re/pull/978
+* ci: remove DARWIN compile flag from iOS build by @alfredh in https://github.com/baresip/re/pull/979
+* thread: add trace thread name logging by @sreimers in https://github.com/baresip/re/pull/980
+* ci/coverage: reduce min. coverage by @sreimers in https://github.com/baresip/re/pull/982
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.5.1...v3.6.0
+
 ## [v3.5.1] - 2023-09-12
 
 ## What's Changed

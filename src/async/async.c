@@ -68,8 +68,10 @@ static int worker_thread(void *arg)
 
 		work = le->data;
 		mtx_lock(work->mtx);
-		if (work->workh)
+		if (work->workh) {
 			work->err = work->workh(work->arg);
+			work->workh = NULL;
+		}
 		mtx_unlock(work->mtx);
 
 		mtx_lock(&a->mtx);
@@ -101,14 +103,18 @@ static void async_destructor(void *data)
 	LIST_FOREACH(&async->workl, le)
 	{
 		struct async_work *work = le->data;
-		if (work->cb)
+		if (work->cb) {
 			work->cb(ECANCELED, work->arg);
+			work->cb = NULL;
+		}
 	}
 	LIST_FOREACH(&async->curl, le)
 	{
 		struct async_work *work = le->data;
-		if (work->cb)
+		if (work->cb) {
 			work->cb(ECANCELED, work->arg);
+			work->cb = NULL;
+		}
 	}
 
 	list_flush(&async->workl);
@@ -146,8 +152,10 @@ static void queueh(int id, void *data, void *arg)
 	(void)id;
 
 	mtx_lock(work->mtx);
-	if (work->cb)
+	if (work->cb) {
 		work->cb(work->err, work->arg);
+		work->cb =NULL;
+	}
 	mtx_unlock(work->mtx);
 
 	mtx_lock(&async->mtx);
@@ -351,7 +359,8 @@ void re_async_cancel(struct re_async *async, intptr_t id)
 		w->workh = NULL;
 		w->cb	 = NULL;
 		w->arg	 = mem_deref(w->arg);
-		list_move(&w->le, &async->freel);
+		/* No move to free list since queueh must always handled if
+		 * mqueue_push is called */
 		mtx_unlock(w->mtx);
 	}
 
