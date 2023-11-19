@@ -635,11 +635,12 @@ static int digest_response(struct httpauth_digest_enc_resp *resp,
 	uint8_t *hash1 = NULL;
 	uint8_t *hash2 = NULL;
 	struct mbuf *mb = NULL;
-	size_t hashstringl = (resp->hash_length * 2) + 1;
 	int err = 0, n = 0;
 
 	if (!resp || !resp->hashh)
 		return EINVAL;
+
+	size_t hashstringl = (resp->hash_length * 2) + 1;
 
 	mb = mbuf_alloc(str_len(user) + str_len(passwd) + chall->realm.l + 2);
 	if (!mb)
