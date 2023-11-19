@@ -961,6 +961,9 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 		goto out;
 	}
 
+	if (err)
+		goto out;
+
 	err = digest_response(resp, chall, method, user, passwd, entitybody);
 
 out:
