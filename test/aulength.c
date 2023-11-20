@@ -16,7 +16,7 @@
 
 int test_aulength(void)
 {
-	struct aufile *af;
+	struct aufile *af = NULL;
 	struct aufile_prm prm;
 	char path[256];
 
