@@ -252,26 +252,26 @@ size_t aufile_get_size(struct aufile *af)
  *
  * @return length in ms if success, otherwise 0.
  */
-size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
+size_t aufile_get_length(struct aufile *af, const struct aufile_prm *prm)
 {
-	if (!af)
+	if (!af || !prm)
 		return 0;
 
 	switch (prm->fmt) {
 		case AUFMT_PCMA:
 		case AUFMT_PCMU:
-			return af->datasize * prm->channels * prm->srate
-				/ 1000;
+			return af->datasize * 1000 /
+				(prm->channels * prm->srate);
 		case AUFMT_S16LE:
-			return af->datasize * 2 * prm->channels * prm->srate
-				/ 1000;
+			return af->datasize * 1000 /
+				(prm->channels * prm->srate * 2);
 		case AUFMT_S24_3LE:
-			return af->datasize * 3 * prm->channels * prm->srate
-				/ 1000;
+			return af->datasize * 1000 /
+				(prm->channels * prm->srate * 3);
 		case AUFMT_S32LE:
 		case AUFMT_FLOAT:
-			return af->datasize * 4 * prm->channels * prm->srate
-			/ 1000;
+			return af->datasize * 1000 /
+				(prm->channels * prm->srate * 4);
 		default:
 			return 0;
 	}
