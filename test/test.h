@@ -160,6 +160,7 @@ int test_aes_gcm(void);
 int test_aubuf(void);
 int test_aulevel(void);
 int test_aulength(void);
+int test_auposition(void);
 int test_auresamp(void);
 int test_async(void);
 int test_av1(void);
