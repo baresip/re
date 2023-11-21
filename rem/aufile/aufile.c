@@ -257,7 +257,7 @@ size_t aufile_get_length(struct aufile *af, const struct aufile_prm *prm)
 	if (!af || !prm)
 		return 0;
 
-	int sample_size = aufmt_sample_size(prm->fmt);
+	size_t sample_size = aufmt_sample_size(prm->fmt);
 
 	if (sample_size == 0)
 		return 0;
