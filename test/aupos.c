@@ -34,7 +34,8 @@ int test_auposition(void)
 	err = aufile_read(af, buffer, &size);
 	TEST_ERR(err);
 
-	TEST_EQUALS(0, size);
+	/* It's possible we read data up to a ms */
+	TEST_ASSERT(size < 16);
 
 	af = mem_deref(af);
 
@@ -50,7 +51,7 @@ int test_auposition(void)
 
 	/* 30 ms should be left, at 8000Hz/s, one channels and 16 bit samples
 	   that's 480 bytes */
-	TEST_EQUALS(480, size);
+	TEST_ASSERT(size - 480 < 16);
 
 
 out:
