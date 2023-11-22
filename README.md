@@ -124,7 +124,6 @@ Patches can sent via Github
 | http     | stable   | HTTP parser (RFC 2616)                         |
 | httpauth | stable   | HTTP-based Authentication (RFC 2617)           |
 | ice      | stable   | Interactive Connectivity Establishment (ICE)   |
-| jbuf     | stable   | Jitter buffer                                  |
 | json     | stable   | JavaScript Object Notation (JSON)              |
 | list     | stable   | Sortable doubly-linked list handling           |
 | main     | stable   | Main poll loop                                 |
