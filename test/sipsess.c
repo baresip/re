@@ -16,7 +16,7 @@
 typedef void (prack_func)(void *arg);
 
 
-enum sdp_neg_state {
+enum neg_state {
 	INITIAL = 0,
 	OFFER_RECEIVED,
 	ANSWER_RECEIVED,
@@ -71,7 +71,7 @@ struct test {
 	bool ack_b;
 	enum rel100_mode rel100_a;
 	enum rel100_mode rel100_b;
-	enum sdp_neg_state sdp_state;
+	enum neg_state sdp_state;
 	enum rel100_state rel100_state_a;
 	enum rel100_state rel100_state_b;
 	enum connect_action conn_action;
@@ -500,7 +500,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	else if (test->conn_action & CONN_ANSWER) {
 		err = sipsess_accept(&test->b, test->sock, msg, 200, "OK",
 				test->rel100_b, "b", "application/sdp",
-				NULL, NULL, NULL, false, offer_handler_b,
+				desc, NULL, NULL, false, offer_handler_b,
 				answer_handler_b, estab_handler_b, NULL, NULL,
 				close_handler, test, hdrs);
 		if (err != test->answ_ret_code) {
@@ -602,7 +602,7 @@ int test_sipsess(void)
 	err = sipsess_connect(&test.a, test.sock, to_uri, NULL,
 			      "sip:a@127.0.0.1", "a", NULL, 0,
 			      "application/sdp", NULL, NULL, false,
-			      callid, desc_handler,
+			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
 			      close_handler, &test, NULL);
@@ -622,7 +622,9 @@ int test_sipsess(void)
 	ASSERT_TRUE(test.estab_b);
 	ASSERT_TRUE(test.desc);
 	ASSERT_TRUE(test.answr_a);
-	ASSERT_TRUE(!test.offer_b);
+	ASSERT_TRUE(test.offer_b);
+	ASSERT_TRUE(!test.offer_a);
+	ASSERT_TRUE(!test.answr_b);
 
 	/* test re-invite with wait for ACK */
 	test.sdp_state = INITIAL;
@@ -782,7 +784,7 @@ int test_sipsess_blind_transfer(void)
 	err = sipsess_connect(&test.a, test.sock, to_uri, NULL,
 			      "sip:a@127.0.0.1", "a", NULL, 0,
 			      "application/sdp", NULL, NULL, false,
-			      callid, desc_handler,
+			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
 			      close_handler, &test, NULL);
@@ -805,7 +807,9 @@ int test_sipsess_blind_transfer(void)
 	ASSERT_TRUE(test.estab_b);
 	ASSERT_TRUE(test.desc);
 	ASSERT_TRUE(test.answr_a);
-	ASSERT_TRUE(!test.offer_b);
+	ASSERT_TRUE(test.offer_b);
+	ASSERT_TRUE(!test.offer_a);
+	ASSERT_TRUE(!test.answr_b);
 
  out:
 	test.a = mem_deref(test.a);
@@ -1121,7 +1125,7 @@ int test_sipsess_100rel_420(void)
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
-	ASSERT_TRUE(test.err == EINVAL);
+	ASSERT_TRUE(test.err == EPROTO);
 
 	/* okay here -- verify */
 	ASSERT_TRUE(!test.b);
@@ -1194,7 +1198,7 @@ int test_sipsess_100rel_421(void)
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
-	ASSERT_TRUE(test.err == EINVAL);
+	ASSERT_TRUE(test.err == EPROTO);
 
 	/* okay here -- verify */
 	ASSERT_TRUE(!test.b);

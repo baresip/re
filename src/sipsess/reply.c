@@ -26,7 +26,6 @@ struct sipsess_reply {
 	const struct sip_msg *msg;
 	struct mbuf *mb;
 	struct sipsess *sess;
-	bool awaiting_answer;
 	bool awaiting_prack;
 	uint16_t scode;
 	uint32_t seq;
@@ -115,11 +114,17 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 	struct sipsess_reply *reply = NULL;
 	struct sip_contact contact;
 	int err = ENOMEM;
+	bool sdp = mbuf_get_left(msg->mb) > 0;
 	bool non_invite = !pl_strcmp(&msg->met, "PRACK")
 			  || !pl_strcmp(&msg->met, "UPDATE");
 
 	if (!non_invite) {
-		if (sess->awaiting_prack)
+		if (sess->neg_state == SDP_NEG_NONE && !mbuf_get_left(desc))
+			return EINVAL;
+		else if (sess->neg_state == SDP_NEG_DONE)
+			desc = NULL;
+
+		if (sess->prack_waiting_cnt > 0)
 			return EINVAL;
 
 		reply = mem_zalloc(sizeof(*reply), destructor);
@@ -133,6 +138,9 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		reply->scode = scode;
 		reply->sess = sess;
 	}
+
+	if (non_invite && sess->neg_state != SDP_NEG_REMOTE_OFFER)
+		desc = NULL;
 
 	sip_contact_set(&contact, sess->cuser, &msg->dst, msg->tp);
 	err = sip_treplyf(non_invite ? NULL : &sess->st,
@@ -160,14 +168,16 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 		(void)list_ledata(list_apply(&sess->replyl, false,
 				  cancel_1xx_timers, NULL));
 
+	if (mbuf_get_left(desc)) {
+		if (sdp)
+			sess->neg_state = SDP_NEG_DONE;
+		else if (!non_invite)
+			sess->neg_state = SDP_NEG_LOCAL_OFFER;
+	}
+
 	if (reply) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
-
-		if (!mbuf_get_left(msg->mb) && desc) {
-			reply->awaiting_answer = true;
-			sess->awaiting_answer = true;
-		}
 	}
 
  out:
@@ -205,16 +215,32 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 				  421, "Extension required",
 				  "Require: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
-		return -1;
+		return EPROTO;
 	}
 	else if (rel100_peer == REL100_REQUIRED && !rel100) {
 		(void)sip_treplyf(&sess->st, NULL, sess->sip, msg, false, 420,
 				  "Bad Extension", "Unsupported: 100rel\r\n"
 				  "Content-Length: 0\r\n\r\n");
-		return -1;
+		return EPROTO;
 	}
 
 	reliably = rel100 && rel100_peer && scode != 100;
+
+	if (reliably && sess->neg_state == SDP_NEG_NONE
+	    && !mbuf_get_left(desc))
+		return EINVAL;
+
+	if (sess->neg_state == SDP_NEG_NONE) {
+		if (reliably && !mbuf_get_left(desc))
+			return EINVAL;
+		else if (!reliably)
+			desc = NULL;
+	}
+	else if (sess->neg_state == SDP_NEG_DONE
+		 || sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+		desc = NULL;
+	}
+
 	if (rel100 != REL100_REQUIRED && reliably) {
 		pl_set_str(&require_header, "Require: 100rel\r\n");
 	}
@@ -264,21 +290,19 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 	if (reliably) {
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
+
+		if (desc) {
+			++sess->prack_waiting_cnt;
+			reply->awaiting_prack = true;
+			sess->neg_state = mbuf_get_left(msg->mb) ?
+				SDP_NEG_DONE : SDP_NEG_LOCAL_OFFER;
+		}
 	}
 	else {
+		if (desc && sess->neg_state == SDP_NEG_REMOTE_OFFER)
+			sess->neg_state = SDP_NEG_PREVIEW_ANSWER;
+
 		mem_deref(reply);
-	}
-
-	if (desc) {
-		if (!mbuf_get_left(msg->mb)) {
-			reply->awaiting_answer = true;
-			sess->awaiting_answer = true;
-		}
-		if (reliably) {
-			sess->awaiting_prack = true;
-			reply->awaiting_prack = true;
-		}
-
 	}
 
  out:
@@ -312,7 +336,7 @@ static bool cmp_handler(struct le *le, void *arg)
 
 
 int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
-			bool *awaiting_answer, bool *awaiting_prack)
+			bool *awaiting_prack)
 {
 	struct sipsess_reply *reply;
 
@@ -321,7 +345,6 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 	if (!reply)
 		return ENOENT;
 
-	*awaiting_answer = reply->awaiting_answer;
 	*awaiting_prack = reply->awaiting_prack;
 
 	mem_deref(reply);
@@ -330,8 +353,7 @@ int sipsess_reply_prack(struct sipsess *sess, const struct sip_msg *msg,
 }
 
 
-int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
-		      bool *awaiting_answer)
+int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg)
 {
 	struct sipsess_reply *reply;
 
@@ -339,8 +361,6 @@ int sipsess_reply_ack(struct sipsess *sess, const struct sip_msg *msg,
 				       (void *)msg));
 	if (!reply)
 		return ENOENT;
-
-	*awaiting_answer = reply->awaiting_answer;
 
 	mem_deref(reply);
 

@@ -7,6 +7,15 @@
 struct sipsess_sock;
 struct sipsess;
 
+/* SDP Negotiation state */
+enum sdp_neg_state {
+	SDP_NEG_NONE = 0,
+	SDP_NEG_LOCAL_OFFER,		/** SDP offer sent */
+	SDP_NEG_REMOTE_OFFER,		/** SDP offer received */
+	SDP_NEG_PREVIEW_ANSWER,		/** SDP preview answer sent */
+	SDP_NEG_DONE			/** SDP negotiation done */
+};
+
 
 typedef void (sipsess_conn_h)(const struct sip_msg *msg, void *arg);
 typedef int  (sipsess_desc_h)(struct mbuf **descp, const struct sa *src,
@@ -74,3 +83,4 @@ void sipsess_close_all(struct sipsess_sock *sock);
 struct sip_dialog *sipsess_dialog(const struct sipsess *sess);
 void sipsess_abort(struct sipsess *sess);
 bool sipsess_ack_pending(const struct sipsess *sess);
+enum sdp_neg_state sipsess_sdp_neg_state(const struct sipsess *sess);
