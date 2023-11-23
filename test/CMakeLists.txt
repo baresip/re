@@ -72,6 +72,7 @@ set(SRCS
   aubuf.c
   aulength.c
   aulevel.c
+  aupos.c
   auresamp.c
   av1.c
   base64.c
