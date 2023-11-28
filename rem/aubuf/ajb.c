@@ -210,7 +210,7 @@ static void plot_ajb(struct ajb *ajb, uint64_t tr)
 			ajb->plot.bufmin,       /* row 8  - plot */
 			ajb->plot.bufmax,       /* row 9  - plot */
 			ajb->plot.as);          /* row 10 - plot */
-	re_trace_event("ajb", "plot", 'P', NULL, 0, RE_TRACE_ARG_STRING_COPY,
+	re_trace_event("ajb", "plot", 'P', NULL, RE_TRACE_ARG_STRING_COPY,
 		       "line", ajb->buf);
 }
 #endif
@@ -234,7 +234,7 @@ void plot_underrun(struct ajb *ajb)
 			ajb,                    /* row 2  - grep optional */
 			treal,                  /* row 3  - plot optional */
 			1);                     /* row 4  - plot */
-	re_trace_event("ajb", "plot", 'U', NULL, 0, RE_TRACE_ARG_STRING_COPY,
+	re_trace_event("ajb", "plot", 'U', NULL, RE_TRACE_ARG_STRING_COPY,
 		       "line", ajb->buf);
 }
 #else
