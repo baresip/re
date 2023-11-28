@@ -158,7 +158,7 @@ struct ajb {
 	uint64_t ts0;        /**< reference timestamp             */
 	uint64_t tr0;        /**< reference time of arrival       */
 	uint64_t tr00;       /**< arrival of first packet         */
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 	struct {
 		int32_t d;
 		uint32_t buftime;
@@ -189,7 +189,7 @@ static void destructor(void *arg)
 }
 
 
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 static void plot_ajb(struct ajb *ajb, uint64_t tr)
 {
 	uint32_t treal;
@@ -216,7 +216,7 @@ static void plot_ajb(struct ajb *ajb, uint64_t tr)
 #endif
 
 
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 void plot_underrun(struct ajb *ajb)
 {
 	uint64_t tr;
@@ -375,7 +375,7 @@ void ajb_calc(struct ajb *ajb, const struct auframe *af, size_t cur_sz)
 	else
 		ajb->as = AJB_GOOD;
 
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 	ajb->plot.d = d;
 	ajb->plot.buftime = buftime;
 	ajb->plot.bufmin  = bufmin;
@@ -438,7 +438,7 @@ enum ajb_state ajb_get(struct ajb *ajb, struct auframe *af)
 		/* early adjustment of avbuftime */
 		ajb->avbuftime -= ptime;
 		ajb->as = AJB_GOOD;
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 		ajb->plot.as = AJB_HIGH;
 		plot_ajb(ajb, tmr_jiffies());
 		ajb->plot.as = AJB_GOOD;
@@ -448,7 +448,7 @@ enum ajb_state ajb_get(struct ajb *ajb, struct auframe *af)
 		/* early adjustment */
 		ajb->avbuftime += ptime;
 		ajb->as = AJB_GOOD;
-#if DEBUG_LEVEL >= 6
+#ifdef RE_AUBUF_TRACE
 		ajb->plot.as = AJB_LOW;
 		plot_ajb(ajb, tmr_jiffies());
 		ajb->plot.as = AJB_GOOD;
