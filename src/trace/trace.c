@@ -46,6 +46,8 @@
 #endif
 
 
+#ifdef RE_TRACE_ENABLED
+
 struct trace_event {
 	const char *name;
 	const char *cat;
@@ -133,6 +135,7 @@ static void flush_tmr(void *arg)
 
 	tmr_start(&trace.flush_tmr, TRACE_FLUSH_TMR, flush_tmr, NULL);
 }
+#endif
 
 
 /**
