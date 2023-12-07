@@ -252,31 +252,18 @@ size_t aufile_get_size(struct aufile *af)
  *
  * @return length in ms if success, otherwise 0.
  */
-size_t aufile_get_length(struct aufile *af, struct aufile_prm *prm)
+size_t aufile_get_length(struct aufile *af, const struct aufile_prm *prm)
 {
-	if (!af)
+	if (!af || !prm)
 		return 0;
 
-	switch (prm->fmt) {
-		case AUFMT_PCMA:
-		case AUFMT_PCMU:
-			return af->datasize * prm->channels * prm->srate
-				/ 1000;
-		case AUFMT_S16LE:
-			return af->datasize * 2 * prm->channels * prm->srate
-				/ 1000;
-		case AUFMT_S24_3LE:
-			return af->datasize * 3 * prm->channels * prm->srate
-				/ 1000;
-		case AUFMT_S32LE:
-		case AUFMT_FLOAT:
-			return af->datasize * 4 * prm->channels * prm->srate
-			/ 1000;
-		default:
-			return 0;
-	}
+	size_t sample_size = aufmt_sample_size(prm->fmt);
 
-	return 0;
+	if (sample_size == 0)
+		return 0;
+
+	return af->datasize * 1000 / (sample_size *
+		prm->channels * prm->srate);
 }
 
 /**
@@ -307,8 +294,12 @@ int aufile_set_position(struct aufile *af, const struct aufile_prm *prm,
 	off_t pos = (off_t)(prm->srate * aufmt_sample_size(prm->fmt)
 		* prm->channels * pos_ms / 1000);
 
+	pos = min((off_t)datasize, pos);
+
 	if (fseek(af->f, pos, SEEK_CUR) < 0)
 		return errno;
+
+	af->nread = pos;
 
 	return 0;
 }

@@ -5,6 +5,33 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.7.0] - 2023-11-06
+
+## What's Changed
+* trace: add id handling by @sreimers in https://github.com/baresip/re/pull/981
+* fmt/pl: add pl_alloc_str by @sreimers in https://github.com/baresip/re/pull/983
+* ci/freebsd: limit runtime to 20 mins by @sreimers in https://github.com/baresip/re/pull/985
+* Httpauth digest response by @cHuberCoffee in https://github.com/baresip/re/pull/944
+* dialog: REVERT fix rtags of forking INVITE with 100rel (#947) by @juha-h in https://github.com/baresip/re/pull/986
+* ice: AI_V4MAPPED doesn't exist on OpenBSD by @landryb in https://github.com/baresip/re/pull/989
+* test: call - add call on-hold/resume test by @cspiel1 in https://github.com/baresip/re/pull/990
+* async: fix re_async_cancel mqueue handling by @sreimers in https://github.com/baresip/re/pull/995
+* async: clear callback function pointer after use (#992) by @cspiel1 in https://github.com/baresip/re/pull/993
+* Update README.md: Fix link in section Examples. by @Wolf-SO in https://github.com/baresip/re/pull/991
+* ci/abi: bump version by @sreimers in https://github.com/baresip/re/pull/1000
+* rtp: make flag rtcp_mux atomic by @cspiel1 in https://github.com/baresip/re/pull/997
+* cmake,udp: improve QOS_FLOWID and PQOS_FLOWID detection by @sreimers in https://github.com/baresip/re/pull/1002
+* types: extend RE_ARG to 32 by @sreimers in https://github.com/baresip/re/pull/1003
+* sip/transp: add win32 local transport addr fallback by @sreimers in https://github.com/baresip/re/pull/1001
+* cmake/config: set HAVE_THREADS only if threads.h by @sreimers in https://github.com/baresip/re/pull/1005
+* ci/freebsd: update vmactions/freebsd-vm@v1 by @sreimers in https://github.com/baresip/re/pull/1006
+* Coverity httpauth fixes by @sreimers in https://github.com/baresip/re/pull/1007
+* rem/aufile: fix aufile_get_length calculations by @larsimmisch in https://github.com/baresip/re/pull/1008
+
+## New Contributors
+* @Wolf-SO made their first contribution in https://github.com/baresip/re/pull/991
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.6.0...v3.7.0
 
 ## [v3.6.2] - 2023-11-06
 

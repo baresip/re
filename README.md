@@ -124,7 +124,6 @@ Patches can sent via Github
 | http     | stable   | HTTP parser (RFC 2616)                         |
 | httpauth | stable   | HTTP-based Authentication (RFC 2617)           |
 | ice      | stable   | Interactive Connectivity Establishment (ICE)   |
-| jbuf     | stable   | Jitter buffer                                  |
 | json     | stable   | JavaScript Object Notation (JSON)              |
 | list     | stable   | Sortable doubly-linked list handling           |
 | main     | stable   | Main poll loop                                 |
@@ -268,8 +267,7 @@ legend:
 ### Supported versions of OpenSSL
 
 * OpenSSL version 1.1.1
-* OpenSSL version 3.0.x
-* OpenSSL version 3.1.x
+* OpenSSL version 3.x.x
 * LibreSSL version 3.x
 
 
