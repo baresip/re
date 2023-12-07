@@ -144,11 +144,8 @@ static void flush_tmr(void *arg)
  */
 int re_trace_init(const char *json_file)
 {
+#ifdef RE_TRACE_ENABLED
 	int err = 0;
-
-#ifndef RE_TRACE_ENABLED
-	return 0;
-#endif
 
 	if (!json_file)
 		return EINVAL;
@@ -196,6 +193,10 @@ out:
 	}
 
 	return err;
+#else
+	(void)json_file;
+	return 0;
+#endif
 }
 
 
@@ -206,11 +207,8 @@ out:
  */
 int re_trace_close(void)
 {
+#ifdef RE_TRACE_ENABLED
 	int err = 0;
-
-#ifndef RE_TRACE_ENABLED
-	return 0;
-#endif
 
 	tmr_cancel(&trace.flush_tmr);
 	re_trace_flush();
@@ -230,6 +228,9 @@ int re_trace_close(void)
 	trace.f = NULL;
 
 	return 0;
+#else
+	return 0;
+#endif
 }
 
 
@@ -240,16 +241,13 @@ int re_trace_close(void)
  */
 int re_trace_flush(void)
 {
+#ifdef RE_TRACE_ENABLED
 	int i, flush_count;
 	struct trace_event *event_tmp;
 	struct trace_event *e;
 	char json_arg[256] = {0};
 	char name[128]	   = {0};
 	char id_str[128]   = {0};
-
-#ifndef RE_TRACE_ENABLED
-	return 0;
-#endif
 
 	if (!re_atomic_rlx(&trace.init))
 		return 0;
@@ -311,6 +309,9 @@ int re_trace_flush(void)
 
 	(void)fflush(trace.f);
 	return 0;
+#else
+	return 0;
+#endif
 }
 
 
@@ -318,11 +319,8 @@ void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
 		    re_trace_arg_type arg_type, const char *arg_name,
 		    void *arg_value)
 {
+#ifdef RE_TRACE_ENABLED
 	struct trace_event *e;
-
-#ifndef RE_TRACE_ENABLED
-	return;
-#endif
 
 	if (!re_atomic_rlx(&trace.init))
 		return;
@@ -361,4 +359,13 @@ void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
 			(const char *)arg_value);
 		break;
 	}
+#else
+	(void)cat;
+	(void)name;
+	(void)ph;
+	(void)id;
+	(void)arg_type;
+	(void)arg_name;
+	(void)arg_value;
+#endif
 }
