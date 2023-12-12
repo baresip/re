@@ -103,7 +103,8 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				goto out;
 		}
 
-		if (pl_isset(&msg->to.tag)) {
+		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
+		if (pl_isset(&msg->to.tag) && contact) {
 			err = sip_dialog_established(sess->dlg) ?
 					sip_dialog_update(sess->dlg, msg) :
 					sip_dialog_create(sess->dlg, msg);
