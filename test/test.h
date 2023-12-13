@@ -229,6 +229,7 @@ int test_httpauth_resp(void);
 int test_httpauth_basic_request(void);
 int test_httpauth_digest_request(void);
 int test_httpauth_digest_response(void);
+int test_httpauth_digest_verification(void);
 int test_ice_loop(void);
 int test_ice_cand(void);
 int test_json(void);
