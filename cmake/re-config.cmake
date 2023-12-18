@@ -266,6 +266,10 @@ endif()
 # Testing Atomic
 #
 
+if(NOT WIN32)
+  set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} -std=c11)
+endif()
+
 set(ATOMIC_TEST_CODE "
     #include <stdatomic.h>
     #include <stdint.h>
