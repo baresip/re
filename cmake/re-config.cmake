@@ -2,7 +2,7 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
-include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
@@ -266,21 +266,20 @@ endif()
 # Testing Atomic
 #
 
-if(NOT WIN32)
-  set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} -std=c11)
-endif()
+enable_language(CXX)
 
 set(ATOMIC_TEST_CODE "
-    #include <stdatomic.h>
-    #include <stdint.h>
-    int main() {
-        atomic_int_least64_t x;
-        atomic_store(&x, 1);
-        x--;
-        return atomic_load(&x);
-    }")
+     #include <atomic>
+     #include <cstdint>
+     std::atomic<uint8_t> n8 (0); // riscv64
+     std::atomic<uint64_t> n64 (0); // armel, mipsel, powerpc
+     int main() {
+       ++n8;
+       ++n64;
+       return 0;
+  }")
 
-check_c_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)
+check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)
 
 if(NOT atomic_test)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} atomic)
