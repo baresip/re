@@ -2,6 +2,7 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
+include(CheckCSourceCompiles)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
@@ -212,5 +213,77 @@ list(APPEND RE_DEFINITIONS
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
   if(Backtrace_FOUND)
     set(CMAKE_ENABLE_EXPORTS ON)
+  endif()
+endif()
+
+
+##############################################################################
+#
+# Linking LIBS
+#
+
+set(RE_LIBS Threads::Threads ${RESOLV_LIBRARY})
+
+if(BACKTRACE_FOUND)
+  list(APPEND RE_LIBS ${Backtrace_LIBRARIES})
+endif()
+
+if(ZLIB_FOUND)
+  list(APPEND RE_LIBS ZLIB::ZLIB)
+endif()
+
+if(USE_OPENSSL)
+  list(APPEND RE_LIBS OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  list(APPEND RE_LIBS
+    "-framework SystemConfiguration" "-framework CoreFoundation"
+  )
+endif()
+
+if(WIN32)
+  list(APPEND RE_LIBS
+    qwave
+    iphlpapi
+    wsock32
+    ws2_32
+    dbghelp
+  )
+else()
+  list(APPEND RE_LIBS m)
+endif()
+
+if(UNIX)
+  list(APPEND RE_LIBS
+    ${CMAKE_DL_LIBS}
+  )
+endif()
+
+
+##############################################################################
+#
+# Testing Atomic
+#
+
+set(ATOMIC_TEST_CODE "
+    #include <stdatomic.h>
+    #include <stdint.h>
+    int main() {
+        atomic_int_least64_t x;
+        atomic_store(&x, 1);
+        x--;
+        return atomic_load(&x);
+    }")
+
+check_c_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)
+
+if(NOT atomic_test)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} atomic)
+  check_c_source_compiles("${ATOMIC_TEST_CODE}" atomic_test_lib)
+  if(NOT atomic_test_lib)
+    message(FATAL_ERROR "No builtin or libatomic support")
+  else()
+    list(APPEND RE_LIBS atomic)
   endif()
 endif()
