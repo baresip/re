@@ -571,7 +571,7 @@ static int poll_setup(struct re *re)
 /**
  * Listen for events on a file descriptor
  *
- * @param fhs    File descriptor handler struct pointer (don't use mem_deref(),
+ * @param fhsp   File descriptor handler struct pointer (don't use mem_deref(),
  *               use fd_close() instead)
  * @param fd     File descriptor
  * @param flags  Wanted event flags

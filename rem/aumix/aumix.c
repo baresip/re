@@ -62,7 +62,11 @@ static void destructor(void *arg)
 {
 	struct aumix *mix = arg;
 
-	if (mix->run) {
+	mtx_lock(&mix->mutex);
+	bool run = mix->run;
+	mtx_unlock(&mix->mutex);
+
+	if (run) {
 
 		mtx_lock(&mix->mutex);
 		mix->run = false;
