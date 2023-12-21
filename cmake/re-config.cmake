@@ -283,7 +283,7 @@ check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)
 
 if(NOT atomic_test)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} atomic)
-  check_c_source_compiles("${ATOMIC_TEST_CODE}" atomic_test_lib)
+  check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test_lib)
   if(NOT atomic_test_lib)
     message(FATAL_ERROR "No builtin or libatomic support")
   else()
