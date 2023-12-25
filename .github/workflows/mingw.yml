@@ -20,7 +20,7 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y mingw-w64 ninja-build
     
-    - uses: actions/checkout@v3 # needed for pr checkout
+    - uses: actions/checkout@v4 # needed for pr checkout
 
     - uses: sreimers/pr-dependency-action@v0.6
       with:
@@ -28,7 +28,7 @@ jobs:
         repo: https://github.com/baresip/baresip-win32
         secret: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: baresip-win32/re
 
@@ -61,7 +61,7 @@ jobs:
     needs: MinGW-w64-build
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/download-artifact@v2
     - uses: sreimers/pr-dependency-action@v0.6
       with:
