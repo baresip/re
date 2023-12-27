@@ -5,6 +5,30 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [v3.8.0] - 2023-12-27
+
+## What's Changed
+* Update README.md by @alfredh in https://github.com/baresip/re/pull/1013
+* rem/aufile: aufile_get_length use aufmt_sample_size by @larsimmisch in https://github.com/baresip/re/pull/1011
+* rem/aufile: test and fix aufile_set_position nread by @larsimmisch in https://github.com/baresip/re/pull/1010
+* ci/ssl: bump assets release by @sreimers in https://github.com/baresip/re/pull/1014
+* readme: update supported openssl versions by @sreimers in https://github.com/baresip/re/pull/1015
+* ci: upgrade android to openssl 3.2.0 by @alfredh in https://github.com/baresip/re/pull/1017
+* sipsess/connect: don't create a dialog for 100 responses by @maximilianfridrich in https://github.com/baresip/re/pull/1018
+* aubuf: fix build with re_trace_event by @cspiel1 in https://github.com/baresip/re/pull/1019
+* trace: fix coverity warnings by @alfredh in https://github.com/baresip/re/pull/1024
+* aumix: fix coverity defect in destructor by @alfredh in https://github.com/baresip/re/pull/1025
+* main: fix doxygen comment by @alfredh in https://github.com/baresip/re/pull/1026
+* connect: do not enforce Contact header in 1XX responses with To tag by @maximilianfridrich in https://github.com/baresip/re/pull/1028
+* test/sipsess: test re-INVITE with wait for ACK by @cspiel1 in https://github.com/baresip/re/pull/1027
+* dialog: fix rtags of forking INVITE by @maximilianfridrich in https://github.com/baresip/re/pull/1023
+* cmake: add RE_LIBS config and add atomic check by @sreimers in https://github.com/baresip/re/pull/1029
+* ci: use actions/checkout@v4 by @robert-scheck in https://github.com/baresip/re/pull/1031
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.7.0...v3.8.0
+
+
 ## [v3.7.0] - 2023-11-06
 
 ## What's Changed
