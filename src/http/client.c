@@ -1196,7 +1196,7 @@ int http_client_set_session_reuse(struct http_cli *cli, bool enabled)
  * Set minimum TLS version
  *
  * @param cli       HTTP Client
- * @param version 	Minimum version, e.g.: TLS1_2_VERSION
+ * @param version   Minimum version, e.g.: TLS1_2_VERSION
  *
  * @return 0 if success, otherwise errorcode
  */
@@ -1210,10 +1210,10 @@ int http_client_set_tls_min_version(struct http_cli *cli, int version)
 
 
 /**
- * Set minimum TLS version
+ * Set maximum TLS version
  *
  * @param cli       HTTP Client
- * @param version 	Minimum version, e.g.: TLS1_2_VERSION
+ * @param version   Maximum version, e.g.: TLS1_2_VERSION
  *
  * @return 0 if success, otherwise errorcode
  */
