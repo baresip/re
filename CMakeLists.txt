@@ -739,7 +739,8 @@ if(LIBRE_BUILD_SHARED)
   )
 endif()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/libre-config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/libre-config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake"
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
   COMPONENT Development
