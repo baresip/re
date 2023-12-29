@@ -13,6 +13,7 @@
 #include <re_sys.h>
 #include <re_net.h>
 #include <re_rtp.h>
+#include <re_thread.h>
 #include "rtcp.h"
 
 
