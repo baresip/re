@@ -49,7 +49,7 @@ int test_mem(void)
 	obj->pattern = PATTERN;
 
 	TEST_EQUALS(1, mem_nrefs(obj));
-	TEST_ASSERT(is_aligned(obj, mem_alignment));
+	TEST_ASSERT(re_is_aligned(obj, mem_alignment));
 
 	obj = mem_ref(obj);
 	TEST_EQUALS(2, mem_nrefs(obj));
@@ -67,7 +67,7 @@ int test_mem(void)
 		TEST_ERR(err);
 	}
 
-	TEST_ASSERT(is_aligned(obj, mem_alignment));
+	TEST_ASSERT(re_is_aligned(obj, mem_alignment));
 
 	old = mem_ref(obj);
 	TEST_EQUALS(2, mem_nrefs(obj));
