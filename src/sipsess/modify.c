@@ -32,9 +32,12 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 	struct sipsess *sess = arg;
 	const struct sip_hdr *hdr;
 	struct mbuf *desc = NULL;
+	bool sdp;
 
 	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
+
+	sdp = mbuf_get_left(msg->mb) > 0;
 
 	if (msg->scode < 200) {
 		return;
@@ -43,20 +46,34 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 
 		(void)sip_dialog_update(sess->dlg, msg);
 
-		if (sess->sent_offer) {
-			(void)sess->answerh(msg, sess->arg);
-		}
-		else {
-			sess->modify_pending = false;
-			(void)sess->offerh(&desc, msg, sess->arg);
+		if (sdp) {
+			if (sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+				sess->neg_state = SDP_NEG_DONE;
+				err = sess->answerh(msg, sess->arg);
+			}
+			else if (sess->neg_state == SDP_NEG_NONE) {
+				sess->neg_state = SDP_NEG_REMOTE_OFFER;
+				err = sess->offerh(&desc, msg, sess->arg);
+			}
+
+			if (err)
+				goto out;
 		}
 
-		(void)sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
+		err = sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
 				  sess->auth, sess->ctype, desc);
+		if (err)
+			goto out;
+
+		if (sess->neg_state == SDP_NEG_REMOTE_OFFER
+		    && mbuf_get_left(desc))
+		    	sess->neg_state = SDP_NEG_DONE;
 
 		mem_deref(desc);
 	}
 	else {
+		sess->neg_state = SDP_NEG_DONE;
+
 		if (sess->terminated)
 			goto out;
 
@@ -126,28 +143,35 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 
 int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
 {
+	int err;
+
 	if (sess->req)
 		return EPROTO;
-
-	sess->sent_offer = sess->desc ? true : false;
-	sess->modify_pending = false;
 
 	if (reset_ls)
 		sip_loopstate_reset(&sess->ls);
 
-	return sip_drequestf(&sess->req, sess->sip, true, "INVITE",
-			     sess->dlg, 0, sess->auth,
-			     send_handler, reinvite_resp_handler, sess,
-			     "%s%s%s"
-			     "Content-Length: %zu\r\n"
-			     "\r\n"
-			     "%b",
-			     sess->desc ? "Content-Type: " : "",
-			     sess->desc ? sess->ctype : "",
-			     sess->desc ? "\r\n" : "",
-			     sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
-			     sess->desc ? mbuf_buf(sess->desc) : NULL,
-			     sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+	err = sip_drequestf(&sess->req, sess->sip, true, "INVITE",
+			    sess->dlg, 0, sess->auth,
+			    send_handler, reinvite_resp_handler, sess,
+			    "%s%s%s"
+			    "Content-Length: %zu\r\n"
+			    "\r\n"
+			    "%b",
+			    sess->desc ? "Content-Type: " : "",
+			    sess->desc ? sess->ctype : "",
+			    sess->desc ? "\r\n" : "",
+			    sess->desc ? mbuf_get_left(sess->desc) :(size_t)0,
+			    sess->desc ? mbuf_buf(sess->desc) : NULL,
+			    sess->desc ? mbuf_get_left(sess->desc):(size_t)0);
+
+	if (!err) {
+		sess->modify_pending = false;
+		if (sess->desc)
+			sess->neg_state = SDP_NEG_LOCAL_OFFER;
+	}
+
+	return err;
 }
 
 
@@ -161,12 +185,11 @@ int sipsess_reinvite(struct sipsess *sess, bool reset_ls)
  */
 int sipsess_modify(struct sipsess *sess, struct mbuf *desc)
 {
-	if (!sess || sess->terminated || sess->awaiting_answer
-	    || !sip_dialog_established(sess->dlg))
+	if (!sess || sess->terminated || !sip_dialog_established(sess->dlg))
 		return EINVAL;
 
-	if (!sess->established && !sess->refresh_allowed
-	    && mbuf_get_left(desc))
+	if (mbuf_get_left(desc) && (sess->neg_state != SDP_NEG_DONE
+	    && sess->neg_state != SDP_NEG_NONE))
 		return EPROTO;
 
 	mem_deref(sess->desc);

@@ -68,7 +68,9 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 		*contp = cont;
 
 out:
-	sess->sent_offer = desc != NULL;
+	if (desc)
+		sess->neg_state = SDP_NEG_LOCAL_OFFER;
+
 	mem_deref(desc);
 	return err;
 }
@@ -89,19 +91,13 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
 
+	sdp = mbuf_get_left(msg->mb) > 0;
+
 	if (msg->scode < 200) {
 		sess->progrh(msg, sess->arg);
-		sdp = mbuf_get_left(msg->mb) > 0;
 
 		if (msg->scode == 100)
 			return;
-
-		if (sdp && sess->sent_offer) {
-			sess->awaiting_answer = false;
-			err = sess->answerh(msg, sess->arg);
-			if (err)
-				goto out;
-		}
 
 		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
 		if (pl_isset(&msg->to.tag) && contact) {
@@ -112,19 +108,40 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				goto out;
 		}
 
+		if (sdp && sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+			err = sess->answerh(msg, sess->arg);
+			if (err)
+				goto out;
+		}
+
 		if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")
 				&& sess->rel100_supported) {
-			if (sdp && !sess->sent_offer) {
-				sess->modify_pending = false;
-				err = sess->offerh(&desc, msg, sess->arg);
+
+			if (sess->neg_state == SDP_NEG_NONE && !sdp)
+				goto out;
+
+			if (sdp) {
+				if (sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+					sess->neg_state = SDP_NEG_DONE;
+				}
+				else if (sess->neg_state == SDP_NEG_NONE) {
+					sess->neg_state = SDP_NEG_REMOTE_OFFER;
+					err = sess->offerh(&desc, msg,
+							   sess->arg);
+				}
 			}
 
 			err |= sipsess_prack(sess, msg->cseq.num, msg->rel_seq,
 					     &msg->cseq.met, desc);
-			mem_deref(desc);
-			sess->desc = mem_deref(sess->desc);
 			if (err)
 				goto out;
+
+			if (sess->neg_state == SDP_NEG_REMOTE_OFFER
+			    && mbuf_get_left(desc))
+				sess->neg_state = SDP_NEG_DONE;
+
+			mem_deref(desc);
+			sess->desc = mem_deref(sess->desc);
 		}
 
 		return;
@@ -139,15 +156,28 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (err)
 			goto out;
 
-		if (sess->sent_offer)
-			err = sess->answerh(msg, sess->arg);
-		else {
-			sess->modify_pending = false;
-			err = sess->offerh(&desc, msg, sess->arg);
+		if (sdp) {
+			if (sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+				sess->neg_state = SDP_NEG_DONE;
+				err = sess->answerh(msg, sess->arg);
+			}
+			else if (sess->neg_state == SDP_NEG_NONE) {
+				sess->neg_state = SDP_NEG_REMOTE_OFFER;
+				err = sess->offerh(&desc, msg, sess->arg);
+			}
 		}
 
 		err |= sipsess_ack(sess->sock, sess->dlg, msg->cseq.num,
-				   sess->auth, sess->ctype, desc);
+				  sess->auth, sess->ctype, desc);
+		if (err)
+			goto out;
+
+		if (sess->neg_state == SDP_NEG_NONE && !sdp)
+			goto out;
+
+		if (sess->neg_state == SDP_NEG_REMOTE_OFFER
+		    && mbuf_get_left(desc))
+			sess->neg_state = SDP_NEG_DONE;
 
 		sess->established = true;
 		mem_deref(desc);
