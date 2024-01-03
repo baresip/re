@@ -99,6 +99,9 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 	if (err)
 		goto out;
 
+	if (mbuf_get_left(msg->mb))
+		sess->neg_state = SDP_NEG_REMOTE_OFFER;
+
 	va_start(ap, fmt);
 
 	if (scode > 100 && scode < 200) {

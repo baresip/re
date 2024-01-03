@@ -15,7 +15,7 @@ jobs:
       OPENSSL_ROOT_DIR: "assets/${{ matrix.ssl }}"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: fix flaky azure mirrors
       if: ${{ runner.os == 'Linux' }}

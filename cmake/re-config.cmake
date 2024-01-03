@@ -2,6 +2,7 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
+include(CheckCXXSourceCompiles)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
 
@@ -212,5 +213,80 @@ list(APPEND RE_DEFINITIONS
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES "[Rr]el")
   if(Backtrace_FOUND)
     set(CMAKE_ENABLE_EXPORTS ON)
+  endif()
+endif()
+
+
+##############################################################################
+#
+# Linking LIBS
+#
+
+set(RE_LIBS Threads::Threads ${RESOLV_LIBRARY})
+
+if(BACKTRACE_FOUND)
+  list(APPEND RE_LIBS ${Backtrace_LIBRARIES})
+endif()
+
+if(ZLIB_FOUND)
+  list(APPEND RE_LIBS ZLIB::ZLIB)
+endif()
+
+if(USE_OPENSSL)
+  list(APPEND RE_LIBS OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  list(APPEND RE_LIBS
+    "-framework SystemConfiguration" "-framework CoreFoundation"
+  )
+endif()
+
+if(WIN32)
+  list(APPEND RE_LIBS
+    qwave
+    iphlpapi
+    wsock32
+    ws2_32
+    dbghelp
+  )
+else()
+  list(APPEND RE_LIBS m)
+endif()
+
+if(UNIX)
+  list(APPEND RE_LIBS
+    ${CMAKE_DL_LIBS}
+  )
+endif()
+
+
+##############################################################################
+#
+# Testing Atomic
+#
+
+enable_language(CXX)
+
+set(ATOMIC_TEST_CODE "
+     #include <atomic>
+     #include <cstdint>
+     std::atomic<uint8_t> n8 (0); // riscv64
+     std::atomic<uint64_t> n64 (0); // armel, mipsel, powerpc
+     int main() {
+       ++n8;
+       ++n64;
+       return 0;
+  }")
+
+check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)
+
+if(NOT atomic_test)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} atomic)
+  check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test_lib)
+  if(NOT atomic_test_lib)
+    message(FATAL_ERROR "No builtin or libatomic support")
+  else()
+    list(APPEND RE_LIBS atomic)
   endif()
 endif()

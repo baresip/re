@@ -11,16 +11,16 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 project(re
-  VERSION 3.7.0
+  VERSION 3.8.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 19) # bump if ABI breaks
+set(PROJECT_SOVERSION 20) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -609,50 +609,6 @@ endif()
 
 ##############################################################################
 #
-# Linking LIBS
-#
-
-set(LINKLIBS Threads::Threads ${RESOLV_LIBRARY})
-
-if(BACKTRACE_FOUND)
-  list(APPEND LINKLIBS ${Backtrace_LIBRARIES})
-endif()
-
-if(ZLIB_FOUND)
-  list(APPEND LINKLIBS ZLIB::ZLIB)
-endif()
-
-if(USE_OPENSSL)
-  list(APPEND LINKLIBS OpenSSL::SSL OpenSSL::Crypto)
-endif()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  list(APPEND LINKLIBS
-    "-framework SystemConfiguration" "-framework CoreFoundation"
-  )
-endif()
-
-if(WIN32)
-  list(APPEND LINKLIBS
-    qwave
-    iphlpapi
-    wsock32
-    ws2_32
-    dbghelp
-  )
-else()
-  list(APPEND LINKLIBS m)
-endif()
-
-if(UNIX)
-  list(APPEND LINKLIBS
-    ${CMAKE_DL_LIBS}
-  )
-endif()
-
-
-##############################################################################
-#
 # Main target object
 #
 
@@ -675,7 +631,7 @@ target_include_directories(re-objs PRIVATE
 if(LIBRE_BUILD_SHARED)
   list(APPEND RE_INSTALL_TARGETS re-shared)
   add_library(re-shared SHARED $<TARGET_OBJECTS:re-objs>)
-  target_link_libraries(re-shared PRIVATE ${LINKLIBS})
+  target_link_libraries(re-shared PRIVATE ${RE_LIBS})
   set_target_properties(re-shared PROPERTIES VERSION
     ${PROJECT_SOVERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
   set_target_properties(re-shared PROPERTIES SOVERSION ${PROJECT_SOVERSION})
@@ -692,7 +648,7 @@ endif()
 if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
-  target_link_libraries(re PUBLIC ${LINKLIBS})
+  target_link_libraries(re PUBLIC ${RE_LIBS})
   target_include_directories(re PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )

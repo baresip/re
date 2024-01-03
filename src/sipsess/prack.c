@@ -68,9 +68,8 @@ static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		(void)sip_dialog_update(req->sess->dlg, msg);
 
 		if (mbuf_get_left(msg->mb)) {
-			if (req->sess->sent_offer) {
-				req->sess->awaiting_answer = false;
-				req->sess->refresh_allowed = true;
+			if (req->sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+				req->sess->neg_state = SDP_NEG_DONE;
 				(void)req->sess->answerh(msg, req->sess->arg);
 			}
 
@@ -135,10 +134,6 @@ static int prack_request(struct sipsess_prack *prack)
 			  prack->rseq, prack->cseq, prack->met);
 	if (err == -1)
 		return err;
-
-	if (req->sess->sent_offer && !req->sess->awaiting_answer
-		&& (!req->body || !mbuf_get_left(req->body)))
-		req->sess->refresh_allowed = true;
 
 	return sip_drequestf(&req->req, req->sess->sip, true, "PRACK",
 			     req->sess->dlg, 0, req->sess->auth, NULL,
