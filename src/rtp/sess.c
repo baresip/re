@@ -229,6 +229,7 @@ void rtcp_handler(struct rtcp_sess *sess, struct rtcp_msg *msg)
 	if (!sess || !msg)
 		return;
 
+	mtx_lock(sess->lock);
 	switch (msg->hdr.pt) {
 
 	case RTCP_SR:
@@ -246,6 +247,8 @@ void rtcp_handler(struct rtcp_sess *sess, struct rtcp_msg *msg)
 	default:
 		break;
 	}
+
+	mtx_unlock(sess->lock);
 }
 
 
@@ -357,8 +360,10 @@ int rtcp_enable(struct rtcp_sess *sess, bool enabled, const char *cname)
 	if (!sess)
 		return EINVAL;
 
+	mtx_lock(sess->lock);
 	sess->cname = mem_deref(sess->cname);
 	err = str_dup(&sess->cname, cname);
+	mtx_unlock(sess->lock);
 	if (err)
 		return err;
 
@@ -583,12 +588,15 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 	if (!sess)
 		return;
 
+	mtx_lock(sess->lock);
 	mbr = get_member(sess, hdr->ssrc);
+	mtx_unlock(sess->lock);
 	if (!mbr) {
 		DEBUG_NOTICE("could not add member: 0x%08x\n", hdr->ssrc);
 		return;
 	}
 
+	mtx_lock(sess->lock);
 	if (!mbr->s) {
 		int err;
 
@@ -598,6 +606,7 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 		else
 			err = mutex_alloc(&mbr->s->lock);
 
+		mtx_unlock(sess->lock);
 		if (err) {
 			DEBUG_NOTICE("could not add sender: 0x%08x\n",
 				     hdr->ssrc);
@@ -611,28 +620,42 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 		/* probation not used */
 		sa_cpy(&mbr->s->rtp_peer, peer);
 		source_unlock(mbr->s);
+		mtx_lock(sess->lock);
 		++sess->senderc;
+		mtx_unlock(sess->lock);
+	}
+	else {
+		mtx_unlock(sess->lock);
 	}
 
 	source_lock(mbr->s);
 	if (!source_update_seq(mbr->s, hdr->seq)) {
 		DEBUG_WARNING("rtp_update_seq() returned 0\n");
 	}
+	source_unlock(mbr->s);
 
+	mtx_lock(sess->lock);
 	if (sess->srate_rx) {
 		/* Convert from wall-clock time to timestamp units */
 		hdr->ts_arrive = tmr_jiffies() * sess->srate_rx / 1000;
+		mtx_unlock(sess->lock);
 
 		/*
 		 * Calculate jitter only when the timestamp is different than
 		 * last packet (see RTP FAQ
 		 * https://www.cs.columbia.edu/~hgs/rtp/faq.html#jitter).
 		 */
+		source_lock(mbr->s);
 		if (hdr->ts != mbr->s->last_rtp_ts)
 			source_calc_jitter(mbr->s, hdr->ts,
 					   (uint32_t)hdr->ts_arrive);
+		source_unlock(mbr->s);
+	}
+	else {
+		mtx_unlock(sess->lock);
 	}
 
+	source_lock(mbr->s);
 	mbr->s->last_rtp_ts = hdr->ts;
 	mbr->s->rtp_rx_bytes += payload_size;
 	source_unlock(mbr->s);
@@ -738,6 +761,7 @@ int rtcp_debug(struct re_printf *pf, const struct rtp_sock *rs)
 		return 0;
 
 	err |= re_hprintf(pf, "----- RTCP Session: -----\n");
+	mtx_lock(sess->lock);
 	err |= re_hprintf(pf, "  cname=%s SSRC=0x%08x/%u rx=%uHz\n",
 			  sess->cname,
 			  rtp_sess_ssrc(sess->rs), rtp_sess_ssrc(sess->rs),
@@ -745,7 +769,6 @@ int rtcp_debug(struct re_printf *pf, const struct rtp_sock *rs)
 
 	hash_apply(sess->members, debug_handler, pf);
 
-	mtx_lock(sess->lock);
 	err |= re_hprintf(pf, "  TX: packets=%u, octets=%u\n",
 			  sess->txstat.psent, sess->txstat.osent);
 	mtx_unlock(sess->lock);
