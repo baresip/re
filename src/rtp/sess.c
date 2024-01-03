@@ -84,6 +84,14 @@ static void sess_destructor(void *data)
 }
 
 
+static void source_destructor(void *data)
+{
+	struct rtp_source *s = data;
+
+	mem_deref(s->lock);
+}
+
+
 static struct rtp_member *get_member(struct rtcp_sess *sess, uint32_t src)
 {
 	struct rtp_member *mbr;
@@ -178,6 +186,7 @@ static void handle_incoming_sr(struct rtcp_sess *sess,
 
 	if (mbr->s) {
 		/* Save time when SR was received */
+		source_lock(mbr->s);
 		mbr->s->sr_recv = tmr_jiffies();
 
 		/* Save NTP timestamp from SR */
@@ -186,6 +195,7 @@ static void handle_incoming_sr(struct rtcp_sess *sess,
 		mbr->s->rtp_ts     = msg->r.sr.rtp_ts;
 		mbr->s->psent      = msg->r.sr.psent;
 		mbr->s->osent      = msg->r.sr.osent;
+		source_unlock(mbr->s);
 	}
 
 	for (i=0; i<msg->hdr.count; i++)
@@ -392,12 +402,14 @@ static bool sender_apply_handler(struct le *le, void *arg)
 
 	/* Initialise the members */
 	rr.ssrc     = mbr->src;
+	source_lock(s);
 	rr.fraction = source_calc_fraction_lost(s);
 	rr.lost     = source_calc_lost(s);
 	rr.last_seq = s->cycles | s->max_seq;
 	rr.jitter   = s->jitter >> 4;
 	rr.lsr      = calc_lsr(&s->last_sr);
 	rr.dlsr     = calc_dlsr(s->sr_recv);
+	source_unlock(s);
 
 	return 0 != rtcp_rr_encode(mb, &rr);
 }
@@ -578,20 +590,31 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 	}
 
 	if (!mbr->s) {
-		mbr->s = mem_zalloc(sizeof(*mbr->s), NULL);
-		if (!mbr->s) {
+		int err;
+
+		mbr->s = mem_zalloc(sizeof(*mbr->s), source_destructor);
+		if (!mbr->s)
+			err = ENOMEM;
+		else
+			err = mutex_alloc(&mbr->s->lock);
+
+		if (err) {
 			DEBUG_NOTICE("could not add sender: 0x%08x\n",
 				     hdr->ssrc);
+			mbr->s = mem_deref(mbr->s);
 			return;
 		}
 
 		/* first packet - init sequence number */
+		source_lock(mbr->s);
 		source_init_seq(mbr->s, hdr->seq);
 		/* probation not used */
 		sa_cpy(&mbr->s->rtp_peer, peer);
+		source_unlock(mbr->s);
 		++sess->senderc;
 	}
 
+	source_lock(mbr->s);
 	if (!source_update_seq(mbr->s, hdr->seq)) {
 		DEBUG_WARNING("rtp_update_seq() returned 0\n");
 	}
@@ -612,6 +635,7 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 
 	mbr->s->last_rtp_ts = hdr->ts;
 	mbr->s->rtp_rx_bytes += payload_size;
+	source_unlock(mbr->s);
 }
 
 
@@ -650,10 +674,12 @@ int rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats)
 		return 0;
 	}
 
+	source_lock(mbr->s);
 	stats->rx.sent = mbr->s->received;
 	stats->rx.lost = source_calc_lost(mbr->s);
 	stats->rx.jit  = sess->srate_rx ?
 		1000000 * (mbr->s->jitter>>4) / sess->srate_rx : 0;
+	source_unlock(mbr->s);
 
 	return 0;
 }
@@ -663,18 +689,34 @@ static bool debug_handler(struct le *le, void *arg)
 {
 	const struct rtp_member *mbr = le->data;
 	struct re_printf *pf = arg;
+	struct mbuf *mb = NULL;
 	int err;
 
 	err = re_hprintf(pf, "  member 0x%08x: lost=%d Jitter=%.1fms"
 			  " RTT=%.1fms\n", mbr->src, mbr->cum_lost,
 			  (double)mbr->jit/1000, (double)mbr->rtt/1000);
+	if (err)
+		return true;
+
 	if (mbr->s) {
-		err |= re_hprintf(pf,
+		mb = mbuf_alloc(64);
+		if (!mb)
+			return true;
+
+		source_lock(mbr->s);
+		err = mbuf_printf(mb,
 				  "                 IP=%J psent=%u rcvd=%u\n",
 				  &mbr->s->rtp_peer, mbr->s->psent,
 				  mbr->s->received);
+		source_unlock(mbr->s);
+		if (err)
+			goto out;
+
+		re_hprintf(pf, "%b", mb->buf, mb->pos);
 	}
 
+out:
+	mem_deref(mb);
 	return err != 0;
 }
 

@@ -12,6 +12,7 @@
 #include <re_hash.h>
 #include <re_sa.h>
 #include <re_rtp.h>
+#include <re_thread.h>
 #include "rtcp.h"
 
 

@@ -13,6 +13,7 @@
 #include <re_sys.h>
 #include <re_net.h>
 #include <re_udp.h>
+#include <re_thread.h>
 #include <re_rtp.h>
 #include <re_atomic.h>
 #include "rtcp.h"
