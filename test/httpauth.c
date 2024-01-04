@@ -590,7 +590,7 @@ int test_httpauth_digest_response(void)
 		},
 	};
 
-	int err;
+	int err = 0;
 
 	for (size_t i = 0; i < RE_ARRAY_SIZE(testv); i++) {
 		struct httpauth_digest_enc_resp *resp = NULL;

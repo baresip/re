@@ -23,8 +23,7 @@ int test_aulength(void)
 	re_snprintf(path, sizeof(path), "%s/beep.wav", test_datapath());
 
 	int err = aufile_open(&af, &prm, path, AUFILE_READ);
-	if (err)
-		TEST_ERR(err);
+	TEST_ERR(err);
 
 	size_t length = aufile_get_length(af, &prm);
 	TEST_EQUALS(67, length);
