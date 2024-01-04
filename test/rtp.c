@@ -320,7 +320,7 @@ static const uint8_t rtcp_sdes[] =
 	"";
 
 
-static int test_rtcp_decode_badmsg(void)
+int test_rtcp_decode_badmsg(void)
 {
 	struct rtcp_msg *msg = NULL;
 	uint32_t ssrc = 0xcafebabe;
@@ -412,10 +412,6 @@ int test_rtcp_decode(void)
 
 	if (err)
 		goto out;
-
-	err = test_rtcp_decode_badmsg();
-	if (err)
-		return err;
 
  out:
 	mem_deref(msg);

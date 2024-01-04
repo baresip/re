@@ -158,6 +158,7 @@ static const struct test tests[] = {
 	TEST(test_rtcp_encode),
 	TEST(test_rtcp_encode_afb),
 	TEST(test_rtcp_decode),
+	TEST(test_rtcp_decode_badmsg),
 	TEST(test_rtcp_packetloss),
 	TEST(test_rtcp_twcc),
 	TEST(test_sa_class),
