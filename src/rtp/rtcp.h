@@ -47,8 +47,6 @@ struct rtp_source {
 	uint32_t last_rtp_ts;     /**< Last RTP timestamp                  */
 	uint32_t psent;           /**< RTP packets sent                    */
 	uint32_t osent;           /**< RTP octets sent                     */
-
-	mtx_t *lock;              /**< Lock for this struct                */
 };
 
 /** RTP Member */
@@ -73,8 +71,6 @@ void source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
 			uint32_t arrival);
 int  source_calc_lost(const struct rtp_source *s);
 uint8_t source_calc_fraction_lost(struct rtp_source *s);
-int source_lock(struct rtp_source *s);
-int source_unlock(struct rtp_source *s);
 
 /* RR (Reception report) */
 int rtcp_rr_alloc(struct rtcp_rr **rrp, size_t count);
