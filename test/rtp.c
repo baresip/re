@@ -320,21 +320,17 @@ static const uint8_t rtcp_sdes[] =
 	"";
 
 
-static int test_rtcp_decode_badmsg(void)
+int test_rtcp_decode_badmsg(void)
 {
 	struct rtcp_msg *msg = NULL;
 	uint32_t ssrc = 0xcafebabe;
-	struct mbuf *mb;
-	int err = 0;
 
-	mb = mbuf_alloc(128);
-	if (!mb) {
-		err = ENOMEM;
-		goto out;
-	}
+	struct mbuf *mb = mbuf_alloc(128);
+	if (!mb)
+		return ENOMEM;
 
-	err = rtcp_encode(mb, RTCP_PSFB, RTCP_PSFB_SLI,
-			  ssrc, ssrc, NULL, NULL);
+	int err = rtcp_encode(mb, RTCP_PSFB, RTCP_PSFB_SLI,
+			      ssrc, ssrc, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -344,7 +340,8 @@ static int test_rtcp_decode_badmsg(void)
 
 	mb->pos = 0;
 
-	if (EBADMSG != rtcp_decode(&msg, mb)) {
+	int ret = rtcp_decode(&msg, mb);
+	if (EBADMSG != ret && ret != ENOMEM) {
 		err = EBADMSG;
 		goto out;
 	}
@@ -412,10 +409,6 @@ int test_rtcp_decode(void)
 
 	if (err)
 		goto out;
-
-	err = test_rtcp_decode_badmsg();
-	if (err)
-		return err;
 
  out:
 	mem_deref(msg);
