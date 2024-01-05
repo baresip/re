@@ -11,7 +11,6 @@
 #include <re_list.h>
 #include <re_hash.h>
 #include <re_sa.h>
-#include <re_thread.h>
 #include <re_rtp.h>
 #include "rtcp.h"
 
@@ -175,16 +174,4 @@ uint8_t source_calc_fraction_lost(struct rtp_source *s)
 		fraction = (lost_interval << 8) / expected_interval;
 
 	return fraction;
-}
-
-
-int source_lock(struct rtp_source *s)
-{
-	return mtx_lock(s->lock);
-}
-
-
-int source_unlock(struct rtp_source *s)
-{
-	return mtx_unlock(s->lock);
 }
