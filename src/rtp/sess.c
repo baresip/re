@@ -306,8 +306,10 @@ void rtcp_set_srate(struct rtp_sock *rs, uint32_t srate_tx, uint32_t srate_rx)
 	if (!sess)
 		return;
 
+	mtx_lock(sess->lock);
 	sess->srate_tx = srate_tx;
 	sess->srate_rx = srate_rx;
+	mtx_unlock(sess->lock);
 }
 
 
@@ -339,7 +341,9 @@ void rtcp_set_srate_rx(struct rtp_sock *rs, uint32_t srate_rx)
 	if (!sess)
 		return;
 
+	mtx_lock(sess->lock);
 	sess->srate_rx = srate_rx;
+	mtx_unlock(sess->lock);
 }
 
 
