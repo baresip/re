@@ -1,0 +1,45 @@
+on: [push, pull_request]
+
+jobs:
+  build_job:
+    # The host should always be linux
+    runs-on: ubuntu-22.04
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    # Run steps on Bullseye=Debian 11
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: bullseye
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
+
+          env: |
+            CMAKE_GENERATOR: Ninja
+
+          shell: /bin/bash
+
+          install: |
+            case "${{ matrix.distro }}" in
+              ubuntu*|jessie|stretch|buster|bullseye)
+                apt-get update -q -y
+                apt-get install -q -y cmake gcc git libssl-dev ninja-build valgrind
+                ;;
+            esac
+
+          run: |
+            cmake -B build -DCMAKE_C_FLAGS="-Werror"
+            cmake --build build -j -t retest
+            valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
