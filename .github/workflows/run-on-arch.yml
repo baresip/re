@@ -35,7 +35,7 @@ jobs:
             case "${{ matrix.distro }}" in
               ubuntu*|jessie|stretch|buster|bullseye)
                 apt-get update -q -y
-                apt-get install -q -y cmake gcc git libssl-dev ninja-build valgrind
+                apt-get install -q -y cmake gcc g++ git libssl-dev ninja-build valgrind
                 ;;
             esac
 
