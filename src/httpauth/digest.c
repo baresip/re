@@ -1071,7 +1071,7 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 
 	/* create cnonce & nonce count */
 	resp->cnonce = rand_u32();
-	resp->nc = re_atomic_rlx_add(&nc, 1);
+	resp->nc = (uint32_t) re_atomic_rlx_add(&nc, 1);
 
 	/* copy fields */
 	err = pl_strdup(&resp->realm, &chall->realm);
