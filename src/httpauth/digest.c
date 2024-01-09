@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include <time.h>
+#include <re_atomic.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mbuf.h>
@@ -264,7 +265,7 @@ int httpauth_digest_response_auth(const struct httpauth_digest_resp *resp,
 }
 
 
-static uint32_t nc = 1;
+static RE_ATOMIC uint32_t nc = 1;
 
 int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 		const struct httpauth_digest_chall *chall,
@@ -298,7 +299,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	pl_set_str(&resp->uri, path);
 	resp->qop = chall->qop;
 
-	err = mbuf_printf(mb, "%x", nc);
+	err = mbuf_printf(mb, "%x", re_atomic_rlx(&nc));
 	err |= mbuf_write_u8(mb, 0);
 	if (err)
 		goto out;
@@ -369,7 +370,8 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 			0 == pl_strcmp(&resp->qop, "auth")) {
 	/* response = MD5(HA1:nonce:nonceCount:cnonce:qop:HA2) */
 		err = mbuf_printf(mb, "%w:%r:%x:%x:%r:%w",
-				ha1, sizeof(ha1), &resp->nonce, nc, cnonce,
+				ha1, sizeof(ha1), &resp->nonce,
+				re_atomic_rlx(&nc), cnonce,
 				&resp->qop, ha2, sizeof(ha2));
 	}
 	else {
@@ -391,7 +393,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	if (err)
 		goto out;
 
-	++nc;
+	re_atomic_rlx_add(&nc, 1);
 	mbuf_set_pos(mb, 0);
 	pl_set_str(&resp->nc, (const char*) mbuf_buf(mb));
 	mbuf_set_pos(mb, p1);
@@ -1069,7 +1071,7 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 
 	/* create cnonce & nonce count */
 	resp->cnonce = rand_u32();
-	resp->nc = nc++;
+	resp->nc = re_atomic_rlx_add(&nc, 1);
 
 	/* copy fields */
 	err = pl_strdup(&resp->realm, &chall->realm);
