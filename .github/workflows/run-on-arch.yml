@@ -39,5 +39,5 @@ jobs:
 
           run: |
             cmake -B build -DCMAKE_C_FLAGS="-Werror"
-            cmake --build build -j -t retest
+            cmake --build build -j --target retest
             ./build/test/retest -r -v
