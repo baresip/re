@@ -11,7 +11,7 @@ jobs:
       matrix:
         include:
           - arch: aarch64
-            distro: ubuntu20.04
+            distro: buster
 
     steps:
       - uses: actions/checkout@v4
