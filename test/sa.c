@@ -44,7 +44,6 @@ int test_sa_cmp(void)
 			"1.2.3.4", 12344,
 			false
 		},
-#ifdef HAVE_INET6
 		{
 			"0:0:0:0:0:0:0:0", 123,
 			"::", 123,
@@ -90,7 +89,6 @@ int test_sa_cmp(void)
 			"fe80:0000:0000:0000:1215:58ff:fe2d:90ab", 3333,
 			false
 		},
-#endif
 	};
 	size_t i;
 	int err = 0;
@@ -133,12 +131,10 @@ int test_sa_decode(void)
 		{0,      AF_INET,  "1.2.3.4:0",     "1.2.3.4", 0},
 		{EINVAL, AF_INET,  "1.2.3.4",       "",        0},
 		{EINVAL, AF_INET,  "1.2.3.4.:1234", "",        0},
-#ifdef HAVE_INET6
 		{0, AF_INET6, "[::1]:1", "::1", 1},
 		{0, AF_INET6, "[fe80::215:58ff:fe2d:90ab]:3333",
 		 "fe80::215:58ff:fe2d:90ab", 3333},
 		{EINVAL, AF_INET6, "[::1]", "", 0},
-#endif
 	};
 	uint32_t i;
 	int err = 0;
@@ -204,12 +200,10 @@ int test_sa_class(void)
 		{true,  false, false, "127.0.0.1"},
 		{true,  false, false, "127.3.0.3"},
 		{false, true,  false, "169.254.1.2"},
-#ifdef HAVE_INET6
 		{false, false, true,  "::"},
 		{true,  false, false, "::1"},
 		{false, true,  false, "fe80::215:58ff:fe2d:90ab"},
 		{false, false, false, "2610:a0:c779:b::d1ad:35b4"}
-#endif
 	};
 	uint32_t i;
 	int err = 0;
@@ -279,11 +273,9 @@ int test_sa_ntop(void)
 		{AF_INET,  "0.0.0.0"},
 		{AF_INET,  "1.2.3.4"},
 		{AF_INET,  "255.254.253.128"},
-#ifdef HAVE_INET6
 		{AF_INET6, "::1"},
 		{AF_INET6, "fe80::215:58ff:fe2d:90ab"},
 		{AF_INET6, "2610:a0:c779:b::d1ad:35b4"}
-#endif
 	};
 	uint32_t i;
 	int err = 0;

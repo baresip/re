@@ -622,10 +622,8 @@ int test_fmt_snprintf(void)
 	const uint8_t v[] = {0xfa, 0xce, 0xb0, 0x0c};
 	struct sa sa4;
 	const char addr4[] = "1.2.3.4";
-#ifdef HAVE_INET6
 	struct sa sa6;
 	const char addr6[] = "2001:5c0:8fff:ffff::d";
-#endif
 	char buf[128], sbuf[8];
 	int n, err;
 
@@ -646,26 +644,22 @@ int test_fmt_snprintf(void)
 		DEBUG_WARNING("sa_set_str4: %m\n", err);
 		goto out;
 	}
-#ifdef HAVE_INET6
 	err = sa_set_str(&sa6, addr6, 0);
 	if (err) {
 		DEBUG_WARNING("sa_set_str6: %m\n", err);
 		goto out;
 	}
-#endif
 
 	(void)re_snprintf(buf, sizeof(buf), "%j", &sa4);
 	if (0 != strcmp(buf, addr4)) {
 		err = EINVAL;
 		goto out;
 	}
-#ifdef HAVE_INET6
 	(void)re_snprintf(buf, sizeof(buf), "%j", &sa6);
 	if (0 != strcmp(buf, addr6)) {
 		err = EINVAL;
 		goto out;
 	}
-#endif
 
 	/* Overflow */
 	n = re_snprintf(buf, 3, "12");
