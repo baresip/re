@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include <time.h>
+#include <re_atomic.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mbuf.h>
@@ -70,6 +71,21 @@ static void challenge_decode(const struct pl *name, const struct pl *val,
 }
 
 
+static void algorithm_decode(struct httpauth_digest_resp *resp,
+	const struct pl *val)
+{
+	resp->algorithm = *val;
+	if (pl_strstr(val, "SHA-256")) {
+		resp->hashh = &sha256;
+		resp->hash_length = SHA256_DIGEST_LENGTH;
+	}
+	else {
+		resp->hashh = &md5;
+		resp->hash_length = MD5_SIZE;
+	}
+}
+
+
 static void response_decode(const struct pl *name, const struct pl *val,
 			    void *arg)
 {
@@ -91,6 +107,12 @@ static void response_decode(const struct pl *name, const struct pl *val,
 		resp->cnonce = *val;
 	else if (!pl_casecmp(name, &param_qop))
 		resp->qop = *val;
+	else if (!pl_casecmp(name, &param_algorithm))
+		algorithm_decode(resp, val);
+	else if (!pl_casecmp(name, &param_charset))
+		resp->charset = *val;
+	else if (!pl_casecmp(name, &param_userhash))
+		resp->userhash = *val;
 }
 
 
@@ -243,7 +265,7 @@ int httpauth_digest_response_auth(const struct httpauth_digest_resp *resp,
 }
 
 
-static uint32_t nc = 1;
+static RE_ATOMIC uint32_t nc = 1;
 
 int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 		const struct httpauth_digest_chall *chall,
@@ -277,7 +299,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	pl_set_str(&resp->uri, path);
 	resp->qop = chall->qop;
 
-	err = mbuf_printf(mb, "%x", nc);
+	err = mbuf_printf(mb, "%x", re_atomic_rlx(&nc));
 	err |= mbuf_write_u8(mb, 0);
 	if (err)
 		goto out;
@@ -348,7 +370,8 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 			0 == pl_strcmp(&resp->qop, "auth")) {
 	/* response = MD5(HA1:nonce:nonceCount:cnonce:qop:HA2) */
 		err = mbuf_printf(mb, "%w:%r:%x:%x:%r:%w",
-				ha1, sizeof(ha1), &resp->nonce, nc, cnonce,
+				ha1, sizeof(ha1), &resp->nonce,
+				re_atomic_rlx(&nc), cnonce,
 				&resp->qop, ha2, sizeof(ha2));
 	}
 	else {
@@ -370,7 +393,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	if (err)
 		goto out;
 
-	++nc;
+	re_atomic_rlx_add(&nc, 1);
 	mbuf_set_pos(mb, 0);
 	pl_set_str(&resp->nc, (const char*) mbuf_buf(mb));
 	mbuf_set_pos(mb, p1);
@@ -389,7 +412,7 @@ out:
 
 
 int httpauth_digest_response_encode(const struct httpauth_digest_resp *resp,
-				  struct mbuf *mb)
+				    struct mbuf *mb)
 {
 	int err;
 	size_t s;
@@ -485,6 +508,165 @@ out:
 	mem_deref(mb);
 
 	return err;
+}
+
+
+static int check_nonce(const char *req_nonce, const struct pl *resp_nonce,
+	const char *etag)
+{
+	struct pl pl = PL_INIT;
+	time_t ts;
+	char *renonce = NULL;
+	int err = 0;
+
+	if (!req_nonce || !resp_nonce || !etag)
+		return EINVAL;
+
+	pl = *resp_nonce;
+	pl.p = pl.p + (pl.l - 16);
+	pl.l = 16;
+	ts = (time_t) pl_x64(&pl);
+
+	if (time(NULL) - ts > 300) {
+		err = ETIMEDOUT;
+		goto out;
+	}
+
+	err = generate_nonce(&renonce, ts, etag, NULL);
+	if (err)
+		goto out;
+
+	if (str_casecmp(req_nonce, renonce))
+		err = EAUTH;
+
+out:
+	mem_deref(renonce);
+	return err;
+}
+
+
+static int digest_verify(struct httpauth_digest_chall_req *req,
+	struct httpauth_digest_resp *resp, const struct pl *method,
+	const char *user, const char *passwd, const char *entitybody)
+{
+	uint8_t *hash1 = NULL;
+	uint8_t *hash2 = NULL;
+	struct mbuf *mb = NULL;
+	int err = 0;
+
+	mb = mbuf_alloc(str_len(user) + str_len(passwd) +
+		str_len(req->realm) + 2);
+	hash1 = mem_zalloc(resp->hash_length, NULL);
+	hash2 = mem_zalloc(resp->hash_length, NULL);
+	if (!mb || !hash1 || !hash2) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	/* HASH H2 */
+	if (pl_strstr(&resp->qop, "auth-int")) {
+		if (!str_isset(entitybody))
+			resp->hashh((uint8_t *)"", str_len(""), hash1);
+		else
+			resp->hashh((uint8_t *)entitybody, str_len(entitybody),
+				hash1);
+
+		err = mbuf_printf(mb, "%r:%r:%w", method, &resp->uri, hash1,
+			resp->hash_length);
+	}
+	else {
+		err = mbuf_printf(mb, "%r:%r", method, &resp->uri);
+	}
+
+	if (err)
+		goto out;
+
+	resp->hashh(mb->buf, mb->end, hash2);
+	mbuf_rewind(mb);
+
+	/* HASH H1 */
+	if (pl_strcmp(&resp->username, user) != 0) {
+		err = EACCES;
+		goto out;
+	}
+
+	err = mbuf_printf(mb, "%s:%r:%s", user, &resp->realm, passwd);
+	if (err)
+		goto out;
+
+	resp->hashh(mb->buf, mb->end, hash1);
+	mbuf_rewind(mb);
+
+	if (pl_strstr(&resp->algorithm, "-sess")) {
+		err = mbuf_printf(mb, "%w:%r:%r",
+			hash1, resp->hash_length, &resp->nonce, &resp->cnonce);
+		if (err)
+			goto out;
+
+		resp->hashh(mb->buf, mb->end, hash1);
+		mbuf_rewind(mb);
+	}
+
+	/* DIGEST */
+	if (pl_isset(&resp->qop)) {
+		err = mbuf_printf(mb, "%w:%r:%r:%r:%r:%w", hash1,
+			resp->hash_length, &resp->nonce, &resp->nc,
+			&resp->cnonce, &resp->qop, hash2, resp->hash_length);
+	}
+	else {
+		err = mbuf_printf(mb, "%w:%r:%w", hash1, resp->hash_length,
+			&resp->nonce, hash2, resp->hash_length);
+	}
+
+	if (err)
+		goto out;
+
+	resp->hashh(mb->buf, mb->end, hash1);
+	mbuf_rewind(mb);
+
+	/* VERIFICATION */
+	err = pl_hex(&resp->response, hash2, resp->hash_length);
+	if (err)
+		goto out;
+
+	err = mem_seccmp(hash1, hash2, resp->hash_length) == 0 ? 0 : EACCES;
+
+out:
+	mem_deref(hash1);
+	mem_deref(hash2);
+	mem_deref(mb);
+
+	return err;
+}
+
+
+int httpauth_digest_verify(struct httpauth_digest_chall_req *req,
+	const struct pl *hval, const struct pl *method, const char *etag,
+	const char *user, const char *passwd, const char *entitybody)
+{
+	struct httpauth_digest_resp resp;
+	int err = 0;
+
+	if (!req || !hval || !method || !user || !passwd)
+		return EINVAL;
+
+	err = httpauth_digest_response_decode(&resp, hval);
+	if (err)
+		return err;
+
+	if (pl_strcasecmp(&resp.realm, req->realm))
+		return EINVAL;
+
+	err = check_nonce(req->nonce, &resp.nonce, etag);
+	if (err == ETIMEDOUT || err == EAUTH) {
+		req->stale = true;
+		return EAUTH;
+	}
+	else if (err) {
+		return err;
+	}
+
+	return digest_verify(req, &resp, method, user, passwd, entitybody);
 }
 
 
@@ -889,7 +1071,7 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 
 	/* create cnonce & nonce count */
 	resp->cnonce = rand_u32();
-	resp->nc = nc++;
+	resp->nc = (uint32_t) re_atomic_rlx_add(&nc, 1);
 
 	/* copy fields */
 	err = pl_strdup(&resp->realm, &chall->realm);
