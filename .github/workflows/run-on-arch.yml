@@ -6,12 +6,11 @@ jobs:
     runs-on: ubuntu-20.04
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
-    # Run steps on Bullseye=Debian 11
     strategy:
       matrix:
         include:
           - arch: aarch64
-            distro: buster
+            distro: bullseye
 
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +25,6 @@ jobs:
           # Not required, but speeds up builds
           githubToken: ${{ github.token }}
 
-          env: |
-            CMAKE_GENERATOR: Ninja
-
           install: |
             case "${{ matrix.distro }}" in
               ubuntu*|jessie|stretch|buster|bullseye)
@@ -38,6 +34,6 @@ jobs:
             esac
 
           run: |
-            cmake -B build -DCMAKE_C_FLAGS="-Werror"
+            cmake -G Ninja -B build -DCMAKE_C_FLAGS="-Werror"
             cmake --build build -j --target retest
             ./build/test/retest -r -v
