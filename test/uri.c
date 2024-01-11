@@ -37,7 +37,6 @@ int test_uri(void)
 		"sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com",
 		"sip:alice;day=tuesday@atlanta.com",
 
-#ifdef HAVE_INET6
 		/* IPv6 */
 		"sip:[::1];transport=udp",
 		"sip:[::1]:1234;transport=udp",
@@ -53,7 +52,6 @@ int test_uri(void)
 		"sip:[2001:db8::10:5070]",
 		"sip:[2001:db8::10]:5070",
 		"sip:user@[2001:db8::10]",
-#endif
 	};
 	struct uri uri;
 	struct mbuf mb;
@@ -124,7 +122,6 @@ int test_uri_encode(void)
 		  PL("")},
 		 "sip:user:pass@host:443/wss/;transport=wss"
 		},
-#ifdef HAVE_INET6
 		{{PL("sip"),
 		  PL("user"),
 		  PL(""),
@@ -135,7 +132,6 @@ int test_uri_encode(void)
 		  PL("")},
 		 "sip:user@[::1]:1234;transport=udp"
 		}
-#endif
 	};
 	struct mbuf mb;
 	int err = EINVAL;

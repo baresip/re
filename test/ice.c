@@ -855,12 +855,10 @@ static const char *testv[] = {
 "6 1 TCP 1692401663 192.0.2.3 45687 typ srflx raddr"
   " 10.0.1.1 rport 8999 tcptype so",
 
-#ifdef HAVE_INET6
 "H76f0ae12 1 UDP 2130706431 fda8:de2d:e95f:4811::1 6054 typ host",
 
 "3113280040 1 UDP 2122255103 2001:aaaa:5ef5:79fb:1847:2c0d:a230:23ab 53329"
   " typ host",
-#endif
 
 };
 

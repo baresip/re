@@ -86,11 +86,9 @@ int test_sip_addr(void)
 		"\"Agmund Bolt\" <sip:agmund@bolt.com:5060;lr;user=phone>"
 		   ";tag=foo123;bar=9d7j3",
 
-#ifdef HAVE_INET6
 		/* RFC 5118 - SIP Torture Test Messages for IPv6 */
 		"\"Caller\" <sip:caller@[2001:db8::1]>",
 		"\"Caller\" <sip:caller@[2001:db8::1]:5080>",
-#endif
 
 		/* gruu */
 		"\"hei\" <sip:alfred1@10.0.0.4:32829;keepalive=crlf>"
@@ -165,11 +163,9 @@ int test_sip_via(void)
 		{SIP_TRANSP_UDP, "1.2.3.4",         1234, "z9ghkdkasd"},
 		{SIP_TRANSP_TCP, "123.123.123.123", 0,    "b0ajsd01abcdef918"},
 		{SIP_TRANSP_TCP, "myhost.com",      0,    "b0ajsd01ab2838475"},
-#ifdef HAVE_INET6
 		{SIP_TRANSP_TCP, "fe80::215:58ff:fe2d:90ab", 5060,
 		 "b0ajs01cde38475"},
 		{SIP_TRANSP_TLS, "fe80::215:58ff:fe2d:90ab", 0, "47daasd5"}
-#endif
 	};
 	struct sip_msg *msg = NULL;
 	struct mbuf *mb;
@@ -198,11 +194,9 @@ int test_sip_via(void)
 
 		ipaddr = !sa_set_str(&addr, testv[i].host, testv[i].port);
 
-#ifdef HAVE_INET6
 		if (ipaddr && AF_INET6 == sa_af(&addr))
 			err = mbuf_printf(mb, "[%s]", testv[i].host);
 		else
-#endif
 			err = mbuf_printf(mb, "%s", testv[i].host);
 		if (err)
 			goto out;
