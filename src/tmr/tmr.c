@@ -375,10 +375,14 @@ void tmr_debug(void)
  */
 void tmr_init(struct tmr *tmr)
 {
-	if (!tmr)
+	struct tmrl *tmrl = re_tmrl_get();
+
+	if (!tmr || !tmrl)
 		return;
 
 	memset(tmr, 0, sizeof(*tmr));
+
+	tmr->lock = tmrl->lock;
 }
 
 
@@ -388,36 +392,33 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 {
 	struct tmrl *tmrl = re_tmrl_get();
 	struct le *le;
-	mtx_t *lock;
+	mtx_t *old_lock = NULL;
 
 	if (!tmr || !tmrl)
 		return;
 
-	if (!tmr->lock || !tmr->le.list)
-		lock = tmrl->lock;
-	else
-		lock = tmr->lock; /* use old lock for unlinking */
+	mtx_lock(tmr->lock);
 
-	mtx_lock(lock);
+	/* Lock both old and new list */
+	if (tmr->lock != tmrl->lock) {
+		mtx_lock(tmrl->lock);
+		old_lock  = tmr->lock;
+		tmr->lock = tmrl->lock;
+	}
 
 	if (tmr->th)
 		list_unlink(&tmr->le);
-
-	mtx_unlock(lock);
-
-	lock = tmrl->lock;
-
-	mtx_lock(lock);
 
 	tmr->th	  = th;
 	tmr->arg  = arg;
 	tmr->file = file;
 	tmr->line = line;
-	tmr->lock = tmrl->lock;
+
+	if (old_lock)
+		mtx_unlock(old_lock);
 
 	if (!th) {
-		tmr->lock = NULL;
-		mtx_unlock(lock);
+		mtx_unlock(tmr->lock);
 		return;
 	}
 
@@ -445,7 +446,7 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 		}
 	}
 
-	mtx_unlock(lock);
+	mtx_unlock(tmr->lock);
 }
 
 
