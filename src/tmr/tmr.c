@@ -393,10 +393,16 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 	if (!tmr || !tmrl)
 		return;
 
-	if (!tmr->lock || !tmr->le.list)
-		lock = tmrl->lock;
+	/* Prevent multiple cancel race conditions */
+	if (!re_atomic_acq(&tmr->active) && !th)
+		return;
+
+	re_atomic_rls_set(&tmr->active, false);
+
+	if (!tmr->llock || !tmr->le.list)
+		lock = tmrl->lock; /* use current list lock */
 	else
-		lock = tmr->lock; /* use old lock for unlinking */
+		lock = tmr->llock; /* use old list lock for unlinking */
 
 	mtx_lock(lock);
 
@@ -413,10 +419,10 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 	tmr->arg  = arg;
 	tmr->file = file;
 	tmr->line = line;
-	tmr->lock = tmrl->lock;
+	tmr->llock = tmrl->lock;
 
 	if (!th) {
-		tmr->lock = NULL;
+		tmr->llock = NULL;
 		mtx_unlock(lock);
 		return;
 	}
@@ -444,6 +450,8 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 			list_prepend(&tmrl->list, &tmr->le, tmr);
 		}
 	}
+
+	re_atomic_rls_set(&tmr->active, true);
 
 	mtx_unlock(lock);
 }

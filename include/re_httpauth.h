@@ -70,6 +70,12 @@ struct httpauth_digest_resp {
 	struct pl cnonce;
 	struct pl qop;
 
+	struct pl algorithm;
+	struct pl charset;
+	struct pl userhash;
+	void (*hashh)(const uint8_t *, size_t, uint8_t *);
+	size_t hash_length;
+
 	struct mbuf *mb;
 };
 
@@ -117,6 +123,9 @@ int httpauth_digest_response_full(struct httpauth_digest_enc_resp **presp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
 	const char *uri, const char *user, const char *passwd, const char *qop,
 	const char *entitybody, const char *charset, const bool userhash);
+int httpauth_digest_verify(struct httpauth_digest_chall_req *req,
+	const struct pl *hval, const struct pl *method, const char *etag,
+	const char *user, const char *passwd, const char *entitybody);
 
 int httpauth_digest_chall_req_print(struct re_printf *pf,
 	const struct httpauth_digest_chall_req *req);
@@ -126,7 +135,6 @@ int httpauth_digest_chall_request_full(struct httpauth_digest_chall_req **preq,
 	const char *real, const char *domain, const char *etag,
 	const char *opaque, const bool stale, const char *algo,
 	const char *qop, const char *charset, const bool userhash);
-
 
 struct httpauth_basic *httpauth_basic_alloc(void);
 int httpauth_basic_decode(struct httpauth_basic *basic,

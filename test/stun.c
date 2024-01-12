@@ -57,7 +57,6 @@ static const unsigned char respv4[] =
      "\x80\x28\x00\x04"
        "\xc0\x7d\x4c\x96";
 
-#ifdef HAVE_INET6
 static const unsigned char respv6[] =
      "\x01\x01\x00\x48"
      "\x21\x12\xa4\x42"
@@ -73,7 +72,6 @@ static const unsigned char respv6[] =
        "\x82\x92\xc2\x75\xbf\xe3\xed\x41"
      "\x80\x28\x00\x04"
        "\xc8\xfb\x0b\x4c";
-#endif
 
 
 static const uint32_t ice_prio = 0x6e0001ff;
@@ -242,7 +240,6 @@ int test_stun_resp(void)
 	if (err)
 		return err;
 
-#ifdef HAVE_INET6
 	resp.p = (char *)respv6;
 	resp.l = sizeof(respv6) - 1;
 	err = sa_set_str(&maddr, "2001:db8:1234:5678:11:2233:4455:6677",
@@ -250,7 +247,6 @@ int test_stun_resp(void)
 	if (err)
 		return err;
 	err = test_resp(&resp, &maddr);
-#endif
 
 	return err;
 }

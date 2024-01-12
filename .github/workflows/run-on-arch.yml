@@ -1,0 +1,39 @@
+on: [push, pull_request]
+
+jobs:
+  build_job:
+    # The host should always be linux
+    runs-on: ubuntu-20.04
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: bullseye
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
+
+          install: |
+            case "${{ matrix.distro }}" in
+              ubuntu*|jessie|stretch|buster|bullseye)
+                apt-get update -q -y
+                apt-get install -q -y cmake gcc g++ libssl-dev ninja-build
+                ;;
+            esac
+
+          run: |
+            cmake -G Ninja -B build -DCMAKE_C_FLAGS="-Werror"
+            cmake --build build -j --target retest
+            ./build/test/retest -r -v
