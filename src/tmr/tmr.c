@@ -393,6 +393,11 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 	if (!tmr || !tmrl)
 		return;
 
+	if (!re_atomic_acq(&tmr->active) && !th)
+		return;
+
+	re_atomic_rls_set(&tmr->active, false);
+
 	if (!tmr->lock || !tmr->le.list)
 		lock = tmrl->lock;
 	else
@@ -444,6 +449,8 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 			list_prepend(&tmrl->list, &tmr->le, tmr);
 		}
 	}
+
+	re_atomic_rls_set(&tmr->active, true);
 
 	mtx_unlock(lock);
 }

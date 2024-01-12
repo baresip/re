@@ -6,6 +6,7 @@
 
 
 #include "re_thread.h"
+#include "re_atomic.h"
 
 /**
  * Defines the timeout handler
@@ -19,6 +20,7 @@ struct tmrl;
 /** Defines a timer */
 struct tmr {
 	struct le le;       /**< Linked list element */
+	RE_ATOMIC bool active; /**< Timer is active  */
 	mtx_t *lock;        /**< Mutex lock          */
 	tmr_h *th;          /**< Timeout handler     */
 	void *arg;          /**< Handler argument    */
