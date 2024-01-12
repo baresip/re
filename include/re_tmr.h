@@ -21,7 +21,7 @@ struct tmrl;
 struct tmr {
 	struct le le;       /**< Linked list element */
 	RE_ATOMIC bool active; /**< Timer is active  */
-	mtx_t *lock;        /**< Mutex lock          */
+	mtx_t *llock;       /**< List Mutex lock     */
 	tmr_h *th;          /**< Timeout handler     */
 	void *arg;          /**< Handler argument    */
 	uint64_t jfs;       /**< Jiffies for timeout */
