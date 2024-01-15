@@ -352,10 +352,12 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		return;
 
 	sz = auframe_size(af);
+
+	mtx_lock(ab->lock);
+
 	if (!ab->ajb && ab->mode == AUBUF_ADAPTIVE)
 		ab->ajb = ajb_alloc(ab->silence, ab->wish_sz);
 
-	mtx_lock(ab->lock);
 	as = ajb_get(ab->ajb, af);
 	if (as == AJB_LOW) {
 #if AUBUF_DEBUG
