@@ -64,8 +64,9 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           C:\msys64\usr\bin\wget.exe https://www.openssl.org/source/openssl-3.1.4.tar.gz
           C:\msys64\usr\bin\tar.exe -xzf openssl-3.1.4.tar.gz
-          cd openssl-3.1.4 && perl Configure ${{ matrix.config.openssl }}
-          cd openssl-3.1.4 && nmake && nmake install
+          cd openssl-3.1.4
+          perl Configure ${{ matrix.config.openssl }}
+          nmake && nmake install
 
       - name: Build
         shell: cmd
