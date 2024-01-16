@@ -401,8 +401,8 @@ static bool sender_apply_handler(struct le *le, void *arg)
 
 	/* Initialise the members */
 	rr.ssrc     = mbr->src;
-	rr.fraction = source_calc_fraction_lost(s);
-	rr.lost     = source_calc_lost(s);
+	rr.fraction = rtp_source_calc_fraction_lost(s);
+	rr.lost     = rtp_source_calc_lost(s);
 	rr.last_seq = s->cycles | s->max_seq;
 	rr.jitter   = s->jitter >> 4;
 	rr.lsr      = calc_lsr(&s->last_sr);
@@ -596,13 +596,13 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 		}
 
 		/* first packet - init sequence number */
-		source_init_seq(mbr->s, hdr->seq);
+		rtp_source_init_seq(mbr->s, hdr->seq);
 		/* probation not used */
 		sa_cpy(&mbr->s->rtp_peer, peer);
 		++sess->senderc;
 	}
 
-	if (!source_update_seq(mbr->s, hdr->seq)) {
+	if (!rtp_source_update_seq(mbr->s, hdr->seq)) {
 		DEBUG_WARNING("rtp_update_seq() returned 0\n");
 	}
 
@@ -616,7 +616,7 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 		 * https://www.cs.columbia.edu/~hgs/rtp/faq.html#jitter).
 		 */
 		if (hdr->ts != mbr->s->last_rtp_ts)
-			source_calc_jitter(mbr->s, hdr->ts,
+			rtp_source_calc_jitter(mbr->s, hdr->ts,
 					   (uint32_t)hdr->ts_arrive);
 	}
 
@@ -665,7 +665,7 @@ int rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats)
 	}
 
 	stats->rx.sent = mbr->s->received;
-	stats->rx.lost = source_calc_lost(mbr->s);
+	stats->rx.lost = rtp_source_calc_lost(mbr->s);
 	stats->rx.jit  = sess->srate_rx ?
 		1000000 * (mbr->s->jitter>>4) / sess->srate_rx : 0;
 

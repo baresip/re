@@ -65,12 +65,12 @@ struct rtp_member *member_add(struct hash *ht, uint32_t src);
 struct rtp_member *member_find(struct hash *ht, uint32_t src);
 
 /* Source */
-void source_init_seq(struct rtp_source *s, uint16_t seq);
-int  source_update_seq(struct rtp_source *s, uint16_t seq);
-void source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
+void rtp_source_init_seq(struct rtp_source *s, uint16_t seq);
+int  rtp_source_update_seq(struct rtp_source *s, uint16_t seq);
+void rtp_source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
 			uint32_t arrival);
-int  source_calc_lost(const struct rtp_source *s);
-uint8_t source_calc_fraction_lost(struct rtp_source *s);
+int  rtp_source_calc_lost(const struct rtp_source *s);
+uint8_t rtp_source_calc_fraction_lost(struct rtp_source *s);
 
 /* RR (Reception report) */
 int rtcp_rr_alloc(struct rtcp_rr **rrp, size_t count);

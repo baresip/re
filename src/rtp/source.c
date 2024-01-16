@@ -20,7 +20,7 @@ enum {
 };
 
 
-void source_init_seq(struct rtp_source *s, uint16_t seq)
+void rtp_source_init_seq(struct rtp_source *s, uint16_t seq)
 {
 	if (!s)
 		return;
@@ -39,7 +39,7 @@ void source_init_seq(struct rtp_source *s, uint16_t seq)
 /*
  * See RFC 3550 - A.1 RTP Data Header Validity Checks
  */
-int source_update_seq(struct rtp_source *s, uint16_t seq)
+int rtp_source_update_seq(struct rtp_source *s, uint16_t seq)
 {
 	uint16_t udelta = seq - s->max_seq;
 	const int MAX_DROPOUT = 3000;
@@ -57,7 +57,7 @@ int source_update_seq(struct rtp_source *s, uint16_t seq)
 			s->probation--;
 			s->max_seq = seq;
 			if (s->probation == 0) {
-				source_init_seq(s, seq);
+				rtp_source_init_seq(s, seq);
 				s->received++;
 				return 1;
 			}
@@ -88,7 +88,7 @@ int source_update_seq(struct rtp_source *s, uint16_t seq)
 			 * restarted without telling us so just re-sync
 			 * (i.e., pretend this was the first packet).
 			 */
-			source_init_seq(s, seq);
+			rtp_source_init_seq(s, seq);
 		}
 		else {
 			s->bad_seq = (seq + 1) & (RTP_SEQ_MOD-1);
@@ -111,7 +111,7 @@ int source_update_seq(struct rtp_source *s, uint16_t seq)
  *     rtp_ts:  the timestamp from the incoming RTP packet
  *     arrival: the current time in the same units.
  */
-void source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
+void rtp_source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
 			uint32_t arrival)
 {
 	const int transit = arrival - rtp_ts;
@@ -132,7 +132,7 @@ void source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
 
 
 /* A.3 */
-int source_calc_lost(const struct rtp_source *s)
+int rtp_source_calc_lost(const struct rtp_source *s)
 {
 	int extended_max = s->cycles + s->max_seq;
 	int expected = extended_max - s->base_seq + 1;
@@ -151,7 +151,7 @@ int source_calc_lost(const struct rtp_source *s)
 
 
 /* A.3 */
-uint8_t source_calc_fraction_lost(struct rtp_source *s)
+uint8_t rtp_source_calc_fraction_lost(struct rtp_source *s)
 {
 	int extended_max = s->cycles + s->max_seq;
 	int expected = extended_max - s->base_seq + 1;
