@@ -59,10 +59,10 @@ jobs:
       - name: Build OpenSSL
         shell: cmd
         run: |
-          wget https://www.openssl.org/source/openssl-3.1.4.tar.gz
-          tar -xzf openssl-3.1.4.tar.gz && mv openssl-3.1.4 openssl
-          cd openssl && perl Configure ${{ matrix.config.openssl }}
-          cd openssl && nmake && nmake install
+          C:\msys64\usr\bin\wget.exe https://www.openssl.org/source/openssl-3.1.4.tar.gz
+          C:\msys64\usr\bin\tar.exe -xzf openssl-3.1.4.tar.gz
+          cd openssl-3.1.4 && perl Configure ${{ matrix.config.openssl }}
+          cd openssl-3.1.4 && nmake && nmake install
 
       - name: Build
         shell: cmd
