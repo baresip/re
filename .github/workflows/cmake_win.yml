@@ -58,6 +58,12 @@ jobs:
 
       - uses: ilammy/setup-nasm@v1
 
+      - uses: actions/cache@v3
+        id: openssl
+        with:
+          path: C:\\Program Files\OpenSSL
+          key: ${{ runner.os }}-${ matrix.config.openssl }-openssl-3.1.4
+
       - name: Build OpenSSL
         shell: cmd
         run: |
