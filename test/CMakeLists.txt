@@ -159,16 +159,8 @@ endif()
 # Main target object
 #
 
-set(LINKLIBS re ${OPENSSL_LIBRARIES})
-if(WIN32)
-  list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32)
-else()
-  list(APPEND LINKLIBS m ${RESOLV_LIBRARY})
-endif()
-
-if(ZLIB_FOUND)
-  list(APPEND LINKLIBS ZLIB::ZLIB)
-endif()
+set(LINKLIBS re)
+list(APPEND LINKLIBS ${RE_LIBS})
 
 add_executable(${PROJECT_NAME} ${SRCS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS 1)
