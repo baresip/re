@@ -608,12 +608,15 @@ static int conn_connect(struct http_req *req)
 		laddr = &req->cli->laddr6;
 #endif
 
-	if (sa_isset(laddr, SA_ADDR))
+	if (sa_isset(laddr, SA_ADDR)) {
+		sa_set_scopeid(&conn->addr, sa_scopeid(laddr));
 		err = tcp_connect_bind(&conn->tc, addr, estab_handler,
 			recv_handler,close_handler, laddr, conn);
-	else
+	}
+	else {
 		err = tcp_connect(&conn->tc, addr, estab_handler, recv_handler,
 			close_handler, conn);
+	}
 	if (err)
 		goto out;
 
