@@ -23,7 +23,6 @@ libre is a Generic library for real-time communications with async IO support.
 * BFCP
 * HTTP-stack with client/server
 * Websockets
-* Jitter-buffer
 * Async I/O (select, epoll, kqueue)
 * UDP/TCP/TLS/DTLS transport
 * JSON parser
