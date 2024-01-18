@@ -32,7 +32,7 @@
  * @param ntp NTP time to convert to (output)
  * @param tv  Unix time to convert from (input)
  */
-void unix2ntp(struct ntp_time *ntp, const struct timeval *tv)
+void unix2ntp(struct rtp_ntp_time *ntp, const struct timeval *tv)
 {
 	ntp->hi = (uint32_t)(tv->tv_sec + UNIX_NTP_OFFSET);
 	ntp->lo = (uint32_t)((double)tv->tv_usec*(double)(1LL<<32)*1.0e-6);
@@ -45,7 +45,7 @@ void unix2ntp(struct ntp_time *ntp, const struct timeval *tv)
  * @param tv  Unix time to convert to (output)
  * @param ntp NTP time to convert from (input)
  */
-void ntp2unix(struct timeval *tv, const struct ntp_time *ntp)
+void ntp2unix(struct timeval *tv, const struct rtp_ntp_time *ntp)
 {
 	tv->tv_sec  = ntp->hi - UNIX_NTP_OFFSET;
 	tv->tv_usec = (uint32_t)(1.0e6 * (double) ntp->lo / (1LL<<32));
@@ -58,7 +58,7 @@ void ntp2unix(struct timeval *tv, const struct ntp_time *ntp)
  * @param ntp NTP time
  * @param jfs_rt Microseconds since UNIX epoch. Optional, may be NULL.
  */
-void ntp_time_get(struct ntp_time *ntp, uint64_t *jfs_rt)
+void ntp_time_get(struct rtp_ntp_time *ntp, uint64_t *jfs_rt)
 {
 #if defined(WIN32)
 	/* timeval::tv_sec on Windows is 32-bit, and it doesn't
@@ -88,7 +88,7 @@ void ntp_time_get(struct ntp_time *ntp, uint64_t *jfs_rt)
  *
  * @return NTP time in compact representation
  */
-uint32_t ntp_compact(const struct ntp_time *ntp)
+uint32_t ntp_compact(const struct rtp_ntp_time *ntp)
 {
 	return ntp ? ((ntp->hi & 0xffff) << 16 | (ntp->lo >> 16)) : 0;
 }

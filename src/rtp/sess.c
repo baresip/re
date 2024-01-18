@@ -114,7 +114,7 @@ static struct rtp_member *get_member(struct rtcp_sess *sess, uint32_t src)
  */
 void rtcp_calc_rtt(uint32_t *rtt, uint32_t lsr, uint32_t dlsr)
 {
-	struct ntp_time ntp_time;
+	struct rtp_ntp_time ntp_time;
 	uint64_t a_us, lsr_us, dlsr_us;
 
 	ntp_time_get(&ntp_time, NULL);
@@ -371,7 +371,7 @@ int rtcp_enable(struct rtcp_sess *sess, bool enabled, const char *cname)
 
 
 /** Calculate LSR (middle 32 bits out of 64 in the NTP timestamp) */
-static uint32_t calc_lsr(const struct ntp_time *last_sr)
+static uint32_t calc_lsr(const struct rtp_ntp_time *last_sr)
 {
 	return last_sr->hi ? ntp_compact(last_sr) : 0;
 }
@@ -436,7 +436,7 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	mtx_unlock(sess->lock);
 
 	if (txstat.jfs_rt_ref) {
-		struct ntp_time ntp;
+		struct rtp_ntp_time ntp;
 		uint64_t jfs_rt, dur;
 		uint32_t rtp_ts;
 

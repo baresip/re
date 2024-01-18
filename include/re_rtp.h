@@ -314,7 +314,7 @@ static inline int16_t rtp_seq_diff(uint16_t x, uint16_t y)
 
 
 /** NTP Time */
-struct ntp_time {
+struct rtp_ntp_time {
 	uint32_t hi;  /**< Seconds since 0h UTC on 1 January 1900 */
 	uint32_t lo;  /**< Fraction of seconds                    */
 };
@@ -334,7 +334,7 @@ struct rtp_source {
 	uint32_t jitter;          /**< Estimated jitter                    */
 	size_t rtp_rx_bytes;      /**< Number of RTP bytes received        */
 	uint64_t sr_recv;         /**< When the last SR was received       */
-	struct ntp_time last_sr;  /**< NTP Timestamp from last SR received */
+	struct rtp_ntp_time last_sr;/**< NTP Timestamp from last SR recvd  */
 	uint32_t rtp_ts;          /**< RTP timestamp                       */
 	uint32_t last_rtp_ts;     /**< Last RTP timestamp                  */
 	uint32_t psent;           /**< RTP packets sent                    */
