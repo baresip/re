@@ -466,9 +466,14 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 static int sdes_encode_handler(struct mbuf *mb, void *arg)
 {
 	struct rtcp_sess *sess = arg;
+	int err;
 
-	return rtcp_sdes_encode(mb, rtp_sess_ssrc(sess->rs), 1,
+	mtx_lock(sess->lock);
+	err = rtcp_sdes_encode(mb, rtp_sess_ssrc(sess->rs), 1,
 				RTCP_SDES_CNAME, sess->cname);
+	mtx_unlock(sess->lock);
+
+	return err;
 }
 
 
