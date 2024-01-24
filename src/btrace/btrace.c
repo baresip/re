@@ -114,7 +114,7 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 			re_regex(symbols[j], str_len(symbols[j]), "([^)]+",
 				 &addr);
 
-			re_snprintf(addr2l, sizeof(addr2l),
+			(void)re_snprintf(addr2l, sizeof(addr2l),
 				    "addr2line -p -f -e %s %r", exe, &addr);
 
 			pipe = popen(addr2l, "r");
