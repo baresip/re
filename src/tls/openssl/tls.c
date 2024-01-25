@@ -45,6 +45,7 @@ struct tls {
 	X509 *cert;
 	char *pass;          /**< password for private key             */
 	bool verify_server;  /**< Enable SIP TLS server verification   */
+	bool verify_client;  /**< Enable SIP TLS client verification   */
 	struct session_reuse reuse;
 	struct list certs;   /**< Certificates for SNI selection       */
 };
@@ -1459,6 +1460,35 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 }
 
 
+/**
+ * Enable verification of client certificate
+ *
+ * @param tc   TLS Connection
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_verify_client(struct tls_conn *tc)
+{
+#if !defined(LIBRESSL_VERSION_NUMBER)
+
+	if (!tc)
+		return EINVAL;
+
+	if (!tc->tls->verify_client)
+		return 0;
+
+	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+		       tls_verify_handler);
+
+	return 0;
+#else
+	(void)tc;
+
+	return ENOSYS;
+#endif
+}
+
+
 static int print_error(const char *str, size_t len, void *unused)
 {
 	(void)unused;
@@ -1594,6 +1624,21 @@ void tls_disable_verify_server(struct tls *tls)
 		return;
 
 	tls->verify_server = false;
+}
+
+
+/**
+ * Enables SIP TLS client verifications for following requests
+ *
+ * @param tls     TLS Object
+ * @param enable  true to enable client verification, false to disable
+ */
+void tls_enable_verify_client(struct tls *tls, bool enable)
+{
+	if (!tls)
+		return;
+
+	tls->verify_client = enable;
 }
 
 

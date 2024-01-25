@@ -69,10 +69,12 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 const char *tls_cipher_name(const struct tls_conn *tc);
 int tls_set_ciphers(struct tls *tls, const char *cipherv[], size_t count);
 int tls_set_verify_server(struct tls_conn *tc, const char *host);
+int tls_verify_client(struct tls_conn *tc);
 
 int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
+void tls_enable_verify_client(struct tls *tls, bool enable);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
