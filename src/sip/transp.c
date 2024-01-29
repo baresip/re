@@ -261,15 +261,14 @@ static void conn_close(struct sip_conn *conn, int err)
 
 		struct sip_connqent *qent = le->data;
 		le = le->next;
-
-		if (qent->qentp) {
-			*qent->qentp = NULL;
-			qent->qentp = NULL;
-		}
+		bool qentp_set = qent->qentp ? true : false;
 
 		qent->transph(err, qent->arg);
-		list_unlink(&qent->le);
-		mem_deref(qent);
+
+		if (!qentp_set) {
+			list_unlink(&qent->le);
+			mem_deref(qent);
+		}
 	}
 
 	sip_keepalive_signal(&conn->kal, err);
@@ -618,12 +617,8 @@ static void tcp_estab_handler(void *arg)
 	while (le) {
 
 		struct sip_connqent *qent = le->data;
+		bool qentp_set = qent->qentp ? true : false;
 		le = le->next;
-
-		if (qent->qentp) {
-			*qent->qentp = NULL;
-			qent->qentp = NULL;
-		}
 
 		trace_send(conn->sip,
 			   conn->sc ? SIP_TRANSP_TLS : SIP_TRANSP_TCP,
@@ -634,8 +629,10 @@ static void tcp_estab_handler(void *arg)
 		if (err)
 			qent->transph(err, qent->arg);
 
-		list_unlink(&qent->le);
-		mem_deref(qent);
+		if (!qentp_set) {
+			list_unlink(&qent->le);
+			mem_deref(qent);
+		}
 	}
 }
 
@@ -896,12 +893,8 @@ static void websock_estab_handler(void *arg)
 	while (le) {
 
 		struct sip_connqent *qent = le->data;
+		bool qentp_set = qent->qentp ? true : false;
 		le = le->next;
-
-		if (qent->qentp) {
-			*qent->qentp = NULL;
-			qent->qentp = NULL;
-		}
 
 		trace_send(conn->sip,
 			   conn->tp,
@@ -917,8 +910,10 @@ static void websock_estab_handler(void *arg)
 		if (err)
 			qent->transph(err, qent->arg);
 
-		list_unlink(&qent->le);
-		mem_deref(qent);
+		if (!qentp_set) {
+			list_unlink(&qent->le);
+			mem_deref(qent);
+		}
 	}
 }
 
