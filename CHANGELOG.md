@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.9.0] - 2024-01-31
+
+## What's Changed
+* http: fix doxygen by @cspiel1 in https://github.com/baresip/re/pull/1033
+* types: remove old ARRAY_SIZE macro by @alfredh in https://github.com/baresip/re/pull/1034
+* cmake: bump minimum to version 3.14 by @alfredh in https://github.com/baresip/re/pull/1030
+* test: use re_is_aligned() by @alfredh in https://github.com/baresip/re/pull/1035
+* sipsess: refactor and simplify SDP negotiation state by @maximilianfridrich in https://github.com/baresip/re/pull/1016
+* bump year by @sreimers in https://github.com/baresip/re/pull/1038
+* cmake,pc: fix static library build by @alfredh in https://github.com/baresip/re/pull/1036
+* rx thread activate by @cspiel1 in https://github.com/baresip/re/pull/1037
+* test: fix cppcheck warnings by @alfredh in https://github.com/baresip/re/pull/1040
+* test: move test_rtcp_decode_badmsg() to separate testcase by @alfredh in https://github.com/baresip/re/pull/1041
+* rtp: lock more fields from rtcp_sess by @cspiel1 in https://github.com/baresip/re/pull/1039
+* rtp: lock rtcp_set_srate() by @cspiel1 in https://github.com/baresip/re/pull/1043
+* test: HAVE_INET6 is always defined by @alfredh in https://github.com/baresip/re/pull/1046
+* ci: add run-on-arch for ARM64 linux by @alfredh in https://github.com/baresip/re/pull/1045
+* httpauth: digest verification rfc 7616 by @cHuberCoffee in https://github.com/baresip/re/pull/1044
+* tmr: prevent race condition on cancel by @sreimers in https://github.com/baresip/re/pull/1048
+* aubuf: fix coverity defect by @alfredh in https://github.com/baresip/re/pull/1051
+* btrace: fix coverity warning by @alfredh in https://github.com/baresip/re/pull/1049
+* ci/win: downgrade openssl by @sreimers in https://github.com/baresip/re/pull/1054
+* docs: update README by @alfredh in https://github.com/baresip/re/pull/1053
+* http: client - set scopeid fixes HTTP requests for IPv6ll by @cspiel1 in https://github.com/baresip/re/pull/1055
+* rtp: add rtp_source_ prefix to RTP source api by @alfredh in https://github.com/baresip/re/pull/1052
+* rtp: make struct rtp_source public by @alfredh in https://github.com/baresip/re/pull/1057
+* rtp: sess - fix coverity warning by @cspiel1 in https://github.com/baresip/re/pull/1058
+* mk: bump version to 3.9.0 by @alfredh in https://github.com/baresip/re/pull/1060
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.8.0...v3.9.0
+
+
 ## [v3.8.0] - 2023-12-27
 
 ## What's Changed
