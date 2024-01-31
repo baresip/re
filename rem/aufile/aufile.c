@@ -271,6 +271,7 @@ size_t aufile_get_length(struct aufile *af, const struct aufile_prm *prm)
  *
  * @param af  Audio-file
  * @param prm Audio file parameters from aufile_open
+ * @param pos_ms Playing position in milliseconds
  *
  * @return 0 if success, otherwise errorcode
  */
