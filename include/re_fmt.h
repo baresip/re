@@ -203,3 +203,13 @@ void fmt_param_apply(const struct pl *pl, fmt_param_h *ph, void *arg);
 int utf8_encode(struct re_printf *pf, const char *str);
 int utf8_decode(struct re_printf *pf, const struct pl *pl);
 size_t utf8_byteseq(char u[4], unsigned cp);
+
+
+/* text2pcap */
+struct re_text2pcap {
+	bool in;
+	const struct mbuf *mb;
+	char *id;
+};
+
+int re_text2pcap(struct re_printf *pf, struct re_text2pcap *pcap);

@@ -242,6 +242,7 @@ set(SRCS
   src/fmt/regex.c
   src/fmt/str.c
   src/fmt/str_error.c
+  src/fmt/text2pcap.c
   src/fmt/time.c
   src/fmt/unicode.c
 
