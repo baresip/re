@@ -6,6 +6,8 @@
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mbuf.h>
+#include <re_trace.h>
+#include <re_mem.h>
 
 
 int re_text2pcap(struct re_printf *pf, struct re_text2pcap *pcap)
@@ -28,4 +30,23 @@ int re_text2pcap(struct re_printf *pf, struct re_text2pcap *pcap)
 	re_hprintf(pf, " %s", pcap->id);
 
 	return 0;
+}
+
+
+void re_text2pcap_trace(const char *name, const char *id, bool in,
+			const struct mbuf *mb)
+{
+	struct re_text2pcap pcap = {.in = in, .mb = mb, .id = id};
+	size_t pcap_buf_sz = (mbuf_get_left(mb) * 3) + 64;
+
+	char *pcap_buf = mem_alloc(pcap_buf_sz, NULL);
+	if (!pcap_buf)
+		return;
+
+	re_snprintf(pcap_buf, pcap_buf_sz, "%H", re_text2pcap, &pcap);
+
+	re_trace_event("pcap", name, 'I', NULL, RE_TRACE_ARG_STRING_COPY,
+		       "pcap", pcap_buf);
+
+	mem_deref(pcap_buf);
 }

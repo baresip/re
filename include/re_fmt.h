@@ -209,7 +209,9 @@ size_t utf8_byteseq(char u[4], unsigned cp);
 struct re_text2pcap {
 	bool in;
 	const struct mbuf *mb;
-	char *id;
+	const char *id;
 };
 
 int re_text2pcap(struct re_printf *pf, struct re_text2pcap *pcap);
+void re_text2pcap_trace(const char *name, const char *id, bool in,
+			const struct mbuf *mb);
