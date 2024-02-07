@@ -17,7 +17,6 @@
 #include <re_atomic.h>
 #include "rtcp.h"
 
-
 #define DEBUG_MODULE "rtp"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
@@ -167,6 +166,10 @@ static void rtcp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 	struct rtp_sock *rs = arg;
 	struct rtcp_msg *msg;
 
+#ifdef RE_RTP_PCAP
+	re_text2pcap_trace("rtcp_recv", "RTCP", true, mb);
+#endif
+
 	while (0 == rtcp_decode(&msg, mb)) {
 
 		/* handle internally first */
@@ -202,9 +205,14 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 		}
 	}
 
+#ifdef RE_RTP_PCAP
+	re_text2pcap_trace("rtp_udp_recv", "RTP", true, mb);
+#endif
+
 	err = rtp_decode(rs, mb, &hdr);
 	if (err)
 		return;
+
 
 	if (rs->rtcp)
 		rtcp_sess_rx_rtp(rs->rtcp, &hdr, mbuf_get_left(mb), src);
@@ -525,6 +533,10 @@ int rtp_send(struct rtp_sock *rs, const struct sa *dst, bool ext,
 
 	mb->pos = pos;
 
+#ifdef RE_RTP_PCAP
+	re_text2pcap_trace("rtp_send", "RTP", false, mb);
+#endif
+
 	return udp_send(rs->sock_rtp, dst, mb);
 }
 
@@ -568,6 +580,10 @@ int rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
 		return err;
 
 	mb->pos = pos;
+
+#ifdef RE_RTP_PCAP
+	re_text2pcap_trace("rtp_resend", "RTP", false, mb);
+#endif
 
 	return udp_send(rs->sock_rtp, dst, mb);
 }
@@ -704,6 +720,9 @@ int rtcp_send(struct rtp_sock *rs, struct mbuf *mb)
 	if (!sock || !sa_isset(&rs->rtcp_peer, SA_ALL))
 		return EINVAL;
 
+#ifdef RE_RTP_PCAP
+	re_text2pcap_trace("rtcp_send", "RTCP", false, mb);
+#endif
 	return udp_send(sock, &rs->rtcp_peer, mb);
 }
 
