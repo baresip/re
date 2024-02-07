@@ -4,6 +4,10 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#ifdef __MINGW32__
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <time.h>
 
 #ifdef WIN32
@@ -128,4 +132,40 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 	(void)arg;
 
 	return re_hprintf(pf, "%02u:%02u:%02u.%03llu", h, m, s, ms);
+}
+
+
+/**
+ * Print local time stamp including microseconds relative to user's timezone
+ *
+ * @param pf  Print function for output
+ * @param arg Not used
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int fmt_timestamp_us(struct re_printf *pf, void *arg)
+{
+	int h, m, s;
+	uint64_t us;
+	struct timespec tspec;
+	struct tm tm;
+
+#if defined(WIN32) && !defined(__MINGW32__)
+	timespec_get(&tspec, TIME_UTC);
+	int err = localtime_s(&tm, &tspec.tv_sec);
+	if (err)
+		return err;
+#else
+	(void)clock_gettime(CLOCK_REALTIME, &tspec);
+	if (!localtime_r(&tspec.tv_sec, &tm))
+		return EINVAL;
+#endif
+
+	h  = tm.tm_hour;
+	m  = tm.tm_min;
+	s  = tm.tm_sec;
+	us = tspec.tv_nsec / 1000;
+	(void)arg;
+
+	return re_hprintf(pf, "%02u:%02u:%02u.%06llu", h, m, s, us);
 }
