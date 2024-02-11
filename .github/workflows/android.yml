@@ -9,7 +9,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: actions/cache@v4
+      id: openssl
+      with:
+        path: openssl
+        key: ${{ runner.os }}-android-openssl-3.2.0
+
     - name: "build openssl"
+      if: steps.openssl.outputs.cache-hit != 'true'
       run: |
         wget -q https://www.openssl.org/source/openssl-3.2.0.tar.gz
         tar -xzf openssl-3.2.0.tar.gz
