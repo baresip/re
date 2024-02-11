@@ -22,7 +22,7 @@ jobs:
       id: openssl
       with:
         path: openssl
-        key: ${{ runner.os }}-android-openssl-$openssl
+        key: ${{ runner.os }}-android-openssl-${{ openssl }}
 
     - name: "build openssl"
       if: steps.openssl.outputs.cache-hit != 'true'
