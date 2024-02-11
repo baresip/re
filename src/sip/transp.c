@@ -679,6 +679,10 @@ static void tcp_connect_handler(const struct sa *paddr, void *arg)
 		err = tls_start_tcp(&conn->sc, transp->tls, conn->tc, 0);
 		if (err)
 			goto out;
+
+		err = tls_verify_client(conn->sc);
+		if (err)
+			goto out;
 	}
 #endif
 
