@@ -32,7 +32,7 @@ jobs:
       with:
         path: baresip-win32/re
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       id: openssl
       with:
         path: baresip-win32/openssl
@@ -50,7 +50,7 @@ jobs:
       run: |
         cd baresip-win32 && make retest
     
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: retest-exe
         path: baresip-win32/re/build/test/retest.exe
@@ -62,7 +62,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
     - uses: sreimers/pr-dependency-action@v0.6
       with:
         name: re
