@@ -38,7 +38,7 @@ void re_text2pcap_trace(const char *name, const char *id, bool in,
 	if (!pcap_buf)
 		return;
 
-	re_snprintf(pcap_buf, pcap_buf_sz, "%H", re_text2pcap, &pcap);
+	(void)re_snprintf(pcap_buf, pcap_buf_sz, "%H", re_text2pcap, &pcap);
 
 	re_trace_event("pcap", name, 'I', NULL, RE_TRACE_ARG_STRING_COPY,
 		       "pcap", pcap_buf);
