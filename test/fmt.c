@@ -1158,3 +1158,30 @@ int test_fmt_hexdump(void)
 
 	return 0;
 }
+
+
+int test_text2pcap(void)
+{
+	char test[64];
+	struct mbuf *mb;
+	int err = 0;
+
+	mb = mbuf_alloc(2);
+	if (!mb)
+		return ENOMEM;
+
+	mbuf_write_u8(mb, 42);
+	mbuf_write_u8(mb, 23);
+
+	mbuf_set_pos(mb, 0);
+
+	struct re_text2pcap pcap = {.id = "test", .in = true, .mb = mb};
+
+	int ret = re_snprintf(test, sizeof(test), "%H", re_text2pcap, &pcap);
+
+	TEST_EQUALS(35, ret);
+
+out:
+	mem_deref(mb);
+	return err;
+}

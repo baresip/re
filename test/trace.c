@@ -67,5 +67,7 @@ int test_trace(void)
 #endif
 
 out:
+	if (err)
+		re_trace_close();
 	return err;
 }

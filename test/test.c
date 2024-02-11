@@ -214,6 +214,7 @@ static const struct test tests[] = {
 	TEST(test_sys_getenv),
 	TEST(test_tcp),
 	TEST(test_telev),
+	TEST(test_text2pcap),
 #ifdef USE_TLS
 	TEST(test_tls),
 	TEST(test_tls_ec),

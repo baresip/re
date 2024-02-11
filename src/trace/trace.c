@@ -164,7 +164,7 @@ int re_trace_init(const char *json_file)
 	trace.event_buffer_flush = mem_zalloc(
 		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
 	if (!trace.event_buffer_flush) {
-		mem_deref(trace.event_buffer);
+		trace.event_buffer = mem_deref(trace.event_buffer);
 		return ENOMEM;
 	}
 
@@ -191,8 +191,8 @@ int re_trace_init(const char *json_file)
 out:
 	if (err) {
 		re_atomic_rlx_set(&trace.init, false);
-		mem_deref(trace.event_buffer);
-		mem_deref(trace.event_buffer_flush);
+		trace.event_buffer	 = mem_deref(trace.event_buffer);
+		trace.event_buffer_flush = mem_deref(trace.event_buffer_flush);
 	}
 
 	return err;
@@ -245,12 +245,12 @@ int re_trace_close(void)
 int re_trace_flush(void)
 {
 #ifdef RE_TRACE_ENABLED
-	int i, flush_count;
+	int flush_count;
 	struct trace_event *event_tmp;
 	struct trace_event *e;
-	char json_arg[256] = {0};
-	char name[128]	   = {0};
-	char id_str[128]   = {0};
+	char *json_arg;
+	char name[128]	 = {0};
+	char id_str[128] = {0};
 
 	if (!re_atomic_rlx(&trace.init))
 		return 0;
@@ -264,7 +264,21 @@ int re_trace_flush(void)
 	trace.event_count = 0;
 	mtx_unlock(&trace.lock);
 
-	for (i = 0; i < flush_count; i++)
+	size_t json_arg_sz = 4096;
+	json_arg = mem_zalloc(json_arg_sz, NULL);
+	if (!json_arg) {
+		for (int i = 0; i < flush_count; i++) {
+			e = &trace.event_buffer_flush[i];
+			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
+				mem_deref((void *)e->arg.a_str);
+
+			if (e->id)
+				mem_deref(e->id);
+		}
+		return ENOMEM;
+	}
+
+	for (int i = 0; i < flush_count; i++)
 	{
 		e = &trace.event_buffer_flush[i];
 
@@ -273,17 +287,17 @@ int re_trace_flush(void)
 			json_arg[0] = '\0';
 			break;
 		case RE_TRACE_ARG_INT:
-			(void)re_snprintf(json_arg, sizeof(json_arg),
+			(void)re_snprintf(json_arg, json_arg_sz,
 					", \"args\":{\"%s\":%i}",
 					e->arg_name, e->arg.a_int);
 			break;
 		case RE_TRACE_ARG_STRING_CONST:
-			(void)re_snprintf(json_arg, sizeof(json_arg),
+			(void)re_snprintf(json_arg, json_arg_sz,
 					", \"args\":{\"%s\":\"%s\"}",
 					e->arg_name, e->arg.a_str);
 			break;
 		case RE_TRACE_ARG_STRING_COPY:
-			(void)re_snprintf(json_arg, sizeof(json_arg),
+			(void)re_snprintf(json_arg, json_arg_sz,
 					", \"args\":{\"%s\":\"%s\"}",
 					e->arg_name, e->arg.a_str);
 
@@ -309,6 +323,8 @@ int re_trace_flush(void)
 			str_isset(json_arg) ? json_arg : "");
 		trace.new = false;
 	}
+
+	mem_deref(json_arg);
 
 	(void)fflush(trace.f);
 	return 0;

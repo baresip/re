@@ -330,6 +330,7 @@ int test_sys_fs_fopen(void);
 int test_sys_getenv(void);
 int test_tcp(void);
 int test_telev(void);
+int test_text2pcap(void);
 int test_thread(void);
 int test_thread_cnd_timedwait(void);
 int test_tmr_jiffies(void);

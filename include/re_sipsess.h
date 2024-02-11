@@ -7,13 +7,13 @@
 struct sipsess_sock;
 struct sipsess;
 
-/* SDP Negotiation state */
+/** SDP Negotiation state */
 enum sdp_neg_state {
 	SDP_NEG_NONE = 0,
-	SDP_NEG_LOCAL_OFFER,		/** SDP offer sent */
-	SDP_NEG_REMOTE_OFFER,		/** SDP offer received */
-	SDP_NEG_PREVIEW_ANSWER,		/** SDP preview answer sent */
-	SDP_NEG_DONE			/** SDP negotiation done */
+	SDP_NEG_LOCAL_OFFER,		/**< SDP offer sent */
+	SDP_NEG_REMOTE_OFFER,		/**< SDP offer received */
+	SDP_NEG_PREVIEW_ANSWER,		/**< SDP preview answer sent */
+	SDP_NEG_DONE			/**< SDP negotiation done */
 };
 
 
