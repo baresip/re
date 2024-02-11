@@ -1,6 +1,12 @@
 name: Android
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
 
 env:
   openssl: 3.2.1
