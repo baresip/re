@@ -1,6 +1,15 @@
 name: Android
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+env:
+  openssl: 3.2.1
 
 jobs:
   android:
@@ -9,11 +18,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: actions/cache@v4
+      id: openssl
+      with:
+        path: openssl
+        key: ${{ runner.os }}-android-openssl-${{ env.openssl }}
+
     - name: "build openssl"
+      if: steps.openssl.outputs.cache-hit != 'true'
       run: |
-        wget -q https://www.openssl.org/source/openssl-3.2.0.tar.gz
-        tar -xzf openssl-3.2.0.tar.gz
-        mv openssl-3.2.0 openssl
+        wget -q https://www.openssl.org/source/openssl-$openssl.tar.gz
+        tar -xzf openssl-$openssl.tar.gz
+        mv openssl-$openssl openssl
         cd openssl && ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH ./Configure android-arm64 no-shared no-tests -U__ANDROID_API__ -D__ANDROID_API__=21 && PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH make build_libs && cd ..
 
     - name: build
