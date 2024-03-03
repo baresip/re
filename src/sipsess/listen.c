@@ -15,6 +15,7 @@
 #include <re_msg.h>
 #include <re_sip.h>
 #include <re_sipsess.h>
+#include <re_sys.h>
 #include "sipsess.h"
 
 
@@ -250,11 +251,18 @@ static void target_refresh_handler(struct sipsess_sock *sock,
 
 	if ((is_invite && sess->st)
 	    || (sdp && sess->neg_state == SDP_NEG_LOCAL_OFFER)) {
-		(void)sip_treplyf(NULL, NULL, sip, msg, false,
-				  500, "Server Internal Error",
-				  "Retry-After: 5\r\n"
-				  "Content-Length: 0\r\n"
-				  "\r\n");
+		if (!sess->established) {
+			uint32_t wait = rand_u16() % 11;
+			(void)sip_treplyf(NULL, NULL, sip, msg, false,
+					  500, "Server Internal Error",
+					  "Retry-After: %u\r\n"
+					  "Content-Length: 0\r\n"
+					  "\r\n", wait);
+		}
+		else {
+			(void)sip_treply(NULL, sip, msg, 491,
+					 "Request Pending");
+		}
 		return;
 	}
 
