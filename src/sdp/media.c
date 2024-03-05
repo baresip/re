@@ -764,6 +764,9 @@ const struct sdp_format *sdp_media_rformat(const struct sdp_media *m,
 		if (!fmt->sup)
 			continue;
 
+		if (!fmt->data)
+			continue;
+
 		if (name && str_casecmp(name, fmt->name))
 			continue;
 
