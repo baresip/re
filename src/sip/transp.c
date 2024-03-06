@@ -945,6 +945,8 @@ static void websock_recv_handler(const struct websock_hdr *hdr,
 	if (mb->end <= 4)
 		return;
 
+	tmr_start(&conn->tmr, TCP_IDLE_TIMEOUT * 1000, conn_tmr_handler, conn);
+
 	start = mb->pos;
 
 	err = sip_msg_decode(&msg, mb);
