@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.10.0] - 2024-03-06
+
+## What's Changed
+* transp: deref qent only if qentp is not set by @maximilianfridrich in https://github.com/baresip/re/pull/1061
+* sipsess: fix doxygen comments by @alfredh in https://github.com/baresip/re/pull/1062
+* aufile: fix doxygen comment by @alfredh in https://github.com/baresip/re/pull/1063
+* ci/codeql: bump action v3 by @sreimers in https://github.com/baresip/re/pull/1064
+* misc: text2pcap helpers (RTP/RTCP capturing) by @sreimers in https://github.com/baresip/re/pull/1065
+* ci/mingw: bump upload/download-artifact and cache versions by @sreimers in https://github.com/baresip/re/pull/1066
+* transp,tls: add TLS client verification by @maximilianfridrich in https://github.com/baresip/re/pull/1059
+* fmt/text2pcap: cleanup by @sreimers in https://github.com/baresip/re/pull/1067
+* ci/android: cache openssl build by @sreimers in https://github.com/baresip/re/pull/1068
+* ci/misc: fix double push/pull runs by @sreimers in https://github.com/baresip/re/pull/1069
+* fmt/text2pcap: fix coverity return value warning by @sreimers in https://github.com/baresip/re/pull/1070
+* sipsess/listen: improve glare handling by @maximilianfridrich in https://github.com/baresip/re/pull/1071
+* conf: add conf_get_i32 by @sreimers in https://github.com/baresip/re/pull/1072
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.9.0...v3.10.0
+
+
 ## [v3.9.0] - 2024-01-31
 
 ## What's Changed
