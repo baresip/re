@@ -22,7 +22,7 @@ static void *handler(void *p)
 	mem_deref(p);
 
 	ret = th.func(th.arg);
-	
+
 	return (void *)(intptr_t)ret;
 }
 
