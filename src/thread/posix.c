@@ -23,7 +23,7 @@ static void *handler(void *p)
 
 	ret = th.func(th.arg);
 	
-	return (void *)(intptr_t)ret; 
+	return (void *)(intptr_t)ret;
 }
 
 
