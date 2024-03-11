@@ -29,4 +29,4 @@ jobs:
     - name: analyze
       run: | 
         cmake -B build -DCMAKE_C_COMPILER=clang-17
-        analyze-build-17 --cdb build/compile_commands.json --status-bugs
+        analyze-build-17 --cdb build/compile_commands.json --status-bugs -v
