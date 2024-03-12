@@ -741,6 +741,7 @@ static int fd_poll(struct re *re)
 	const uint64_t to = tmr_next_timeout(re->tmrl);
 	int i, n;
 	int nfds = re->nfds;
+	int err = 0;
 	struct re_fhs *fhs = NULL;
 #ifdef HAVE_SELECT
 	fd_set rfds, wfds, efds;
@@ -827,11 +828,14 @@ static int fd_poll(struct re *re)
 	default:
 		(void)to;
 		DEBUG_WARNING("no polling method set\n");
-		return EINVAL;
+		err = EINVAL;
+		goto out;
 	}
 
-	if (n < 0)
-		return RE_ERRNO_SOCK;
+	if (n < 0) {
+		err = RE_ERRNO_SOCK;
+		goto out;
+	}
 
 	/* Check for events */
 	for (i=0; (n > 0) && (i < nfds); i++) {
@@ -908,7 +912,8 @@ static int fd_poll(struct re *re)
 #endif
 
 		default:
-			return EINVAL;
+			err = EINVAL;
+			goto out;
 		}
 
 		if (!flags)
@@ -926,10 +931,11 @@ static int fd_poll(struct re *re)
 		--n;
 	}
 
+ out:
 	/* Delayed fhs deref to avoid dangling fhs pointers */
 	fhsld_flush(re);
 
-	return 0;
+	return err;
 }
 
 
