@@ -39,7 +39,6 @@
 #include <re_fmt.h>
 #include <re_net.h>
 #include <re_mem.h>
-#include <re_mbuf.h>
 #include <re_list.h>
 #include <re_thread.h>
 #include <re_tmr.h>
@@ -72,6 +71,7 @@ struct re_fhs {
 	int flags;           /**< Polling flags (Read, Write, etc.) */
 	fd_h* fh;            /**< Event handler                     */
 	void* arg;           /**< Handler argument                  */
+	struct re_fhs* next; /**< Next element in the delete list   */
 };
 
 /** Polling loop data */
@@ -82,7 +82,7 @@ struct re {
 	RE_ATOMIC bool polling;      /**< Is polling flag                   */
 	int sig;                     /**< Last caught signal                */
 	struct tmrl *tmrl;           /**< List of timers                    */
-	struct mbuf *fhsld;          /**< fhs delete list                   */
+	struct re_fhs *fhsld;        /**< fhs single-linked delete list     */
 #ifdef HAVE_SELECT
 	struct re_fhs **fhsl;        /**< Select fhs pointer list           */
 #endif
@@ -111,18 +111,14 @@ static void poll_close(struct re *re);
 
 static void fhsld_flush(struct re *re)
 {
-	if (!re->fhsld)
-		return;
+	struct re_fhs *fhs = re->fhsld;
+	re->fhsld = NULL;
 
-	re->fhsld->pos = 0;
-
-	while (re->fhsld->pos < re->fhsld->end) {
-		intptr_t p = mbuf_read_ptr(re->fhsld);
-		mem_deref((void *)p);
+	while (fhs) {
+		struct re_fhs *next = fhs->next;
+		mem_deref(fhs);
+		fhs = next;
 	}
-
-	re->fhsld->pos = 0;
-	re->fhsld->end = 0;
 }
 
 
@@ -135,7 +131,6 @@ static void re_destructor(void *arg)
 	mem_deref(re->mutex);
 	mem_deref(re->async);
 	mem_deref(re->tmrl);
-	mem_deref(re->fhsld);
 }
 
 
@@ -162,12 +157,6 @@ int re_alloc(struct re **rep)
 	re = mem_zalloc(sizeof(struct re), re_destructor);
 	if (!re)
 		return ENOMEM;
-
-	re->fhsld = mbuf_alloc(64 * sizeof(void *));
-	if (!re->fhsld) {
-		err = ENOMEM;
-		goto out;
-	}
 
 	err = mutex_alloc_tp(&re->mutex, mtx_recursive);
 
@@ -722,7 +711,10 @@ struct re_fhs *fd_close(struct re_fhs *fhs)
 		DEBUG_INFO("fd_close: fd=%d\n", fhs->fd);
 	}
 
-	mbuf_write_ptr(re->fhsld, (intptr_t)fhs);
+	re_assert(fhs->next == NULL);
+	fhs->next = re->fhsld;
+	re->fhsld = fhs;
+
 	--re->nfds;
 
 	return NULL;
