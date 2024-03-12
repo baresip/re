@@ -203,7 +203,7 @@ out:
 static void send_update_a(void *arg)
 {
 	struct test *test = arg;
-	struct mbuf *desc;
+	struct mbuf *desc = NULL;
 	int err;
 
 	err = make_sdp(&desc, sdp_a);
@@ -223,7 +223,7 @@ out:
 static void send_update_b(void *arg)
 {
 	struct test *test = arg;
-	struct mbuf *desc;
+	struct mbuf *desc = NULL;
 	int err;
 
 	err = make_sdp(&desc, sdp_b);
@@ -433,7 +433,7 @@ static void close_handler(int err, const struct sip_msg *msg, void *arg)
 static void conn_handler(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
-	struct mbuf *desc;
+	struct mbuf *desc = NULL;
 	int err;
 	char *hdrs = test->rel100_b == REL100_REQUIRED ?
 		     "Require: 100rel\r\n" : "";

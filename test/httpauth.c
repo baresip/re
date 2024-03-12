@@ -651,13 +651,13 @@ int test_httpauth_digest_response(void)
 			goto out;
 		}
 
-		mb_printed = mem_deref (mb_printed);
-		resp = mem_deref(resp);
+		mem_deref(mb_printed);
+		mem_deref(resp);
 		continue;
 
 out:
-		mb_printed = mem_deref (mb_printed);
-		resp = mem_deref(resp);
+		mem_deref(mb_printed);
+		mem_deref(resp);
 		break;
 	}
 
