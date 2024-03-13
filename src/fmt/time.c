@@ -148,7 +148,7 @@ int fmt_timestamp_us(struct re_printf *pf, void *arg)
 	int h, m, s;
 	uint64_t us;
 	struct timespec tspec;
-	struct tm tm;
+	struct tm tm = {0};
 
 #if defined(WIN32) && !defined(__MINGW32__)
 	timespec_get(&tspec, TIME_UTC);
