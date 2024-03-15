@@ -18,7 +18,7 @@ jobs:
           - arch: aarch64
             distro: bullseye
           - arch: armv7
-            distro: bullseye
+            distro: ubuntu22.04
 
     steps:
       - uses: actions/checkout@v4
