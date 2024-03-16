@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+struct pl;
+
 /** Debug levels */
 enum {
 	DBG_EMERG       = 0,       /**< System is unusable               */
@@ -49,47 +51,87 @@ enum {
  *
  * Print warning message
  */
+
+/**
+ * @def DEBUG_WARNING_ID(...)
+ *
+ * Print warning message with identifier
+ */
+
 #if (DEBUG_LEVEL >= 4)
-#define DEBUG_WARNING(...) \
+#define DEBUG_WARNING(...)                                                    \
 	dbg_printf(DBG_WARNING, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_WARNING_ID(...)                                                 \
+	dbg_printf_id(debug_id, DBG_WARNING, DEBUG_MODULE ": " __VA_ARGS__)
 #else
 #define DEBUG_WARNING(...)
+#define DEBUG_WARNING_ID(...)
 #endif
+
 
 /**
  * @def DEBUG_NOTICE(...)
  *
  * Print notice message
  */
+
+/**
+ * @def DEBUG_NOTICE_ID(...)
+ *
+ * Print notice message with identifier
+ */
+
 #if (DEBUG_LEVEL >= 5)
-#define DEBUG_NOTICE(...) \
-	dbg_printf(DBG_NOTICE, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_NOTICE(...) dbg_printf(DBG_NOTICE, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_NOTICE_ID(...)                                                  \
+	dbg_printf_id(debug_id, DBG_NOTICE, DEBUG_MODULE ": " __VA_ARGS__)
 #else
 #define DEBUG_NOTICE(...)
+#define DEBUG_NOTICE_ID(...)
 #endif
+
 
 /**
  * @def DEBUG_INFO(...)
  *
  * Print info message
  */
+
+/**
+ * @def DEBUG_INFO_ID(...)
+ *
+ * Print info message with identifier
+ */
+
 #if (DEBUG_LEVEL >= 6)
-#define DEBUG_INFO(...) \
-	dbg_printf(DBG_INFO, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_INFO(...) dbg_printf(DBG_INFO, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_INFO_ID(...)                                                    \
+	dbg_printf_id(debug_id, DBG_INFO, DEBUG_MODULE ": " __VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
+#define DEBUG_INFO_ID(...)
 #endif
+
 
 /**
  * @def DEBUG_PRINTF(...)
  *
  * Print debug message
  */
+
+/**
+ * @def DEBUG_PRINTF_ID(...)
+ *
+ * Print debug message with identifier
+ */
+
 #if (DEBUG_LEVEL >= 7)
-#define DEBUG_PRINTF(...) \
-	dbg_printf(DBG_DEBUG, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_PRINTF(...) dbg_printf(DBG_DEBUG, DEBUG_MODULE ": " __VA_ARGS__)
+#define DEBUG_PRINTF_ID(...)                                                  \
+	dbg_printf_id(debug_id, DBG_DEBUG, DEBUG_MODULE ": " __VA_ARGS__)
 #else
 #define DEBUG_PRINTF(...)
+#define DEBUG_PRINTF_ID(...)
 #endif
 
 
@@ -110,13 +152,15 @@ enum dbg_flags {
  * @param len   String length
  * @param arg   Handler argument
  */
-typedef void (dbg_print_h)(int level, const char *p, size_t len, void *arg);
+typedef void(dbg_print_h)(struct pl *id, int level, const char *p, size_t len,
+			  void *arg);
 
 void dbg_init(int level, enum dbg_flags flags);
 void dbg_close(void);
 int  dbg_logfile_set(const char *name);
 void dbg_handler_set(dbg_print_h *ph, void *arg);
 void dbg_printf(int level, const char *fmt, ...);
+void dbg_printf_id(struct pl *id, int level, const char *fmt, ...);
 const char *dbg_level_str(int level);
 
 #ifdef __cplusplus
