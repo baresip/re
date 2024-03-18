@@ -6,7 +6,6 @@
 
 #include <string.h>
 #include <re.h>
-#include <re_h264.h>
 #include <rem.h>
 #include "test.h"
 
