@@ -16,7 +16,7 @@
 #include <re_dbg.h>
 
 
-static bool obu_allowed_rtp(enum obu_type type)
+bool obu_allowed_rtp(enum obu_type type)
 {
 	switch (type) {
 
