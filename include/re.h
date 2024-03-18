@@ -29,6 +29,7 @@ extern "C" {
 #include "re_convert.h"
 #include "re_crc32.h"
 #include "re_dns.h"
+#include "re_h264.h"
 #include "re_hash.h"
 #include "re_hmac.h"
 #include "re_http.h"
