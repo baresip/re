@@ -15,6 +15,9 @@
 #include <re_dbg.h>
 
 
+enum { DUMMY_TS = 36000 };
+
+
 #if 0
 static void dump_annexb(const uint8_t *start, size_t size)
 {
@@ -86,7 +89,7 @@ static int test_h264_stap_a_encode(void)
 		0x00, 0x00, 0x01,
 		0x65, 0xb8, 0x00, 0x04, 0x00, 0x00, 0x05, 0x39,
 	};
-#define MAX_NRI 3
+	enum { MAX_NRI = 3 };
 	struct mbuf *mb_pkt   = mbuf_alloc(256);
 	struct mbuf *mb_frame = mbuf_alloc(256);
 	struct h264_nal_header hdr;
@@ -175,11 +178,10 @@ static int test_h264_stap_a_decode(void)
 int test_h264(void)
 {
 	struct h264_nal_header hdr, hdr2;
-	struct mbuf *mb;
 	static const uint8_t nal = 0x25;
 	int err;
 
-	mb = mbuf_alloc(1);
+	struct mbuf *mb = mbuf_alloc(1);
 	if (!mb)
 		return ENOMEM;
 
@@ -628,9 +630,6 @@ static int depack_handle_h264(struct state *st, bool marker,
 }
 
 
-enum { DUMMY_TS = 36000 };
-
-
 static int packet_handler(bool marker, uint64_t rtp_ts,
 			  const uint8_t *hdr, size_t hdr_len,
 			  const uint8_t *pld, size_t pld_len,
@@ -669,7 +668,7 @@ static const char *bitstream = "000001650010e2238712983719283719823798";
 int test_h264_packet(void)
 {
 	struct state state;
-	const size_t pktsize = 8;
+	const size_t MAX_PKTSIZE = 8;
 	int err;
 
 	memset(&state, 0, sizeof(state));
@@ -684,7 +683,7 @@ int test_h264_packet(void)
 	if (!state.mb)
 		return ENOMEM;
 
-	err = h264_packetize(DUMMY_TS, state.buf, state.len, pktsize,
+	err = h264_packetize(DUMMY_TS, state.buf, state.len, MAX_PKTSIZE,
 			     packet_handler, &state);
 	if (err)
 		goto out;
