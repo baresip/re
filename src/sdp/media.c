@@ -912,6 +912,26 @@ const char *sdp_media_session_rattr(const struct sdp_media *m,
 
 
 /**
+ * Apply a function handler to all matching local attributes
+ *
+ * @param m     SDP Media line
+ * @param name  Attribute name
+ * @param attrh Attribute handler
+ * @param arg   Handler argument
+ *
+ * @return Attribute value if match
+ */
+const char *sdp_media_lattr_apply(const struct sdp_media *m, const char *name,
+				  sdp_attr_h *attrh, void *arg)
+{
+	if (!m)
+		return NULL;
+
+	return sdp_attr_apply(&m->lattrl, name, attrh, arg);
+}
+
+
+/**
  * Apply a function handler to all matching remote attributes
  *
  * @param m     SDP Media line

@@ -131,6 +131,8 @@ const char *sdp_media_rattr(const struct sdp_media *m, const char *name);
 const char *sdp_media_session_rattr(const struct sdp_media *m,
 				    const struct sdp_session *sess,
 				    const char *name);
+const char *sdp_media_lattr_apply(const struct sdp_media *m, const char *name,
+				  sdp_attr_h *attrh, void *arg);
 const char *sdp_media_rattr_apply(const struct sdp_media *m, const char *name,
 				  sdp_attr_h *attrh, void *arg);
 const char *sdp_media_name(const struct sdp_media *m);
