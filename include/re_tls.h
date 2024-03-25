@@ -28,6 +28,13 @@ enum tls_keytype {
 	TLS_KEYTYPE_EC,
 };
 
+enum tls_resume_mode {
+	TLS_RESUMPTION_NONE	= 0,
+	TLS_RESUMPTION_IDS	= (1 << 0),
+	TLS_RESUMPTION_TICKETS	= (1 << 1),
+	TLS_RESUMPTION_ALL	= TLS_RESUMPTION_IDS | TLS_RESUMPTION_TICKETS,
+};
+
 struct tls_conn_d {
 	int (*verifyh) (int ok, void *arg);
 	void *arg;
@@ -75,6 +82,7 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 void tls_enable_verify_client(struct tls *tls, bool enable);
+int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
