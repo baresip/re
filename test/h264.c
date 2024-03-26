@@ -723,10 +723,10 @@ int test_h264_packet(void)
 	int err;
 
 	err = test_h264_packet_base(bitstream, false);
-	ASSERT_EQ(0, err);
+	TEST_ERR(err);
 
 	err = test_h264_packet_base(bitstream_long, true);
-	ASSERT_EQ(0, err);
+	TEST_ERR(err);
 
  out:
 	return err;
