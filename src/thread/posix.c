@@ -16,11 +16,12 @@ struct thread {
 
 static void *handler(void *p)
 {
-	struct thread th = *(struct thread *)p;
+	struct thread *th = p;
 
-	mem_deref(p);
+	int ret = th->func(th->arg);
+	mem_deref(th);
 
-	return (void *)(intptr_t)th.func(th.arg);
+	return (void *)(intptr_t)ret;
 }
 
 
