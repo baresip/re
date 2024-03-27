@@ -165,7 +165,7 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 
 	if (res == HTTPS_MSG_REQUEST_CERT) {
 
-		d = mem_zalloc(sizeof(*conn), verify_msg_destructor);
+		d = mem_zalloc(sizeof(*d), verify_msg_destructor);
 		if (!d) {
 			res = HTTPS_MSG_IGNORE;
 			goto out;

@@ -155,7 +155,8 @@ int h264_fu_hdr_decode(struct h264_fu *fu, struct mbuf *mb)
  *
  * @note: copied from ffmpeg source
  */
-const uint8_t *h264_find_startcode(const uint8_t *p, const uint8_t *end)
+static const uint8_t *h264_find_startcode_int(const uint8_t *p,
+					      const uint8_t *end)
 {
 	const uint8_t *a = p + 4 - ((size_t)p & 3);
 
@@ -188,6 +189,18 @@ const uint8_t *h264_find_startcode(const uint8_t *p, const uint8_t *end)
 	}
 
 	return end + 3;
+}
+
+
+const uint8_t *h264_find_startcode(const uint8_t *p, const uint8_t *end)
+{
+	const uint8_t *out = h264_find_startcode_int(p, end);
+
+	/* check for 4-byte startcode */
+	if (p<out && out<end && !out[-1])
+		--out;
+
+	return out;
 }
 
 

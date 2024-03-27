@@ -2190,3 +2190,45 @@ int tls_verify_client_post_handshake(struct tls_conn *tc)
 
 	return err;
 }
+
+
+/**
+ * Set TLS session resumption mode
+ *
+ * @param tls  TLS Object
+ * @param mode TLS session resumption mode
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
+{
+	long ok = 1;
+
+	if (!tls)
+		return EINVAL;
+
+	if (mode & TLS_RESUMPTION_IDS) {
+		ok = SSL_CTX_set_session_cache_mode(tls->ctx,
+						    SSL_SESS_CACHE_SERVER);
+	}
+	else {
+		ok = SSL_CTX_set_session_cache_mode(tls->ctx,
+						    SSL_SESS_CACHE_OFF);
+	}
+
+	if (mode & TLS_RESUMPTION_TICKETS) {
+		ok |= SSL_CTX_clear_options(tls->ctx, SSL_OP_NO_TICKET);
+		ok |= SSL_CTX_set_num_tickets(tls->ctx, 2);
+	}
+	else {
+		ok |= SSL_CTX_set_options(tls->ctx, SSL_OP_NO_TICKET);
+		ok |= SSL_CTX_set_num_tickets(tls->ctx, 0);
+	}
+
+	if (!ok) {
+		ERR_clear_error();
+		return EFAULT;
+	}
+
+	return 0;
+}

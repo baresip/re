@@ -296,6 +296,21 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 						  msg->r.fb.fci.gnackv[i].blp);
 			}
 		}
+		else if (msg->hdr.count == RTCP_RTPFB_TWCC) {
+			const struct twcc *twcc = msg->r.fb.fci.twccv;
+
+			err |= re_hprintf(pf,
+					  " TWCC"
+					  " base_seq=%u"
+					  " pkt_status_count=%u"
+					  " ref_time=%u"
+					  " fb_pkt_count=%u"
+					  ,
+					  twcc->seq,
+					  twcc->count,
+					  twcc->reftime,
+					  twcc->fbcount);
+		}
 		break;
 
 	case RTCP_PSFB:

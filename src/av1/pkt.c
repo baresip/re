@@ -22,6 +22,35 @@ enum {
 };
 
 
+/*
+ * Calculate length of LEB128 field
+ *
+ * Add high 1 bits on all but last (most significant) group to form bytes
+ */
+static size_t leb128_calc_size(uint64_t value)
+{
+	size_t bytes = 1;
+
+	/* Bit7: 1=more bytes coming, 0=complete */
+	while (value >= 0x80) {
+
+		++bytes;
+
+		value >>= 7;
+	}
+
+	return bytes;
+}
+
+
+/*
+ * Z: MUST be set to 1 if the first OBU element is an OBU fragment that is a
+ *    continuation of an OBU fragment from the previous packet, and MUST be
+ *    set to 0 otherwise.
+ *
+ * Y: MUST be set to 1 if the last OBU element is an OBU fragment that will
+ *    continue in the next packet, and MUST be set to 0 otherwise.
+ */
 static void hdr_encode(uint8_t hdr[AV1_AGGR_HDR_SIZE],
 		       bool z, bool y, uint8_t w, bool n)
 {
@@ -51,7 +80,7 @@ static struct mbuf *encode_obu(uint8_t type, const uint8_t *p, size_t len)
 
 
 static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
-		     bool w0)
+		     bool w0, size_t maxlen, unsigned *small_obus)
 {
 	struct mbuf wrap = {
 		.buf  = (uint8_t *)buf,
@@ -60,12 +89,16 @@ static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
 		.end  = size
 	};
 	struct mbuf *mb_obu = NULL;
+	size_t accum = AV1_AGGR_HDR_SIZE;
+	unsigned count = 0;
+	enum { OBU_HEADER_SIZE=1 };
 	int err = 0;
 
 	while (mbuf_get_left(&wrap) >= 2) {
 
 		struct av1_obu_hdr hdr;
 		bool last;
+		size_t tmp;
 
 		err = av1_obu_decode(&hdr, &wrap);
 		if (err) {
@@ -107,6 +140,17 @@ static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
 			if (err)
 				goto out;
 
+			/* Count number of small OBUs that fits */
+
+			tmp = OBU_HEADER_SIZE
+				+ leb128_calc_size(hdr.size)
+				+ hdr.size;
+
+			accum += tmp;
+
+			if (accum < maxlen) {
+				++count;
+			}
 			break;
 
 		case AV1_OBU_TEMPORAL_DELIMITER:
@@ -125,6 +169,9 @@ static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
 		mb_obu = mem_deref(mb_obu);
 	}
 
+	if (small_obus)
+		*small_obus = count;
+
  out:
 	mem_deref(mb_obu);
 	return err;
@@ -134,12 +181,12 @@ static int copy_obus(struct mbuf *mb_pkt, const uint8_t *buf, size_t size,
 static int av1_packetize_internal(bool *newp, bool marker, uint64_t rtp_ts,
 				  const uint8_t *buf, size_t len,
 				  size_t maxlen, uint8_t w,
+				  bool use_w_field, unsigned small_obus,
 				  av1_packet_h *pkth, void *arg)
 {
 	uint8_t hdr[AV1_AGGR_HDR_SIZE];
-	bool cont = false;
+	bool z_cont = false;
 	int err = 0;
-
 
 	if (w > 3) {
 		DEBUG_WARNING("w too large\n");
@@ -150,21 +197,25 @@ static int av1_packetize_internal(bool *newp, bool marker, uint64_t rtp_ts,
 
 	while (len > maxlen) {
 
-		hdr_encode(hdr, cont, true, w, *newp);
+		hdr_encode(hdr, z_cont, true, w, *newp);
 		*newp = false;
 
 		err |= pkth(false, rtp_ts, hdr, sizeof(hdr), buf, maxlen, arg);
 
 		buf  += maxlen;
 		len  -= maxlen;
-		cont = true;
+		z_cont = true;
 
 		/* If OBUs are fragmented */
-		if (w == 2)
-			w = 1;
+		if (use_w_field && small_obus > 0) {
+
+			if (w==2 || w==3) {
+				w -= small_obus;
+			}
+		}
 	}
 
-	hdr_encode(hdr, cont, false, w, *newp);
+	hdr_encode(hdr, z_cont, false, w, *newp);
 	*newp = false;
 
 	err |= pkth(marker, rtp_ts, hdr, sizeof(hdr), buf, len, arg);
@@ -212,18 +263,95 @@ int av1_packetize_high(bool *newp, bool marker, uint64_t rtp_ts,
 		w = count;
 	}
 
-	err = copy_obus(mb_pkt, buf, len, count > MAX_OBUS);
+	bool use_w_field = count <= MAX_OBUS;
+	unsigned small_obus = 0;
+
+	err = copy_obus(mb_pkt, buf, len, count > MAX_OBUS,
+			maxlen, &small_obus);
 	if (err)
 		goto out;
 
 	err = av1_packetize_internal(newp, marker, rtp_ts,
 				     mb_pkt->buf, mb_pkt->end, maxlen,
-				     w,
+				     w, use_w_field, small_obus,
 				     pkth, arg);
-	if (err)
-		goto out;
 
  out:
 	mem_deref(mb_pkt);
+	return err;
+}
+
+
+/**
+ * Packetize an AV1 bitstream with one or more OBUs, using W=1 mode
+ *
+ * @param newp    Pointer to new stream flag
+ * @param marker  Set marker bit
+ * @param rtp_ts  RTP timestamp
+ * @param buf     Input buffer
+ * @param len     Buffer length
+ * @param maxlen  Maximum RTP packet size
+ * @param pkth    Packet handler
+ * @param arg     Handler argument
+ *
+ * @return 0 if success, otherwise errorcode
+ *
+ * W: two bit field that describes the number of OBU elements in the packet.
+ *    This field MUST be set equal to 0 or equal to the number of OBU elements
+ *    contained in the packet. If set to 0, each OBU element MUST be preceded
+ *    by a length field.
+ *    If not set to 0 (i.e., W = 1, 2 or 3) the last OBU element MUST NOT be
+ *    preceded by a length field.
+ *
+ */
+int av1_packetize_one_w(bool *newp, bool marker, uint64_t rtp_ts,
+			const uint8_t *buf, size_t len, size_t maxlen,
+			av1_packet_h *pkth, void *arg)
+{
+	struct mbuf wrap = {
+		.buf  = (uint8_t *)buf,
+		.size = len,
+		.pos  = 0,
+		.end  = len
+	};
+	int err = 0;
+
+	while (mbuf_get_left(&wrap) >= 2) {
+
+		struct av1_obu_hdr hdr;
+		size_t start = wrap.pos;
+
+		err = av1_obu_decode(&hdr, &wrap);
+		if (err) {
+			DEBUG_WARNING("av1: encode: hdr dec error (%m)\n",
+				      err);
+			return err;
+		}
+
+		if (obu_allowed_rtp(hdr.type)) {
+
+			size_t header_size = wrap.pos - start;
+			size_t total_size = header_size + hdr.size;
+			bool last = (hdr.size == mbuf_get_left(&wrap));
+			bool use_w_field = true;
+
+			err = av1_packetize_internal(newp,
+						     marker && last,
+						     rtp_ts,
+						     &wrap.buf[start],
+						     total_size,
+						     maxlen,
+						     1,
+						     use_w_field,
+						     0,
+						     pkth,
+						     arg);
+			if (err)
+				return err;
+		}
+
+		mbuf_advance(&wrap, hdr.size);
+	}
+
 	return err;
 }
