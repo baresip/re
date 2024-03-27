@@ -487,6 +487,7 @@ struct state {
 	struct mbuf *mb;
 	size_t frag_start;
 	bool frag;
+	bool long_startcode;
 
 	/* test */
 	uint8_t buf[256];
@@ -506,8 +507,11 @@ static void fragment_rewind(struct state *vds)
 static int depack_handle_h264(struct state *st, bool marker,
 			      struct mbuf *src)
 {
-	static const uint8_t nal_seq[3] = {0, 0, 1};
+	static const uint8_t nal_seq3[3] = {0, 0, 1};
+	static const uint8_t nal_seq4[4] = {0, 0, 0, 1};
 	struct h264_nal_header h264_hdr;
+	size_t nal_seq_len = st->long_startcode ?
+		sizeof(nal_seq4) : sizeof(nal_seq3);
 	int err;
 
 	err = h264_nal_header_decode(&h264_hdr, src);
@@ -533,7 +537,9 @@ static int depack_handle_h264(struct state *st, bool marker,
 		--src->pos;
 
 		/* prepend H.264 NAL start sequence */
-		err  = mbuf_write_mem(st->mb, nal_seq, sizeof(nal_seq));
+		err  = mbuf_write_mem(st->mb,
+				      st->long_startcode ? nal_seq4 : nal_seq3,
+				      nal_seq_len);
 
 		err |= mbuf_write_mem(st->mb, mbuf_buf(src),
 				      mbuf_get_left(src));
@@ -561,7 +567,9 @@ static int depack_handle_h264(struct state *st, bool marker,
 			st->frag = true;
 
 			/* prepend H.264 NAL start sequence */
-			mbuf_write_mem(st->mb, nal_seq, sizeof(nal_seq));
+			mbuf_write_mem(st->mb,
+			       st->long_startcode ? nal_seq4 : nal_seq3,
+			       nal_seq_len);
 
 			/* encode NAL header back to buffer */
 			err = h264_nal_header_encode(st->mb, &h264_hdr);
@@ -601,7 +609,8 @@ static int depack_handle_h264(struct state *st, bool marker,
 			--src->pos;
 
 			err  = mbuf_write_mem(st->mb,
-					      nal_seq, sizeof(nal_seq));
+				      st->long_startcode ? nal_seq4 : nal_seq3,
+				      nal_seq_len);
 			err |= mbuf_write_mem(st->mb, mbuf_buf(src), len);
 			if (err)
 				goto out;
@@ -661,11 +670,7 @@ static int packet_handler(bool marker, uint64_t rtp_ts,
 }
 
 
-/* bitstream in Annex-B format (with startcode 00 00 01) */
-static const char *bitstream = "000001650010e2238712983719283719823798";
-
-
-int test_h264_packet(void)
+static int test_h264_packet_base(const char *bs, bool long_startcode)
 {
 	struct state state;
 	const size_t MAX_PKTSIZE = 8;
@@ -673,9 +678,10 @@ int test_h264_packet(void)
 
 	memset(&state, 0, sizeof(state));
 
-	state.len = strlen(bitstream)/2;
+	state.long_startcode = long_startcode;
+	state.len = strlen(bs)/2;
 
-	err = str_hex(state.buf, state.len, bitstream);
+	err = str_hex(state.buf, state.len, bs);
 	if (err)
 		return err;
 
@@ -694,5 +700,34 @@ int test_h264_packet(void)
  out:
 	mem_deref(state.mb);
 
+	return err;
+}
+
+
+/* bitstream in Annex-B format (with startcode 00 00 01) */
+static const char *bitstream =
+	"0000016701020304"
+	"0000016801020304"
+	"000001650010e2238712983719283719823798";
+
+
+/* bitstream in Annex-B format (with startcode 00 00 00 01) */
+static const char *bitstream_long =
+	"000000016701020304"
+	"000000016801020304"
+	"00000001650010e2238712983719283719823798";
+
+
+int test_h264_packet(void)
+{
+	int err;
+
+	err = test_h264_packet_base(bitstream, false);
+	TEST_ERR(err);
+
+	err = test_h264_packet_base(bitstream_long, true);
+	TEST_ERR(err);
+
+ out:
 	return err;
 }
