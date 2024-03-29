@@ -36,8 +36,8 @@ typedef void (fd_h)(int flags, void *arg);
 typedef void (re_signal_h)(int sig);
 
 
-int   fd_listen(struct re_fhs **fhs, re_sock_t fd, int flags, fd_h *fh,
-		void *arg);
+int   fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h *fh,
+	void *arg);
 struct re_fhs *fd_close(struct re_fhs *fhs);
 int   fd_setsize(int maxfds);
 
