@@ -569,7 +569,7 @@ static int poll_setup(struct re *re)
  *
  * @return 0 if success, otherwise errorcode
  */
-int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
+int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h *fh,
 	      void *arg)
 {
 	struct re *re = re_get();
