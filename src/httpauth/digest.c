@@ -1000,13 +1000,13 @@ int httpauth_digest_response_print(struct re_printf *pf,
 int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
 	const char *user,	const char *passwd, const char *entitybody,
-	uint32_t cnonce, uint32_t nonce_counter)
+	uint32_t cnonce, uint32_t nonce_cnt)
 {
 	if (!resp || !chall || !method || !passwd)
 		return EINVAL;
 
 	resp->cnonce = cnonce;
-	resp->nc = nonce_counter;
+	resp->nc = nonce_cnt;
 
 	return digest_response(resp, chall, method,
 		user, passwd, entitybody);

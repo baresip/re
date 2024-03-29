@@ -113,8 +113,8 @@ int httpauth_digest_response_print(struct re_printf *pf,
 	const struct httpauth_digest_enc_resp *resp);
 int httpauth_digest_response_set_cnonce(struct httpauth_digest_enc_resp *resp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
-	const char *user,	const char *passwd, const char *entitybody,
-	const uint32_t cnonce, const uint32_t nc_);
+	const char *user, const char *passwd, const char *entitybody,
+	uint32_t cnonce, uint32_t nonce_cnt);
 int httpauth_digest_response(struct httpauth_digest_enc_resp **presp,
 	const struct httpauth_digest_chall *chall, const struct pl *method,
 	const char *uri, const char *user, const char *passwd, const char *qop,
