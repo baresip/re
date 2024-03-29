@@ -581,7 +581,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h fh,
 		return EINVAL;
 	}
 
-	if (!fhsp || !flags || !fh)
+	if (!fhsp || !flags || fh == NULL)
 		return EINVAL;
 
 #ifndef RELEASE
