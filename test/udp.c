@@ -164,7 +164,7 @@ int test_udp(void)
 	if (err)
 		goto out;
 
-	err  = udp_listen(&ut->usc, &ut->cli, udp_recv_client, ut);
+	err  = udp_listen(&ut->usc, NULL, udp_recv_client, ut);
 	err |= udp_listen(&ut->uss, &ut->srv, udp_recv_server, ut);
 	if (err)
 		goto out;
