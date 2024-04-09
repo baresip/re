@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.11.0] - 2024-04-09
+
+### What's Changed
+* ci/clang-analyze: bump clang version and fix status-bugs by @sreimers in https://github.com/baresip/re/pull/1079
+* main: Flush list of deleted fhs on `fd_poll` errors by @Lastique in https://github.com/baresip/re/pull/1081
+* main: Use slist for fhs delete list. by @Lastique in https://github.com/baresip/re/pull/1082
+* http/server: fix wrong sizeof in verify_msg by @akscf in https://github.com/baresip/re/pull/1083
+* ci/sanitizers: add mmap rnd_bits workaround by @sreimers in https://github.com/baresip/re/pull/1086
+* rtcp: add printing of TWCC packet by @alfredh in https://github.com/baresip/re/pull/1084
+* include: add re_h264.h to re.h by @alfredh in https://github.com/baresip/re/pull/1087
+* sdp: add sdp media lattr apply function the same way as for rattr by @cHuberCoffee in https://github.com/baresip/re/pull/1089
+* av1: improve packetizer by @alfredh in https://github.com/baresip/re/pull/1088
+* test: minor H.264 improvements by @alfredh in https://github.com/baresip/re/pull/1090
+* tls: add session resumption setter by @maximilianfridrich in https://github.com/baresip/re/pull/1091
+* thread/posix: optimize handler and fix gcc arm32 warning by @sreimers in https://github.com/baresip/re/pull/1093
+* h264: fix for Annex-B bitstreams with 4-byte startcode by @alfredh in https://github.com/baresip/re/pull/1092
+* ci/arch: add armv7 check by @sreimers in https://github.com/baresip/re/pull/1085
+* main,httpauth: fix different from the declaration by @jobo-zt in https://github.com/baresip/re/pull/1095
+* httpauth: fix doxygen comment by @alfredh in https://github.com/baresip/re/pull/1097
+
+### New Contributors
+* @akscf made their first contribution in https://github.com/baresip/re/pull/1083
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.10.0...v3.11.0
+
+
 ## [v3.10.0] - 2024-03-06
 
 ## What's Changed
