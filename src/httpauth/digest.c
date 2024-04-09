@@ -993,7 +993,7 @@ int httpauth_digest_response_print(struct re_printf *pf,
  * @param passwd        User password
  * @param entitybody    Entitybody if qop=auth-int
  * @param cnonce        Cnonce
- * @param nonce_counter Nonce counter
+ * @param nonce_cnt     Nonce counter
  *
  * @return 0 if success, otherwise errorcode
  */
