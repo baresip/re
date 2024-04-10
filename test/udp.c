@@ -48,6 +48,9 @@ static int send_data(struct udp_sock *us, const struct sa *peer,
 	mb->pos = 0;
 
 	err = udp_send(us, peer, mb);
+	if (err) {
+		DEBUG_WARNING("udp_send error: %m\n", err);
+	}
 
 	mem_deref(mb);
 

@@ -124,7 +124,8 @@ int net_sockopt_v6only(re_sock_t fd, bool only)
 {
 	int on = only;
 
-#ifndef OPENBSD
+	DEBUG_NOTICE("net_sockopt_v6only: on=%d\n", on);
+
 #ifdef IPV6_V6ONLY
 	if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			     BUF_CAST &on, sizeof(on))) {
@@ -132,8 +133,10 @@ int net_sockopt_v6only(re_sock_t fd, bool only)
 		DEBUG_WARNING("IPV6_V6ONLY: %m\n", err);
 		return err;
 	}
+#else
+	DEBUG_NOTICE("net_sockopt_v6only: COMPILE-TIME DISABLED\n");
 #endif
-#endif
+
 	return 0;
 }
 
