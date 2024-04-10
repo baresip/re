@@ -69,6 +69,51 @@ static void dump_rtp(const uint8_t *p, size_t size)
 #endif
 
 
+static int test_h264_stap_a_encode_base(const uint8_t *frame, size_t len,
+				   bool long_startcode)
+{
+	enum { MAX_NRI = 3 };
+	struct mbuf *mb_pkt   = mbuf_alloc(256);
+	struct mbuf *mb_frame = mbuf_alloc(256);
+	struct h264_nal_header hdr;
+	int err;
+
+	if (!mb_pkt || !mb_frame) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	err = h264_stap_encode(mb_pkt, frame, len);
+	if (err)
+		goto out;
+
+	mb_pkt->pos = 0;
+
+	err = h264_nal_header_decode(&hdr, mb_pkt);
+	ASSERT_EQ(0, err);
+
+	ASSERT_EQ(MAX_NRI,          hdr.nri);              /* NOTE: max NRI */
+	ASSERT_EQ(H264_NALU_STAP_A, hdr.type);
+
+	if (long_startcode) {
+		err = h264_stap_decode_annexb_long(mb_frame, mb_pkt);
+		ASSERT_EQ(0, err);
+	}
+	else {
+		err = h264_stap_decode_annexb(mb_frame, mb_pkt);
+		ASSERT_EQ(0, err);
+	}
+
+	TEST_MEMCMP(frame, len, mb_frame->buf, mb_frame->end);
+
+ out:
+	mem_deref(mb_frame);
+	mem_deref(mb_pkt);
+
+	return err;
+}
+
+
 static int test_h264_stap_a_encode(void)
 {
 	static const uint8_t frame[] = {
@@ -89,38 +134,34 @@ static int test_h264_stap_a_encode(void)
 		0x00, 0x00, 0x01,
 		0x65, 0xb8, 0x00, 0x04, 0x00, 0x00, 0x05, 0x39,
 	};
-	enum { MAX_NRI = 3 };
-	struct mbuf *mb_pkt   = mbuf_alloc(256);
-	struct mbuf *mb_frame = mbuf_alloc(256);
-	struct h264_nal_header hdr;
+	static const uint8_t frame_long[] = {
+
+		/* AUD */
+		0x00, 0x00, 0x00, 0x01,
+		0x09, 0x10,
+
+		/* SPS */
+		0x00, 0x00, 0x00, 0x01,
+		0x67, 0x42, 0xc0, 0x1f, 0x8c, 0x8d, 0x40,
+
+		/* PPS */
+		0x00, 0x00, 0x00, 0x01,
+		0x68, 0xce, 0x3c, 0x80,
+
+		/* IDR_SLICE */
+		0x00, 0x00, 0x00, 0x01,
+		0x65, 0xb8, 0x00, 0x04, 0x00, 0x00, 0x05, 0x39,
+	};
 	int err;
 
-	if (!mb_pkt || !mb_frame) {
-		err = ENOMEM;
-		goto out;
-	}
+	err = test_h264_stap_a_encode_base(frame, sizeof(frame), false);
+	TEST_ERR(err);
 
-	err = h264_stap_encode(mb_pkt, frame, sizeof(frame));
-	if (err)
-		goto out;
-
-	mb_pkt->pos = 0;
-
-	err = h264_nal_header_decode(&hdr, mb_pkt);
-	ASSERT_EQ(0, err);
-
-	ASSERT_EQ(MAX_NRI,          hdr.nri);              /* NOTE: max NRI */
-	ASSERT_EQ(H264_NALU_STAP_A, hdr.type);
-
-	err = h264_stap_decode_annexb(mb_frame, mb_pkt);
-	ASSERT_EQ(0, err);
-
-	TEST_MEMCMP(frame, sizeof(frame), mb_frame->buf, mb_frame->end);
+	err = test_h264_stap_a_encode_base(frame_long, sizeof(frame_long),
+					   true);
+	TEST_ERR(err);
 
  out:
-	mem_deref(mb_frame);
-	mem_deref(mb_pkt);
-
 	return err;
 }
 

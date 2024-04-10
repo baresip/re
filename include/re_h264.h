@@ -104,3 +104,4 @@ bool h264_is_keyframe(int type);
 int  h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
 		      size_t frame_sz);
 int  h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt);
+int  h264_stap_decode_annexb_long(struct mbuf *mb_frame, struct mbuf *mb_pkt);
