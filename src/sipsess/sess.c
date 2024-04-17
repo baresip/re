@@ -85,8 +85,13 @@ static bool termwait(struct sipsess *sess)
 
 	if (sess->req) {
 		sip_request_cancel(sess->req);
-		mem_ref(sess);
-		wait = true;
+		if (!sip_request_provrecv(sess->req)) {
+			sess->req = mem_deref(sess->req);
+		}
+		else {
+			mem_ref(sess);
+			wait = true;
+		}
 	}
 
 	if (sess->replyl.head) {

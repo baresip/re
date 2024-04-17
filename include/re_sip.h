@@ -344,6 +344,7 @@ int sip_drequestf(struct sip_request **reqp, struct sip *sip, bool stateful,
 void sip_request_cancel(struct sip_request *req);
 bool sip_request_loops(struct sip_loopstate *ls, uint16_t scode);
 void sip_loopstate_reset(struct sip_loopstate *ls);
+bool sip_request_provrecv(const struct sip_request *req);
 
 
 /* reply */

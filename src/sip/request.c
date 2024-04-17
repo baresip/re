@@ -970,10 +970,25 @@ void sip_request_cancel(struct sip_request *req)
 
 	req->canceled = true;
 
-	if (!req->provrecv)
+	if (!req->provrecv) {
+		req->ct = mem_deref(req->ct);
 		return;
+	}
 
 	(void)sip_ctrans_cancel(req->ct);
+}
+
+
+/**
+ * Check if a provisional response was received for a SIP Request
+ *
+ * @param req SIP Request
+ *
+ * @return True if a provisional response was received, false otherwise
+ */
+bool sip_request_provrecv(const struct sip_request *req)
+{
+	return req ? req->provrecv : false;
 }
 
 
