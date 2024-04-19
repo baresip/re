@@ -150,6 +150,7 @@ enum {
 
 
 /** SIP Via header */
+#define RE_RFC3261_BRANCH_ID "z9hG4bK"
 struct sip_via {
 	struct pl sentby;
 	struct sa addr;
