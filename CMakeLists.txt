@@ -14,13 +14,13 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(re
-  VERSION 3.10.0
+  VERSION 3.11.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 22) # bump if ABI breaks
+set(PROJECT_SOVERSION 23) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -99,7 +99,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 set(re_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
-find_package(re CONFIG REQUIRED)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/re-config.cmake")
 
 list(APPEND RE_DEFINITIONS
   -DRE_VERSION="${PROJECT_VERSION_FULL}"
@@ -649,7 +649,7 @@ endif()
 if(LIBRE_BUILD_STATIC)
   list(APPEND RE_INSTALL_TARGETS re)
   add_library(re STATIC $<TARGET_OBJECTS:re-objs>)
-  target_link_libraries(re PUBLIC ${RE_LIBS})
+  target_link_libraries(re PRIVATE ${RE_LIBS})
   target_include_directories(re PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )
@@ -705,6 +705,9 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 
 install(TARGETS ${RE_INSTALL_TARGETS}
   EXPORT libre
+  RUNTIME
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Libraries
   LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT Libraries
@@ -723,7 +726,9 @@ install(FILES ${HEADERS}
 
 install(EXPORT libre
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
+  FILE libre-targets.cmake
   NAMESPACE libre::
+  COMPONENT Development
 )
 
 if(LIBRE_BUILD_SHARED)
@@ -740,7 +745,9 @@ install(FILES cmake/re-config.cmake
   COMPONENT Development
 )
 
-install(FILES cmake/libre-config.cmake
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/libre-config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake" @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake"
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
   COMPONENT Development
 )
