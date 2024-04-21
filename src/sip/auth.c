@@ -203,7 +203,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		err = pl_strdup(&realm->realm, &ch.realm);
 		if (err)
 			goto out;
-	
+
 		err = pl_strdup(&realm->algorithm, &ch.algorithm);
 		if (err)
 			goto out;
