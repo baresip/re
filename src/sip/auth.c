@@ -287,6 +287,10 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		struct realm *realm = le->data;
 		struct mbuf *digest = NULL;
 
+		err = mkdigest(&digest, realm, met, uri, cnonce);
+		if (err)
+			break;
+
 		switch (realm->hdr) {
 
 		case SIP_HDR_WWW_AUTHENTICATE:
@@ -300,10 +304,6 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		default:
 			continue;
 		}
-
-		err = mkdigest(&digest, realm, met, uri, cnonce);
-		if (err)
-			break;
 
 		err |= mbuf_printf(mb, "Digest username=\"%s\"", realm->user);
 		err |= mbuf_printf(mb, ", realm=\"%s\"", realm->realm);
