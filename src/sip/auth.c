@@ -181,7 +181,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 	}
 
 	if (!pl_isset(&ch.algorithm))
-		pl_set_str(&ch.algorithm, "md5");
+		pl_set_str(&ch.algorithm, "MD5");
 
 	if (pl_strcasecmp(&ch.algorithm, "md5") &&
 	    pl_strcasecmp(&ch.algorithm, "sha-256")) {
@@ -236,7 +236,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 	if (pl_isset(&ch.opaque))
 		err |= pl_strdup(&realm->opaque, &ch.opaque);
 
- out:
+out:
 	if (err) {
 		mem_deref(realm);
 		auth->err = err;
@@ -244,7 +244,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 	}
 
 	return false;
- }
+}
 
 
 /**
