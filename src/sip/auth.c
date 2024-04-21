@@ -94,11 +94,12 @@ static int mkdigest(struct mbuf **digestp, const struct realm *realm,
 		    const char *met, const char *uri, uint64_t cnonce)
 {
 	struct mbuf *digest;
+	uint8_t *ha1 = NULL, *ha2 = NULL;
 	digest_printf_h *digest_printf;
 	int err;
 
 	bool use_sha256 = str_casecmp(realm->algorithm, "sha-256") == 0;
-	int h_size	= use_sha256 ? SHA256_DIGEST_SIZE : MD5_SIZE;
+	size_t h_size	= use_sha256 ? SHA256_DIGEST_SIZE : MD5_SIZE;
 
 	digest = mbuf_alloc(h_size);
 	if (!digest)
@@ -106,14 +107,16 @@ static int mkdigest(struct mbuf **digestp, const struct realm *realm,
 
 	mbuf_set_end(digest, h_size);
 
-	uint8_t *ha1 = mem_alloc(h_size, NULL);
-	if (!ha1)
-		return ENOMEM;
+	ha1 = mem_zalloc(h_size, NULL);
+	if (!ha1) {
+		err = ENOMEM;
+		goto out;
+	}
 
-	uint8_t *ha2 = mem_alloc(h_size, NULL);
+	ha2 = mem_zalloc(h_size, NULL);
 	if (!ha2) {
-		mem_deref(ha1);
-		return ENOMEM;
+		err = ENOMEM;
+		goto out;
 	}
 
 	if (use_sha256)
@@ -141,7 +144,9 @@ out:
 	mem_deref(ha1);
 	mem_deref(ha2);
 
-	if (!err)
+	if (err)
+		mem_deref(digest);
+	else
 		*digestp = digest;
 
 	return err;
