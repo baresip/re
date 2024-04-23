@@ -282,6 +282,7 @@ typedef int(sip_auth_h)(char **username, char **password, const char *realm,
 typedef bool(sip_hdr_h)(const struct sip_hdr *hdr, const struct sip_msg *msg,
 			void *arg);
 typedef void(sip_keepalive_h)(int err, void *arg);
+typedef int(digest_printf_h)(uint8_t *md, const char *fmt, ...);
 
 #define LIBRE_HAVE_SIPTRACE 1
 typedef void(sip_trace_h)(bool tx, enum sip_transp tp,
