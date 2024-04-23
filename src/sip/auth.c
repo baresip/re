@@ -14,11 +14,16 @@
 #include <re_sa.h>
 #include <re_sys.h>
 #include <re_md5.h>
+#include <re_sha.h>
 #include <re_httpauth.h>
 #include <re_udp.h>
 #include <re_msg.h>
 #include <re_sip.h>
 #include "sip.h"
+
+#define DEBUG_MODULE "sip_auth"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 enum {
 	NONCE_EXPIRES  = 300,
@@ -42,6 +47,7 @@ struct realm {
 	char *opaque;
 	char *user;
 	char *pass;
+	char *algorithm;
 	uint32_t nc;
 	enum sip_hdrid hdr;
 };
@@ -69,6 +75,7 @@ static void realm_destructor(void *arg)
 	mem_deref(realm->opaque);
 	mem_deref(realm->user);
 	mem_deref(realm->pass);
+	mem_deref(realm->algorithm);
 }
 
 
@@ -83,33 +90,66 @@ static void auth_destructor(void *arg)
 }
 
 
-static int mkdigest(uint8_t *digest, const struct realm *realm,
+static int mkdigest(struct mbuf **digestp, const struct realm *realm,
 		    const char *met, const char *uri, uint64_t cnonce)
 {
-	uint8_t ha1[MD5_SIZE], ha2[MD5_SIZE];
+	struct mbuf *digest;
+	uint8_t *ha1 = NULL, *ha2 = NULL;
+	digest_printf_h *digest_printf;
 	int err;
 
-	err = md5_printf(ha1, "%s:%s:%s",
-			 realm->user, realm->realm, realm->pass);
-	if (err)
-		return err;
+	bool use_sha256 = str_casecmp(realm->algorithm, "sha-256") == 0;
+	size_t h_size	= use_sha256 ? SHA256_DIGEST_SIZE : MD5_SIZE;
 
-	err = md5_printf(ha2, "%s:%s", met, uri);
+	digest = mbuf_alloc(h_size);
+	if (!digest)
+		return ENOMEM;
+
+	mbuf_set_end(digest, h_size);
+
+	ha1 = mem_zalloc(h_size, NULL);
+	if (!ha1) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	ha2 = mem_zalloc(h_size, NULL);
+	if (!ha2) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	if (use_sha256)
+		digest_printf = &sha256_printf;
+	else
+		digest_printf = &md5_printf;
+
+	err = digest_printf(ha1, "%s:%s:%s", realm->user, realm->realm,
+			    realm->pass);
 	if (err)
-		return err;
+		goto out;
+
+	err = digest_printf(ha2, "%s:%s", met, uri);
+	if (err)
+		goto out;
 
 	if (realm->qop)
-		return md5_printf(digest, "%w:%s:%08x:%016llx:auth:%w",
-				  ha1, sizeof(ha1),
-				  realm->nonce,
-				  realm->nc,
-				  cnonce,
-				  ha2, sizeof(ha2));
+		err = digest_printf(
+			mbuf_buf(digest), "%w:%s:%08x:%016llx:auth:%w", ha1,
+			h_size, realm->nonce, realm->nc, cnonce, ha2, h_size);
 	else
-		return md5_printf(digest, "%w:%s:%w",
-				  ha1, sizeof(ha1),
-				  realm->nonce,
-				  ha2, sizeof(ha2));
+		err = digest_printf(mbuf_buf(digest), "%w:%s:%w", ha1, h_size,
+				    realm->nonce, ha2, h_size);
+out:
+	mem_deref(ha1);
+	mem_deref(ha2);
+
+	if (err)
+		mem_deref(digest);
+	else
+		*digestp = digest;
+
+	return err;
 }
 
 
@@ -131,7 +171,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 {
 	struct httpauth_digest_chall ch;
 	struct sip_auth *auth = arg;
-	struct realm *realm = NULL;
+	struct realm *realm   = NULL;
 	int err;
 	(void)msg;
 
@@ -140,7 +180,11 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		goto out;
 	}
 
-	if (pl_isset(&ch.algorithm) && pl_strcasecmp(&ch.algorithm, "md5")) {
+	if (!pl_isset(&ch.algorithm))
+		pl_set_str(&ch.algorithm, "MD5");
+
+	if (pl_strcasecmp(&ch.algorithm, "md5") &&
+	    pl_strcasecmp(&ch.algorithm, "sha-256")) {
 		err = ENOSYS;
 		goto out;
 	}
@@ -160,6 +204,10 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		if (err)
 			goto out;
 
+		err = pl_strdup(&realm->algorithm, &ch.algorithm);
+		if (err)
+			goto out;
+
 		err = auth->authh(&realm->user, &realm->pass,
 				  realm->realm, auth->arg);
 		if (err)
@@ -171,9 +219,10 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 			goto out;
 		}
 
-		realm->nonce  = mem_deref(realm->nonce);
-		realm->qop    = mem_deref(realm->qop);
-		realm->opaque = mem_deref(realm->opaque);
+		realm->nonce	 = mem_deref(realm->nonce);
+		realm->qop	 = mem_deref(realm->qop);
+		realm->opaque	 = mem_deref(realm->opaque);
+		realm->algorithm = mem_deref(realm->algorithm);
 	}
 
 	realm->hdr = hdr->id;
@@ -187,7 +236,7 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 	if (pl_isset(&ch.opaque))
 		err |= pl_strdup(&realm->opaque, &ch.opaque);
 
- out:
+out:
 	if (err) {
 		mem_deref(realm);
 		auth->err = err;
@@ -236,9 +285,9 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		const uint64_t cnonce = rand_u64();
 		struct realm *realm = le->data;
-		uint8_t digest[MD5_SIZE];
+		struct mbuf *digest = NULL;
 
-		err = mkdigest(digest, realm, met, uri, cnonce);
+		err = mkdigest(&digest, realm, met, uri, cnonce);
 		if (err)
 			break;
 
@@ -260,8 +309,9 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 		err |= mbuf_printf(mb, ", realm=\"%s\"", realm->realm);
 		err |= mbuf_printf(mb, ", nonce=\"%s\"", realm->nonce);
 		err |= mbuf_printf(mb, ", uri=\"%s\"", uri);
-		err |= mbuf_printf(mb, ", response=\"%w\"",
-				   digest, sizeof(digest));
+		err |= mbuf_printf(mb, ", response=\"%w\"", digest->buf,
+				   digest->end);
+		digest = mem_deref(digest);
 
 		if (realm->opaque)
 			err |= mbuf_printf(mb, ", opaque=\"%s\"",
@@ -275,7 +325,7 @@ int sip_auth_encode(struct mbuf *mb, struct sip_auth *auth, const char *met,
 
 		++realm->nc;
 
-		err |= mbuf_write_str(mb, ", algorithm=MD5");
+		err |= mbuf_printf(mb, ", algorithm=%s", realm->algorithm);
 		err |= mbuf_write_str(mb, "\r\n");
 		if (err)
 			break;
