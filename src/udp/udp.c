@@ -190,20 +190,20 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 	/* call helpers */
 	mtx_lock(us->lock);
 	le = us->helpers.head;
-	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
 		bool hdld;
 
-		mtx_lock(us->lock);
 		le = le->next;
-		mtx_unlock(us->lock);
 
 		hdld = uh->recvh(&src, mb, uh->arg);
-		if (hdld)
+		if (hdld) {
+			mtx_unlock(us->lock);
 			goto out;
+		}
 	}
 
+	mtx_unlock(us->lock);
 	us->rh(&src, mb, us->arg);
 
  out:
@@ -936,26 +936,24 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 {
 	struct le *le;
+	struct udp_helper *uh = NULL;
 
 	if (!us)
 		return NULL;
 
 	mtx_lock(us->lock);
 	le = us->helpers.head;
-	mtx_unlock(us->lock);
 	while (le) {
-
-		struct udp_helper *uh = le->data;
-
-		mtx_lock(us->lock);
+		uh = le->data;
 		le = le->next;
-		mtx_unlock(us->lock);
 
 		if (layer == uh->layer)
-			return uh;
+			break;
 	}
 
-	return NULL;
+	mtx_unlock(us->lock);
+
+	return le ? uh : NULL;
 }
 
 
@@ -997,14 +995,11 @@ void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 
 	mtx_lock(us->lock);
 	le = us->helpers.head;
-	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
 		bool hdld;
 
-		mtx_lock(us->lock);
 		le = le->next;
-		mtx_unlock(us->lock);
 
 		if (src != &hsrc) {
 			sa_cpy(&hsrc, src);
@@ -1012,9 +1007,12 @@ void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		}
 
 		hdld = uh->recvh(&hsrc, mb, uh->arg);
-		if (hdld)
+		if (hdld) {
+			mtx_unlock(us->lock);
 			return;
+		}
 	}
 
+	mtx_unlock(us->lock);
 	us->rh(src, mb, us->arg);
 }
