@@ -285,6 +285,11 @@ int test_rtcp_encode(void)
 	while (mbuf_get_left(mb) >= 4 && !err) {
 		struct rtcp_msg *msg = NULL;
 		err = rtcp_decode(&msg, mb);
+		if (err)
+			break;
+
+		DEBUG_NOTICE("%H\n", rtcp_msg_print, msg);
+
 		msg = mem_deref(msg);
 	}
 	if (err)
