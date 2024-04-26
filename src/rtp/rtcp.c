@@ -205,7 +205,8 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 	err = re_hprintf(pf, "%8s pad=%u count=%-2u pt=%-3u len=%u ",
 			 rtcp_type_name((enum rtcp_type)msg->hdr.pt),
 			 (unsigned)msg->hdr.p,
-			 (unsigned)msg->hdr.count, (unsigned)msg->hdr.pt, msg->hdr.length);
+			 (unsigned)msg->hdr.count,
+			 (unsigned)msg->hdr.pt, msg->hdr.length);
 	if (err)
 		return err;
 
