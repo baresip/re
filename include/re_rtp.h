@@ -96,10 +96,10 @@ struct rtcp_sdes_item {
 struct rtcp_msg {
 	/** RTCP Header */
 	struct rtcp_hdr {
-		unsigned int version:2;  /**< Protocol version       */
-		unsigned int p:1;        /**< Padding flag           */
-		unsigned int count:5;    /**< Varies by packet type  */
-		unsigned int pt:8;       /**< RTCP packet type       */
+		uint8_t version;         /**< Protocol version       */
+		bool p;                  /**< Padding flag           */
+		uint8_t count;           /**< Varies by packet type  */
+		enum rtcp_type pt;       /**< RTCP packet type       */
 		uint16_t length;         /**< Packet length in words */
 	} hdr;
 	union {
