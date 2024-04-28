@@ -494,8 +494,7 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 out:
 #ifndef RELEASE
 	if (err == ENODATA) {
-		DEBUG_WARNING("Format: \"%b<-- NO ARG\n",
-			      fmt, p - fmt + 1);
+		DEBUG_WARNING("Format: \"%b<-- NO ARG\n", fmt, p - fmt + 1);
 		re_assert(0 && "RE_VA_ARG: no more arguments");
 	}
 	if (err == EOVERFLOW) {
