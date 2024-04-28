@@ -202,11 +202,11 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 	if (!msg)
 		return 0;
 
-	err = re_hprintf(pf, "%8s pad=%u count=%-2u pt=%-3u len=%u ",
+	err = re_hprintf(pf, "%8s pad=%d count=%-2d pt=%-3d len=%u ",
 			 rtcp_type_name((enum rtcp_type)msg->hdr.pt),
-			 (unsigned)msg->hdr.p,
-			 (unsigned)msg->hdr.count,
-			 (unsigned)msg->hdr.pt, msg->hdr.length);
+			 msg->hdr.p,
+			 msg->hdr.count,
+			 msg->hdr.pt, msg->hdr.length);
 	if (err)
 		return err;
 
@@ -223,7 +223,7 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 		for (i=0; i<msg->hdr.count && !err; i++) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[i];
 			err = re_hprintf(pf, " {%08x %u %d %u %u %u %u}",
-					 rr->ssrc, rr->fraction, (int)rr->lost,
+					 rr->ssrc, rr->fraction, rr->lost,
 					 rr->last_seq, rr->jitter,
 					 rr->lsr, rr->dlsr);
 		}
@@ -234,7 +234,7 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 		for (i=0; i<msg->hdr.count && !err; i++) {
 			const struct rtcp_rr *rr = &msg->r.rr.rrv[i];
 			err = re_hprintf(pf, " {0x%08x %u %d %u %u %u %u}",
-					 rr->ssrc, rr->fraction, (int)rr->lost,
+					 rr->ssrc, rr->fraction, rr->lost,
 					 rr->last_seq, rr->jitter,
 					 rr->lsr, rr->dlsr);
 		}
@@ -259,7 +259,7 @@ int rtcp_msg_print(struct re_printf *pf, const struct rtcp_msg *msg)
 		break;
 
 	case RTCP_BYE:
-		err = re_hprintf(pf, "%u srcs:", (unsigned)msg->hdr.count);
+		err = re_hprintf(pf, "%u srcs:", msg->hdr.count);
 		for (i=0; i<msg->hdr.count && !err; i++) {
 			err = re_hprintf(pf, " %08x",
 					 msg->r.bye.srcv[i]);
