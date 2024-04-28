@@ -303,7 +303,7 @@ typedef int re_sock_t;
 #define HAVE_RE_ARG 1
 
 #define RE_ARG_SIZE(type)                                                     \
-	_Generic((type),                                                      \
+	_Generic((0)?(type):(type),                                           \
 	bool:			sizeof(int),                                  \
 	char:			sizeof(int),                                  \
 	unsigned char:		sizeof(unsigned int),                         \
