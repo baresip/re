@@ -296,7 +296,7 @@ int test_rtcp_encode(void)
 
 		msg = mem_deref(msg);
 
-		ASSERT_TRUE(str_len(debug_buf) > 0);
+		ASSERT_TRUE(str_isset(debug_buf) > 0);
 	}
 	if (err)
 		goto out;
