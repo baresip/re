@@ -243,6 +243,7 @@ int test_rtcp_encode(void)
 	struct mbuf *mb;
 	const size_t sz = sizeof(rtcp_msg) - 1;
 	const uint32_t srcv[2] = {0x12345678, 0x00abcdef};
+	char debug_buf[512];
 	int err = 0;
 
 	mb = mbuf_alloc(512);
@@ -288,9 +289,14 @@ int test_rtcp_encode(void)
 		if (err)
 			break;
 
-		DEBUG_NOTICE("%H\n", rtcp_msg_print, msg);
+		/* Check that debug print works */
+		debug_buf[0] = '\0';
+		re_snprintf(debug_buf, sizeof(debug_buf),
+			    "%H", rtcp_msg_print, msg);
 
 		msg = mem_deref(msg);
+
+		ASSERT_TRUE(str_len(debug_buf) > 0);
 	}
 	if (err)
 		goto out;
