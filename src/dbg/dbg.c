@@ -28,12 +28,10 @@ static struct {
 	enum dbg_flags flags;  /**< Debug flags            */
 	dbg_print_h *ph;       /**< Optional print handler */
 	void *arg;             /**< Handler argument       */
-	FILE *f;               /**< Logfile                */
 } dbg = {
 	0,
 	DBG_INFO,
 	DBG_ANSI,
-	NULL,
 	NULL,
 	NULL,
 };
@@ -82,37 +80,6 @@ void dbg_init(int level, enum dbg_flags flags)
  */
 void dbg_close(void)
 {
-	if (dbg.f) {
-		(void)fclose(dbg.f);
-		dbg.f = NULL;
-	}
-}
-
-
-/**
- * Set debug logfile
- *
- * @param name Name of the logfile, NULL to close
- *
- * @return 0 if success, otherwise errorcode
- */
-int dbg_logfile_set(const char *name)
-{
-	int err;
-
-	dbg_close();
-
-	if (!name)
-		return 0;
-
-	err = fs_fopen(&dbg.f, name, "a+");
-	if (err)
-		return err;
-
-	(void)re_fprintf(dbg.f, "\n===== Log Started: %H", fmt_gmtime, NULL);
-	(void)fflush(dbg.f);
-
-	return 0;
 }
 
 
@@ -180,7 +147,7 @@ out:
 }
 
 
-/* Formatted output to print handler and/or logfile */
+/* Formatted output to print handler */
 static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 {
 	char buf[256];
@@ -191,9 +158,8 @@ static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 	if (level > dbg.level)
 		goto out;
 
-	if (!dbg.ph && !dbg.f)
+	if (!dbg.ph)
 		goto out;
-
 
 	len = re_vsnprintf(buf, sizeof(buf), fmt, ap);
 	if (len <= 0)
@@ -202,12 +168,6 @@ static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 	/* Print handler? */
 	if (dbg.ph) {
 		dbg.ph(level, buf, len, dbg.arg);
-	}
-
-	/* Output to file */
-	if (dbg.f) {
-		if (fwrite(buf, 1, len, dbg.f) > 0)
-			(void)fflush(dbg.f);
 	}
 
  out:
