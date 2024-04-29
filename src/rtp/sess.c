@@ -608,7 +608,7 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 	}
 
 	if (!rtp_source_update_seq(mbr->s, hdr->seq)) {
-		DEBUG_WARNING("rtp_update_seq() returned 0\n");
+		DEBUG_WARNING("rtp_source_update_seq() returned 0\n");
 	}
 
 	if (sess->srate_rx) {
