@@ -91,8 +91,10 @@ void dbg_close(void)
  */
 void dbg_handler_set(dbg_print_h *ph, void *arg)
 {
+	dbg_lock();
 	dbg.ph  = ph;
 	dbg.arg = arg;
+	dbg_unlock();
 }
 
 
