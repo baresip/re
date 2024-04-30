@@ -91,8 +91,10 @@ void dbg_close(void)
  */
 void dbg_handler_set(dbg_print_h *ph, void *arg)
 {
+	dbg_lock();
 	dbg.ph  = ph;
 	dbg.arg = arg;
+	dbg_unlock();
 }
 
 
@@ -151,27 +153,24 @@ out:
 static void dbg_fmt_vprintf(int level, const char *fmt, va_list ap)
 {
 	char buf[256];
-	int len;
 
 	dbg_lock();
+	int dbg_level   = dbg.level;
+	dbg_print_h *ph = dbg.ph;
+	void *arg       = dbg.arg;
+	dbg_unlock();
 
-	if (level > dbg.level)
-		goto out;
-
-	if (!dbg.ph)
-		goto out;
-
-	len = re_vsnprintf(buf, sizeof(buf), fmt, ap);
-	if (len <= 0)
-		goto out;
+	if (level > dbg_level)
+		return;
 
 	/* Print handler? */
-	if (dbg.ph) {
-		dbg.ph(level, buf, len, dbg.arg);
-	}
+	if (ph) {
+		int len = re_vsnprintf(buf, sizeof(buf), fmt, ap);
+		if (len <= 0)
+			return;
 
- out:
-	dbg_unlock();
+		ph(level, buf, len, arg);
+	}
 }
 
 
