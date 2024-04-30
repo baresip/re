@@ -1227,7 +1227,25 @@ int http_client_set_tls_max_version(struct http_cli *cli, int version)
 
 	return tls_set_max_proto_version(cli->tls, version);
 }
-#endif
+
+
+/**
+ * Disable TLS server certificate verification
+ *
+ * @param cli	HTTP Client
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_client_disable_verify_server(struct http_cli *cli)
+{
+	if (!cli)
+		return EINVAL;
+
+	tls_disable_verify_server(cli->tls);
+
+	return 0;
+}
+#endif /* USE_TLS */
 
 
 /**

@@ -173,6 +173,7 @@ int http_client_set_keypem(struct http_cli *cli, const char *pem);
 int http_client_set_session_reuse(struct http_cli *cli, bool enabled);
 int http_client_set_tls_min_version(struct http_cli *cli, int version);
 int http_client_set_tls_max_version(struct http_cli *cli, int version);
+int http_client_disable_verify_server(struct http_cli *cli);
 #endif
 
 /* Server */
