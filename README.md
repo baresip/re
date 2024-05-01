@@ -169,7 +169,6 @@ legend:
 
 * [RFC 1321](https://tools.ietf.org/html/rfc1321) - The MD5 Message-Digest Algorithm
 * [RFC 1886](https://tools.ietf.org/html/rfc1886) - DNS Extensions to support IP version 6
-* [RFC 2032](https://tools.ietf.org/html/rfc2032) - RTP Payload Format for H.261 Video Streams
 * [RFC 2616](https://tools.ietf.org/html/rfc2616) - Hypertext Transfer Protocol -- HTTP/1.1
 * [RFC 2617](https://tools.ietf.org/html/rfc2617) - HTTP Authentication: Basic and Digest Access Authentication
 * [RFC 2782](https://tools.ietf.org/html/rfc2782) - A DNS RR for Specifying the Location of Services (DNS SRV)
