@@ -235,6 +235,7 @@ static void resp_handler(int err, const struct http_msg *msg, void *arg)
 	}
 
 	pl_set_mbuf(&auth, abuf);
+	mbuf_set_pos(conn->body, 0);
 	err = send_req(conn, &auth);
 	if (err)
 		goto disconnect;
