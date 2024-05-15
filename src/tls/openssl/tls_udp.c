@@ -353,7 +353,7 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 
 	if (SSL_state(tc->ssl) != SSL_ST_OK) {
 
-		if (tc->up) {
+		if (tc->up && !SSL_get_secure_renegotiation_support(tc->ssl)) {
 			conn_close(tc, EPROTO);
 			return;
 		}
