@@ -1089,7 +1089,6 @@ int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
  */
 int tls_set_srtp(struct tls *tls, const char *suites)
 {
-#ifdef USE_OPENSSL_SRTP
 	if (!tls || !suites)
 		return EINVAL;
 
@@ -1099,12 +1098,6 @@ int tls_set_srtp(struct tls *tls, const char *suites)
 	}
 
 	return 0;
-#else
-	(void)tls;
-	(void)suites;
-
-	return ENOSYS;
-#endif
 }
 
 
@@ -1265,7 +1258,6 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 		     uint8_t *cli_key, size_t cli_key_size,
 		     uint8_t *srv_key, size_t srv_key_size)
 {
-#ifdef USE_OPENSSL_SRTP
 	static const char *label = "EXTRACTOR-dtls_srtp";
 	size_t key_size, salt_size, size;
 	SRTP_PROTECTION_PROFILE *sel;
@@ -1336,16 +1328,6 @@ int tls_srtp_keyinfo(const struct tls_conn *tc, enum srtp_suite *suite,
 	mem_secclean(keymat, sizeof(keymat));
 
 	return 0;
-#else
-	(void)tc;
-	(void)suite;
-	(void)cli_key;
-	(void)cli_key_size;
-	(void)srv_key;
-	(void)srv_key_size;
-
-	return ENOSYS;
-#endif
 }
 
 
