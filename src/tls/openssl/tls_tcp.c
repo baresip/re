@@ -230,7 +230,7 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 
 	if (SSL_state(tc->ssl) != SSL_ST_OK) {
 
-		if (tc->up) {
+		if (tc->up && !SSL_get_secure_renegotiation_support(tc->ssl)) {
 			*err = EPROTO;
 			return true;
 		}
