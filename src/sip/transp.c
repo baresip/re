@@ -334,7 +334,10 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 
 	if (msg->req) {
 		if (!have_essential_fields(msg)){
-			(void)sip_reply(sip, msg, 400, "Bad Request");
+			if (!pl_strcmp(&msg->met, "ACK"))
+				DEBUG_WARNING("Received bad ACK request\n");
+			else
+				(void)sip_reply(sip, msg, 400, "Bad Request");
 			return;
 		}
 	}
