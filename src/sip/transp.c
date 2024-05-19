@@ -314,7 +314,7 @@ static bool have_essential_fields(const struct sip_msg *msg)
 		pl_isset(&(msg->from.auri)) &&
 		pl_isset(&(msg->cseq.met)) &&
 		pl_isset(&(msg->callid)) &&
-		pl_isset(&(msg->maxfwd)) &&
+		(pl_isset(&(msg->maxfwd)) || !pl_strcmp(&msg->met, "ACK")) &&
 		pl_isset(&(msg->via.branch)))
 		return true;
 
@@ -333,12 +333,8 @@ static void sip_recv(struct sip *sip, const struct sip_msg *msg,
 	}
 
 	if (msg->req) {
-		if (!have_essential_fields(msg)) {
-			if (!pl_strcmp(&msg->met, "ACK"))
-				DEBUG_NOTICE("received bad ACK request "
-					     "from %r\n", &(msg->from.auri));
-			else
-				(void)sip_reply(sip, msg, 400, "Bad Request");
+		if (!have_essential_fields(msg)){
+			(void)sip_reply(sip, msg, 400, "Bad Request");
 			return;
 		}
 	}
