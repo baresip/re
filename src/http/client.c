@@ -28,8 +28,6 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-#define PEMBUF_SIZE 512
-
 enum {
 	CONN_TIMEOUT = 30000,
 	RECV_TIMEOUT = 60000,
@@ -1108,8 +1106,9 @@ int http_client_set_cert(struct http_cli *cli, const char *path)
 
 /**
  * Set client certificate in PEM format
+ *
  * @param cli    HTTP Client
- * @param pem    Client certificate in PEM format
+ * @param pem    Client certificate as 0-terminated string in PEM format
  *
  * @return 0 for success, error code otherwise.
  */
@@ -1120,11 +1119,19 @@ int http_client_set_certpem(struct http_cli *cli, const char *pem)
 		return EINVAL;
 
 	cli->cert = mem_deref(cli->cert);
-	cli->cert = mbuf_alloc(PEMBUF_SIZE);
+	cli->cert = mbuf_alloc(strlen(pem));
 	return mbuf_write_str(cli->cert, pem);
 }
 
 
+/**
+ * Set client key
+ *
+ * @param cli   HTTP Client
+ * @param path  File path to client key
+ *
+ * @return 0 for success, error code otherwise.
+ */
 int http_client_set_key(struct http_cli *cli, const char *path)
 {
 	int err = 0;
@@ -1143,6 +1150,14 @@ int http_client_set_key(struct http_cli *cli, const char *path)
 }
 
 
+/**
+ * Set client key in PEM format
+ *
+ * @param cli    HTTP Client
+ * @param pem    Client key as 0-terminated string in PEM format
+ *
+ * @return 0 for success, error code otherwise.
+ */
 int http_client_set_keypem(struct http_cli *cli, const char *pem)
 {
 	if (!cli || !str_isset(pem))
@@ -1150,7 +1165,7 @@ int http_client_set_keypem(struct http_cli *cli, const char *pem)
 
 	cli->key = mem_deref(cli->key);
 
-	cli->key = mbuf_alloc(PEMBUF_SIZE);
+	cli->key = mbuf_alloc(strlen(pem));
 	return mbuf_write_str(cli->key, pem);
 }
 

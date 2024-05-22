@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.12.0] - 2024-05-15
+
+## What's Changed
+* cmake: fix static library build (vcpkg) by @alfredh in https://github.com/baresip/re/pull/1096
+* h264: add STAP-A decode with long startcodes by @alfredh in https://github.com/baresip/re/pull/1101
+* sess,request: deref request and ctrans immediately by @maximilianfridrich in https://github.com/baresip/re/pull/1099
+* ua: enforce magic cookie in Via branch by @maximilianfridrich in https://github.com/baresip/re/pull/1102
+* sip/auth: SHA-256 digest algorithm support by @sreimers in https://github.com/baresip/re/pull/1103
+* ci/coverage: increase min. coverage by @sreimers in https://github.com/baresip/re/pull/1106
+* rtp: fix correct logging text by @alfredh in https://github.com/baresip/re/pull/1109
+* types: fix RE_ARG_SIZE gcc bit fields by @sreimers in https://github.com/baresip/re/pull/1110
+* fmt: use re_fprintf instead of DEBUG_WARNING to avoid deadlock by @alfredh in https://github.com/baresip/re/pull/1112
+* dbg: remove support for logfile by @alfredh in https://github.com/baresip/re/pull/1111
+* test: add usage of rtcp_msg_print() by @alfredh in https://github.com/baresip/re/pull/1105
+* http/client: add setter to disable tls server verification by @maximilianfridrich in https://github.com/baresip/re/pull/1114
+* dbg: mutex should be unlocked while calling print handler by @alfredh in https://github.com/baresip/re/pull/1113
+* Update README.md by @alfredh in https://github.com/baresip/re/pull/1115
+* http/request: reset body mbuf pos on re-sending by @maximilianfridrich in https://github.com/baresip/re/pull/1116
+* bump version by @alfredh in https://github.com/baresip/re/pull/1118
+* cmake: bump soversion by @alfredh in https://github.com/baresip/re/pull/1119
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.11.0...v3.12.0
+
+
 ## [v3.11.0] - 2024-04-09
 
 ### What's Changed

@@ -6,7 +6,6 @@
 #ifdef HAVE_SIGNAL
 #include <signal.h>
 #endif
-#include <openssl/ssl.h>
 #include <re_types.h>
 #include "main.h"
 
@@ -22,15 +21,9 @@ static void sigpipe_handler(int x)
 
 int openssl_init(void)
 {
-	int err;
-
 #ifdef SIGPIPE
 	(void)signal(SIGPIPE, sigpipe_handler);
 #endif
-
-	err = OPENSSL_init_ssl(OPENSSL_INIT_SSL_DEFAULT, NULL);
-	if (!err)
-		return ENOSYS;
 
 	return 0;
 }
