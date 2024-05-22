@@ -26,8 +26,6 @@
 #define INET6_ADDRSTRLEN 46
 #endif
 
-/** Length of IPv4/v6 address string */
-#define NET_ADDRSTRLEN INET6_ADDRSTRLEN
 
 /* forward declarations */
 struct sa;
