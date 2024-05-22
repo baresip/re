@@ -36,5 +36,13 @@ jobs:
       run: |
         wget "https://github.com/baresip/tools/releases/download/v2024.05.0/assets.tar.gz"
         tar -xf assets.tar.gz
+
     - name: make
-      run: cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j
+      run: |
+        cmake -B build -DCMAKE_C_FLAGS="-Werror"
+        cmake --build build -j
+        cmake --build build -t retest
+
+    - name: retest
+      run: |
+        ./build/test/retest -r -v
