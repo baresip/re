@@ -56,6 +56,9 @@ int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
 			    const uint8_t *cert, size_t len_cert,
 			    const uint8_t *key, size_t len_key);
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
+int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
+				  size_t len_chain);
+int tls_set_certificate_chain(struct tls *tls, const char *path);
 void tls_set_verify_client(struct tls *tls);
 void tls_set_verify_client_trust_all(struct tls *tls);
 int tls_set_verify_client_handler(struct tls_conn *tc, int depth,

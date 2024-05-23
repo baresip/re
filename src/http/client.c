@@ -1260,6 +1260,58 @@ int http_client_disable_verify_server(struct http_cli *cli)
 
 	return 0;
 }
+
+
+/**
+ * Change used certificate+key of TLS connection
+ *
+ * @param cli       HTTP Client
+ * @param chain     Cert (chain) + Key (PEM format)
+ * @param len_chain Length of certificate + key PEM string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int http_client_use_chainpem(struct http_cli *cli, const char *chain,
+			     int len_chain)
+{
+	if (!cli || !cli->tls)
+		return EINVAL;
+
+	int err = tls_set_certificate_chain_pem(cli->tls, chain, len_chain);
+	if (err)
+		return err;
+
+	cli->cert = mem_deref(cli->cert);
+	cli->key = mem_deref(cli->key);
+
+	return 0;
+}
+
+
+/**
+ * Change used certificate+key of TLS connection
+ *
+ * @param cli  HTTP Client
+ * @param path Path to Cert (chain) + Key file (PEM format)
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int http_client_use_chain(struct http_cli *cli, const char *path)
+{
+	int err;
+
+	if (!cli || !cli->tls)
+		return EINVAL;
+
+	err =  tls_set_certificate_chain(cli->tls, path);
+	if (err)
+		return err;
+
+	cli->cert = mem_deref(cli->cert);
+	cli->key = mem_deref(cli->key);
+
+	return 0;
+}
 #endif /* USE_TLS */
 
 

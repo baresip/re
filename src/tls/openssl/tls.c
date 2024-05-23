@@ -10,6 +10,7 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <re_types.h>
@@ -2211,6 +2212,157 @@ int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
 		ERR_clear_error();
 		return EFAULT;
 	}
+
+	return 0;
+}
+
+
+/**
+ * Change used certificate+key of an existing SSL object
+ *
+ * @param tls       TLS Object
+ * @param chain     Cert (chain) + Key in PEM format
+ * @param len_chain Length of certificate + key PEM string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
+				  size_t len_chain)
+{
+	STACK_OF(X509) *cert_stack = NULL;
+	BIO *bio_mem = NULL;
+	EVP_PKEY *pkey = NULL;
+	X509 *leaf_cert = NULL;
+	int err = ENOMEM;
+
+	if (!tls || !chain || !len_chain)
+		return EINVAL;
+
+	bio_mem = BIO_new_mem_buf(chain, (int)len_chain);
+	cert_stack = sk_X509_new_null();
+	if (!bio_mem || !cert_stack)
+		goto out;
+
+	X509 *cert;
+	while ((cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) != NULL) {
+		int n = sk_X509_push(cert_stack, cert);
+		if (n < 1) {
+			X509_free(cert);
+			goto out;
+		}
+	}
+
+	err = EINVAL;
+
+	if (sk_X509_num(cert_stack) == 0)
+		goto out;
+
+	leaf_cert = sk_X509_shift(cert_stack);
+	long ok = SSL_CTX_use_certificate(tls->ctx, leaf_cert);
+	if (ok <= 0) {
+		X509_free(leaf_cert);
+		goto out;
+	}
+
+	if (sk_X509_num(cert_stack)) {
+		ok = SSL_CTX_clear_chain_certs(tls->ctx);
+		if (!ok)
+			goto out;
+
+		while((cert = sk_X509_shift(cert_stack)) != NULL){
+			ok = SSL_CTX_add0_chain_cert(tls->ctx, cert);
+			if (!ok) {
+				X509_free(cert);
+				goto out;
+			}
+		}
+	}
+
+	BIO_free(bio_mem);
+	bio_mem = BIO_new_mem_buf(chain, (int)len_chain);
+	if (!bio_mem) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	pkey = PEM_read_bio_PrivateKey(bio_mem, NULL, NULL, NULL);
+	if (!pkey)
+		goto out;
+
+	ok = SSL_CTX_use_PrivateKey(tls->ctx, pkey);
+	if (ok <= 0) {
+		err = EKEYREJECTED;
+		goto out;
+	}
+
+	ok = SSL_CTX_check_private_key(tls->ctx);
+	if (ok <= 0)
+		goto out;
+
+	if (tls->cert)
+		X509_free(tls->cert);
+
+	tls->cert = leaf_cert;
+	leaf_cert = NULL;
+
+	err = 0;
+
+out:
+	if (bio_mem)
+		BIO_free(bio_mem);
+	if (leaf_cert)
+		X509_free(leaf_cert);
+	if (cert_stack)
+		sk_X509_pop_free(cert_stack, X509_free);
+	if (pkey)
+		EVP_PKEY_free(pkey);
+	if (err)
+		ERR_clear_error();
+
+	return err;
+}
+
+
+/**
+ * Change used certificate+key of an existing SSL object
+ *
+ * @param tls  TLS Object
+ * @param path Path to Cert (chain) + Key file (PEM format)
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int tls_set_certificate_chain(struct tls *tls, const char *path)
+{
+	X509 *cert;
+	int ok = 0;
+
+	if (!tls || !path)
+		return EINVAL;
+
+	ok = SSL_CTX_use_certificate_chain_file(tls->ctx, path);
+	if (ok <= 0) {
+		ERR_clear_error();
+		return ENOENT;
+	}
+
+	ok = SSL_CTX_use_PrivateKey_file(tls->ctx, path, SSL_FILETYPE_PEM);
+	if (ok <= 0) {
+		ERR_clear_error();
+		return EKEYREJECTED;
+	}
+
+	cert = SSL_CTX_get0_certificate(tls->ctx);
+	if (!cert) {
+		ERR_clear_error();
+		return ENOENT;
+	}
+
+	X509_up_ref(cert);
+
+	if (tls->cert)
+		X509_free(tls->cert);
+
+	tls->cert = cert;
 
 	return 0;
 }
