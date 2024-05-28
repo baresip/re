@@ -91,6 +91,10 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
 
+	if (!sip_dialog_cmp_half(sess->dlg, msg)
+		|| sip_dialog_lseqinv(sess->dlg) != msg->cseq.num)
+		goto out;
+
 	sdp = mbuf_get_left(msg->mb) > 0;
 
 	if (msg->scode < 200) {
