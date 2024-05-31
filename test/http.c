@@ -344,9 +344,9 @@ static void http_resp_handler(int err, const struct http_msg *msg, void *arg)
 
 	/* verify HTTP response */
 	TEST_STRCMP("1.1", 3, msg->ver.p, msg->ver.l);
-	TEST_STRCMP("", 0, msg->met.p, msg->met.l);
-	TEST_STRCMP("", 0, msg->path.p, msg->path.l);
-	TEST_STRCMP("", 0, msg->prm.p, msg->prm.l);
+	TEST_ASSERT(!msg->met.p);
+	TEST_ASSERT(!msg->path.p);
+	TEST_ASSERT(!msg->prm.p);
 	TEST_EQUALS(200, msg->scode);
 	TEST_STRCMP("OK", 2, msg->reason.p, msg->reason.l);
 	TEST_EQUALS(t->clen, msg->clen);
