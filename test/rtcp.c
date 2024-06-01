@@ -21,7 +21,7 @@
  */
 
 
-#define GENERATOR_SSRC 0x00000001
+static const uint32_t GENERATOR_SSRC = 0x00000001;
 
 
 struct fixture {
