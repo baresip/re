@@ -39,7 +39,6 @@ jobs:
 
     - name: gcov
       run: | 
-        cd ../re
         gcov build/**/*.o
 
     - name: install gcovr
