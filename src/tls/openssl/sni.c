@@ -161,27 +161,32 @@ static int ssl_set_verify_client(SSL *ssl, const char *host)
 
 static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 {
-	struct tls *tls = arg;
+	struct tls *tls	= arg;
 	struct tls_cert *uc = NULL;
 	const char *sni;
-	(void)al;
 
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if (!str_isset(sni))
-		goto out;
+		goto err;
 
 	/* find and apply matching certificate */
 	uc = tls_cert_for_sni(tls, sni);
-	if (!uc)
-		goto out;
+	if (!uc) {
+		*al = SSL_AD_UNRECOGNIZED_NAME;
+		return SSL_TLSEXT_ERR_ALERT_FATAL;
+	}
 
 	DEBUG_INFO("found cert for sni %s\n", sni);
-	SSL_set_SSL_CTX(ssl, tls_cert_ctx(uc));
+	if (SSL_set_SSL_CTX(ssl, tls_cert_ctx(uc)) == NULL)
+		goto err;
 
 	(void)ssl_set_verify_client(ssl, tls_cert_host(uc));
 
-out:
 	return SSL_TLSEXT_ERR_OK;
+
+err:
+	*al = SSL_AD_INTERNAL_ERROR;
+	return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 
