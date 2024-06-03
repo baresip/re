@@ -28,9 +28,7 @@ void tls_flush_error(void);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
 X509 *tls_cert_x509(struct tls_cert *hc);
 SSL_CTX *tls_cert_ctx(struct tls_cert *hc);
-EVP_PKEY *tls_cert_pkey(struct tls_cert *hc);
 
-struct stack_st_X509 *tls_cert_chain(struct tls_cert *hc);
 const char *tls_cert_host(struct tls_cert *hc);
 const struct list *tls_certs(const struct tls *tls);
 
