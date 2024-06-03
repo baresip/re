@@ -247,14 +247,12 @@ static int tls_ctx_alloc(SSL_CTX **ctxp, enum tls_method method,
 
 	default:
 		DEBUG_WARNING("tls method %d not supported\n", method);
-		err = ENOSYS;
-		goto out;
+		return ENOSYS;
 	}
 
 	if (!ctx) {
 		ERR_clear_error();
-		err = ENOMEM;
-		goto out;
+		return ENOMEM;
 	}
 
 	SSL_CTX_set_min_proto_version(ctx, min_proto);
