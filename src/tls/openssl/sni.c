@@ -19,11 +19,9 @@
 #include "tls.h"
 
 
-#define DEBUG_MODULE "tls"
+#define DEBUG_MODULE "tls/sni"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
-
-#if !defined(LIBRESSL_VERSION_NUMBER)
 
 struct tls_conn;
 
@@ -161,28 +159,6 @@ static int ssl_set_verify_client(SSL *ssl, const char *host)
 }
 
 
-static int ssl_use_cert(SSL *ssl, struct tls_cert *uc)
-{
-	int err;
-	long r;
-
-	SSL_certs_clear(ssl);
-	r = SSL_clear_chain_certs(ssl);
-	if (r != 1)
-		return EINVAL;
-
-	r = SSL_use_cert_and_key(ssl, tls_cert_x509(uc), tls_cert_pkey(uc),
-				 tls_cert_chain(uc), 1);
-	if (r != 1) {
-		ERR_clear_error();
-		return EINVAL;
-	}
-
-	err = ssl_set_verify_client(ssl, tls_cert_host(uc));
-	return err;
-}
-
-
 static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 {
 	struct tls *tls = arg;
@@ -200,7 +176,9 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 		goto out;
 
 	DEBUG_INFO("found cert for sni %s\n", sni);
-	(void)ssl_use_cert(ssl, uc);
+	SSL_set_SSL_CTX(ssl, tls_cert_ctx(uc));
+
+	(void)ssl_set_verify_client(ssl, tls_cert_host(uc));
 
 out:
 	return SSL_TLSEXT_ERR_OK;
@@ -218,5 +196,3 @@ void tls_enable_sni(struct tls *tls)
 					       ssl_servername_handler);
 	SSL_CTX_set_tlsext_servername_arg(tls_ssl_ctx(tls), tls);
 }
-
-#endif /* !defined(LIBRESSL_VERSION_NUMBER) */
