@@ -49,6 +49,8 @@ struct tls {
 	bool verify_client;  /**< Enable SIP TLS client verification   */
 	struct session_reuse reuse;
 	struct list certs;   /**< Certificates for SNI selection       */
+	char *capath;
+	char *cafile;
 };
 
 /**
@@ -127,6 +129,8 @@ static void destructor(void *data)
 	hash_flush(tls->reuse.ht_sessions);
 	mem_deref(tls->reuse.ht_sessions);
 	mem_deref(tls->pass);
+	mem_deref(tls->capath);
+	mem_deref(tls->cafile);
 	list_flush(&tls->certs);
 }
 
@@ -377,6 +381,9 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 	if (capath && !fs_isdir(capath)) {
 		return ENOTDIR;
 	}
+
+	str_dup(&tls->cafile, cafile);
+	str_dup(&tls->capath, capath);
 
 	/* Load the CAs we trust */
 	if (!(SSL_CTX_load_verify_locations(tls->ctx, cafile, capath))) {
@@ -1995,6 +2002,13 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 	err = tls_ctx_alloc(&uc->ctx, TLS_METHOD_TLS, certf, NULL, NULL);
 	if (err)
 		goto err;
+
+	/* Load the CAs we trust */
+	if (!(SSL_CTX_load_verify_locations(uc->ctx, tls->cafile,
+					    tls->capath))) {
+		err = ENOENT;
+		goto err;
+	}
 
 	list_append(&tls->certs, &uc->le, uc);
 	if (list_count(&tls->certs) == 1)
