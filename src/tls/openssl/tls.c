@@ -382,6 +382,9 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 		return ENOTDIR;
 	}
 
+	tls->cafile = mem_deref(tls->cafile);
+	tls->capath = mem_deref(tls->capath);
+
 	str_dup(&tls->cafile, cafile);
 	str_dup(&tls->capath, capath);
 
@@ -1967,6 +1970,8 @@ static void tls_cert_destructor(void *arg)
 	struct tls_cert *uc = arg;
 
 	mem_deref(uc->host);
+	if (uc->ctx)
+		SSL_CTX_free(uc->ctx);
 }
 
 
