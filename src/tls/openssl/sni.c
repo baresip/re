@@ -166,8 +166,10 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 	const char *sni;
 
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-	if (!str_isset(sni))
-		goto err;
+	if (!str_isset(sni)) {
+		*al = SSL_AD_UNRECOGNIZED_NAME;
+		return SSL_TLSEXT_ERR_ALERT_FATAL;
+	}
 
 	/* find and apply matching certificate */
 	uc = tls_cert_for_sni(tls, sni);
@@ -177,16 +179,14 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 	}
 
 	DEBUG_INFO("found cert for sni %s\n", sni);
-	if (SSL_set_SSL_CTX(ssl, tls_cert_ctx(uc)) == NULL)
-		goto err;
+	if (SSL_set_SSL_CTX(ssl, tls_cert_ctx(uc)) == NULL) {
+		*al = SSL_AD_INTERNAL_ERROR;
+		return SSL_TLSEXT_ERR_ALERT_FATAL;
+	}
 
 	(void)ssl_set_verify_client(ssl, tls_cert_host(uc));
 
 	return SSL_TLSEXT_ERR_OK;
-
-err:
-	*al = SSL_AD_INTERNAL_ERROR;
-	return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 
