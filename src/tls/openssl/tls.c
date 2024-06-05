@@ -1997,8 +1997,10 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 		goto err;
 
 	X509_STORE *ca = SSL_CTX_get_cert_store(tls->ctx);
-	X509_STORE_up_ref(ca);
-	SSL_CTX_set_cert_store(uc->ctx, ca);
+	if (ca) {
+		X509_STORE_up_ref(ca);
+		SSL_CTX_set_cert_store(uc->ctx, ca);
+	}
 
 	list_append(&tls->certs, &uc->le, uc);
 	if (list_count(&tls->certs) == 1)
