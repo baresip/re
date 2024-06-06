@@ -162,6 +162,7 @@ static const struct test tests[] = {
 	TEST(test_rtcp_decode_badmsg),
 	TEST(test_rtcp_packetloss),
 	TEST(test_rtcp_twcc),
+	TEST(test_rtcp_loop),
 	TEST(test_sa_class),
 	TEST(test_sa_cmp),
 	TEST(test_sa_decode),
