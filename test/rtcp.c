@@ -191,3 +191,110 @@ int test_rtcp_packetloss(void)
 
 	return err;
 }
+
+
+struct agent {
+	struct rtp_sock *rtp_sock;
+	struct sa laddr_rtcp;
+	unsigned rtp_count;
+	unsigned psfb_count;
+};
+
+
+static void rtp_recv_handler(const struct sa *src,
+			     const struct rtp_header *hdr,
+			     struct mbuf *mb, void *arg)
+{
+	struct agent *ag = arg;
+	(void)src;
+	(void)hdr;
+	(void)mb;
+
+	++ag->rtp_count;
+}
+
+
+static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
+			      void *arg)
+{
+	struct agent *ag = arg;
+	(void)src;
+
+	switch (msg->hdr.pt) {
+
+	case RTCP_PSFB:
+		++ag->psfb_count;
+		re_cancel();
+		break;
+
+	default:
+		break;
+	}
+}
+
+
+static int agent_init(struct agent *ag, bool mux)
+{
+	struct sa laddr;
+
+	sa_set_str(&laddr, "127.0.0.1", 0);
+
+	int err = rtp_listen(&ag->rtp_sock, IPPROTO_UDP,
+			     &laddr, 1024, 65535, true,
+			     rtp_recv_handler, rtcp_recv_handler, ag);
+	if (err)
+		return err;
+
+	rtcp_enable_mux(ag->rtp_sock, mux);
+
+	udp_local_get(rtcp_sock(ag->rtp_sock), &ag->laddr_rtcp);
+
+	return 0;
+}
+
+
+static int test_rtcp_loop_base(bool mux)
+{
+	struct agent a = {0}, b = {0};
+	int err;
+
+	err = agent_init(&a, mux);
+	TEST_ERR(err);
+	err = agent_init(&b, mux);
+	TEST_ERR(err);
+
+	rtcp_start(a.rtp_sock, "cname", &b.laddr_rtcp);
+	rtcp_start(b.rtp_sock, "cname", &a.laddr_rtcp);
+
+	err = rtcp_send_pli(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock));
+	TEST_ERR(err);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	ASSERT_EQ(0, a.rtp_count);
+	ASSERT_EQ(0, a.psfb_count);
+	ASSERT_EQ(0, b.rtp_count);
+	ASSERT_EQ(1, b.psfb_count);
+
+ out:
+	mem_deref(b.rtp_sock);
+	mem_deref(a.rtp_sock);
+
+	return err;
+}
+
+
+int test_rtcp_loop(void)
+{
+	int err;
+
+	err = test_rtcp_loop_base(false);
+	TEST_ERR(err);
+
+	err = test_rtcp_loop_base(true);
+	TEST_ERR(err);
+
+ out:
+	return err;
+}
