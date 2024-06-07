@@ -51,8 +51,11 @@ jobs:
         mkdir html
         cov=$(~/.local/bin/gcovr -r . --html-details html/index.html --json-summary | jq .line_percent)
         echo "Coverage: ${cov}% (min $min_cov%)"
-        zip -r coverage.zip html
         exit $(echo "$cov < $min_cov" | bc -l)
+
+    - name: coverage zip
+      run: |
+        zip -r coverage.zip html
 
     - uses: actions/upload-artifact@v4
       with:
