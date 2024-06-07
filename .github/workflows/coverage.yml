@@ -43,11 +43,19 @@ jobs:
 
     - name: install gcovr
       run: |
-        pip install gcovr==5.0
+        pip install gcovr
 
     - name: coverage check
       run: |
         min_cov="64.6"
-        cov=$(~/.local/bin/gcovr -r . -s | grep lines | awk '{ print $2 }' | sed 's/%//')
+        mkdir html
+        cov=$(~/.local/bin/gcovr -r . --html-details html/index.html --json-summary | jq .line_percent)
         echo "Coverage: ${cov}% (min $min_cov%)"
+        zip -r coverage.zip html
         exit $(echo "$cov < $min_cov" | bc -l)
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: coverage.zip
+        retention-days: 7
