@@ -303,7 +303,7 @@ int  sip_debug(struct re_printf *pf, const struct sip *sip);
 int  sip_send(struct sip *sip, void *sock, enum sip_transp tp,
 	      const struct sa *dst, struct mbuf *mb);
 int  sip_send_conn(struct sip *sip, void *sock, enum sip_transp tp,
-		   const struct sa *dst, struct mbuf *mb,
+		   const struct sa *dst, char *host, struct mbuf *mb,
 		   sip_conn_h *connh, void *arg);
 void sip_set_trace_handler(struct sip *sip, sip_trace_h *traceh);
 
