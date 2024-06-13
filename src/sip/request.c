@@ -233,7 +233,7 @@ static int request(struct sip_request *req, enum sip_transp tp,
 	}
 
 	if (!req->stateful) {
-		err = sip_send_conn(req->sip, NULL, tp, dst, mb,
+		err = sip_send_conn(req->sip, NULL, tp, dst, req->host, mb,
 				    connect_handler, req);
 	}
 	else {

@@ -34,6 +34,7 @@ struct sip_dialog {
 	uint32_t hash;
 	uint32_t lseq;
 	uint32_t rseq;
+	uint32_t lseqinv;
 	size_t cpos;
 	size_t rpos;
 	enum sip_transp tp;
@@ -395,12 +396,13 @@ int sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 	if (!dlg)
 		return ENOMEM;
 
-	dlg->callid = mem_ref(odlg->callid);
-	dlg->ltag   = mem_ref(odlg->ltag);
-	dlg->hash   = odlg->hash;
-	dlg->lseq   = odlg->lseq;
-	dlg->rseq   = msg->req ? msg->cseq.num : 0;
-	dlg->tp     = msg->tp;
+	dlg->callid  = mem_ref(odlg->callid);
+	dlg->ltag    = mem_ref(odlg->ltag);
+	dlg->hash    = odlg->hash;
+	dlg->lseq    = odlg->lseq;
+	dlg->lseqinv = odlg->lseqinv;
+	dlg->rseq    = msg->req ? msg->cseq.num : 0;
+	dlg->tp      = msg->tp;
 
 	err = pl_strdup(&dlg->uri, &addr.auri);
 	if (err)
@@ -570,6 +572,9 @@ int sip_dialog_encode(struct mbuf *mb, struct sip_dialog *dlg, uint32_t cseq,
 	if (!mb || !dlg || !met)
 		return EINVAL;
 
+	if (!strcmp(met, "INVITE"))
+		dlg->lseqinv = dlg->lseq;
+
 	err |= mbuf_write_mem(mb, mbuf_buf(dlg->mb), mbuf_get_left(dlg->mb));
 	err |= mbuf_printf(mb, "Call-ID: %s\r\n", dlg->callid);
 	err |= mbuf_printf(mb, "CSeq: %u %s\r\n", strcmp(met, "ACK") ?
@@ -658,6 +663,19 @@ uint16_t sip_dialog_srcport(struct sip_dialog *dlg)
 uint32_t sip_dialog_lseq(const struct sip_dialog *dlg)
 {
 	return dlg ? dlg->lseq : 0;
+}
+
+
+/**
+ * Get the local sequence number of the last sent INVITE
+ *
+ * @param dlg SIP Dialog
+ *
+ * @return Local sequence number
+ */
+uint32_t sip_dialog_lseqinv(const struct sip_dialog *dlg)
+{
+	return dlg ? dlg->lseqinv : 0;
 }
 
 

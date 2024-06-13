@@ -91,6 +91,10 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	if (!msg || err || sip_request_loops(&sess->ls, msg->scode))
 		goto out;
 
+	if (!sip_dialog_cmp_half(sess->dlg, msg)
+		|| sip_dialog_lseqinv(sess->dlg) != msg->cseq.num)
+		goto out;
+
 	sdp = mbuf_get_left(msg->mb) > 0;
 
 	if (msg->scode < 200) {
@@ -148,15 +152,15 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	}
 	else if (msg->scode < 300) {
 
+		sess->established = true;
+
 		sess->hdrs = mem_deref(sess->hdrs);
 
 		err = sip_dialog_established(sess->dlg) ?
 				sip_dialog_update(sess->dlg, msg) :
 				sip_dialog_create(sess->dlg, msg);
-		if (err)
-			goto out;
 
-		if (sdp) {
+		if (sdp && !err) {
 			if (sess->neg_state == SDP_NEG_LOCAL_OFFER) {
 				sess->neg_state = SDP_NEG_DONE;
 				err = sess->answerh(msg, sess->arg);
@@ -179,7 +183,6 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		    && mbuf_get_left(desc))
 			sess->neg_state = SDP_NEG_DONE;
 
-		sess->established = true;
 		mem_deref(desc);
 
 		if (err || sess->terminated)

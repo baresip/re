@@ -27,14 +27,11 @@ struct tls_cert;
 void tls_flush_error(void);
 SSL_CTX *tls_ssl_ctx(const struct tls *tls);
 X509 *tls_cert_x509(struct tls_cert *hc);
-EVP_PKEY *tls_cert_pkey(struct tls_cert *hc);
+SSL_CTX *tls_cert_ctx(struct tls_cert *hc);
 
-struct stack_st_X509 *tls_cert_chain(struct tls_cert *hc);
 const char *tls_cert_host(struct tls_cert *hc);
 const struct list *tls_certs(const struct tls *tls);
 
 struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni);
-#if !defined(LIBRESSL_VERSION_NUMBER)
 int tls_verify_handler(int ok, X509_STORE_CTX *ctx);
 void tls_enable_sni(struct tls *tls);
-#endif

@@ -161,7 +161,7 @@ endif()
 
 set(LINKLIBS re ${OPENSSL_LIBRARIES})
 if(WIN32)
-  list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32)
+  list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32 crypt32)
 else()
   list(APPEND LINKLIBS m ${RESOLV_LIBRARY})
 endif()

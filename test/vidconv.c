@@ -348,6 +348,9 @@ int test_vidconv_pixel_formats(void)
 
 			size_t size = test->dst_planev[p].sz;
 
+			if (!test->dst_planev[p].data)
+				continue;
+
 			TEST_MEMCMP(test->dst_planev[p].data,
 				    test->dst_planev[p].sz,
 				    fdst->data[p],

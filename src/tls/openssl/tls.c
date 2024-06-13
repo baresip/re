@@ -10,6 +10,7 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <re_types.h>
@@ -57,9 +58,7 @@ struct tls {
  */
 struct tls_cert {
 	struct le le;
-	X509 *x509;
-	EVP_PKEY *pkey;
-	STACK_OF(X509) *chain;
+	SSL_CTX *ctx;
 	char *host;
 };
 
@@ -163,7 +162,6 @@ static int keytype2int(enum tls_keytype type)
 }
 
 
-#if !defined(LIBRESSL_VERSION_NUMBER)
 /**
  * OpenSSL verify handler for debugging purposes. Prints only warnings in the
  * default build
@@ -206,7 +204,6 @@ int tls_verify_handler(int ok, X509_STORE_CTX *ctx)
 
 	return ok;
 }
-#endif
 
 
 static int tls_verify_idx = -1;
@@ -219,6 +216,80 @@ static void tls_init_verify_idx(void)
 
 	tls_verify_idx = SSL_get_ex_new_index(0, "tls verify ud",
 		NULL, NULL, NULL);
+}
+
+
+static int tls_ctx_alloc(SSL_CTX **ctxp, enum tls_method method,
+			 const char *certf, const char *pwd, struct tls *tls)
+{
+	int err = 0;
+	int r;
+	SSL_CTX *ctx;
+	int min_proto = 0;
+
+	switch (method) {
+
+	case TLS_METHOD_TLS:
+	case TLS_METHOD_SSLV23:
+		ctx	  = SSL_CTX_new(TLS_method());
+		min_proto = TLS1_2_VERSION;
+		break;
+
+	case TLS_METHOD_DTLS:
+	case TLS_METHOD_DTLSV1:
+	case TLS_METHOD_DTLSV1_2:
+		ctx = SSL_CTX_new(DTLS_method());
+		break;
+
+	default:
+		DEBUG_WARNING("tls method %d not supported\n", method);
+		return ENOSYS;
+	}
+
+	if (!ctx) {
+		ERR_clear_error();
+		return ENOMEM;
+	}
+
+	SSL_CTX_set_min_proto_version(ctx, min_proto);
+
+	if (!certf)
+		goto out;
+
+	/* Load our keys and certificates */
+	if (pwd && tls) {
+		err = str_dup(&tls->pass, pwd);
+		if (err)
+			goto out;
+
+		SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+		SSL_CTX_set_default_passwd_cb_userdata(ctx, tls);
+	}
+
+	r = SSL_CTX_use_certificate_chain_file(ctx, certf);
+	if (r <= 0) {
+		DEBUG_WARNING("Can't read certificate file: %s (%d)\n", certf,
+			      r);
+		ERR_clear_error();
+		err = EINVAL;
+		goto out;
+	}
+
+	r = SSL_CTX_use_PrivateKey_file(ctx, certf, SSL_FILETYPE_PEM);
+	if (r <= 0) {
+		DEBUG_WARNING("Can't read key file: %s (%d)\n", certf, r);
+		ERR_clear_error();
+		err = EINVAL;
+		goto out;
+	}
+
+out:
+	if (err)
+		SSL_CTX_free(ctx);
+	else
+		*ctxp = ctx;
+
+	return err;
 }
 
 
@@ -236,8 +307,7 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	      const char *pwd)
 {
 	struct tls *tls;
-	int r, err;
-	int min_proto = 0;
+	int err;
 
 	if (!tlsp)
 		return EINVAL;
@@ -246,71 +316,15 @@ int tls_alloc(struct tls **tlsp, enum tls_method method, const char *keyfile,
 	if (!tls)
 		return ENOMEM;
 
-	tls->verify_server = true;
-	switch (method) {
-
-	case TLS_METHOD_TLS:
-	case TLS_METHOD_SSLV23:
-		tls->ctx = SSL_CTX_new(TLS_method());
-		min_proto = TLS1_2_VERSION;
-		break;
-
-	case TLS_METHOD_DTLS:
-	case TLS_METHOD_DTLSV1:
-	case TLS_METHOD_DTLSV1_2:
-		tls->ctx = SSL_CTX_new(DTLS_method());
-		break;
-
-	default:
-		DEBUG_WARNING("tls method %d not supported\n", method);
-		err = ENOSYS;
-		goto out;
-	}
-
-	if (!tls->ctx) {
-		ERR_clear_error();
-		err = ENOMEM;
-		goto out;
-	}
-
-	err = tls_set_min_proto_version(tls, min_proto);
+	err = tls_ctx_alloc(&tls->ctx, method, keyfile, pwd, tls);
 	if (err)
 		goto out;
+
+	tls->verify_server = true;
 
 #if defined(TRACE_SSL)
 	SSL_CTX_set_keylog_callback(tls->ctx, tls_keylogger_cb);
 #endif
-
-	/* Load our keys and certificates */
-	if (keyfile) {
-		if (pwd) {
-			err = str_dup(&tls->pass, pwd);
-			if (err)
-				goto out;
-
-			SSL_CTX_set_default_passwd_cb(tls->ctx, password_cb);
-			SSL_CTX_set_default_passwd_cb_userdata(tls->ctx, tls);
-		}
-
-		r = SSL_CTX_use_certificate_chain_file(tls->ctx, keyfile);
-		if (r <= 0) {
-			DEBUG_WARNING("Can't read certificate file: %s (%d)\n",
-				      keyfile, r);
-			ERR_clear_error();
-			err = EINVAL;
-			goto out;
-		}
-
-		r = SSL_CTX_use_PrivateKey_file(tls->ctx, keyfile,
-						SSL_FILETYPE_PEM);
-		if (r <= 0) {
-			DEBUG_WARNING("Can't read key file: %s (%d)\n",
-				      keyfile, r);
-			ERR_clear_error();
-			err = EINVAL;
-			goto out;
-		}
-	}
 
 	err = hash_alloc(&tls->reuse.ht_sessions, 256);
 	if (err)
@@ -1404,7 +1418,6 @@ int tls_set_ciphers(struct tls *tls, const char *cipherv[], size_t count)
  */
 int tls_set_verify_server(struct tls_conn *tc, const char *host)
 {
-#if !defined(LIBRESSL_VERSION_NUMBER)
 	struct sa sa;
 
 	if (!tc || !host)
@@ -1433,12 +1446,6 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, tls_verify_handler);
 
 	return 0;
-#else
-	(void)tc;
-	(void)host;
-
-	return ENOSYS;
-#endif
 }
 
 
@@ -1946,17 +1953,14 @@ SSL_CTX *tls_ssl_ctx(const struct tls *tls)
 }
 
 
-#if !defined(LIBRESSL_VERSION_NUMBER)
 static void tls_cert_destructor(void *arg)
 {
 	struct tls_cert *uc = arg;
 
 	mem_deref(uc->host);
-	X509_free(uc->x509);
-	EVP_PKEY_free(uc->pkey);
-	sk_X509_pop_free(uc->chain, X509_free);
+	if (uc->ctx)
+		SSL_CTX_free(uc->ctx);
 }
-#endif
 
 
 /**
@@ -1972,11 +1976,8 @@ static void tls_cert_destructor(void *arg)
  */
 int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 {
-#if !defined(LIBRESSL_VERSION_NUMBER)
 	struct tls_cert *uc;
-	BIO *bio = NULL;
 	int err = 0;
-	int ret;
 
 	if (!tls || !certf)
 		return EINVAL;
@@ -1988,73 +1989,30 @@ int tls_add_certf(struct tls *tls, const char *certf, const char *host)
 	if (str_isset(host)) {
 		err = str_dup(&uc->host, host);
 		if (err)
-			goto out;
+			goto err;
 	}
 
-	bio = BIO_new_file(certf, "r");
-	if (!bio) {
-		err = EIO;
-		goto out;
+	err = tls_ctx_alloc(&uc->ctx, TLS_METHOD_TLS, certf, NULL, NULL);
+	if (err)
+		goto err;
+
+	X509_STORE *ca = SSL_CTX_get_cert_store(tls->ctx);
+	if (ca) {
+		X509_STORE_up_ref(ca);
+		SSL_CTX_set_cert_store(uc->ctx, ca);
 	}
 
-	uc->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-	if (!uc->x509) {
-		DEBUG_WARNING("Can't read certificate from file: %s\n", certf);
-		err = ENOTSUP;
-		goto out;
-	}
+	list_append(&tls->certs, &uc->le, uc);
+	if (list_count(&tls->certs) == 1)
+		tls_enable_sni(tls);
 
-	while (1) {
-		X509 *ca = PEM_read_bio_X509(bio, NULL, 0, NULL);
-		if (!ca)
-			break;
+	return 0;
 
-		if (!uc->chain)
-			uc->chain = sk_X509_new_null();
-
-		if (!uc->chain) {
-			err = ENOMEM;
-			goto out;
-		}
-
-		if (!sk_X509_push(uc->chain, ca)) {
-			err = ENOMEM;
-			goto out;
-		}
-	}
-
-	ret = BIO_reset(bio);
-	if (ret < 0 || !bio) {
-		err = EIO;
-		goto out;
-	}
-
-	uc->pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
-	if (!uc->pkey) {
-		DEBUG_WARNING("Can't read private key from file: %s\n", certf);
-		err = ENOTSUP;
-		goto out;
-	}
-
-out:
-	BIO_free(bio);
-	if (err) {
-		ERR_clear_error();
-		mem_deref(uc);
-	}
-	else {
-		list_append(&tls->certs, &uc->le, uc);
-		if (list_count(&tls->certs) == 1)
-			tls_enable_sni(tls);
-	}
+err:
+	ERR_clear_error();
+	mem_deref(uc);
 
 	return err;
-#else
-	(void)tls;
-	(void)certf;
-	(void)host;
-	return ENOSYS;
-#endif
 }
 
 
@@ -2067,35 +2025,14 @@ out:
  */
 X509 *tls_cert_x509(struct tls_cert *hc)
 {
-	return hc ? hc->x509 : NULL;
+	return hc ? SSL_CTX_get0_certificate(hc->ctx) : NULL;
 }
 
 
-/**
- * Returns the private key of the TLS certificate
- *
- * @param hc  TLS certificate
- *
- * @return The OpenSSL EVP_PKEY
- */
-EVP_PKEY *tls_cert_pkey(struct tls_cert *hc)
-{
-	return hc ? hc->pkey : NULL;
+SSL_CTX *tls_cert_ctx(struct tls_cert *hc) {
+
+	return hc ? hc->ctx : NULL;
 }
-
-
-/*
- * Returns the certificate chain of the TLS certificate
- *
- * @param hc  TLS certificate
- *
- * @return The OpenSSL stack of X509
- */
-struct stack_st_X509 *tls_cert_chain(struct tls_cert *hc)
-{
-	return hc ? hc->chain : NULL;
-}
-
 
 /**
  * Returns the host name of the TLS certificate
@@ -2211,6 +2148,157 @@ int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
 		ERR_clear_error();
 		return EFAULT;
 	}
+
+	return 0;
+}
+
+
+/**
+ * Change used certificate+key of an existing SSL object
+ *
+ * @param tls       TLS Object
+ * @param chain     Cert (chain) + Key in PEM format
+ * @param len_chain Length of certificate + key PEM string
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
+				  size_t len_chain)
+{
+	STACK_OF(X509) *cert_stack = NULL;
+	BIO *bio_mem = NULL;
+	EVP_PKEY *pkey = NULL;
+	X509 *leaf_cert = NULL;
+	int err = ENOMEM;
+
+	if (!tls || !chain || !len_chain)
+		return EINVAL;
+
+	bio_mem = BIO_new_mem_buf(chain, (int)len_chain);
+	cert_stack = sk_X509_new_null();
+	if (!bio_mem || !cert_stack)
+		goto out;
+
+	X509 *cert;
+	while ((cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) != NULL) {
+		int n = sk_X509_push(cert_stack, cert);
+		if (n < 1) {
+			X509_free(cert);
+			goto out;
+		}
+	}
+
+	err = EINVAL;
+
+	if (sk_X509_num(cert_stack) == 0)
+		goto out;
+
+	leaf_cert = sk_X509_shift(cert_stack);
+	long ok = SSL_CTX_use_certificate(tls->ctx, leaf_cert);
+	if (ok <= 0) {
+		X509_free(leaf_cert);
+		goto out;
+	}
+
+	if (sk_X509_num(cert_stack)) {
+		ok = SSL_CTX_clear_chain_certs(tls->ctx);
+		if (!ok)
+			goto out;
+
+		while((cert = sk_X509_shift(cert_stack)) != NULL){
+			ok = SSL_CTX_add0_chain_cert(tls->ctx, cert);
+			if (!ok) {
+				X509_free(cert);
+				goto out;
+			}
+		}
+	}
+
+	BIO_free(bio_mem);
+	bio_mem = BIO_new_mem_buf(chain, (int)len_chain);
+	if (!bio_mem) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	pkey = PEM_read_bio_PrivateKey(bio_mem, NULL, NULL, NULL);
+	if (!pkey)
+		goto out;
+
+	ok = SSL_CTX_use_PrivateKey(tls->ctx, pkey);
+	if (ok <= 0) {
+		err = EKEYREJECTED;
+		goto out;
+	}
+
+	ok = SSL_CTX_check_private_key(tls->ctx);
+	if (ok <= 0)
+		goto out;
+
+	if (tls->cert)
+		X509_free(tls->cert);
+
+	tls->cert = leaf_cert;
+	leaf_cert = NULL;
+
+	err = 0;
+
+out:
+	if (bio_mem)
+		BIO_free(bio_mem);
+	if (leaf_cert)
+		X509_free(leaf_cert);
+	if (cert_stack)
+		sk_X509_pop_free(cert_stack, X509_free);
+	if (pkey)
+		EVP_PKEY_free(pkey);
+	if (err)
+		ERR_clear_error();
+
+	return err;
+}
+
+
+/**
+ * Change used certificate+key of an existing SSL object
+ *
+ * @param tls  TLS Object
+ * @param path Path to Cert (chain) + Key file (PEM format)
+ *
+ * @return int 0 if success, otherwise errorcode
+ */
+int tls_set_certificate_chain(struct tls *tls, const char *path)
+{
+	X509 *cert;
+	int ok = 0;
+
+	if (!tls || !path)
+		return EINVAL;
+
+	ok = SSL_CTX_use_certificate_chain_file(tls->ctx, path);
+	if (ok <= 0) {
+		ERR_clear_error();
+		return ENOENT;
+	}
+
+	ok = SSL_CTX_use_PrivateKey_file(tls->ctx, path, SSL_FILETYPE_PEM);
+	if (ok <= 0) {
+		ERR_clear_error();
+		return EKEYREJECTED;
+	}
+
+	cert = SSL_CTX_get0_certificate(tls->ctx);
+	if (!cert) {
+		ERR_clear_error();
+		return ENOENT;
+	}
+
+	X509_up_ref(cert);
+
+	if (tls->cert)
+		X509_free(tls->cert);
+
+	tls->cert = cert;
 
 	return 0;
 }
