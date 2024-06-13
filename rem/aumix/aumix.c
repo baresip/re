@@ -565,7 +565,7 @@ void aumix_source_flush(struct aumix_source *src)
  *
  * @return 0 if success, otherwise errorcode
  */
-int aumix_debug(struct re_printf *pf, struct aumix *mix)
+int aumix_debug(struct re_printf *pf, const struct aumix *mix)
 {
 	struct le *le;
 	int err = 0;
