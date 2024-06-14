@@ -193,6 +193,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 {
 	const struct sip_hdr *minexp;
 	struct sipreg *reg = arg;
+	uint16_t last_scode = reg->ls.last_scode;
 
 	reg->wait = failwait(reg->failc + 1);
 	if (err || !msg || sip_request_loops(&reg->ls, msg->scode)) {
@@ -223,6 +224,11 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 		case 401:
 		case 407:
+			if (reg->ls.failc > 1 && last_scode == msg->scode) {
+				reg->failc++;
+				goto out;
+			}
+
 			sip_auth_reset(reg->auth);
 			err = sip_auth_authenticate(reg->auth, msg);
 			if (err) {
