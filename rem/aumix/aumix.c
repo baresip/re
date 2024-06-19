@@ -399,7 +399,11 @@ uint32_t aumix_source_count(const struct aumix *mix)
 	if (!mix)
 		return 0;
 
-	return list_count(&mix->srcl);
+	mtx_lock(mix->mutex);
+	uint32_t count = list_count(&mix->srcl);
+	mtx_unlock(mix->mutex);
+
+	return count;
 }
 
 
