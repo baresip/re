@@ -74,7 +74,7 @@ static int auth_handler(char **user, char **pass, const char *rlm, void *arg)
 
 static int test_sip_auth_encode(void)
 {
-	int err;
+	int err = 0;
 	struct mbuf *mb, *mb_enc;
 	struct sip_auth *auth = NULL;
 	char buf[1024] = {0};
