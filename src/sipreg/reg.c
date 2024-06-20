@@ -215,53 +215,53 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 
 		if (reg->regid > 0 && !reg->terminated && !reg->ka)
 			start_outbound(reg, msg);
+		goto out;
 	}
-	else {
-		if (reg->terminated && !reg->registered)
+
+	if (reg->terminated && !reg->registered)
+		goto out;
+
+	switch (msg->scode) {
+
+	case 401:
+	case 407:
+		if (reg->ls.failc > 1 && last_scode == msg->scode) {
+			reg->failc++;
 			goto out;
-
-		switch (msg->scode) {
-
-		case 401:
-		case 407:
-			if (reg->ls.failc > 1 && last_scode == msg->scode) {
-				reg->failc++;
-				goto out;
-			}
-
-			sip_auth_reset(reg->auth);
-			err = sip_auth_authenticate(reg->auth, msg);
-			if (err) {
-				err = (err == EAUTH) ? 0 : err;
-				break;
-			}
-
-			err = request(reg, false);
-			if (err)
-				break;
-
-			return;
-
-		case 403:
-			sip_auth_reset(reg->auth);
-			break;
-
-		case 423:
-			minexp = sip_msg_hdr(msg, SIP_HDR_MIN_EXPIRES);
-			if (!minexp || !pl_u32(&minexp->val) || !reg->expires)
-				break;
-
-			reg->expires = pl_u32(&minexp->val);
-
-			err = request(reg, false);
-			if (err)
-				break;
-
-			return;
 		}
 
-		++reg->failc;
+		sip_auth_reset(reg->auth);
+		err = sip_auth_authenticate(reg->auth, msg);
+		if (err) {
+			err = (err == EAUTH) ? 0 : err;
+			break;
+		}
+
+		err = request(reg, false);
+		if (err)
+			break;
+
+		return;
+
+	case 403:
+		sip_auth_reset(reg->auth);
+		break;
+
+	case 423:
+		minexp = sip_msg_hdr(msg, SIP_HDR_MIN_EXPIRES);
+		if (!minexp || !pl_u32(&minexp->val) || !reg->expires)
+			break;
+
+		reg->expires = pl_u32(&minexp->val);
+
+		err = request(reg, false);
+		if (err)
+			break;
+
+		return;
 	}
+
+	++reg->failc;
 
  out:
 	if (!reg->expires) {
