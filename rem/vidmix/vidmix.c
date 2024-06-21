@@ -34,7 +34,7 @@ struct vidmix_source {
 	struct le le;
 	uint32_t pidx;
 	thrd_t thread;
-	mtx_t mutex;
+	mtx_t *mutex;
 	struct vidframe *frame_tx;
 	struct vidframe *frame_rx;
 	struct vidmix *mix;
@@ -84,6 +84,7 @@ static void source_destructor(void *arg)
 	mem_deref(src->frame_tx);
 	mem_deref(src->frame_rx);
 	mem_deref(src->mix);
+	mem_deref(src->mutex);
 }
 
 
@@ -181,7 +182,7 @@ static int vidmix_thread(void *arg)
 	struct vidmix *mix = src->mix;
 	uint64_t ts = tmr_jiffies_usec();
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 
 	while (src->run) {
 
@@ -189,9 +190,9 @@ static int vidmix_thread(void *arg)
 		struct le *le;
 		uint64_t now;
 
-		mtx_unlock(&src->mutex);
+		mtx_unlock(src->mutex);
 		sys_usleep(4000);
-		mtx_lock(&src->mutex);
+		mtx_lock(src->mutex);
 
 		now = tmr_jiffies_usec();
 
@@ -253,7 +254,7 @@ static int vidmix_thread(void *arg)
 		ts += src->fint;
 	}
 
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 
 	return 0;
 }
@@ -265,16 +266,16 @@ static int content_thread(void *arg)
 	struct vidmix *mix = src->mix;
 	uint64_t ts = tmr_jiffies_usec();
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 
 	while (src->run) {
 
 		struct le *le;
 		uint64_t now;
 
-		mtx_unlock(&src->mutex);
+		mtx_unlock(src->mutex);
 		sys_usleep(4000);
-		mtx_lock(&src->mutex);
+		mtx_lock(src->mutex);
 
 		now = tmr_jiffies_usec();
 
@@ -299,7 +300,7 @@ static int content_thread(void *arg)
 		ts += src->fint;
 	}
 
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 
 	return 0;
 }
@@ -392,11 +393,9 @@ int vidmix_source_alloc(struct vidmix_source **srcp, struct vidmix *mix,
 	src->arg     = arg;
 	src->pidx    = ++mix->next_pidx;
 
-	err = mtx_init(&src->mutex, mtx_plain) != thrd_success;
-	if (err) {
-		err = ENOMEM;
+	err = mutex_alloc(&src->mutex);
+	if (err)
 		goto out;
-	}
 
 	if (sz) {
 		err = vidframe_alloc(&src->frame_tx, mix->fmt, sz);
@@ -438,7 +437,14 @@ bool vidmix_source_isenabled(const struct vidmix_source *src)
  */
 bool vidmix_source_isrunning(const struct vidmix_source *src)
 {
-	return src ? src->run : false;
+	if (!src)
+		return false;
+
+	mtx_lock(src->mutex);
+	bool run = src->run;
+	mtx_unlock(src->mutex);
+
+	return run;
 }
 
 
@@ -528,16 +534,25 @@ int vidmix_source_start(struct vidmix_source *src)
 	if (!src)
 		return EINVAL;
 
-	if (src->run)
+	mtx_lock(src->mutex);
+	bool run = src->run;
+	mtx_unlock(src->mutex);
+
+	if (run)
 		return EALREADY;
 
+	mtx_lock(src->mutex);
 	src->run = true;
+	mtx_unlock(src->mutex);
 
 	err = thread_create_name(&src->thread, "vidmix",
 				 src->content ? content_thread : vidmix_thread,
 				 src);
-	if (err)
+	if (err) {
+		mtx_lock(src->mutex);
 		src->run = false;
+		mtx_unlock(src->mutex);
+	}
 
 	return err;
 }
@@ -553,10 +568,14 @@ void vidmix_source_stop(struct vidmix_source *src)
 	if (!src)
 		return;
 
-	if (src->run) {
-		mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
+	bool run = src->run;
+	mtx_unlock(src->mutex);
+
+	if (run) {
+		mtx_lock(src->mutex);
 		src->run = false;
-		mtx_unlock(&src->mutex);
+		mtx_unlock(src->mutex);
 		thrd_join(src->thread, NULL);
 	}
 }
@@ -587,10 +606,10 @@ int vidmix_source_set_size(struct vidmix_source *src, const struct vidsz *sz)
 
 	clear_frame(frame);
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	mem_deref(src->frame_tx);
 	src->frame_tx = frame;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 
 	return 0;
 }
@@ -607,9 +626,9 @@ void vidmix_source_set_rate(struct vidmix_source *src, unsigned fps)
 	if (!src || !fps)
 		return;
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	src->fint = VIDEO_TIMEBASE/fps;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 }
 
 
@@ -624,9 +643,9 @@ void vidmix_source_set_content_hide(struct vidmix_source *src, bool hide)
 	if (!src)
 		return;
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	src->content_hide = hide;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 }
 
 
@@ -640,9 +659,9 @@ void vidmix_source_toggle_selfview(struct vidmix_source *src)
 	if (!src)
 		return;
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	src->selfview = !src->selfview;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 }
 
 
@@ -660,10 +679,10 @@ void vidmix_source_set_focus(struct vidmix_source *src,
 	if (!src)
 		return;
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	src->focus_full = focus_full;
 	src->focus = (void *)focus_src;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 }
 
 
@@ -708,10 +727,10 @@ void vidmix_source_set_focus_idx(struct vidmix_source *src, uint32_t pidx)
 	if (focus && focus == src->focus)
 		focus_full = !src->focus_full;
 
-	mtx_lock(&src->mutex);
+	mtx_lock(src->mutex);
 	src->focus_full = focus_full;
 	src->focus = focus;
-	mtx_unlock(&src->mutex);
+	mtx_unlock(src->mutex);
 }
 
 
