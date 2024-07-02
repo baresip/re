@@ -37,7 +37,7 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 #ifdef HAVE_INET6
 	case AF_INET6:
 		mreq6.ipv6mr_multiaddr = group->u.in6.sin6_addr;
-		mreq6.ipv6mr_interface = 0;
+		mreq6.ipv6mr_interface = sa_scopeid(group);
 
 		err = udp_setsockopt(us, IPPROTO_IPV6,
 				     join
