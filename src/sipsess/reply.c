@@ -51,10 +51,6 @@ static void tmr_handler(void *arg)
 	struct sipsess_reply *reply = arg;
 	struct sipsess *sess = reply->sess;
 
-	/* wait for all pending ACKs */
-	if (sess->replyl.head)
-		goto out;
-
 	/* we want to send bye */
 
 	if (!sess->terminated) {
@@ -64,14 +60,15 @@ static void tmr_handler(void *arg)
 		}
 		else {
 			sess->established = true;
+			mem_deref(reply);
 			sipsess_terminate(sess, ETIMEDOUT, NULL);
+			return;
 		}
 	}
 	else {
 		mem_deref(sess);
 	}
 
-out:
 	mem_deref(reply);
 }
 
