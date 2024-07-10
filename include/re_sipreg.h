@@ -27,6 +27,7 @@ int sipreg_send(struct sipreg *reg);
 int sipreg_set_rwait(struct sipreg *reg, uint32_t rwait);
 
 const struct sa *sipreg_laddr(const struct sipreg *reg);
+const struct sa *sipreg_paddr(const struct sipreg *reg);
 
 uint32_t sipreg_proxy_expires(const struct sipreg *reg);
 bool sipreg_registered(const struct sipreg *reg);

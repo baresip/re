@@ -28,6 +28,7 @@ enum {
 struct sipreg {
 	struct sip_loopstate ls;
 	struct sa laddr;
+	struct sa paddr;
 	struct tmr tmr;
 	struct sip *sip;
 	struct sip_keepalive *ka;
@@ -200,6 +201,8 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 		reg->failc++;
 		goto out;
 	}
+
+	reg->paddr = msg->src;
 
 	if (msg->scode < 200) {
 		return;
@@ -562,6 +565,19 @@ int sipreg_set_rwait(struct sipreg *reg, uint32_t rwait)
 const struct sa *sipreg_laddr(const struct sipreg *reg)
 {
 	return reg ? &reg->laddr : NULL;
+}
+
+
+/**
+ * Get the peer address for a SIP Registration client
+ *
+ * @param reg SIP Registration client
+ *
+ * @return Peer address
+ */
+const struct sa *sipreg_paddr(const struct sipreg *reg)
+{
+	return reg ? &reg->paddr : NULL;
 }
 
 
