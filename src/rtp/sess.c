@@ -65,15 +65,11 @@ struct rtcp_sess {
 
 /* Prototypes */
 static void schedule(struct rtcp_sess *sess);
-static int  send_bye_packet(struct rtcp_sess *sess);
 
 
 static void sess_destructor(void *data)
 {
 	struct rtcp_sess *sess = data;
-
-	if (sess->cname)
-		(void)send_bye_packet(sess);
 
 	tmr_cancel(&sess->tmr);
 
@@ -509,9 +505,13 @@ static int send_rtcp_report(struct rtcp_sess *sess)
 }
 
 
-static int send_bye_packet(struct rtcp_sess *sess)
+int rtcp_send_bye_packet(struct rtp_sock *rs)
 {
-	const uint32_t ssrc = rtp_sess_ssrc(sess->rs);
+	if (!rs)
+		return EINVAL;
+
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	const uint32_t ssrc = rtp_sess_ssrc(rs);
 	struct mbuf *mb;
 	int err;
 
