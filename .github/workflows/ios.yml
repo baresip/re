@@ -15,7 +15,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: build
+    - name: build Xcode
       run: |
-        cmake -B build -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=ON -DUSE_OPENSSL=OFF -DCMAKE_C_FLAGS="-Werror"
-        cmake --build build -- CODE_SIGNING_ALLOWED=NO
+        cmake -B build_xcode -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=ON -DUSE_OPENSSL=OFF -DCMAKE_C_FLAGS="-Werror"
+        cmake --build build_xcode -- CODE_SIGNING_ALLOWED=NO
+
+    - name: normal build
+      run: |
+        cmake -B build -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=ON -DUSE_OPENSSL=OFF -DCMAKE_C_FLAGS="-Werror"
+        cmake --build build -j
