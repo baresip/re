@@ -585,6 +585,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     src/dns/darwin/srv.c
     src/net/bsd/brt.c
   )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+  list(APPEND SRCS
+    src/dns/darwin/srv.c
+  )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   list(APPEND SRCS
     src/net/bsd/brt.c
