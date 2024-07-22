@@ -1102,7 +1102,6 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 }
 
 
-#if HAVE_INET6
 static int dst_set_scopeid(struct sip *sip, struct sa *dst, enum sip_transp tp)
 {
 	struct sa laddr;
@@ -1118,7 +1117,6 @@ static int dst_set_scopeid(struct sip *sip, struct sa *dst, enum sip_transp tp)
 	sa_set_scopeid(dst, sa_scopeid(&laddr));
 	return 0;
 }
-#endif
 
 
 int sip_transp_init(struct sip *sip, uint32_t sz)
@@ -1446,11 +1444,9 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 		return EINVAL;
 
 	sa_cpy(&dsttmp, dst);
-#if HAVE_INET6
 	err = dst_set_scopeid(sip, &dsttmp, tp);
 	if (err)
 		return err;
-#endif
 
 	switch (tp) {
 
