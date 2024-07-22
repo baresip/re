@@ -42,9 +42,7 @@ const char *net_af2name(int af)
 
 	case AF_UNSPEC:    return "AF_UNSPEC";
 	case AF_INET:      return "AF_INET";
-#ifdef HAVE_INET6
 	case AF_INET6:     return "AF_INET6";
-#endif
 	default:           return "???";
 	}
 }
