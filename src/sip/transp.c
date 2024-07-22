@@ -1193,19 +1193,19 @@ static void http_req_handler(struct http_conn *hc, const struct http_msg *msg,
 /**
  * Add a SIP transport
  *
- * @param sip   SIP stack instance
- * @param tp    SIP Transport
- * @param laddr Local network address
- * @param ...   Optional transport parameters such as TLS context
+ * @param sip    SIP stack instance
+ * @param tp     SIP Transport
+ * @param listen True to open listening socket (UDP socket always opened)
+ * @param laddr  Local network address
+ * @param ap     Optional transport parameters such as TLS context
  *
  * @return 0 if success, otherwise errorcode
  */
-int sip_transp_add(struct sip *sip, enum sip_transp tp,
-		   const struct sa *laddr, ...)
+static int add_transp(struct sip *sip, enum sip_transp tp,
+		      bool listen, const struct sa *laddr, va_list ap)
 {
 	struct sip_transport *transp;
 	struct tls *tls;
-	va_list ap;
 	int err = 0;
 
 	if (!sip || !laddr || !sa_isset(laddr, SA_ADDR))
@@ -1226,8 +1226,6 @@ int sip_transp_add(struct sip *sip, enum sip_transp tp,
 	list_append(&sip->transpl, &transp->le, transp);
 	transp->sip = sip;
 	transp->tp  = tp;
-
-	va_start(ap, laddr);
 
 	switch (tp) {
 
@@ -1252,6 +1250,13 @@ int sip_transp_add(struct sip *sip, enum sip_transp tp,
 		/*@fallthrough@*/
 
 	case SIP_TRANSP_TCP:
+
+		if (!listen) {
+			transp->laddr = *laddr;
+			sa_set_port(&transp->laddr, 0);
+			return err;
+		}
+
 		err = tcp_listen((struct tcp_sock **)&transp->sock, laddr,
 				 tcp_connect_handler, transp);
 		if (err)
@@ -1265,10 +1270,59 @@ int sip_transp_add(struct sip *sip, enum sip_transp tp,
 		break;
 	}
 
-	va_end(ap);
-
 	if (err)
 		mem_deref(transp);
+
+	return err;
+}
+
+
+/**
+ * Add a SIP transport
+ *
+ * @param sip   SIP stack instance
+ * @param tp    SIP Transport
+ * @param laddr Local network address
+ * @param ...   Optional transport parameters such as TLS context
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_transp_add(struct sip *sip, enum sip_transp tp,
+		   const struct sa *laddr, ...)
+{
+	int err;
+	va_list ap;
+
+	va_start(ap, laddr);
+	err = add_transp(sip, tp, true, laddr, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
+ * Add a SIP transport and open listening socket if requested
+ *
+ * UDP socket will always be opened even if listen is false.
+ *
+ * @param sip    SIP stack instance
+ * @param tp     SIP Transport
+ * @param listen True to open listening socket
+ * @param laddr  Local network address
+ * @param ...	 Optional transport parameters such as TLS context
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_transp_add_sock(struct sip *sip, enum sip_transp tp,
+			bool listen, const struct sa *laddr, ...)
+{
+	int err;
+	va_list ap;
+
+	va_start(ap, laddr);
+	err = add_transp(sip, tp, listen, laddr, ap);
+	va_end(ap);
 
 	return err;
 }
@@ -1768,10 +1822,29 @@ int  sip_settos(struct sip *sip, uint8_t tos)
 }
 
 
+static void sip_transports_print(struct re_printf *pf, const struct sip* sip)
+{
+	uint32_t mask = 0;
+
+	for (struct le *le = sip->transpl.head; le; le = le->next) {
+		const struct sip_transport *transp = le->data;
+		mask |= (1 << transp->tp);
+	}
+
+	for (uint8_t i = 0; i < SIP_TRANSPC; ++i) {
+		if (mask==0 || (0 != (mask & (1u << i))))
+			(void)re_hprintf(pf, "  %s\n", sip_transp_name(i));
+	}
+}
+
+
 static bool debug_handler(struct le *le, void *arg)
 {
 	const struct sip_transport *transp = le->data;
 	struct re_printf *pf = arg;
+
+	if (sa_port(&transp->laddr) == 0)
+		return false;
 
 	(void)re_hprintf(pf, "  %J (%s)\n",
 			 &transp->laddr,
@@ -1813,6 +1886,9 @@ int sip_transp_debug(struct re_printf *pf, const struct sip *sip)
 	int err;
 
 	err = re_hprintf(pf, "transports:\n");
+	sip_transports_print(pf, sip);
+
+	err |= re_hprintf(pf, "transport sockets:\n");
 	list_apply(&sip->transpl, true, debug_handler, pf);
 
 	err |= re_hprintf(pf, "connections:\n");
