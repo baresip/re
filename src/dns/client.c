@@ -1217,9 +1217,7 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 {
 	struct dnsc *dnsc;
 	struct sa laddr;
-#ifdef HAVE_INET6
 	struct sa laddr6;
-#endif
 	int err;
 
 	if (!dcpp)
@@ -1241,10 +1239,9 @@ int dnsc_alloc(struct dnsc **dcpp, const struct dnsc_conf *conf,
 	sa_set_str(&laddr, "0.0.0.0", 0);
 	err  = udp_listen(&dnsc->us, &laddr, udp_recv_handler, dnsc);
 
-#ifdef HAVE_INET6
 	sa_set_str(&laddr6, "::", 0);
 	err &= udp_listen(&dnsc->us6, &laddr6, udp_recv_handler, dnsc);
-#endif
+
 	if (err)
 		goto out;
 
