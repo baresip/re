@@ -252,11 +252,9 @@ static inline size_t stun_indlen(const struct sa *sa)
 		len += STUN_ATTR_ADDR4_SIZE;
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		len += STUN_ATTR_ADDR6_SIZE;
 		break;
-#endif
 	}
 
 	return len;
