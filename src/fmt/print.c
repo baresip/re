@@ -441,20 +441,16 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 				break;
 			}
 
-#ifdef HAVE_INET6
 			if (AF_INET6 == sa_af(sa)) {
 				ch = '[';
 				err |= vph(&ch, 1, arg);
 			}
-#endif
 			err |= write_padded(addr, strlen(addr), pad, ' ',
 					    plr, NULL, vph, arg);
-#ifdef HAVE_INET6
 			if (AF_INET6 == sa_af(sa)) {
 				ch = ']';
 				err |= vph(&ch, 1, arg);
 			}
-#endif
 
 			ch = ':';
 			err |= vph(&ch, 1, arg);
