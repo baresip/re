@@ -124,11 +124,9 @@ static int rt_parse(const struct nlmsghdr *nlhdr, struct net_rt *rt)
 					= *(uint32_t *)RTA_DATA(rtattr);
 				break;
 
-#ifdef HAVE_INET6
 			case AF_INET6:
 				sa_set_in6(&rt->gw, RTA_DATA(rtattr), 0);
 				break;
-#endif
 
 			default:
 				DEBUG_WARNING("RTA_GW: unknown family %d\n",
@@ -146,11 +144,9 @@ static int rt_parse(const struct nlmsghdr *nlhdr, struct net_rt *rt)
 					= *(uint32_t *)RTA_DATA(rtattr);
 				break;
 
-#ifdef HAVE_INET6
 			case AF_INET6:
 				sa_set_in6(&rt->dst, RTA_DATA(rtattr), 0);
 				break;
-#endif
 
 			default:
 				DEBUG_WARNING("RTA_DST: unknown family %d\n",
@@ -227,11 +223,9 @@ int net_rt_list(net_rt_h *rth, void *arg)
 		if (0 != rt_parse(nlmsg, &rt))
 			continue;
 
-#ifdef HAVE_INET6
 		if (AF_INET6 == sa_af(&rt.dst)
 		    && IN6_IS_ADDR_UNSPECIFIED(&rt.dst.u.in6.sin6_addr))
 			continue;
-#endif
 
 		if (rth(rt.ifname, &rt.dst, rt.dstlen, &rt.gw, arg))
 			break;
