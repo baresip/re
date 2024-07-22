@@ -30,7 +30,6 @@ int sa_print_addr(struct re_printf *pf, const struct sa *sa)
 
 	err = re_hprintf(pf, "%j", sa);
 
-#ifdef HAVE_INET6
 	if (sa_af(sa) == AF_INET6 && sa_is_linklocal(sa)) {
 #ifdef HAVE_GETIFADDRS
 		char ifname[IF_NAMESIZE];
@@ -44,7 +43,6 @@ int sa_print_addr(struct re_printf *pf, const struct sa *sa)
 		err |= re_hprintf(pf, "%%%d", scope_id);
 #endif
 	}
-#endif
 
 	return err;
 }
