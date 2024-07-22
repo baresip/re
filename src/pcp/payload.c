@@ -25,11 +25,9 @@ static int pcp_write_port(struct mbuf *mb, const struct sa *sa)
 		port_be = sa->u.in.sin_port;
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		port_be = sa->u.in6.sin6_port;
 		break;
-#endif
 
 	default:
 		return EAFNOSUPPORT;
