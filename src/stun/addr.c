@@ -29,9 +29,7 @@ static void in6_xor_tid(uint8_t *in6, const uint8_t *tid)
 int stun_addr_encode(struct mbuf *mb, const struct sa *addr,
 		     const uint8_t *tid)
 {
-#ifdef HAVE_INET6
 	uint8_t addr6[16];
-#endif
 	uint16_t port;
 	uint32_t addr4;
 	int err = 0;
@@ -52,7 +50,6 @@ int stun_addr_encode(struct mbuf *mb, const struct sa *addr,
 		err |= mbuf_write_u32(mb, htonl(addr4));
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		sa_in6(addr, addr6);
 		if (tid)
@@ -63,7 +60,7 @@ int stun_addr_encode(struct mbuf *mb, const struct sa *addr,
 		err |= mbuf_write_u16(mb, htons(port));
 		err |= mbuf_write_mem(mb, addr6, 16);
 		break;
-#endif
+
 	default:
 		err = EAFNOSUPPORT;
 		break;
