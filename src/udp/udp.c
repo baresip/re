@@ -285,11 +285,7 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 		(void)re_snprintf(serv, sizeof(serv), "%u", sa_port(local));
 	}
 	else {
-#ifdef HAVE_INET6
 		af = AF_UNSPEC;
-#else
-		af = AF_INET;
-#endif
 	}
 
 	memset(&hints, 0, sizeof(hints));
