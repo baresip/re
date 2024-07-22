@@ -13,9 +13,7 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 			    bool join)
 {
 	struct ip_mreq mreq;
-#ifdef HAVE_INET6
 	struct ipv6_mreq mreq6;
-#endif
 	int err;
 
 	if (!us || !group)
@@ -34,7 +32,6 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 				     &mreq, sizeof(mreq));
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		mreq6.ipv6mr_multiaddr = group->u.in6.sin6_addr;
 		mreq6.ipv6mr_interface = sa_scopeid(group);
@@ -45,7 +42,6 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 				     : IPV6_LEAVE_GROUP,
 				     &mreq6, sizeof(mreq6));
 		break;
-#endif
 
 	default:
 		return EAFNOSUPPORT;
