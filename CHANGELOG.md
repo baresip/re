@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.13.0] - 2024-06-19
+
+## What's Changed
+* http/client: use dynamically sized buffers for PEM setters by @maximilianfridrich in https://github.com/baresip/re/pull/1117
+* tls: allow secure TLS renegotiation by @maximilianfridrich in https://github.com/baresip/re/pull/1121
+* tls: always enable USE_OPENSSL_SRTP by @alfredh in https://github.com/baresip/re/pull/1122
+* main: remove call to openssl init by @alfredh in https://github.com/baresip/re/pull/1120
+* sip/transp: Allow ACK w/o Max-Forwards header by @juha-h in https://github.com/baresip/re/pull/1124
+* net: remove NET_ADDRSTRLEN by @alfredh in https://github.com/baresip/re/pull/1123
+* ci/ios: increase min deployment target by @sreimers in https://github.com/baresip/re/pull/1126
+* tls/http: add certificate chain setters by @maximilianfridrich in https://github.com/baresip/re/pull/1125
+* sipsess/connect: set sess->established immediately on 200 receival by @maximilianfridrich in https://github.com/baresip/re/pull/1128
+* test/cmake: add crypt32 linking for WIN32 by @sreimers in https://github.com/baresip/re/pull/1130
+* ci/sanitizers: use clang-17 by @sreimers in https://github.com/baresip/re/pull/1131
+* ci/sanitizer: add undefined behavior sanitizer by @sreimers in https://github.com/baresip/re/pull/1132
+* sip: verify call-id, to-tag, cseq of INVITE response by @maximilianfridrich in https://github.com/baresip/re/pull/1129
+* ci: remove one unneeded directory change by @alfredh in https://github.com/baresip/re/pull/1134
+* test: change GENERATOR_SSRC from define to type by @alfredh in https://github.com/baresip/re/pull/1133
+* tls: refactoring SNI ctx usage for libressl support by @sreimers in https://github.com/baresip/re/pull/1136
+* test: add test_rtcp_loop() by @alfredh in https://github.com/baresip/re/pull/1137
+* ci/coverage: increase min coverage by @sreimers in https://github.com/baresip/re/pull/1138
+* ci/coverage: use json summary and upload html details by @sreimers in https://github.com/baresip/re/pull/1139
+* sip: add host param to sip_send_conn by @sreimers in https://github.com/baresip/re/pull/1141
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.12.0...v3.13.0
+
 ## [v3.12.0] - 2024-05-15
 
 ## What's Changed

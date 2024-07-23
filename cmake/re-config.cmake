@@ -55,7 +55,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
 else()
   check_symbol_exists(res_ninit resolv.h HAVE_RESOLV)
 endif()
-if(HAVE_RESOLV)
+if(HAVE_RESOLV AND ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  list(APPEND RE_DEFINITIONS HAVE_RESOLV)
+  set(RESOLV_LIBRARY) # Provided by libc
+elseif(HAVE_RESOLV)
   set(RESOLV_LIBRARY resolv)
   list(APPEND RE_DEFINITIONS HAVE_RESOLV)
 else()
@@ -77,9 +80,11 @@ if(HAVE_THREADS)
   list(APPEND RE_DEFINITIONS HAVE_THREADS)
 endif()
 
-check_function_exists(accept4 HAVE_ACCEPT4)
-if(HAVE_ACCEPT4)
-  list(APPEND RE_DEFINITIONS HAVE_ACCEPT4)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  check_function_exists(accept4 HAVE_ACCEPT4)
+  if(HAVE_ACCEPT4)
+    list(APPEND RE_DEFINITIONS HAVE_ACCEPT4)
+  endif()
 endif()
 
 if(CMAKE_USE_PTHREADS_INIT)
@@ -113,7 +118,6 @@ list(APPEND RE_DEFINITIONS
 if(UNIX)
   list(APPEND RE_DEFINITIONS
     HAVE_PWD_H
-    HAVE_ROUTE_LIST
     HAVE_SETRLIMIT
     HAVE_STRERROR_R
     HAVE_STRINGS_H
@@ -125,6 +129,9 @@ if(UNIX)
     )
   if(NOT ANDROID)
     list(APPEND RE_DEFINITIONS HAVE_GETIFADDRS)
+  endif()
+  if(NOT IOS)
+    list(APPEND RE_DEFINITIONS HAVE_ROUTE_LIST)
   endif()
 endif()
 

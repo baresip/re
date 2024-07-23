@@ -21,7 +21,7 @@
 
 /** Defines an Audio mixer */
 struct aumix {
-	mtx_t mutex;
+	mtx_t *mutex;
 	cnd_t cond;
 	struct list srcl;
 	thrd_t thread;
@@ -62,21 +62,22 @@ static void destructor(void *arg)
 {
 	struct aumix *mix = arg;
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 	bool run = mix->run;
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 
 	if (run) {
 
-		mtx_lock(&mix->mutex);
+		mtx_lock(mix->mutex);
 		mix->run = false;
 		cnd_signal(&mix->cond);
-		mtx_unlock(&mix->mutex);
+		mtx_unlock(mix->mutex);
 
 		thrd_join(mix->thread, NULL);
 	}
 
 	mem_deref(mix->af);
+	mem_deref(mix->mutex);
 }
 
 
@@ -85,9 +86,9 @@ static void source_destructor(void *arg)
 	struct aumix_source *src = arg;
 
 	if (src->le.list) {
-		mtx_lock(&src->mix->mutex);
+		mtx_lock(src->mix->mutex);
 		list_unlink(&src->le);
-		mtx_unlock(&src->mix->mutex);
+		mtx_unlock(src->mix->mutex);
 	}
 
 	mem_deref(src->aubuf);
@@ -110,7 +111,7 @@ static int aumix_thread(void *arg)
 	if (!silence || !frame || !mix_frame)
 		goto out;
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 
 	while (mix->run) {
 
@@ -119,13 +120,13 @@ static int aumix_thread(void *arg)
 
 		if (!mix->srcl.head) {
 			mix->af = mem_deref(mix->af);
-			cnd_wait(&mix->cond, &mix->mutex);
+			cnd_wait(&mix->cond, mix->mutex);
 			ts = 0;
 		}
 		else {
-			mtx_unlock(&mix->mutex);
+			mtx_unlock(mix->mutex);
 			sys_usleep(4000);
-			mtx_lock(&mix->mutex);
+			mtx_lock(mix->mutex);
 		}
 
 		now = tmr_jiffies();
@@ -243,7 +244,7 @@ static int aumix_thread(void *arg)
 		ts += mix->ptime;
 	}
 
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 
  out:
 	mem_deref(mix_frame);
@@ -287,9 +288,8 @@ int aumix_alloc(struct aumix **mixp, uint32_t srate,
 	mix->rec_sum.srate = srate;
 	mix->rec_sum.sampc = mix->frame_size;
 
-	err = mtx_init(&mix->mutex, mtx_plain) != thrd_success;
+	err = mutex_alloc(&mix->mutex);
 	if (err) {
-		err = ENOMEM;
 		goto out;
 	}
 
@@ -328,9 +328,9 @@ void aumix_recordh(struct aumix *mix, aumix_record_h *recordh)
 	if (!mix)
 		return;
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 	mix->recordh = recordh;
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 }
 
 
@@ -345,9 +345,9 @@ void aumix_record_sumh(struct aumix *mix, aumix_record_h *recordh)
 	if (!mix)
 		return;
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 	mix->record_sumh = recordh;
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 }
 
 
@@ -378,10 +378,10 @@ int aumix_playfile(struct aumix *mix, const char *filepath)
 		return EINVAL;
 	}
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 	mem_deref(mix->af);
 	mix->af = af;
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 
 	return 0;
 }
@@ -399,7 +399,11 @@ uint32_t aumix_source_count(const struct aumix *mix)
 	if (!mix)
 		return 0;
 
-	return list_count(&mix->srcl);
+	mtx_lock(mix->mutex);
+	uint32_t count = list_count(&mix->srcl);
+	mtx_unlock(mix->mutex);
+
+	return count;
 }
 
 
@@ -468,9 +472,9 @@ void aumix_source_readh(struct aumix_source *src, aumix_read_h *readh)
 	if (!src || !src->mix)
 		return;
 
-	mtx_lock(&src->mix->mutex);
+	mtx_lock(src->mix->mutex);
 	src->readh = readh;
-	mtx_unlock(&src->mix->mutex);
+	mtx_unlock(src->mix->mutex);
 }
 
 
@@ -510,7 +514,7 @@ void aumix_source_enable(struct aumix_source *src, bool enable)
 
 	mix = src->mix;
 
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 
 	if (enable) {
 		list_append(&mix->srcl, &src->le, src);
@@ -520,7 +524,7 @@ void aumix_source_enable(struct aumix_source *src, bool enable)
 		list_unlink(&src->le);
 	}
 
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 }
 
 
@@ -565,7 +569,7 @@ void aumix_source_flush(struct aumix_source *src)
  *
  * @return 0 if success, otherwise errorcode
  */
-int aumix_debug(struct re_printf *pf, struct aumix *mix)
+int aumix_debug(struct re_printf *pf, const struct aumix *mix)
 {
 	struct le *le;
 	int err = 0;
@@ -574,7 +578,7 @@ int aumix_debug(struct re_printf *pf, struct aumix *mix)
 		return EINVAL;
 
 	re_hprintf(pf, "aumix debug:\n");
-	mtx_lock(&mix->mutex);
+	mtx_lock(mix->mutex);
 	LIST_FOREACH(&mix->srcl, le)
 	{
 		struct aumix_source *src = le->data;
@@ -586,6 +590,6 @@ int aumix_debug(struct re_printf *pf, struct aumix *mix)
 	}
 
 out:
-	mtx_unlock(&mix->mutex);
+	mtx_unlock(mix->mutex);
 	return err;
 }

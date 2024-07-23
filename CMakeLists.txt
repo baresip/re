@@ -14,13 +14,13 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(re
-  VERSION 3.12.0
+  VERSION 3.13.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 24) # bump if ABI breaks
+set(PROJECT_SOVERSION 25) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -584,6 +584,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND SRCS
     src/dns/darwin/srv.c
     src/net/bsd/brt.c
+  )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+  list(APPEND SRCS
+    src/dns/darwin/srv.c
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   list(APPEND SRCS
