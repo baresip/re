@@ -615,8 +615,10 @@ int dns_rr_print(struct re_printf *pf, const struct dnsrr *rr)
 	n = (w > l) ? w - l : 0;
 
 	err = re_hprintf(pf, "%s.", rr->name);
-	while (n--)
+	while (n) {
 		err |= pf->vph(" ", 1, pf->arg);
+		--n;
+	}
 
 	err |= re_hprintf(pf, " %10lld %-4s %-7s ",
 			  rr->ttl,
