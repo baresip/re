@@ -40,7 +40,7 @@ static void cancel_handler(void *arg)
  * @param sessp     Pointer to allocated SIP Session
  * @param sock      SIP Session socket
  * @param msg       Incoming SIP message
- * @param scode     Response status code
+ * @param scode     Response status code or zero to skip sending of reply
  * @param reason    Response reason phrase
  * @param rel100    Sending 1xx reliably supported, required or disabled
  * @param cuser     Contact username or URI
@@ -74,8 +74,8 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 	va_list ap;
 	int err;
 
-	if (!sessp || !sock || !msg || scode < 100 || scode > 299 ||
-	    !cuser || !ctype)
+	if (!sessp || !sock || !msg || (scode != 0 && scode < 100) ||
+	    scode > 299 || !cuser || !ctype)
 		return EINVAL;
 
 	err = sipsess_alloc(&sess, sock, cuser, ctype, NULL, authh, aarg, aref,
