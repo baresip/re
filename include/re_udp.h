@@ -45,6 +45,10 @@ re_sock_t udp_sock_fd(const struct udp_sock *us, int af);
 
 int  udp_multicast_join(struct udp_sock *us, const struct sa *group);
 int  udp_multicast_leave(struct udp_sock *us, const struct sa *group);
+int  udp_multicast_join_local(struct udp_sock *us, const struct sa *group,
+			      const struct sa *local);
+int  udp_multicast_leave_local(struct udp_sock *us, const struct sa *group,
+			       const struct sa *local);
 int  udp_settos(struct udp_sock *us, uint8_t tos);
 void udp_flush(const struct udp_sock *us);
 void udp_recv_packet(struct udp_sock *us, const struct sa *src,
