@@ -695,6 +695,32 @@ bool sa_is_loopback(const struct sa *sa)
 	}
 }
 
+/**
+ * Check if socket address is a multicast address
+ *
+ * @param sa Socket address
+ *
+ * @return true if multicast address, otherwise false
+ */
+bool sa_is_multicast(const struct sa *sa)
+{
+	if (!sa)
+		return false;
+
+	switch (sa_af(sa)) {
+
+	case AF_INET:
+		return IN_MULTICAST(ntohl(sa->u.in.sin_addr.s_addr));
+
+#ifdef HAVE_INET6
+	case AF_INET6:
+		return IN6_IS_ADDR_MULTICAST(&sa->u.in6.sin6_addr);
+#endif
+
+	default:
+		return false;
+	}
+}
 
 /**
  * Check if socket address is any/unspecified address
