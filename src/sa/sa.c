@@ -683,10 +683,8 @@ bool sa_is_multicast(const struct sa *sa)
 	case AF_INET:
 		return IN_MULTICAST(ntohl(sa->u.in.sin_addr.s_addr));
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return IN6_IS_ADDR_MULTICAST(&sa->u.in6.sin6_addr);
-#endif
 
 	default:
 		return false;
