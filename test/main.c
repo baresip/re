@@ -32,8 +32,7 @@ static void signal_handler(int num)
 #ifdef HAVE_GETOPT
 static void usage(void)
 {
-	(void)re_fprintf(stderr, "Usage: retest [-rotalp] [-hmv]"
-			 " <testcase>\n");
+	(void)re_fprintf(stderr, "Usage: retest [options] <testcase>\n");
 
 	(void)re_fprintf(stderr, "\ntest group options:\n");
 	(void)re_fprintf(stderr, "\t-r        Run regular tests\n");

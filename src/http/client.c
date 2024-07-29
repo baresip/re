@@ -48,9 +48,7 @@ struct http_cli {
 	struct mbuf *cert;
 	struct mbuf *key;
 	struct sa laddr;
-#ifdef HAVE_INET6
 	struct sa laddr6;
-#endif
 	size_t bufsize_max;
 };
 
@@ -601,10 +599,8 @@ static int conn_connect(struct http_req *req)
 
 	if (sa_af(&conn->addr) == AF_INET)
 		laddr = &req->cli->laddr;
-#ifdef HAVE_INET6
 	else if (sa_af(&conn->addr) == AF_INET6)
 		laddr = &req->cli->laddr6;
-#endif
 
 	if (sa_isset(laddr, SA_ADDR)) {
 		sa_set_scopeid(&conn->addr, sa_scopeid(laddr));
@@ -878,16 +874,13 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			goto out;
 	}
 	else {
-#ifdef HAVE_INET6
 		struct sa tmp;
-#endif
 		err = dnsc_query(&req->dq, cli->dnsc, req->host,
 				 DNS_TYPE_A, DNS_CLASS_IN, true,
 				 query_handler, req);
 		if (err)
 			goto out;
 
-#ifdef HAVE_INET6
 		if (0 == net_default_source_addr_get(AF_INET6, &tmp)) {
 
 			err = dnsc_query(&req->dq6, cli->dnsc, req->host,
@@ -896,7 +889,6 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			if (err)
 				goto out;
 		}
-#endif
 	}
 
  out:
@@ -1338,13 +1330,8 @@ void http_client_set_laddr(struct http_cli *cli, const struct sa *addr)
  */
 void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr)
 {
-#ifdef HAVE_INET6
 	if (cli && addr)
 		sa_cpy(&cli->laddr6, addr);
-#else
-	(void)cli;
-	(void)addr;
-#endif
 }
 
 

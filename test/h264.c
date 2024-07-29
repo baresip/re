@@ -670,7 +670,7 @@ static int packet_handler(bool marker, uint64_t rtp_ts,
 {
 	struct state *state = arg;
 	struct mbuf *mb_pkt = mbuf_alloc(hdr_len + pld_len);
-	int err;
+	int err = 0;
 
 	if (!mb_pkt)
 		return ENOMEM;
@@ -679,8 +679,12 @@ static int packet_handler(bool marker, uint64_t rtp_ts,
 
 	++state->count;
 
-	err  = mbuf_write_mem(mb_pkt, hdr, hdr_len);
-	err |= mbuf_write_mem(mb_pkt, pld, pld_len);
+	if (hdr && hdr_len)
+		err |= mbuf_write_mem(mb_pkt, hdr, hdr_len);
+
+	if (pld && pld_len)
+		err |= mbuf_write_mem(mb_pkt, pld, pld_len);
+
 	if (err)
 		goto out;
 
