@@ -37,7 +37,7 @@ int putbit_one(struct putbit *pb, unsigned bit)
 	}
 
 	uint8_t *p = pb->mb->buf;
-	size_t bit_pos = 1u << (0x7 - (pb->bit_pos & 0x7));
+	size_t bit_pos = (size_t)(1u << (0x7 - (pb->bit_pos & 0x7)));
 
 	if (bit) {
 		p[byte_pos] |= bit_pos;
