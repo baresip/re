@@ -165,11 +165,12 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 	struct tls_cert *uc = NULL;
 	const char *sni;
 
+	if (!SSL_is_server(ssl))
+		return SSL_TLSEXT_ERR_OK;
+
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-	if (!str_isset(sni)) {
-		*al = SSL_AD_UNRECOGNIZED_NAME;
-		return SSL_TLSEXT_ERR_ALERT_FATAL;
-	}
+	if (!str_isset(sni))
+		return SSL_TLSEXT_ERR_OK;
 
 	/* find and apply matching certificate */
 	uc = tls_cert_for_sni(tls, sni);
