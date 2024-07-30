@@ -25,7 +25,8 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 
 	if (local && !sa_is_any(local)) {
 		char name[64];
-		if (net_if_getname(name, sizeof(name), sa_af(local), local) != 0)
+		if (net_if_getname(name, sizeof(name), sa_af(local),
+				   local) != 0)
 			return EADDRNOTAVAIL;
 
 		if ((if_index = if_nametoindex(name)) == 0)
