@@ -74,8 +74,6 @@ static int template_layers(struct putbit *pb, const struct dd *dd)
 
 static int template_dtis(struct putbit *pb, const struct dd *dd)
 {
-	re_printf("template_dtis\n");
-
 	for (uint8_t templateIndex = 0;
 	     templateIndex < dd->template_cnt;
 	     templateIndex++) {
@@ -99,8 +97,6 @@ static int template_dtis(struct putbit *pb, const struct dd *dd)
 static int template_fdiffs(struct putbit *pb, const struct dd *dd)
 {
 	int err;
-
-	re_printf("template_fdiffs (encode) bit_pos=%zu\n", pb->bit_pos);
 
 	for (uint8_t templateIndex = 0;
 	     templateIndex < dd->template_cnt;
@@ -136,8 +132,6 @@ static int template_fdiffs(struct putbit *pb, const struct dd *dd)
 
 static int template_chains(struct putbit *pb, const struct dd *dd)
 {
-	re_printf("template_chains\n");
-
 	int err = putbit_write_ns(pb, dd->dt_cnt + 1, dd->chain_cnt);
 	if (err)
 		return err;
@@ -193,8 +187,6 @@ static int template_dependency_structure(struct putbit *pb,
 {
 	int err;
 
-	re_printf("template_dependency_structure\n");
-
 	uint8_t dt_cnt_minus_one = dd->dt_cnt - 1;
 
 	err  = putbit_write(pb, 6, dd->template_id_offset);
@@ -218,9 +210,6 @@ static int template_dependency_structure(struct putbit *pb,
 	if (err)
 		return err;
 
-	re_printf("resolutions_present_flag: %d\n",
-		  dd->resolutions_present_flag);
-
 	err = putbit_one(pb, dd->resolutions_present_flag);
 	if (err)
 		return err;
@@ -238,8 +227,6 @@ static int template_dependency_structure(struct putbit *pb,
 static int extended_descriptor_fields(struct putbit *pb, const struct dd *dd)
 {
 	int err = 0;
-
-	re_printf("extended_descriptor_fields\n");
 
 	err |= putbit_one(pb, dd->template_dependency_structure_present_flag);
 	err |= putbit_one(pb, dd->active_decode_targets_present_flag);

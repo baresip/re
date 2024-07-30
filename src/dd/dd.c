@@ -136,8 +136,6 @@ static int template_dtis(struct dd *dd, struct getbit *gb)
 
 static int template_fdiffs(struct dd *dd, struct getbit *gb)
 {
-	re_printf("template_fdiffs\n");
-
 	for (uint8_t templateIndex = 0;
 	     templateIndex < dd->template_cnt;
 	     templateIndex++) {
@@ -265,8 +263,6 @@ static int template_dependency_structure(struct dd *dd, struct getbit *gb)
 
 static int extended_descriptor_fields(struct dd *dd, struct getbit *gb)
 {
-	re_printf("extended_descriptor_fields\n");
-
 	if (getbit_get_left(gb) < 5)
 		return EBADMSG;
 
@@ -327,11 +323,6 @@ int dd_decode(struct dd *dd, const uint8_t *buf, size_t sz)
 	else {
 		no_extended_descriptor_fields(dd);
 	}
-
-#if 0
-	frame_dependency_definition();
-	zero_padding = f(sz * 8 - TotalConsumedBits);
-#endif
 
 	return 0;
 }

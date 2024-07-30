@@ -233,8 +233,6 @@ static int test_dd_decode(void)
 
 	ASSERT_EQ(1, dd.chain_cnt);
 
-	printf("encode.\n");
-
 	err = dd_encode(mb, &dd);
 	TEST_ERR(err);
 
@@ -255,8 +253,6 @@ static int test_dd_chrome(void)
 	struct mbuf *mb = mbuf_alloc(16);
 	uint8_t buf[12];
 	int err;
-
-	printf("chrome\n");
 
 	if (!mb)
 		return ENOMEM;
@@ -306,14 +302,10 @@ static int test_dd_chrome(void)
 
 	ASSERT_EQ(0, dd.chain_cnt);
 
-#if 1
-	printf("chrome encode.\n");
-
 	err = dd_encode(mb, &dd);
 	TEST_ERR(err);
 
 	TEST_MEMCMP(buf, sizeof(buf), mb->buf, mb->end);
-#endif
 
  out:
 	mem_deref(mb);
