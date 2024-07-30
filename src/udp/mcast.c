@@ -3,6 +3,8 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#include <net/if.h>
+
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_net.h>
@@ -50,7 +52,7 @@ static int multicast_update(struct udp_sock *us, const struct sa *group,
 	case AF_INET6:
 		mreq6.ipv6mr_multiaddr = group->u.in6.sin6_addr;
 		mreq6.ipv6mr_interface = if_index;
-		if (if_index = 0) {
+		if (if_index == 0) {
 			mreq6.ipv6mr_interface = sa_scopeid(group);
 		}
 
