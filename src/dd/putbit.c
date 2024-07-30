@@ -60,6 +60,9 @@ int putbit_write(struct putbit *pb, unsigned count, unsigned val)
 	if (!pb)
 		return EINVAL;
 
+	if (count > 32)
+		return EINVAL;
+
 	for (unsigned i=0; i<count; i++) {
 
 		unsigned shift = count-i-1;
