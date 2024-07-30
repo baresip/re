@@ -342,69 +342,70 @@ void dd_print(const struct dd *dd)
 	if (!dd)
 		return;
 
-	printf("~~~~ DD: ~~~~\n");
+	re_printf("~~~~ DD: ~~~~\n");
 
-	printf(".... start=%d, end=%d,"
-	       " frame_dependency_template_id=%u, frame_number=%u\n",
-	       dd->start_of_frame,
-	       dd->end_of_frame,
-	       dd->frame_dependency_template_id,
-	       dd->frame_number);
-	printf(".... ext: %d\n", dd->ext);
+	re_printf(".... start=%d, end=%d,"
+		  " frame_dependency_template_id=%u, frame_number=%u\n",
+		  dd->start_of_frame,
+		  dd->end_of_frame,
+		  dd->frame_dependency_template_id,
+		  dd->frame_number);
+	re_printf(".... ext: %d\n", dd->ext);
 
 	if (dd->ext) {
 
-		printf(".... template_dependency_structure_present_flag: %u\n",
-		       dd->template_dependency_structure_present_flag);
-		printf(".... active_decode_targets_present_flag:         %u\n",
-		       dd->active_decode_targets_present_flag);
-		printf(".... custom_dtis_flag:                           %u\n",
-		       dd->custom_dtis_flag);
-		printf(".... custom_fdiffs_flag:                         %u\n",
-		       dd->custom_fdiffs_flag);
-		printf(".... custom_chains_flag:                         %u\n",
-		       dd->custom_chains_flag);
-		printf("\n");
+		re_printf(".... template_dependency_structure_present:   %u\n",
+			  dd->template_dependency_structure_present_flag);
+		re_printf(".... active_decode_targets_present_flag:      %u\n",
+			  dd->active_decode_targets_present_flag);
+		re_printf(".... custom_dtis_flag:                        %u\n",
+			  dd->custom_dtis_flag);
+		re_printf(".... custom_fdiffs_flag:                      %u\n",
+			  dd->custom_fdiffs_flag);
+		re_printf(".... custom_chains_flag:                      %u\n",
+			  dd->custom_chains_flag);
+		re_printf("\n");
 
-		printf(".... active_decode_targets_bitmask: 0x%x\n",
-		       dd->active_decode_targets_bitmask);
-		printf(".... template_id_offset:            %u\n",
-		       dd->template_id_offset);
-		printf(".... dt_cnt:                        %u\n", dd->dt_cnt);
-		printf(".... template_cnt:                  %u\n",
-		       dd->template_cnt);
-		printf(".... max_spatial_id:                %u\n",
-		       dd->max_spatial_id);
-		printf("\n");
+		re_printf(".... active_decode_targets_bitmask: 0x%x\n",
+			  dd->active_decode_targets_bitmask);
+		re_printf(".... template_id_offset:            %u\n",
+			  dd->template_id_offset);
+		re_printf(".... dt_cnt:                        %u\n",
+			  dd->dt_cnt);
+		re_printf(".... template_cnt:                  %u\n",
+			  dd->template_cnt);
+		re_printf(".... max_spatial_id:                %u\n",
+			  dd->max_spatial_id);
+		re_printf("\n");
 
-		printf(".... template spatial/temporal ids:\n");
+		re_printf(".... template spatial/temporal ids:\n");
 		for (uint8_t i=0; i<dd->template_cnt; i++) {
 
-			printf(".... [%u] spatial=%u temporal=%u\n",
-			       i,
-			       dd->template_spatial_id[i],
-			       dd->template_temporal_id[i]);
+			re_printf(".... [%u] spatial=%u temporal=%u\n",
+				  i,
+				  dd->template_spatial_id[i],
+				  dd->template_temporal_id[i]);
 		}
-		printf("\n");
+		re_printf("\n");
 
-		printf(".... resolutions_present_flag: %u\n",
-		       dd->resolutions_present_flag);
-		printf(".... render_count: %u\n", dd->render_count);
+		re_printf(".... resolutions_present_flag: %u\n",
+			  dd->resolutions_present_flag);
+		re_printf(".... render_count: %u\n", dd->render_count);
 		for (uint8_t i = 0; i < dd->render_count; i++) {
 
-			printf(".... max_render %u:        %u x %u\n",
-			       i,
-			       dd->max_render_width_minus_1[i] + 1,
-			       dd->max_render_height_minus_1[i] + 1);
+			re_printf(".... max_render %u:        %u x %u\n",
+				  i,
+				  dd->max_render_width_minus_1[i] + 1,
+				  dd->max_render_height_minus_1[i] + 1);
 		}
-		printf("\n");
+		re_printf("\n");
 
 		for (uint8_t i = 0; i < dd->template_cnt; i++) {
 
 			uint8_t fdiffCnt = dd->template_fdiff_cnt[i];
 
-			printf(".... [%u] template_fdiff_cnt: %u",
-			       i, fdiffCnt);
+			re_printf(".... [%u] template_fdiff_cnt: %u",
+				  i, fdiffCnt);
 
 			for (uint8_t j = 0; j < fdiffCnt; j++) {
 
@@ -412,18 +413,17 @@ void dd_print(const struct dd *dd)
 
 				fdiff = dd->template_fdiff[i][j];
 
-				printf("  <fdiff=%u>", fdiff);
+				re_printf("  <fdiff=%u>", fdiff);
 			}
 
-			printf("\n");
+			re_printf("\n");
 		}
-		printf("\n");
+		re_printf("\n");
 
+		re_printf(".... chain_cnt:             %u\n", dd->chain_cnt);
+		re_printf("\n");
 
-		printf(".... chain_cnt:                %u\n", dd->chain_cnt);
-		printf("\n");
-
-		printf(".... template_dti: 2D\n");
+		re_printf(".... template_dti: 2D\n");
 		for (uint8_t tix = 0; tix < dd->template_cnt; tix++) {
 
 			for (uint8_t dtix = 0; dtix < dd->dt_cnt; dtix++) {
@@ -436,6 +436,6 @@ void dd_print(const struct dd *dd)
 		}
 	}
 
-	printf("~~~~~~~~~~~~\n");
-	printf("\n");
+	re_printf("~~~~~~~~~~~~\n");
+	re_printf("\n");
 }
