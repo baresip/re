@@ -62,7 +62,8 @@ int putbit_write(struct putbit *pb, unsigned count, unsigned val)
 
 	for (unsigned i=0; i<count; i++) {
 
-		unsigned bit = (val >> (count-i-1)) & 0x1;
+		unsigned shift = count-i-1;
+		unsigned bit = (val >> shift) & 0x1;
 
 		int err = putbit_one(pb, bit);
 		if (err)
