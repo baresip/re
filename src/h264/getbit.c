@@ -6,7 +6,13 @@
 
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_h264.h>
 #include "h264.h"
+
+
+#define DEBUG_MODULE "getbit"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
 
 
 void getbit_init(struct getbit *gb, const uint8_t *buf, size_t size)
@@ -89,4 +95,62 @@ int get_ue_golomb(struct getbit *gb, unsigned *valp)
 		*valp = info - 1;
 
 	return 0;
+}
+
+
+/*
+  x = 0
+  for ( i = 0; i < n; i++ ) {
+   x = 2 * x + read_bit()
+  }
+  TotalConsumedBits += n
+  return x
+ */
+unsigned get_bits(struct getbit *gb, unsigned n)
+{
+	unsigned x = 0;
+
+	if (getbit_get_left(gb) < n) {
+		DEBUG_WARNING("get_bits: read past end"
+			" (n=%zu, left=%zu)\n", n, getbit_get_left(gb));
+		return 0;
+	}
+
+	for (unsigned i=0; i<n; i++) {
+
+		x = 2*x + get_bit(gb);
+	}
+
+	return x;
+}
+
+
+#define dd_f(n) get_bits(gb, (n))
+
+
+/*
+ * ns(n) - non-symmetric unsigned encoded integer with maximum
+ *         number of values n (i.e., output in range 0..n-1).
+ *
+ */
+unsigned getbit_read_ns(struct getbit *gb, unsigned n)
+{
+	unsigned w = 0;
+	unsigned x = n;
+
+	while (x != 0) {
+
+		x = x >> 1;
+		++w;
+	}
+
+	unsigned m = (1u << w) - n;
+	unsigned v = dd_f(w - 1);
+
+	if (v < m)
+		return v;
+
+	unsigned extra_bit = dd_f(1);
+
+	return (v << 1) - m + extra_bit;
 }

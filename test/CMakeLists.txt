@@ -80,6 +80,7 @@ set(SRCS
   conf.c
   convert.c
   crc32.c
+  dd.c
   dns.c
   dsp.c
   dtmf.c
