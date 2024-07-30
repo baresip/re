@@ -179,9 +179,9 @@ static int test_dd_decode(void)
 	err = dd_decode(&dd, buf, sizeof(buf));
 	TEST_ERR(err);
 
-	printf("ok\n");
-
+#if 0
 	dd_print(&dd);
+#endif
 
 	ASSERT_EQ(1, dd.start_of_frame);
 	ASSERT_EQ(0, dd.end_of_frame);
@@ -269,7 +269,7 @@ static int test_dd_chrome(void)
 	err = dd_decode(&dd, buf, sizeof(buf));
 	TEST_ERR(err);
 
-#if 1
+#if 0
 	dd_print(&dd);
 #endif
 
