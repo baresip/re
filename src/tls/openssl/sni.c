@@ -135,30 +135,6 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 }
 
 
-static int ssl_set_verify_client(SSL *ssl, const char *host)
-{
-	struct sa sa;
-
-	if (!ssl || !host)
-		return EINVAL;
-
-	if (sa_set_str(&sa, host, 0)) {
-		SSL_set_hostflags(ssl,
-				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-
-		if (!SSL_set1_host(ssl, host)) {
-			DEBUG_WARNING("SSL_set1_host error\n");
-			ERR_clear_error();
-			return EPROTO;
-		}
-	}
-
-	SSL_set_verify(ssl, SSL_VERIFY_PEER, tls_verify_handler);
-
-	return 0;
-}
-
-
 static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 {
 	struct tls *tls	= arg;
@@ -184,8 +160,6 @@ static int ssl_servername_handler(SSL *ssl, int *al, void *arg)
 		*al = SSL_AD_INTERNAL_ERROR;
 		return SSL_TLSEXT_ERR_ALERT_FATAL;
 	}
-
-	(void)ssl_set_verify_client(ssl, tls_cert_host(uc));
 
 	return SSL_TLSEXT_ERR_OK;
 }
