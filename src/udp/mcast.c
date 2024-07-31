@@ -3,7 +3,11 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#ifdef WIN32
+#include <netioapi.h>
+#else
 #include <net/if.h>
+#endif
 
 #include <re_types.h>
 #include <re_fmt.h>
