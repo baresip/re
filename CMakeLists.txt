@@ -132,6 +132,7 @@ set(HEADERS
   include/re_convert.h
   include/re_crc32.h
   include/re_dbg.h
+  include/re_dd.h
   include/re_dns.h
   include/re_fmt.h
   include/re_h264.h
@@ -225,6 +226,10 @@ set(SRCS
   src/conf/conf.c
 
   src/dbg/dbg.c
+
+  src/dd/dd.c
+  src/dd/dd_enc.c
+  src/dd/putbit.c
 
   src/dns/client.c
   src/dns/cstr.c
