@@ -68,6 +68,7 @@ bool     sa_cmp(const struct sa *l, const struct sa *r, int flag);
 
 bool     sa_is_linklocal(const struct sa *sa);
 bool     sa_is_loopback(const struct sa *sa);
+bool     sa_is_multicast(const struct sa *sa);
 bool     sa_is_any(const struct sa *sa);
 
 void     sa_set_scopeid(struct sa *sa, uint32_t scopeid);
