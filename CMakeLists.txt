@@ -14,13 +14,13 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(re
-  VERSION 3.13.0
+  VERSION 3.14.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 25) # bump if ABI breaks
+set(PROJECT_SOVERSION 26) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -132,6 +132,7 @@ set(HEADERS
   include/re_convert.h
   include/re_crc32.h
   include/re_dbg.h
+  include/re_dd.h
   include/re_dns.h
   include/re_fmt.h
   include/re_h264.h
@@ -225,6 +226,10 @@ set(SRCS
   src/conf/conf.c
 
   src/dbg/dbg.c
+
+  src/dd/dd.c
+  src/dd/dd_enc.c
+  src/dd/putbit.c
 
   src/dns/client.c
   src/dns/cstr.c

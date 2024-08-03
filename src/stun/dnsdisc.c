@@ -79,7 +79,6 @@ static void a_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 }
 
 
-#ifdef HAVE_INET6
 static void aaaa_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 			 struct list *authl, struct list *addl, void *arg)
 {
@@ -104,7 +103,6 @@ static void aaaa_handler(int err, const struct dnshdr *hdr, struct list *ansl,
  out:
 	resolved(dns, err);
 }
-#endif
 
 
 static int a_or_aaaa_query(struct stun_dns *dns, const char *name)
@@ -117,11 +115,9 @@ static int a_or_aaaa_query(struct stun_dns *dns, const char *name)
 		return dnsc_query(&dns->dq, dns->dnsc, name, DNS_TYPE_A,
 				  DNS_CLASS_IN, true, a_handler, dns);
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return dnsc_query(&dns->dq, dns->dnsc, name, DNS_TYPE_AAAA,
 				  DNS_CLASS_IN, true, aaaa_handler, dns);
-#endif
 
 	default:
 		return EAFNOSUPPORT;
@@ -172,7 +168,6 @@ static void srv_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 		}
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		arr = dns_rrlist_find(addl, rr->rdata.srv.target,
 				      DNS_TYPE_AAAA, DNS_CLASS_IN, true);
@@ -183,7 +178,6 @@ static void srv_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 			goto out;
 		}
 		break;
-#endif
 	}
 
 	sa_set_in(&dns->srv, 0, rr->rdata.srv.port);

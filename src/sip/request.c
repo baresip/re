@@ -406,7 +406,6 @@ static bool rr_cache_handler(struct dnsrr *rr, void *arg)
 		list_append(&req->cachel, &rr->le_priv, rr);
 		break;
 
-#ifdef HAVE_INET6
 	case DNS_TYPE_AAAA:
 		if (!sip_transp_supported(req->sip, req->tp, AF_INET6))
 			break;
@@ -414,7 +413,6 @@ static bool rr_cache_handler(struct dnsrr *rr, void *arg)
 		list_unlink(&rr->le_priv);
 		list_append(&req->cachel, &rr->le_priv, rr);
 		break;
-#endif
 
 	case DNS_TYPE_CNAME:
 		list_unlink(&rr->le_priv);
@@ -626,7 +624,6 @@ static int addr_lookup(struct sip_request *req, const char *name)
 			return err;
 	}
 
-#ifdef HAVE_INET6
 	if (sip_transp_supported(req->sip, req->tp, AF_INET6)) {
 
 		err = dnsc_query(&req->dnsq2, req->sip->dnsc, name,
@@ -635,7 +632,6 @@ static int addr_lookup(struct sip_request *req, const char *name)
 		if (err)
 			return err;
 	}
-#endif
 
 	if (!req->dnsq && !req->dnsq2)
 		return EPROTONOSUPPORT;

@@ -109,7 +109,6 @@ int sa_pton(const char *addr, struct sa *sa)
 			 sizeof(sa->u.un.sun_path));
 	}
 #endif
-#ifdef HAVE_INET6
 	else if (!strncmp(addr, "fe80:", 5) && strrchr(addr, '%')) {
 		err = sa_addrinfo(addr, sa);
 	}
@@ -124,7 +123,6 @@ int sa_pton(const char *addr, struct sa *sa)
 			sa->u.in6.sin6_family = AF_INET6;
 		}
 	}
-#endif
 	else {
 		return EINVAL;
 	}
@@ -166,12 +164,10 @@ int sa_set_str(struct sa *sa, const char *addr, uint16_t port)
 		sa->len = sizeof(struct sockaddr_in);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		sa->u.in6.sin6_port = htons(port);
 		sa->len = sizeof(struct sockaddr_in6);
 		break;
-#endif
 
 	default:
 		return EAFNOSUPPORT;
@@ -213,16 +209,11 @@ void sa_set_in6(struct sa *sa, const uint8_t *addr, uint16_t port)
 	if (!sa)
 		return;
 
-#ifdef HAVE_INET6
 	memset(sa, 0, sizeof(*sa));
 	sa->u.in6.sin6_family = AF_INET6;
 	memcpy(&sa->u.in6.sin6_addr, addr, 16);
 	sa->u.in6.sin6_port = htons(port);
 	sa->len = sizeof(struct sockaddr_in6);
-#else
-	(void)addr;
-	(void)port;
-#endif
 }
 
 
@@ -247,12 +238,10 @@ int sa_set_sa(struct sa *sa, const struct sockaddr *s)
 		sa->len = sizeof(struct sockaddr_in);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		memcpy(&sa->u.in6, s, sizeof(struct sockaddr_in6));
 		sa->len = sizeof(struct sockaddr_in6);
 		break;
-#endif
 
 	default:
 		return EAFNOSUPPORT;
@@ -281,11 +270,9 @@ void sa_set_port(struct sa *sa, uint16_t port)
 		sa->u.in.sin_port = htons(port);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		sa->u.in6.sin6_port = htons(port);
 		break;
-#endif
 
 	default:
 		DEBUG_WARNING("sa_set_port: no af %d (port %u)\n",
@@ -387,9 +374,7 @@ void sa_in6(const struct sa *sa, uint8_t *addr)
 	if (!sa || !addr)
 		return;
 
-#ifdef HAVE_INET6
 	memcpy(addr, &sa->u.in6.sin6_addr, 16);
-#endif
 }
 
 
@@ -421,11 +406,9 @@ int sa_ntop(const struct sa *sa, char *buf, int size)
 		ret = inet_ntop(AF_INET, &sa->u.in.sin_addr, buf, size);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		ret = inet_ntop(AF_INET6, &sa->u.in6.sin6_addr, buf, size);
 		break;
-#endif
 
 	default:
 		return EAFNOSUPPORT;
@@ -455,10 +438,8 @@ uint16_t sa_port(const struct sa *sa)
 	case AF_INET:
 		return ntohs(sa->u.in.sin_port);
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return ntohs(sa->u.in6.sin6_port);
-#endif
 
 	default:
 		return 0;
@@ -496,7 +477,6 @@ bool sa_isset(const struct sa *sa, int flag)
 				return false;
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		if (flag & SA_ADDR)
 			if (IN6_IS_ADDR_UNSPECIFIED(&sa->u.in6.sin6_addr))
@@ -505,7 +485,6 @@ bool sa_isset(const struct sa *sa, int flag)
 			if (0 == sa->u.in6.sin6_port)
 				return false;
 		break;
-#endif
 
 	default:
 		return false;
@@ -539,7 +518,6 @@ uint32_t sa_hash(const struct sa *sa, int flag)
 			v += ntohs(sa->u.in.sin_port);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		if (flag & SA_ADDR) {
 			uint32_t *a = (uint32_t *)&sa->u.in6.sin6_addr;
@@ -548,7 +526,6 @@ uint32_t sa_hash(const struct sa *sa, int flag)
 		if (flag & SA_PORT)
 			v += ntohs(sa->u.in6.sin6_port);
 		break;
-#endif
 
 	default:
 		DEBUG_WARNING("sa_hash: unknown af %d\n", sa->u.sa.sa_family);
@@ -614,7 +591,6 @@ bool sa_cmp(const struct sa *l, const struct sa *r, int flag)
 				return false;
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		if (flag & SA_ADDR)
 			if (memcmp(&l->u.in6.sin6_addr,
@@ -624,7 +600,6 @@ bool sa_cmp(const struct sa *l, const struct sa *r, int flag)
 			if (l->u.in6.sin6_port != r->u.in6.sin6_port)
 				return false;
 		break;
-#endif
 
 	default:
 		return false;
@@ -656,10 +631,8 @@ bool sa_is_linklocal(const struct sa *sa)
 	case AF_INET:
 		return IN_IS_ADDR_LINKLOCAL(sa->u.in.sin_addr.s_addr);
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return IN6_IS_ADDR_LINKLOCAL(&sa->u.in6.sin6_addr);
-#endif
 
 	default:
 		return false;
@@ -685,16 +658,38 @@ bool sa_is_loopback(const struct sa *sa)
 		return (ntohl(sa->u.in.sin_addr.s_addr) & 0xff000000) ==
 		       0x7f000000;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return IN6_IS_ADDR_LOOPBACK(&sa->u.in6.sin6_addr);
-#endif
 
 	default:
 		return false;
 	}
 }
 
+/**
+ * Check if socket address is a multicast address
+ *
+ * @param sa Socket address
+ *
+ * @return true if multicast address, otherwise false
+ */
+bool sa_is_multicast(const struct sa *sa)
+{
+	if (!sa)
+		return false;
+
+	switch (sa_af(sa)) {
+
+	case AF_INET:
+		return IN_MULTICAST(ntohl(sa->u.in.sin_addr.s_addr));
+
+	case AF_INET6:
+		return IN6_IS_ADDR_MULTICAST(&sa->u.in6.sin6_addr);
+
+	default:
+		return false;
+	}
+}
 
 /**
  * Check if socket address is any/unspecified address
@@ -713,10 +708,8 @@ bool sa_is_any(const struct sa *sa)
 	case AF_INET:
 		return INADDR_ANY == ntohl(sa->u.in.sin_addr.s_addr);
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		return IN6_IS_ADDR_UNSPECIFIED(&sa->u.in6.sin6_addr);
-#endif
 
 	default:
 		return false;
@@ -729,14 +722,10 @@ void sa_set_scopeid(struct sa *sa, uint32_t scopeid)
 	if (!sa)
 		return;
 
-#ifdef HAVE_INET6
 	if (sa_af(sa) != AF_INET6)
 		return;
 
 	sa->u.in6.sin6_scope_id = scopeid;
-#else
-	(void)scopeid;
-#endif
 }
 
 
@@ -745,13 +734,10 @@ uint32_t sa_scopeid(const struct sa *sa)
 	if (!sa)
 		return 0;
 
-#ifdef HAVE_INET6
 	if (sa_af(sa) != AF_INET6)
 		return 0;
 
 	return sa->u.in6.sin6_scope_id;
-#endif
-	return 0;
 }
 
 

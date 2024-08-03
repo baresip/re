@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.14.0] - 2024-07-23
+
+## What's Changed
+* aumix: use mutex_alloc() by @alfredh in https://github.com/baresip/re/pull/1142
+* sipreg/reg.c: stop retrying registers early after 401/407 by @maximilianfridrich in https://github.com/baresip/re/pull/1143
+* aumix: add locking in aumix_source_count() by @alfredh in https://github.com/baresip/re/pull/1145
+* test: init err in test_sip_auth_encode() by @alfredh in https://github.com/baresip/re/pull/1146
+* sipreg: refactor response_handler else optimization by @sreimers in https://github.com/baresip/re/pull/1147
+* vidmix: improve mutex usage by @alfredh in https://github.com/baresip/re/pull/1148
+* udp/mcast: use group scopeid as interface for IPv6 by @maximilianfridrich in https://github.com/baresip/re/pull/1149
+* .clangd: suppress -Wgnu-zero-variadic-macro-arguments by @maximilianfridrich in https://github.com/baresip/re/pull/1150
+* ci/build: use only macos-latest by @sreimers in https://github.com/baresip/re/pull/1153
+* cmake: fix resolv on FreeBSD by @sreimers in https://github.com/baresip/re/pull/1152
+* test: use h264_stap_decode_annexb() by @alfredh in https://github.com/baresip/re/pull/1151
+* sipsess/reply: terminate session if no (PR)ACK received after 64*T1 by @maximilianfridrich in https://github.com/baresip/re/pull/1155
+* rtcp: send BYE manually by @alfredh in https://github.com/baresip/re/pull/1154
+* cmake: check accept4 only on linux by @sreimers in https://github.com/baresip/re/pull/1157
+* cmake: fix iOS HAVE_ROUTE_LIST and darwin dns by @sreimers in https://github.com/baresip/re/pull/1158
+* test: check if header and payload is set by @alfredh in https://github.com/baresip/re/pull/1161
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.13.0...v3.14.0
+
+
 ## [v3.13.0] - 2024-06-19
 
 ## What's Changed

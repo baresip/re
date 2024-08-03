@@ -164,6 +164,7 @@ int test_auposition(void);
 int test_auresamp(void);
 int test_async(void);
 int test_av1(void);
+int test_dd(void);
 int test_base64(void);
 int test_bfcp(void);
 int test_bfcp_bin(void);

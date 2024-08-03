@@ -30,11 +30,9 @@ int pcp_ipaddr_encode(struct mbuf *mb, const struct sa *sa)
 				      4);
 		break;
 
-#ifdef HAVE_INET6
 	case AF_INET6:
 		err |= mbuf_write_mem(mb, sa->u.in6.sin6_addr.s6_addr, 16);
 		break;
-#endif
 
 	default:
 		err = EAFNOSUPPORT;
@@ -62,12 +60,10 @@ int pcp_ipaddr_decode(struct mbuf *mb, struct sa *sa)
 		sa_init(sa, AF_INET);
 		memcpy(&sa->u.in.sin_addr, p + 12, 4);
 	}
-#ifdef HAVE_INET6
 	else {
 		sa_init(sa, AF_INET6);
 		memcpy(sa->u.in6.sin6_addr.s6_addr, p, 16);
 	}
-#endif
 
 	mb->pos += 16;
 

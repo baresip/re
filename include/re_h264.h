@@ -105,3 +105,21 @@ int  h264_stap_encode(struct mbuf *mb, const uint8_t *frame,
 		      size_t frame_sz);
 int  h264_stap_decode_annexb(struct mbuf *mb_frame, struct mbuf *mb_pkt);
 int  h264_stap_decode_annexb_long(struct mbuf *mb_frame, struct mbuf *mb_pkt);
+
+
+/*
+ * Get bits wrapper
+ */
+
+struct getbit {
+	const uint8_t *buf;
+	size_t pos;
+	size_t end;
+};
+
+void     getbit_init(struct getbit *gb, const uint8_t *buf, size_t size);
+size_t   getbit_get_left(const struct getbit *gb);
+unsigned get_bit(struct getbit *gb);
+int      get_ue_golomb(struct getbit *gb, unsigned *valp);
+unsigned get_bits(struct getbit *gb, unsigned n);
+unsigned getbit_read_ns(struct getbit *gb, unsigned n);
