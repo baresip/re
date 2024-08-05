@@ -114,3 +114,11 @@ uint64_t auframe_bytes_to_timestamp(const struct auframe *af, size_t n)
 	return ((uint64_t) n) * AUDIO_TIMEBASE /
 		(af->srate * af->ch * sample_size);
 }
+
+
+uint64_t auframe_bytes_to_ms(const struct auframe *af, size_t n)
+{
+	size_t sample_size = aufmt_sample_size(af->fmt);
+
+	return ((uint64_t)n * 1000) / (af->srate * af->ch * sample_size);
+}

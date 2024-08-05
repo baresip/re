@@ -3,6 +3,10 @@
  *
  * Copyright (C) 2010 Creytiv.com
  */
+#undef RE_TRACE_ENABLED
+#if AUBUF_TRACE
+#define RE_TRACE_ENABLED 1
+#endif
 #include <string.h>
 #include <re.h>
 #include <rem_au.h>
@@ -18,6 +22,7 @@
 /** Locked audio-buffer with almost zero-copy */
 struct aubuf {
 	struct list afl;
+	struct pl *id;          /**< Audio buffer Identifier                 */
 	mtx_t *lock;
 	size_t wish_sz;
 	size_t cur_sz;
@@ -63,6 +68,7 @@ static void aubuf_destructor(void *arg)
 	list_flush(&ab->afl);
 	mem_deref(ab->lock);
 	mem_deref(ab->ajb);
+	mem_deref(ab->id);
 }
 
 
@@ -149,6 +155,23 @@ int aubuf_alloc(struct aubuf **abp, size_t min_sz, size_t max_sz)
 		*abp = ab;
 
 	return err;
+}
+
+
+/**
+ * Set buffer id.
+ *
+ * @param ab  Audio buffer.
+ * @param id  Identifier.
+ */
+void aubuf_set_id(struct aubuf *ab, struct pl *id)
+{
+	if (!ab)
+		return;
+
+	mtx_lock(ab->lock);
+	ab->id = mem_ref(id);
+	mtx_unlock(ab->lock);
 }
 
 
@@ -272,10 +295,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 
 	if (ab->max_sz && ab->cur_sz > ab->max_sz) {
 		++ab->stats.or;
-#if AUBUF_DEBUG
-		(void)re_printf("aubuf: %p overrun (cur=%zu/%zu)\n",
-				ab, ab->cur_sz, ab->max_sz);
-#endif
+		RE_TRACE_ID_INSTANT("aubuf", "overrun", ab->id);
 		f = list_ledata(ab->afl.head);
 		if (f) {
 			ab->cur_sz -= mbuf_get_left(f->mb);
@@ -367,16 +387,13 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		goto out;
 	}
 
+	RE_TRACE_ID_INSTANT_I("aubuf", "cur_sz_ms",
+			      auframe_bytes_to_ms(af, ab->cur_sz), ab->id);
+
 	if (ab->fill_sz || ab->cur_sz < sz) {
 		if (!ab->fill_sz) {
 			++ab->stats.ur;
-#if AUBUF_DEBUG
-			(void)re_printf("aubuf: %p underrun "
-					"(cur=%zu, sz=%zu)\n",
-					ab, ab->cur_sz, sz);
-			fflush(stdout);
-			plot_underrun(ab->ajb);
-#endif
+			RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
 		}
 
 		if (!ab->fill_sz)
@@ -384,8 +401,10 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 
 		filling = ab->fill_sz > 0;
 		memset(af->sampv, 0, sz);
-		if (filling)
+		if (filling) {
+			RE_TRACE_ID_INSTANT("aubuf", "filling", ab->id);
 			goto out;
+		}
 		else
 			ab->fill_sz = ab->wish_sz;
 	}
