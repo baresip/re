@@ -47,6 +47,12 @@ struct sip_ccert {
 };
 
 
+struct sip_ccert_data {
+	uint32_t hsup;
+	struct sip_ccert *ccert;
+};
+
+
 struct sip_transport {
 	struct le le;
 	struct sa laddr;
@@ -188,6 +194,31 @@ static const struct sip_transport *transp_find(struct sip *sip,
 	}
 
 	return fb;
+}
+
+
+static struct le *transp_apply_all(struct sip *sip, enum sip_transp tp, int af,
+				   list_apply_h ah, void *arg)
+{
+	if (!ah)
+		return NULL;
+
+	for (struct le *le = sip->transpl.head; le; le = le->next) {
+
+		const struct sip_transport *transp = le->data;
+		const struct sa *laddr = &transp->laddr;
+
+		if (transp->tp != tp)
+			continue;
+
+		if (af != AF_UNSPEC && sa_af(laddr) != af)
+			continue;
+
+		if (ah(le, arg))
+			return le;
+	}
+
+	return NULL;
 }
 
 
@@ -1401,6 +1432,27 @@ int sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 }
 
 
+static bool add_ccert_handler(struct le *le, void *arg)
+{
+	const struct sip_transport *transp = le->data;
+	struct sip_ccert_data *cc = arg;
+
+	if (!cc->ccert->he.list)
+		hash_append(transp->ht_ccert, cc->hsup, &cc->ccert->he,
+			    cc->ccert);
+	else {
+		struct sip_ccert *ccert = mem_zalloc(sizeof(*ccert), NULL);
+		if (!ccert)
+			return false;
+
+		ccert->file = cc->ccert->file;
+		hash_append(transp->ht_ccert, cc->hsup, &ccert->he, ccert);
+	}
+
+	return false;
+}
+
+
 /**
  * Add a client certificate to the TLS transport object
  * Client certificates are saved as hash-table.
@@ -1416,10 +1468,9 @@ int sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
 			 const char *cert)
 {
 	int err = 0;
-	const struct sip_transport *transp = NULL;
 	struct sip_ccert *ccert = NULL;
+	struct sip_ccert_data cc_data;
 	struct mbuf *sup = NULL;
-	uint32_t hsup = 0;
 
 	if (!sip || !uri || !cert)
 		return EINVAL;
@@ -1435,30 +1486,20 @@ int sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
 
 	mbuf_set_pos(sup, 0);
 
-	hsup = hash_joaat(mbuf_buf(sup), mbuf_get_left(sup));
-	transp = transp_find(sip, SIP_TRANSP_TLS, AF_INET, NULL);
-	if (transp) {
-		ccert = mem_zalloc(sizeof(*ccert), NULL);
-		if (!ccert) {
-			err = ENOMEM;
-			goto out;
-		}
-
-		pl_set_str(&ccert->file, cert);
-		hash_append(transp->ht_ccert, hsup, &ccert->he, ccert);
+	ccert = mem_zalloc(sizeof(*ccert), NULL);
+	if (!ccert) {
+		err = ENOMEM;
+		goto out;
 	}
+	pl_set_str(&ccert->file, cert);
 
-	transp = transp_find(sip, SIP_TRANSP_TLS, AF_INET6, NULL);
-	if (transp) {
-		ccert = mem_zalloc(sizeof(*ccert), NULL);
-		if (!ccert) {
-			err = ENOMEM;
-			goto out;
-		}
+	cc_data.hsup = hash_joaat(mbuf_buf(sup), mbuf_get_left(sup));
+	cc_data.ccert = ccert;
 
-		pl_set_str(&ccert->file, cert);
-		hash_append(transp->ht_ccert, hsup, &ccert->he, ccert);
-	}
+	(void)transp_apply_all(sip, SIP_TRANSP_TLS, AF_INET, add_ccert_handler,
+			       &cc_data);
+	(void)transp_apply_all(sip, SIP_TRANSP_TLS, AF_INET6,
+			       add_ccert_handler, &cc_data);
 
  out:
 	mem_deref(sup);
