@@ -29,6 +29,8 @@ struct tmr {
 	int line;
 };
 
+#define TMR_INIT {.le = LE_INIT}
+
 int      tmrl_alloc(struct tmrl **tmrl);
 void     tmr_poll(struct tmrl *tmrl);
 uint64_t tmr_jiffies_usec(void);
