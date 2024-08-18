@@ -66,7 +66,8 @@ static void tmr_handler(void *arg)
 		}
 	}
 	else {
-		mem_deref(sess);
+		mem_deref(sess); /* list_flush derefs reply */
+		return;
 	}
 
 	mem_deref(reply);
