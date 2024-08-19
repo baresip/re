@@ -66,7 +66,9 @@ static void tmr_handler(void *arg)
 		}
 	}
 	else {
+		mem_deref(reply);
 		mem_deref(sess);
+		return;
 	}
 
 	mem_deref(reply);
