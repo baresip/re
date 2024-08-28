@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v3.15.0] - 2024-08-28
+
+## What's Changed
+* misc: remove HAVE_INET6 by @sreimers in https://github.com/baresip/re/pull/1159
+* dns/rr: fix dns_rr_print underflow by @sreimers in https://github.com/baresip/re/pull/1162
+* test/async: remove AI_ADDRCONFIG by @sreimers in https://github.com/baresip/re/pull/1165
+* retest: update usage message by @robert-scheck in https://github.com/baresip/re/pull/1166
+* add filter_registrar option by @maximilianfridrich in https://github.com/baresip/re/pull/1160
+* sa: add utility function to check if address is multicast by @cmfitch1 in https://github.com/baresip/re/pull/1168
+* tls/sni: skip SNI check if we are client or server_name absent by @maximilianfridrich in https://github.com/baresip/re/pull/1169
+* tls/sni: do not enable client verification when SNI matching is done by @maximilianfridrich in https://github.com/baresip/re/pull/1172
+* dd: Dependency Descriptor RTP header extension by @alfredh in https://github.com/baresip/re/pull/1170
+* aubuf: add AUBUF_TRACE mode with id by @sreimers in https://github.com/baresip/re/pull/1174
+* sip/transp: add client certificate to all TLS transports by @maximilianfridrich in https://github.com/baresip/re/pull/1173
+* tmr: add TMR_INIT by @sreimers in https://github.com/baresip/re/pull/1177
+* sipsess/reply: fix heap-use-after-free bug by @sreimers in https://github.com/baresip/re/pull/1179
+* version 3.15.0 by @alfredh in https://github.com/baresip/re/pull/1180
+
+## New Contributors
+* @cmfitch1 made their first contribution in https://github.com/baresip/re/pull/1168
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.14.0...v3.15.0
+
+
 ## [v3.14.0] - 2024-07-23
 
 ## What's Changed
