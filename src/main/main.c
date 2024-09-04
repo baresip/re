@@ -755,13 +755,12 @@ static int fd_poll(struct re *re)
 		FD_ZERO(&wfds);
 		FD_ZERO(&efds);
 
-		for (i = 0; cfds < nfds; i++) {
+		for (i = 0; (i < re->maxfds) && (cfds < nfds); i++) {
 			fhs = re->fhsl[i];
 
+			++cfds;
 			if (!fhs || !fhs->fh)
 				continue;
-
-			++cfds;
 
 			re_sock_t fd = fhs->fd;
 			if (fhs->flags & FD_READ)
