@@ -89,6 +89,36 @@ int rtcp_send_nack(struct rtp_sock *rs, uint16_t fsn, uint16_t blp)
 }
 
 
+static int encode_gnack(struct mbuf *mb, void *arg)
+{
+	struct gnack *fci = arg;
+
+	int err = mbuf_write_u16(mb, htons(fci->pid));
+	err |= mbuf_write_u16(mb, htons(fci->blp));
+	return err;
+}
+
+
+/**
+ * Send an RTCP Generic NACK packet (RFC 4585 6.2.1)
+ *
+ * @param rs   RTP Socket
+ * @param ssrc SSRC of the target encoder
+ * @param fsn  First Sequence Number lost
+ * @param blp  Bitmask of lost packets
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_send_gnack(struct rtp_sock *rs, uint32_t ssrc, uint16_t fsn,
+		    uint16_t blp)
+{
+	struct gnack fci = {fsn, blp};
+	return rtcp_quick_send(rs, RTCP_RTPFB, RTCP_RTPFB_GNACK,
+			       rtp_sess_ssrc(rs), ssrc, &encode_gnack,
+			       &fci);
+}
+
+
 /**
  * Send an RTCP Picture Loss Indication (PLI) packet
  *
