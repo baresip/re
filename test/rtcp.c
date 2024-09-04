@@ -198,6 +198,8 @@ struct agent {
 	struct sa laddr_rtcp;
 	unsigned rtp_count;
 	unsigned psfb_count;
+	unsigned rtpfb_count;
+	unsigned gnack_count;
 };
 
 
@@ -221,6 +223,12 @@ static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
 	(void)src;
 
 	switch (msg->hdr.pt) {
+
+	case RTCP_RTPFB:
+		if (msg->r.fb.fci.gnackv->pid == 42)
+			++ag->gnack_count;
+		++ag->rtpfb_count;
+		break;
 
 	case RTCP_PSFB:
 		++ag->psfb_count;
@@ -266,6 +274,9 @@ static int test_rtcp_loop_base(bool mux)
 	rtcp_start(a.rtp_sock, "cname", &b.laddr_rtcp);
 	rtcp_start(b.rtp_sock, "cname", &a.laddr_rtcp);
 
+	err = rtcp_send_gnack(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock), 42, 0);
+	TEST_ERR(err);
+
 	err = rtcp_send_pli(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock));
 	TEST_ERR(err);
 
@@ -276,6 +287,8 @@ static int test_rtcp_loop_base(bool mux)
 	ASSERT_EQ(0, a.psfb_count);
 	ASSERT_EQ(0, b.rtp_count);
 	ASSERT_EQ(1, b.psfb_count);
+	ASSERT_EQ(1, b.rtpfb_count);
+	ASSERT_EQ(1, b.gnack_count);
 
  out:
 	mem_deref(b.rtp_sock);
