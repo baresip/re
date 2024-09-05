@@ -35,4 +35,4 @@ jobs:
     - name: build
       run: |
         cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="arm64-v8a" -DANDROID_PLATFORM=android-21 -DOPENSSL_ROOT_DIR=openssl -DOPENSSL_INCLUDE_DIR=openssl/include -DOPENSSL_CRYPTO_LIBRARY=openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY=openssl/libssl.a .
-        cmake --build . -j 2
+        cmake --build . -j 4 -t retest
