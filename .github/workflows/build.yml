@@ -32,15 +32,10 @@ jobs:
       run: |
         echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
 
-    - name: fix flaky azure mirrors
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo sed -i 's/azure\./de\./' /etc/apt/sources.list
-
     - name: install packages
       if: ${{ runner.os == 'Linux' }}
       run: |
-        sudo apt-get update && sudo apt-get install -y ninja-build
+        sudo apt-get update && sudo apt-get install -y ninja-build valgrind
 
     - name: install packages
       if: ${{ runner.os == 'macOS' }}
@@ -55,9 +50,15 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -Werror -DCMAKE_C_FLAGS="-Werror"
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_C_FLAGS="-Werror"
         cmake --build build -t retest
     
-    - name: retest
+    - name: retest with valgrind
+      if: ${{ runner.os == 'Linux' }}
       run: |
-        ./build/test/retest -r -v
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -a -v
+
+    - name: retest
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        ./build/test/retest -a -v
