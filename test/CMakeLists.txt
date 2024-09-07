@@ -19,7 +19,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # Module/Package Includes
 #
 
-#find_package(RE REQUIRED)
 
 ##############################################################################
 #
@@ -43,9 +42,11 @@ else()
     -Wmissing-declarations
     -Wmissing-prototypes
     -Wnested-externs
+    -Wno-strict-aliasing
     -Wold-style-definition
     -Wshadow -Waggregate-return
     -Wstrict-prototypes
+    -Wuninitialized
     -Wvla
   )
 endif()
