@@ -845,7 +845,7 @@ int test_multithread(void)
 	for (i=0; i<RE_ARRAY_SIZE(threadv); i++) {
 
 		if (threadv[i].err != 0) {
-			re_printf("%u failed: %-30s  [%d] [%m]\n", i,
+			re_printf("%zu failed: %-30s  [%d] [%m]\n", i,
 				  threadv[i].test->name,
 				  threadv[i].err, threadv[i].err);
 			err = threadv[i].err;
