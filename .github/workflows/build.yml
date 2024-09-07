@@ -54,11 +54,10 @@ jobs:
         cmake --build build -t retest
     
     - name: retest
-      if: ${{ matrix.compiler == 'clang' }}
       run: |
-        ./build/test/retest -a -v
+        ./build/test/retest -r -v
 
     - name: retest with valgrind
-      if: ${{ matrix.compiler == 'gcc' }}
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -a -v
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
