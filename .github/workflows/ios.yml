@@ -23,4 +23,4 @@ jobs:
     - name: normal build
       run: |
         cmake -B build -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=ON -DUSE_OPENSSL=OFF -DCMAKE_C_FLAGS="-Werror"
-        cmake --build build -j
+        cmake --build build -j retest

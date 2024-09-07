@@ -20,9 +20,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: install devel tools
       run: |
-        apk add musl-dev git cmake gcc g++ make binutils openssl-dev linux-headers zlib-dev ninja
+        apk add musl-dev git cmake gcc g++ valgrind binutils openssl-dev linux-headers zlib-dev ninja
 
     - name: make
       run: |
         cmake -B build -DCMAKE_C_FLAGS="-Werror"
-        cmake --build build -j
+        cmake --build build -j -t retest
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v

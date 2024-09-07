@@ -25,9 +25,9 @@ jobs:
       with:
         usesh: true
         prepare: |
-          pkg install -y ninja cmake
+          pkg install -y ninja cmake valgrind
 
         run: |
           freebsd-version
           cmake -B build && cmake --build build -t retest
-          ./build/test/retest -r -v
+          valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
