@@ -53,12 +53,12 @@ jobs:
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_C_FLAGS="-Werror"
         cmake --build build -t retest
     
-    - name: retest with valgrind
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -a -v
-
     - name: retest
-      if: ${{ runner.os == 'macOS' }}
+      if: ${{ matrix.compiler == 'clang' }}
       run: |
         ./build/test/retest -a -v
+
+    - name: retest with valgrind
+      if: ${{ matrix.compiler == 'gcc' }}
+      run: |
+        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -a -v
