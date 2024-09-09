@@ -37,11 +37,11 @@ jobs:
             case "${{ matrix.distro }}" in
               ubuntu*|jessie|stretch|buster|bullseye)
                 apt-get update -q -y
-                apt-get install -q -y cmake gcc g++ libssl-dev ninja-build
+                apt-get install -q -y cmake gcc g++ libssl-dev ninja-build valgrind
                 ;;
             esac
 
           run: |
             cmake -G Ninja -B build -DCMAKE_C_FLAGS="-Werror"
             cmake --build build -j --target retest
-            ./build/test/retest -r -v
+            valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
