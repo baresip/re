@@ -5,6 +5,23 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.16.0] - 2024-10-02
+
+## What's Changed
+* thread: fix pthread_setname_np NetBSD by @leleliu008 in https://github.com/baresip/re/pull/1182
+* ice: AI_V4MAPPED macro is missing on some BSD systems by @leleliu008 in https://github.com/baresip/re/pull/1181
+* rtp/rtcp: add RTCP Generic NACK packet send (RFC 4585 6.2.1) by @sreimers in https://github.com/baresip/re/pull/1186
+* main/fd_listen: return EMFILE if maxfds is reached by @sreimers in https://github.com/baresip/re/pull/1185
+* ci: build retest for android by @alfredh in https://github.com/baresip/re/pull/1187
+* test: minor cmake cleanup by @alfredh in https://github.com/baresip/re/pull/1188
+* test: fix re_printf format string for multithread test by @alfredh in https://github.com/baresip/re/pull/1190
+* ci: run retest on Fedora by @alfredh in https://github.com/baresip/re/pull/1191
+
+## New Contributors
+* @leleliu008 made their first contribution in https://github.com/baresip/re/pull/1182
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.15.0...v3.16.0
+
 
 ## [v3.15.0] - 2024-08-28
 
