@@ -87,9 +87,6 @@ typedef SSIZE_T ssize_t;
 #define RE_BREAKPOINT
 #endif
 
-/* Backwards compat */
-#define BREAKPOINT RE_BREAKPOINT
-
 
 /* Error return/goto debug helpers */
 #ifdef TRACE_ERR
