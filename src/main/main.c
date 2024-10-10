@@ -762,7 +762,7 @@ static int fd_poll(struct re *re)
 		FD_ZERO(&wfds);
 		FD_ZERO(&efds);
 
-		for (i = 0; cfds < nfds; i++) {
+		for (i = 0; (i < re->maxfds) && (cfds < nfds); i++) {
 			fhs = re->fhsl[i];
 
 			if (!fhs || !fhs->fh)
