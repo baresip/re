@@ -727,6 +727,8 @@ static int sip_request_send(struct sip_request *req, struct sip *sip,
 {
 	struct sa dst;
 	int err;
+	bool addr_only = req->tp_selected &&
+		dnsc_getaddrinfo_only(req->sip->dnsc);
 
 	if (!sa_set_str(&dst, req->host,
 			sip_transp_port(req->tp, route->port))) {
@@ -737,7 +739,7 @@ static int sip_request_send(struct sip_request *req, struct sip *sip,
 			return err;
 		}
 	}
-	else if (route->port) {
+	else if (route->port || addr_only){
 
 		req->port = sip_transp_port(req->tp, route->port);
 		err = addr_lookup(req, req->host);
