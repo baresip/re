@@ -974,8 +974,16 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 	struct dns_query *q = NULL;
 	struct dnshdr hdr;
 	int err = 0;
+	bool use_getaddrinfo = false;
+	bool srv_available = srvv && srvc && *srvc != 0;
 
-	if (!dnsc || !name || !srvv || !srvc || !(*srvc))
+	if (!dnsc || !name)
+		return EINVAL;
+
+	use_getaddrinfo = dnsc->conf.getaddrinfo &&
+		(type == DNS_TYPE_A || type == DNS_TYPE_AAAA);
+
+	if (!srv_available && !use_getaddrinfo)
 		return EINVAL;
 
 	if (DNS_QTYPE_AXFR == type)
@@ -1029,8 +1037,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		list_init(q->rrlv[i]);
 	}
 
-	if (dnsc->conf.getaddrinfo &&
-	    (q->type == DNS_TYPE_A || q->type == DNS_TYPE_AAAA)) {
+	if (use_getaddrinfo) {
 		err = query_getaddrinfo(q);
 		if (err)
 			goto error;
@@ -1400,4 +1407,21 @@ bool dnsc_getaddrinfo_enabled(struct dnsc *dnsc)
 		return false;
 
 	return dnsc->conf.getaddrinfo;
+}
+
+
+/**
+ * Return if getaddrinfo usage is enabled and exclusive,
+ * i.e. there are no DNS servers known explicitly
+ *
+ * @param dnsc  DNS Client
+ *
+ * @return true if DNS servers are available, false otherwise
+ */
+bool dnsc_getaddrinfo_only(const struct dnsc *dnsc)
+{
+	if (!dnsc)
+		return false;
+
+	return dnsc->conf.getaddrinfo && dnsc->srvc == 0;
 }
