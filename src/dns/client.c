@@ -984,7 +984,7 @@ static int query(struct dns_query **qp, struct dnsc *dnsc, uint8_t opcode,
 		(type == DNS_TYPE_A || type == DNS_TYPE_AAAA);
 
 	if (!srv_available && !use_getaddrinfo)
-		return EINVAL;
+		return ENOTSUP;
 
 	if (DNS_QTYPE_AXFR == type)
 		proto = IPPROTO_TCP;
