@@ -757,11 +757,10 @@ static int fd_poll(struct re *re)
 
 		for (i = 0; (i < re->maxfds) && (cfds < nfds); i++) {
 			fhs = re->fhsl[i];
-
+			
+			++cfds;
 			if (!fhs || !fhs->fh)
 				continue;
-
-			++cfds;
 
 			re_sock_t fd = fhs->fd;
 			if (fhs->flags & FD_READ)
