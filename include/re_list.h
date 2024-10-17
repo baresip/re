@@ -97,6 +97,9 @@ static inline bool list_isempty(const struct list *list)
 #define LIST_FOREACH(list, le)					\
 	for ((le) = list_head((list)); (le); (le) = (le)->next)
 
+#define LIST_FOREACH_SAFE(list, le, n)			\
+	for ((le) = list_head((list)), (n) = (le) ? (le)->next : NULL; (le); \
+		(le) = (n), (n) = (le) ? (le)->next : NULL)
 
 /**
  * Move element to another linked list
