@@ -171,7 +171,7 @@ static int keytype2int(enum tls_keytype type)
  *
  * @return passes parameter ok unchanged
  */
-int tls_verify_handler(int ok, X509_STORE_CTX *ctx)
+static int tls_verify_handler(int ok, X509_STORE_CTX *ctx)
 {
 	int err, depth;
 
