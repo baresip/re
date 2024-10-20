@@ -13,6 +13,17 @@
 #include <re_dbg.h>
 
 
+static int thread_equal(void *thrd)
+{
+	thrd_t t = *(thrd_t *)thrd;
+
+	if (thrd_equal(t, thrd_current()))
+		return 0;
+
+	return EINVAL;
+}
+
+
 static int thread(void *id)
 {
 	int n = *(int *)id;
@@ -27,23 +38,36 @@ static int thread(void *id)
 int test_thread(void)
 {
 	thrd_t thr;
+	thrd_t thr_main = thrd_current();
 	int err;
 	int id;
 
 	err = thread_create_name(&thr, "test1", NULL, NULL);
 	TEST_EQUALS(EINVAL, err);
 
-	id = 23;
+	id  = 23;
 	err = thread_create_name(&thr, "test2", thread, (void *)&id);
 	TEST_ERR(err);
 	thrd_join(thr, &err);
 	TEST_EQUALS(thrd_error, err);
 
-	id = 42;
+	id  = 42;
 	err = thread_create_name(&thr, "test3", thread, (void *)&id);
 	TEST_ERR(err);
 	thrd_join(thr, &err);
 	TEST_EQUALS(EPROTO, err);
+
+	err = thread_create_name(&thr, "test_not_equal", thread_equal,
+				 &thr_main);
+	TEST_ERR(err);
+	thrd_join(thr, &err);
+	TEST_EQUALS(EINVAL, err);
+
+	err = thread_create_name(&thr, "test_equal", thread_equal, &thr);
+	TEST_ERR(err);
+	TEST_EQUALS(0, thrd_equal(thr, thrd_current()));
+	thrd_join(thr, &err);
+	TEST_EQUALS(0, err);
 
 	err = 0;
 
