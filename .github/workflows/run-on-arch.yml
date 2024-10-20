@@ -29,6 +29,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
+          base_image: '--platform=linux/aarch64 ubuntu:20.04'
 
           # Not required, but speeds up builds
           githubToken: ${{ github.token }}
