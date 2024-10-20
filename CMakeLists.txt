@@ -74,7 +74,7 @@ else()
     -Wnested-externs
     -Wno-strict-aliasing
     -Wold-style-definition
-    -Wshadow -Waggregate-return
+    -Wshadow
     -Wstrict-prototypes
     -Wuninitialized
     -Wvla

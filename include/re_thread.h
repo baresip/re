@@ -22,14 +22,18 @@
 #else
 
 #if defined(WIN32)
-
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+
+struct thrd_win32 {
+	HANDLE hdl;
+	DWORD id;
+};
 #define ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
 typedef INIT_ONCE once_flag;
-typedef HANDLE thrd_t;
+typedef struct thrd_win32 thrd_t;
 typedef CONDITION_VARIABLE cnd_t;
 typedef CRITICAL_SECTION mtx_t;
 typedef DWORD tss_t;
