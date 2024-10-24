@@ -698,10 +698,10 @@ static int packet_handler(bool marker, uint64_t rtp_ts,
 }
 
 
-static int test_h264_packet_base(const char *bs, bool long_startcode)
+static int test_h264_packet_base(const char *bs, bool long_startcode,
+				 size_t max_pktsize)
 {
 	struct state state;
-	const size_t MAX_PKTSIZE = 8;
 	int err;
 
 	memset(&state, 0, sizeof(state));
@@ -717,7 +717,7 @@ static int test_h264_packet_base(const char *bs, bool long_startcode)
 	if (!state.mb)
 		return ENOMEM;
 
-	err = h264_packetize(DUMMY_TS, state.buf, state.len, MAX_PKTSIZE,
+	err = h264_packetize(DUMMY_TS, state.buf, state.len, max_pktsize,
 			     packet_handler, &state);
 	if (err)
 		goto out;
@@ -748,12 +748,13 @@ static const char *bitstream_long =
 
 int test_h264_packet(void)
 {
+	const size_t MAX_PKTSIZE = 8;
 	int err;
 
-	err = test_h264_packet_base(bitstream, false);
+	err = test_h264_packet_base(bitstream, false, MAX_PKTSIZE);
 	TEST_ERR(err);
 
-	err = test_h264_packet_base(bitstream_long, true);
+	err = test_h264_packet_base(bitstream_long, true, MAX_PKTSIZE);
 	TEST_ERR(err);
 
  out:
