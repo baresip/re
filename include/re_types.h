@@ -299,6 +299,30 @@ typedef int re_sock_t;
 
 #define HAVE_RE_ARG 1
 
+#if defined(__clang__)
+#define RE_ARG_SIZE(type)                                                     \
+	_Generic((type),                                                      \
+	bool:			sizeof(int),                                  \
+	char:			sizeof(int),                                  \
+	unsigned char:		sizeof(unsigned int),                         \
+	short:			sizeof(int),                                  \
+	unsigned short:		sizeof(unsigned int),	                      \
+	int:			sizeof(int),                                  \
+	unsigned int:		sizeof(unsigned int),                         \
+	long:			sizeof(long),                                 \
+	unsigned long:		sizeof(unsigned long),                        \
+	long long:		sizeof(long long),                            \
+	unsigned long long:	sizeof(unsigned long long),                   \
+	float:			sizeof(double),                               \
+	double:			sizeof(double),                               \
+	char const*:		sizeof(char const *),                         \
+	char*:			sizeof(char *),                               \
+	void const*:		sizeof(void const *),                         \
+	void*:			sizeof(void *),                               \
+	struct pl:		sizeof(struct pl),                            \
+	default: sizeof(void*)                                                \
+)
+#else /* GCC bit fields workaround */
 #define RE_ARG_SIZE(type)                                                     \
 	_Generic((0)?(type):(type),                                           \
 	bool:			sizeof(int),                                  \
@@ -321,6 +345,7 @@ typedef int re_sock_t;
 	struct pl:		sizeof(struct pl),                            \
 	default: sizeof(void*)                                                \
 )
+#endif
 
 #define RE_ARG_0() 0
 #define RE_ARG_1(expr) RE_ARG_SIZE(expr), (expr), 0
