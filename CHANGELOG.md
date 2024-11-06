@@ -5,9 +5,29 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v3.16.0] - 2024-10-02
 
-## What's Changed
+## v3.17.0 - 2024-11-06
+
+### What's Changed
+* types: remove old BREAKPOINT macro by @alfredh in https://github.com/baresip/re/pull/1194
+* dnsc: Fallback to getaddrinfo without any DNS servers by @weili-jiang in https://github.com/baresip/re/pull/1195
+* dns/client: return ENOTSUP if no server or not getaddrinfo by @sreimers in https://github.com/baresip/re/pull/1196
+* conf: add conf_get_float by @juha-h in https://github.com/baresip/re/pull/1198
+* ci/run-on-arch: use ubuntu 22.04 by @sreimers in https://github.com/baresip/re/pull/1204
+* thread: fix thrd_equal win32 handle by @sreimers in https://github.com/baresip/re/pull/1203
+* test: add pktsize to test_h264_packet_base() by @alfredh in https://github.com/baresip/re/pull/1205
+* tls: make tls_verify_handler() static by @alfredh in https://github.com/baresip/re/pull/1201
+* types: fix clang-tidy warning (gcc bit fields workaround) by @sreimers in https://github.com/baresip/re/pull/1206
+
+### New Contributors
+* @weili-jiang made their first contribution in https://github.com/baresip/re/pull/1195
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.16.0...v3.17.0
+
+
+## v3.16.0 - 2024-10-02
+
+### What's Changed
 * thread: fix pthread_setname_np NetBSD by @leleliu008 in https://github.com/baresip/re/pull/1182
 * ice: AI_V4MAPPED macro is missing on some BSD systems by @leleliu008 in https://github.com/baresip/re/pull/1181
 * rtp/rtcp: add RTCP Generic NACK packet send (RFC 4585 6.2.1) by @sreimers in https://github.com/baresip/re/pull/1186
@@ -17,15 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * test: fix re_printf format string for multithread test by @alfredh in https://github.com/baresip/re/pull/1190
 * ci: run retest on Fedora by @alfredh in https://github.com/baresip/re/pull/1191
 
-## New Contributors
+### New Contributors
 * @leleliu008 made their first contribution in https://github.com/baresip/re/pull/1182
 
 **Full Changelog**: https://github.com/baresip/re/compare/v3.15.0...v3.16.0
 
 
-## [v3.15.0] - 2024-08-28
+## v3.15.0 - 2024-08-28
 
-## What's Changed
+### What's Changed
 * misc: remove HAVE_INET6 by @sreimers in https://github.com/baresip/re/pull/1159
 * dns/rr: fix dns_rr_print underflow by @sreimers in https://github.com/baresip/re/pull/1162
 * test/async: remove AI_ADDRCONFIG by @sreimers in https://github.com/baresip/re/pull/1165
@@ -41,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * sipsess/reply: fix heap-use-after-free bug by @sreimers in https://github.com/baresip/re/pull/1179
 * version 3.15.0 by @alfredh in https://github.com/baresip/re/pull/1180
 
-## New Contributors
+### New Contributors
 * @cmfitch1 made their first contribution in https://github.com/baresip/re/pull/1168
 
 **Full Changelog**: https://github.com/baresip/re/compare/v3.14.0...v3.15.0
@@ -49,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v3.14.0] - 2024-07-23
 
-## What's Changed
+### What's Changed
 * aumix: use mutex_alloc() by @alfredh in https://github.com/baresip/re/pull/1142
 * sipreg/reg.c: stop retrying registers early after 401/407 by @maximilianfridrich in https://github.com/baresip/re/pull/1143
 * aumix: add locking in aumix_source_count() by @alfredh in https://github.com/baresip/re/pull/1145
@@ -73,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v3.13.0] - 2024-06-19
 
-## What's Changed
+### What's Changed
 * http/client: use dynamically sized buffers for PEM setters by @maximilianfridrich in https://github.com/baresip/re/pull/1117
 * tls: allow secure TLS renegotiation by @maximilianfridrich in https://github.com/baresip/re/pull/1121
 * tls: always enable USE_OPENSSL_SRTP by @alfredh in https://github.com/baresip/re/pull/1122
@@ -100,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v3.12.0] - 2024-05-15
 
-## What's Changed
+### What's Changed
 * cmake: fix static library build (vcpkg) by @alfredh in https://github.com/baresip/re/pull/1096
 * h264: add STAP-A decode with long startcodes by @alfredh in https://github.com/baresip/re/pull/1101
 * sess,request: deref request and ctrans immediately by @maximilianfridrich in https://github.com/baresip/re/pull/1099
