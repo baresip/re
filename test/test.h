@@ -252,6 +252,7 @@ int test_net_if(void);
 int test_net_dst_source_addr_get(void);
 int test_odict(void);
 int test_odict_array(void);
+int test_odict_pl(void);
 int test_pcp(void);
 int test_trice_cand(void);
 int test_trice_candpair(void);
