@@ -107,6 +107,20 @@ int odict_entry_add(struct odict *o, const char *key,
 }
 
 
+int odict_pl_add(struct odict *od, const char *key,
+		 const struct pl *val)
+{
+	char *str;
+	int err = pl_strdup(&str, val);
+	if (err)
+		return err;
+
+	err = odict_entry_add(od, key, ODICT_STRING, str);
+	mem_deref(str);
+	return err;
+}
+
+
 void odict_entry_del(struct odict *o, const char *key)
 {
 	mem_deref((struct odict_entry *)odict_lookup(o, key));

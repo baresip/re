@@ -29,6 +29,8 @@ int odict_debug(struct re_printf *pf, const struct odict *o);
 
 int odict_entry_add(struct odict *o, const char *key,
 		    int type, ...);
+int odict_pl_add(struct odict *od, const char *key,
+		 const struct pl *val);
 void odict_entry_del(struct odict *o, const char *key);
 int odict_entry_debug(struct re_printf *pf, const struct odict_entry *e);
 bool odict_compare(const struct odict *dict1, const struct odict *dict2,

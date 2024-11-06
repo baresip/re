@@ -147,6 +147,7 @@ static const struct test tests[] = {
 	TEST(test_mqueue),
 	TEST(test_odict),
 	TEST(test_odict_array),
+	TEST(test_odict_pl),
 	TEST(test_pcp),
 	TEST(test_remain),
 	TEST(test_re_assert_se),
