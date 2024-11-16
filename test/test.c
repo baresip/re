@@ -1110,7 +1110,7 @@ int test_integration(const char *name, bool verbose)
 		if (str_isset(name) && test->name)
 			continue;
 
-		(void)re_fprintf(stderr, "  %-28s: ", test->name);
+		(void)re_fprintf(stderr, "  %-32s: ", test->name);
 
 		if (test->exec)
 			err = test->exec();
