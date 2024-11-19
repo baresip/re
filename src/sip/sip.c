@@ -203,6 +203,7 @@ void sip_close(struct sip *sip, bool force)
  * @param sock  Optional socket to send from
  * @param tp    SIP transport
  * @param dst   Destination network address
+ * @param host  Target hostname
  * @param mb    Buffer containing SIP message
  * @param connh SIP connected handler
  * @param arg   Handler argument
