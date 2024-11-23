@@ -15,7 +15,7 @@
 enum large_body_test {
 	REQ_BODY_CHUNK_SIZE = 26 * 42,
 	REQ_BODY_SIZE = REQ_BODY_CHUNK_SIZE * 480 - 26,
-	REQ_HTTP_REQUESTS = 2
+	REQ_HTTP_REQUESTS = 3
 };
 
 enum {
@@ -514,7 +514,17 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	dconf.cache_ttl_max	 = 1800;
 	dconf.getaddrinfo	 = dnsc_getaddrinfo_enabled(dnsc);
 
+	if (dns_set_conf_test) {
+		err = dnsc_conf_set(dnsc, &dconf);
+		if (err)
+			goto out;
+	}
+
 	err = http_client_alloc(&cli, dnsc);
+	if (err)
+		goto out;
+
+	err = http_client_set_config(cli, &hconf);
 	if (err)
 		goto out;
 
@@ -590,22 +600,11 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 					sa_port(&srv),
 					t.cert_auth ? "auth/" : "");
 
-	for (i = 1; i <= 10*REQ_HTTP_REQUESTS; i++) {
+	for (i = 1; i <= REQ_HTTP_REQUESTS; i++) {
 		t.i_req_body = 0;
-
-		err = http_client_set_config(cli, &hconf);
-		if (err)
-			goto out;
-
-		if (dns_set_conf_test) {
-			err = dnsc_conf_set(dnsc, &dconf);
-			if (err)
-				goto out;
-		}
 
 		t.clen = put ? REQ_BODY_SIZE :
 			2 * strlen("abcdefghijklmnopqrstuvwxyz");
-
 
 		if (http_conn) {
 			err = http_reqconn_alloc(&conn, cli,
