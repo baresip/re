@@ -345,8 +345,6 @@ static bool have_essential_fields(const struct sip_msg *msg)
 		pl_isset(&(msg->from.auri)) &&
 		pl_isset(&(msg->cseq.met)) &&
 		pl_isset(&(msg->callid)) &&
-		(pl_isset(&(msg->maxfwd)) ||
-		 !pl_strncmp(&msg->met, "ACK", 3)) &&
 		pl_isset(&(msg->via.branch)))
 		return true;
 
