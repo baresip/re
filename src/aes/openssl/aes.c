@@ -27,7 +27,6 @@ static const EVP_CIPHER *aes_cipher(enum aes_mode mode, size_t key_bits)
 		switch (key_bits) {
 
 		case 128: return EVP_aes_128_ctr();
-		case 192: return EVP_aes_192_ctr();
 		case 256: return EVP_aes_256_ctr();
 		default:
 			return NULL;
