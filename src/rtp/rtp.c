@@ -199,7 +199,7 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 
 		pt = mbuf_buf(mb)[1] & 0x7f;
 
-		if (64 <= pt && pt <= 95) {
+		if (rtp_pt_is_rtcp(pt)) {
 			rtcp_recv_handler(src, mb, arg);
 			return;
 		}
