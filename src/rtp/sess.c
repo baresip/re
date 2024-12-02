@@ -459,6 +459,16 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 }
 
 
+int rtcp_make_sr(const struct rtp_sock *rs, struct mbuf *mb)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return EINVAL;
+
+	return mk_sr(sess, mb);
+}
+
+
 static int sdes_encode_handler(struct mbuf *mb, void *arg)
 {
 	struct rtcp_sess *sess = arg;
@@ -476,6 +486,16 @@ static int sdes_encode_handler(struct mbuf *mb, void *arg)
 static int mk_sdes(struct rtcp_sess *sess, struct mbuf *mb)
 {
 	return rtcp_encode(mb, RTCP_SDES, 1, sdes_encode_handler, sess);
+}
+
+
+int rtcp_make_sdes_cname(const struct rtp_sock *rs, struct mbuf *mb)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return EINVAL;
+
+	return mk_sdes(sess, mb);
 }
 
 
@@ -552,6 +572,16 @@ static void timeout(void *arg)
 
 static void schedule(struct rtcp_sess *sess)
 {
+	tmr_start(&sess->tmr, sess->interval, timeout, sess);
+}
+
+
+void rtcp_schedule_report(const struct rtp_sock *rs)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return;
+
 	tmr_start(&sess->tmr, sess->interval, timeout, sess);
 }
 
