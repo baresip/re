@@ -27,6 +27,11 @@ static int rtcp_quick_send(struct rtp_sock *rs, enum rtcp_type type,
 
 	mb->pos = RTCP_HEADROOM;
 
+	err  = rtcp_make_sr(rs, mb);
+	err |= rtcp_make_sdes_cname(rs, mb);
+	if (err)
+		goto out;
+
 	va_start(ap, count);
 	err = rtcp_vencode(mb, type, count, ap);
 	va_end(ap);
@@ -36,6 +41,10 @@ static int rtcp_quick_send(struct rtp_sock *rs, enum rtcp_type type,
 	if (!err)
 		err = rtcp_send(rs, mb);
 
+	if (!err)
+		rtcp_schedule_report(rs);
+
+out:
 	mem_deref(mb);
 
 	return err;

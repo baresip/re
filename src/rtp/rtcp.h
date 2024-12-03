@@ -44,8 +44,12 @@ int rtcp_rr_alloc(struct rtcp_rr **rrp, size_t count);
 int rtcp_rr_encode(struct mbuf *mb, const struct rtcp_rr *rr);
 int rtcp_rr_decode(struct mbuf *mb, struct rtcp_rr *rr);
 
+/* SR (Sender report) */
+int rtcp_make_sr(const struct rtp_sock *rs, struct mbuf *mb);
+
 /* SDES (Source Description) */
 int rtcp_sdes_decode(struct mbuf *mb, struct rtcp_sdes *sdes);
+int rtcp_make_sdes_cname(const struct rtp_sock *rs, struct mbuf *mb);
 
 /* RTCP Feedback */
 int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp);
@@ -86,3 +90,4 @@ void rtcp_sess_tx_rtp(struct rtcp_sess *sess, uint32_t ts, uint64_t jfs_rt,
 		      size_t payload_size);
 void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 		      size_t payload_size, const struct sa *peer);
+void rtcp_schedule_report(const struct rtp_sock *rs);
