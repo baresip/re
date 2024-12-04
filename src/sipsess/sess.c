@@ -373,6 +373,21 @@ bool sipsess_ack_pending(const struct sipsess *sess)
 
 
 /**
+ * Compares the sessions SIP message with given SIP message
+ *
+ * @param sess  SIP Session
+ * @param msg   SIP Message
+ * @return True if msg matches with sess->msg
+ */
+bool sipsess_msg_equal(const struct sipsess *sess, const struct sip_msg *msg)
+{
+	if (!sess)
+		return false;
+
+	return sess->msg == msg;
+}
+
+/**
  * Get the SDP negotiation state of a SIP Session
  *
  * @param sess  SIP Session
