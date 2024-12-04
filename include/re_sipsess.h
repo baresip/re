@@ -83,4 +83,5 @@ void sipsess_close_all(struct sipsess_sock *sock);
 struct sip_dialog *sipsess_dialog(const struct sipsess *sess);
 void sipsess_abort(struct sipsess *sess);
 bool sipsess_ack_pending(const struct sipsess *sess);
+bool sipsess_msg_equal(const struct sipsess *sess, const struct sip_msg *msg);
 enum sdp_neg_state sipsess_sdp_neg_state(const struct sipsess *sess);
