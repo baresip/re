@@ -218,6 +218,7 @@ static const struct test tests[] = {
 	TEST(test_tcp),
 	TEST(test_telev),
 	TEST(test_text2pcap),
+	TEST(test_fmt_trim),
 #ifdef USE_TLS
 	TEST(test_tls),
 	TEST(test_tls_ec),
