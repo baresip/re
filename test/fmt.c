@@ -1185,3 +1185,80 @@ out:
 	mem_deref(mb);
 	return err;
 }
+
+
+int test_fmt_trim(void)
+{
+	const struct pl pla = PL("  heisann  ");
+	const struct pl pll = PL("heisann  ");
+	const struct pl plr = PL("  heisann");
+	const struct pl plb = PL("heisann");
+
+	const struct pl pl  = PL("	 \r	\n  heisann	\n \r  ");
+	const struct pl pl1 = PL("heisann	\n \r  ");
+	const struct pl pl2 = PL("	 \r	\n  heisann");
+	const struct pl pl3 = PL("heisann");
+
+	const struct pl pl4 = PL("	 \r \n");
+	const struct pl pl5 = PL("");
+	struct pl pln;
+
+	int err = 0;
+
+	pln = pla;
+	err = pl_ltrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pll);
+	TEST_ERR(err);
+
+	pln = pla;
+	err = pl_rtrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &plr);
+	TEST_ERR(err);
+
+	pln = pla;
+	err = pl_trim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &plb);
+	TEST_ERR(err);
+
+	pln = pl1;
+	err = pl_ltrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl1);
+	TEST_ERR(err);
+
+	pln = pl;
+	err = pl_rtrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl2);
+	TEST_ERR(err);
+
+	pln = pl;
+	err = pl_trim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl3);
+	TEST_ERR(err);
+
+	pln = pl4;
+	err = pl_ltrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl5);
+	TEST_ERR(err);
+
+	pln = pl4;
+	err = pl_rtrim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl5);
+	TEST_ERR(err);
+
+	pln = pl4;
+	err = pl_trim(&pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl5);
+	TEST_ERR(err);
+
+out:
+	return err;
+}
