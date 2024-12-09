@@ -408,15 +408,6 @@ const char *test_datapath(void);
  */
 
 
-struct pf {
-	struct udp_helper *uh;
-	struct udp_sock *us;
-	char name[16];
-};
-
-int pf_create(struct pf **pfp, struct udp_sock *us, const char *name);
-
-
 struct stunserver {
 	struct udp_sock *us;
 	struct tcp_sock *ts;

@@ -103,7 +103,6 @@ set(SRCS
   mem.c
   mock/dnssrv.c
   mock/nat.c
-  mock/pf.c
   mock/sipsrv.c
   mock/stunsrv.c
   mock/tcpsrv.c
