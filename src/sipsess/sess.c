@@ -373,6 +373,17 @@ bool sipsess_ack_pending(const struct sipsess *sess)
 
 
 /**
+ * Get the SIP message of a SIP Session
+ *
+ * @param sess  SIP Session
+ * @return SIP Message
+ */
+const struct sip_msg *sipsess_msg(const struct sipsess *sess)
+{
+	return sess ? sess->msg : NULL;
+}
+
+/**
  * Get the SDP negotiation state of a SIP Session
  *
  * @param sess  SIP Session
