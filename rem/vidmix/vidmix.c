@@ -89,7 +89,7 @@ static void source_destructor(void *arg)
 
 
 static inline void source_mix(struct vidframe *mframe,
-			      const struct vidframe *frame_src,
+			      struct vidframe *frame_src,
 			      unsigned n, unsigned rows, unsigned idx,
 			      bool focus, bool focus_this, bool focus_full)
 {
@@ -130,6 +130,14 @@ static inline void source_mix(struct vidframe *mframe,
 	else if (rows == 1) {
 
 		source_mix_full(mframe, frame_src);
+		return;
+	}
+	else if (rows == 2) {
+		rect.w = mframe->size.w / 2;
+		rect.h = mframe->size.h;
+		rect.x = (rect.w) * (idx % 2);
+		rect.y = 0;
+		vidconv_center(mframe, frame_src, &rect);
 		return;
 	}
 	else {
