@@ -132,6 +132,14 @@ static inline void source_mix(struct vidframe *mframe,
 		source_mix_full(mframe, frame_src);
 		return;
 	}
+	else if (n <= 3) {
+		rect.w = mframe->size.w / n;
+		rect.h = mframe->size.h;
+		rect.x = (rect.w) * (idx % n);
+		rect.y = 0;
+		vidconv_center(mframe, frame_src, &rect);
+		return;
+	}
 	else {
 		rect.w = mframe->size.w / rows;
 		rect.h = mframe->size.h / rows;
