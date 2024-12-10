@@ -9,3 +9,5 @@ void vidconv(struct vidframe *dst, const struct vidframe *src,
 	     struct vidrect *r);
 void vidconv_aspect(struct vidframe *dst, const struct vidframe *src,
 		    struct vidrect *r);
+void vidconv_center(struct vidframe *dst, const struct vidframe *src,
+		    struct vidrect *r);
