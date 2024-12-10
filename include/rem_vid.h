@@ -55,6 +55,8 @@ struct vidframe {
 	uint16_t linesize[4];  /**< Array of line-sizes */
 	struct vidsz size;     /**< Frame resolution    */
 	enum vidfmt fmt;       /**< Video pixel format  */
+	unsigned xoffs;        /**< x offset            */
+	unsigned yoffs;        /**< y offset            */
 };
 
 /** Video point */
