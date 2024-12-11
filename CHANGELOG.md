@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.18.0 - 2024-12-11
+
+## What's Changed
+* odict: add odict_pl_add() by @cspiel1 in https://github.com/baresip/re/pull/1208
+* ci/build: remove Ubuntu 20.04, add 24.04, use GCC 14 on 24.04 by @robert-scheck in https://github.com/baresip/re/pull/1210
+* test: vertical alignment of integration test names by @alfredh in https://github.com/baresip/re/pull/1212
+* sip: update doxygen comment by @alfredh in https://github.com/baresip/re/pull/1215
+* test/http: decrease test runs from 20 to 3 to decrease test time by @fAuernigg in https://github.com/baresip/re/pull/1216
+* sip/transp: allow requests w/o Max-Forwards header by @cspiel1 in https://github.com/baresip/re/pull/1217
+* test: remove unused fuzz mock by @alfredh in https://github.com/baresip/re/pull/1220
+* rtp: use rtp_pt_is_rtcp() for RTCP demultiplexing by @alfredh in https://github.com/baresip/re/pull/1221
+* aes: remove 192-bits CTR-mode (looks unused) by @alfredh in https://github.com/baresip/re/pull/1219
+* rtp: send all RTCP packets as compound packets by @maximilianfridrich in https://github.com/baresip/re/pull/1222
+* rtp/sess.c: lock rtcp_sess in rtcp_set_srate_tx to fix data race by @maximilianfridrich in https://github.com/baresip/re/pull/1223
+* Update Doxyfile by @alfredh in https://github.com/baresip/re/pull/1224
+* test: remove unused packet-filter mock by @alfredh in https://github.com/baresip/re/pull/1227
+* bump version to 3.18.0 by @alfredh in https://github.com/baresip/re/pull/1230
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.17.0...v3.18.0
+
+
 ## v3.17.0 - 2024-11-06
 
 ### What's Changed
