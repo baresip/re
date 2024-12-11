@@ -426,10 +426,12 @@ static int encode_handler(struct mbuf *mb, void *arg)
 static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 {
 	struct txstat txstat;
+	uint32_t srate_tx;
 	int err;
 
 	mtx_lock(sess->lock);
 	txstat = sess->txstat;
+	srate_tx = sess->srate_tx;
 	sess->txstat.ts_synced = false;
 	mtx_unlock(sess->lock);
 
@@ -442,7 +444,7 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 
 		dur = jfs_rt - txstat.jfs_rt_ref;
 		rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref + dur *
-				    sess->srate_tx / 1000000u);
+				    srate_tx / 1000000u);
 
 		err = rtcp_encode(mb, RTCP_SR, sess->senderc,
 				  rtp_sess_ssrc(sess->rs), ntp.hi, ntp.lo,
