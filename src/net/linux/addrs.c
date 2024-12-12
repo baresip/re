@@ -1,3 +1,4 @@
+#include <string.h>
 #include <unistd.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
