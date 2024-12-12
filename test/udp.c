@@ -213,3 +213,78 @@ int test_udp(void)
 
 	return err;
 }
+
+
+#if !defined(WIN32)
+static int udp_tos(const char *addr)
+{
+	struct udp_test *ut;
+	int layer = 0;
+	int err;
+
+	ut = mem_zalloc(sizeof(*ut), destructor);
+	if (!ut)
+		return ENOMEM;
+
+	err  = sa_set_str(&ut->cli, addr, 0);
+	err |= sa_set_str(&ut->srv, addr, 0);
+	TEST_ERR(err);
+
+	err  = udp_listen(&ut->usc, &ut->cli, udp_recv_client, ut);
+	err |= udp_listen(&ut->uss, &ut->srv, udp_recv_server, ut);
+	TEST_ERR(err);
+
+	err  = udp_settos(ut->usc, 184);
+	err |= udp_settos(ut->uss, 120);
+	TEST_ERR(err);
+
+	err  = udp_local_get(ut->usc, &ut->cli);
+	err |= udp_local_get(ut->uss, &ut->srv);
+	TEST_ERR(err);
+
+	err = udp_register_helper(&ut->uh, ut->usc, layer,
+				  udp_helper_send, udp_helper_recv, ut);
+	TEST_ERR(err);
+
+	/* Send from connected client UDP socket */
+	err = udp_connect(ut->usc, &ut->srv);
+	TEST_ERR(err);
+
+	/* Start test */
+	err = send_data(ut->usc, &ut->srv, data0);
+	TEST_ERR(err);
+
+	err = re_main_timeout(100);
+	TEST_ERR(err);
+
+	if (ut->err)
+		err = ut->err;
+
+ out:
+	mem_deref(ut);
+
+	return err;
+}
+
+
+int test_udp_tos(void)
+{
+	int err;
+
+	err = udp_tos("127.0.0.1");
+	TEST_ERR(err);
+
+	err = udp_tos("::1");
+	TEST_ERR(err);
+
+ out:
+	return err;
+}
+#else
+/* Outcome of the TOS test on Windows would be dependent on the
+ * DisableUserTOSSetting Windows registry setting. */
+int test_udp_tos(void)
+{
+	return 0;
+}
+#endif

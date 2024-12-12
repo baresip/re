@@ -216,6 +216,7 @@ static const struct test tests[] = {
 	TEST(test_sys_fs_fopen),
 	TEST(test_sys_getenv),
 	TEST(test_tcp),
+	TEST(test_tcp_tos),
 	TEST(test_telev),
 	TEST(test_text2pcap),
 #ifdef USE_TLS
@@ -236,6 +237,7 @@ static const struct test tests[] = {
 	TEST(test_turn),
 	TEST(test_turn_tcp),
 	TEST(test_udp),
+	TEST(test_udp_tos),
 	TEST(test_unixsock),
 	TEST(test_uri),
 	TEST(test_uri_encode),
