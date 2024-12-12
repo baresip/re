@@ -1,3 +1,9 @@
+/**
+ * @file linux/addrs.c Get interface addresses (See rtnetlink(7))
+ *
+ * Copyright (C) 2024 Sebastian Reimers
+ */
+
 #include <string.h>
 #include <unistd.h>
 #include <linux/netlink.h>
