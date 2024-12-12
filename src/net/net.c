@@ -129,7 +129,10 @@ int net_default_source_addr_get(int af, struct sa *ip)
  */
 int net_if_apply(net_ifaddr_h *ifh, void *arg)
 {
-#ifdef HAVE_GETIFADDRS
+#ifdef LINUX
+	return net_netlink_addrs(ifh, arg);
+#endif
+#if HAVE_GETIFADDRS
 	return net_getifaddrs(ifh, arg);
 #else
 	return net_if_list(ifh, arg);
