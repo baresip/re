@@ -1450,12 +1450,25 @@ int tcp_settos(struct tcp_sock *ts, uint32_t tos)
 {
 	int err = 0;
 	int v = tos;
+	struct sa sa;
 
 	if (!ts)
 		return EINVAL;
 
 	ts->tos = tos;
-	err = tcp_sock_setopt(ts, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	err = tcp_local_get(ts, &sa);
+	if (err)
+		return err;
+
+	if (sa_af(&sa) == AF_INET) {
+		err = tcp_sock_setopt(ts, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	}
+#if defined(IPV6_TCLASS) && !defined(WIN32)
+	else  if (sa_af(&sa) == AF_INET6) {
+		err = tcp_sock_setopt(ts, IPPROTO_IPV6, IPV6_TCLASS, &v,
+				      sizeof(v));
+	}
+#endif
 
 	return err;
 }
@@ -1465,16 +1478,31 @@ int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
 {
 	int err = 0;
 	int v = tos;
+	struct sa sa;
 
 	if (!tc)
 		return EINVAL;
 
 	tc->tos = tos;
-	if (tc->fdc != RE_BAD_SOCK) {
+	if (tc->fdc == RE_BAD_SOCK)
+		return err;
+
+	err = tcp_conn_local_get(tc, &sa);
+	if (err)
+		return err;
+
+	if (sa_af(&sa) == AF_INET) {
 		if (0 != setsockopt(tc->fdc, IPPROTO_IP, IP_TOS,
 					BUF_CAST &v, sizeof(v)))
 			err = RE_ERRNO_SOCK;
 	}
+#if defined(IPV6_TCLASS) && !defined(WIN32)
+	else  if (sa_af(&sa) == AF_INET6) {
+		if (0 != setsockopt(tc->fdc, IPPROTO_IPV6, IPV6_TCLASS,
+					BUF_CAST &v, sizeof(v)))
+			err = RE_ERRNO_SOCK;
+	}
+#endif
 
 	return err;
 }
