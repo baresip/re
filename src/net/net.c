@@ -129,6 +129,9 @@ int net_default_source_addr_get(int af, struct sa *ip)
  */
 int net_if_apply(net_ifaddr_h *ifh, void *arg)
 {
+#ifdef LINUX
+	return net_netlink_addrs(ifh, arg);
+#endif
 #ifdef HAVE_GETIFADDRS
 	return net_getifaddrs(ifh, arg);
 #else

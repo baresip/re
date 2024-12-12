@@ -606,6 +606,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND SRCS
     src/net/linux/rt.c
+    src/net/linux/addrs.c
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   list(APPEND SRCS

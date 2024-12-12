@@ -73,6 +73,7 @@ int net_if_getlinklocal(const char *ifname, int af, struct sa *ip);
 
 /* Net interface (ifaddrs.c) */
 int net_getifaddrs(net_ifaddr_h *ifh, void *arg);
+int net_netlink_addrs(net_ifaddr_h *ifh, void *arg);
 
 
 /* Net route */
