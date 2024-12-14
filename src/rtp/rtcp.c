@@ -102,9 +102,7 @@ static int encode_gnack(struct mbuf *mb, void *arg)
 {
 	struct gnack *fci = arg;
 
-	int err = mbuf_write_u16(mb, htons(fci->pid));
-	err |= mbuf_write_u16(mb, htons(fci->blp));
-	return err;
+	return rtcp_rtpfb_gnack_encode(mb, fci->pid, fci->blp);
 }
 
 
