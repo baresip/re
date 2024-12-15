@@ -20,6 +20,8 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+enum { BUFSZ = 8192, MAXIF = 255 };
+
 
 static void parse_rtattr(struct rtattr *tb[], struct rtattr *rta, int len)
 {
@@ -42,8 +44,38 @@ static bool is_ipv6_deprecated(uint32_t flags)
 	return false;
 }
 
-static bool parse_msg(struct nlmsghdr *msg, int len, net_ifaddr_h *ifh,
-		      void *arg)
+
+static bool parse_msg_link(struct nlmsghdr *msg, size_t len, int *iff_up)
+{
+	struct nlmsghdr *nlh;
+	struct ifinfomsg *ifi;
+
+	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
+		if (nlh->nlmsg_type == NLMSG_DONE) {
+			return true;
+		}
+		if (nlh->nlmsg_type == NLMSG_ERROR) {
+			DEBUG_WARNING("netlink recv error\n");
+			return true;
+		}
+
+		ifi = NLMSG_DATA(nlh);
+
+		if (ifi->ifi_index >= MAXIF) {
+			DEBUG_WARNING("Max interface index [%d] reached!\n",
+				      MAXIF);
+			return false;
+		}
+
+		iff_up[ifi->ifi_index] = ifi->ifi_flags & IFF_UP;
+	}
+
+	return false;
+}
+
+
+static bool parse_msg_addr(struct nlmsghdr *msg, size_t len, net_ifaddr_h *ifh,
+			   int *iff_up, void *arg)
 {
 	struct nlmsghdr *nlh;
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
@@ -56,7 +88,7 @@ static bool parse_msg(struct nlmsghdr *msg, int len, net_ifaddr_h *ifh,
 		}
 		if (nlh->nlmsg_type == NLMSG_ERROR) {
 			DEBUG_WARNING("netlink recv error\n");
-			return false;
+			return true;
 		}
 
 		struct ifaddrmsg *ifa = NLMSG_DATA(nlh);
@@ -66,6 +98,9 @@ static bool parse_msg(struct nlmsghdr *msg, int len, net_ifaddr_h *ifh,
 			     nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
 
 		if (!rta_tb[IFA_ADDRESS])
+			continue;
+
+		if (ifa->ifa_index < MAXIF && !iff_up[ifa->ifa_index])
 			continue;
 
 		if (rta_tb[IFA_FLAGS] && ifa->ifa_family == AF_INET6) {
@@ -100,9 +135,10 @@ static bool parse_msg(struct nlmsghdr *msg, int len, net_ifaddr_h *ifh,
 int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 {
 	int err = 0;
-	char buffer[8192];
+	char buffer[BUFSZ];
 	re_sock_t sock;
 	int len;
+	int iff_up[MAXIF] = {0};
 
 	struct {
 		struct nlmsghdr nlh;
@@ -121,6 +157,25 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	struct timeval timeout = {5, 0};
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
+	/* GETLINK */
+	memset(&req, 0, sizeof(req));
+	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+	req.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+	req.nlh.nlmsg_type  = RTM_GETLINK;
+
+	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0) {
+		err = errno;
+		DEBUG_WARNING("sendto failed %m\n", err);
+		goto out;
+	}
+
+	while ((len = (int)recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+		if (parse_msg_link((struct nlmsghdr *)buffer, (size_t)len,
+				   iff_up))
+			break;
+	}
+
+	/* GETADDR */
 	memset(&req, 0, sizeof(req));
 	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
 	req.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
@@ -133,7 +188,8 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = (int)recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg((struct nlmsghdr *)buffer, len, ifh, arg))
+		if (parse_msg_addr((struct nlmsghdr *)buffer, (size_t)len, ifh,
+				   iff_up, arg))
 			break;
 	}
 
