@@ -131,8 +131,7 @@ int net_if_apply(net_ifaddr_h *ifh, void *arg)
 {
 #ifdef LINUX
 	return net_netlink_addrs(ifh, arg);
-#endif
-#ifdef HAVE_GETIFADDRS
+#elif HAVE_GETIFADDRS
 	return net_getifaddrs(ifh, arg);
 #else
 	return net_if_list(ifh, arg);
