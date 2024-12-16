@@ -45,7 +45,7 @@ static bool is_ipv6_deprecated(uint32_t flags)
 }
 
 
-static bool parse_msg_link(struct nlmsghdr *msg, size_t len, int *iff_up)
+static bool parse_msg_link(struct nlmsghdr *msg, ssize_t len, int *iff_up)
 {
 	struct nlmsghdr *nlh;
 	struct ifinfomsg *ifi;
@@ -74,8 +74,8 @@ static bool parse_msg_link(struct nlmsghdr *msg, size_t len, int *iff_up)
 }
 
 
-static bool parse_msg_addr(struct nlmsghdr *msg, size_t len, net_ifaddr_h *ifh,
-			   int *iff_up, void *arg)
+static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
+			   net_ifaddr_h *ifh, int *iff_up, void *arg)
 {
 	struct nlmsghdr *nlh;
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
@@ -137,7 +137,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	int err = 0;
 	char buffer[BUFSZ];
 	re_sock_t sock;
-	int len;
+	ssize_t len;
 	int iff_up[MAXIF] = {0};
 
 	struct {
@@ -169,9 +169,8 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 		goto out;
 	}
 
-	while ((len = (int)recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_link((struct nlmsghdr *)buffer, (size_t)len,
-				   iff_up))
+	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+		if (parse_msg_link((struct nlmsghdr *)buffer, len, iff_up))
 			break;
 	}
 
@@ -187,9 +186,9 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 		goto out;
 	}
 
-	while ((len = (int)recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_addr((struct nlmsghdr *)buffer, (size_t)len, ifh,
-				   iff_up, arg))
+	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+		if (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh, iff_up,
+				   arg))
 			break;
 	}
 
