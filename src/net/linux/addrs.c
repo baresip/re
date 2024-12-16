@@ -165,13 +165,19 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0) {
 		err = errno;
-		DEBUG_WARNING("sendto failed %m\n", err);
+		DEBUG_WARNING("GETLINK send failed %m\n", err);
 		goto out;
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
 		if (parse_msg_link((struct nlmsghdr *)buffer, len, iff_up))
 			break;
+	}
+
+	if (len < 0) {
+		err = errno;
+		DEBUG_WARNING("GETLINK recv failed %m\n", err);
+		goto out;
 	}
 
 	/* GETADDR */
@@ -182,7 +188,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0) {
 		err = errno;
-		DEBUG_WARNING("sendto failed %m\n", err);
+		DEBUG_WARNING("GETADDR send failed %m\n", err);
 		goto out;
 	}
 
@@ -190,6 +196,11 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 		if (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh, iff_up,
 				   arg))
 			break;
+	}
+
+	if (len < 0) {
+		err = errno;
+		DEBUG_WARNING("GETADDR recv failed %m\n", err);
 	}
 
 out:
