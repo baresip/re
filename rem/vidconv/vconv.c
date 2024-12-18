@@ -825,15 +825,15 @@ void vidconv_aspect(struct vidframe *dst, const struct vidframe *src,
  * @param src  Source video frame
  * @param r    Drawing area in destination frame
  */
-void vidconv_center(struct vidframe *dst, struct vidframe *src,
+void vidconv_center(struct vidframe *dst, const struct vidframe *src,
 		    struct vidrect *r)
 {
+	struct vidframe sc = *src;
 
-	r->w = min(r->w, src->size.w);
-	r->h = min(r->h, src->size.h);
+	double rh = (double)src->size.h / (double)r->h;
 
-	src->xoffs = (src->size.w - r->w) / 2;
-	src->yoffs = (src->size.h - r->h) / 2;
+	sc.size.w = (unsigned)min((double)src->size.w, (double)r->w * rh);
+	sc.xoffs  = ((src->size.w / rh) - r->w) / 2;
 
-	vidconv(dst, src, r);
+	vidconv(dst, &sc, r);
 }
