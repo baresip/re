@@ -482,24 +482,6 @@ int nat_alloc(struct nat **natp, enum natbox_type type,
 
 
 /*
- * TCP Server
- */
-
-enum behavior {
-	BEHAVIOR_NORMAL,
-	BEHAVIOR_REJECT
-};
-
-struct tcp_server {
-	struct tcp_sock *ts;
-	enum behavior behavior;
-	struct sa laddr;
-};
-
-int tcp_server_alloc(struct tcp_server **srvp, enum behavior behavior);
-
-
-/*
  * SIP Server
  */
 

@@ -105,7 +105,6 @@ set(SRCS
   mock/nat.c
   mock/sipsrv.c
   mock/stunsrv.c
-  mock/tcpsrv.c
   mock/turnsrv.c
   mqueue.c
   net.c
