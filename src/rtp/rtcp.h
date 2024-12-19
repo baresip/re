@@ -53,8 +53,6 @@ int rtcp_make_sdes_cname(const struct rtp_sock *rs, struct mbuf *mb);
 
 /* RTCP Feedback */
 int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp);
-int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
-			 uint8_t picid);
 int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n);
 int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
 int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
