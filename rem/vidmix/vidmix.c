@@ -89,7 +89,7 @@ static void source_destructor(void *arg)
 
 
 static inline void source_mix(struct vidframe *mframe,
-			      struct vidframe *frame_src,
+			      const struct vidframe *frame_src,
 			      unsigned n, unsigned rows, unsigned idx,
 			      bool focus, bool focus_this, bool focus_full)
 {
