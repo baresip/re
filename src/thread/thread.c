@@ -94,6 +94,8 @@ static int handler(void *p)
 #elif defined(HAVE_PTHREAD)
 #if defined(OPENBSD)
 	(void)pthread_set_name_np(*th.thr, th.name);
+#elif defined(__NetBSD__)
+	(void)pthread_setname_np(*th.thr, "%s", th.name);
 #else
 	(void)pthread_setname_np(*th.thr, th.name);
 #endif

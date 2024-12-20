@@ -200,6 +200,7 @@ int test_fmt_str_error(void);
 int test_fmt_str_itoa(void);
 int test_fmt_str_wchar(void);
 int test_fmt_timestamp(void);
+int test_fmt_trim(void);
 int test_fmt_unicode(void);
 int test_fmt_unicode_decode(void);
 int test_g711_alaw(void);
@@ -252,6 +253,7 @@ int test_net_if(void);
 int test_net_dst_source_addr_get(void);
 int test_odict(void);
 int test_odict_array(void);
+int test_odict_pl(void);
 int test_pcp(void);
 int test_trice_cand(void);
 int test_trice_candpair(void);
@@ -331,6 +333,7 @@ int test_sys_fs_isfile(void);
 int test_sys_fs_fopen(void);
 int test_sys_getenv(void);
 int test_tcp(void);
+int test_tcp_tos(void);
 int test_telev(void);
 int test_text2pcap(void);
 int test_thread(void);
@@ -342,6 +345,7 @@ int test_turn(void);
 int test_turn_tcp(void);
 int test_turn_thread(void);
 int test_udp(void);
+int test_udp_tos(void);
 int test_unixsock(void);
 int test_uri(void);
 int test_uri_encode(void);
@@ -405,15 +409,6 @@ const char *test_datapath(void);
 /*
  * Mock objects
  */
-
-
-struct pf {
-	struct udp_helper *uh;
-	struct udp_sock *us;
-	char name[16];
-};
-
-int pf_create(struct pf **pfp, struct udp_sock *us, const char *name);
 
 
 struct stunserver {
@@ -489,24 +484,6 @@ int nat_alloc(struct nat **natp, enum natbox_type type,
 
 
 /*
- * TCP Server
- */
-
-enum behavior {
-	BEHAVIOR_NORMAL,
-	BEHAVIOR_REJECT
-};
-
-struct tcp_server {
-	struct tcp_sock *ts;
-	enum behavior behavior;
-	struct sa laddr;
-};
-
-int tcp_server_alloc(struct tcp_server **srvp, enum behavior behavior);
-
-
-/*
  * SIP Server
  */
 
@@ -522,15 +499,6 @@ struct sip_server {
 int sip_server_alloc(struct sip_server **srvp);
 int sip_server_uri(struct sip_server *srv, char *uri, size_t sz,
 		   enum sip_transp tp);
-
-
-/*
- * Packet fuzzing
- */
-
-struct fuzz;
-
-int fuzz_register_tcpconn(struct fuzz **fuzzp, struct tcp_conn *tc);
 
 
 /*

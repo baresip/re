@@ -321,7 +321,9 @@ void rtcp_set_srate_tx(struct rtp_sock *rs, uint32_t srate_tx)
 	if (!sess)
 		return;
 
+	mtx_lock(sess->lock);
 	sess->srate_tx = srate_tx;
+	mtx_unlock(sess->lock);
 }
 
 
@@ -424,10 +426,12 @@ static int encode_handler(struct mbuf *mb, void *arg)
 static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 {
 	struct txstat txstat;
+	uint32_t srate_tx;
 	int err;
 
 	mtx_lock(sess->lock);
 	txstat = sess->txstat;
+	srate_tx = sess->srate_tx;
 	sess->txstat.ts_synced = false;
 	mtx_unlock(sess->lock);
 
@@ -440,7 +444,7 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 
 		dur = jfs_rt - txstat.jfs_rt_ref;
 		rtp_ts = (uint32_t)((uint64_t)txstat.ts_ref + dur *
-				    sess->srate_tx / 1000000u);
+				    srate_tx / 1000000u);
 
 		err = rtcp_encode(mb, RTCP_SR, sess->senderc,
 				  rtp_sess_ssrc(sess->rs), ntp.hi, ntp.lo,
@@ -456,6 +460,16 @@ static int mk_sr(struct rtcp_sess *sess, struct mbuf *mb)
 	}
 
 	return err;
+}
+
+
+int rtcp_make_sr(const struct rtp_sock *rs, struct mbuf *mb)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return EINVAL;
+
+	return mk_sr(sess, mb);
 }
 
 
@@ -476,6 +490,16 @@ static int sdes_encode_handler(struct mbuf *mb, void *arg)
 static int mk_sdes(struct rtcp_sess *sess, struct mbuf *mb)
 {
 	return rtcp_encode(mb, RTCP_SDES, 1, sdes_encode_handler, sess);
+}
+
+
+int rtcp_make_sdes_cname(const struct rtp_sock *rs, struct mbuf *mb)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return EINVAL;
+
+	return mk_sdes(sess, mb);
 }
 
 
@@ -552,6 +576,16 @@ static void timeout(void *arg)
 
 static void schedule(struct rtcp_sess *sess)
 {
+	tmr_start(&sess->tmr, sess->interval, timeout, sess);
+}
+
+
+void rtcp_schedule_report(const struct rtp_sock *rs)
+{
+	struct rtcp_sess *sess = rtp_rtcp_sess(rs);
+	if (!sess)
+		return;
+
 	tmr_start(&sess->tmr, sess->interval, timeout, sess);
 }
 

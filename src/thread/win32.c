@@ -30,6 +30,7 @@ struct thread {
 	void *arg;
 };
 
+
 static int dtor_register(tss_t key, tss_dtor_t dtor)
 {
 	int i;
@@ -107,7 +108,8 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 		goto out;
 	}
 
-	*thr = (thrd_t)handle;
+	thr->hdl = (HANDLE)handle;
+	thr->id	 = GetThreadId((HANDLE)handle);
 out:
 	if (err)
 		mem_deref(th);
@@ -118,19 +120,22 @@ out:
 
 int thrd_equal(thrd_t lhs, thrd_t rhs)
 {
-	return GetThreadId(lhs) == GetThreadId(rhs);
+	return lhs.id == rhs.id;
 }
 
 
 thrd_t thrd_current(void)
 {
-	return GetCurrentThread();
+	/* GetCurrentThread() returns only a pseudo handle and can not used
+	 * within other threads */
+	thrd_t t = {.hdl = GetCurrentThread(), .id = GetCurrentThreadId()};
+	return t;
 }
 
 
 int thrd_detach(thrd_t thr)
 {
-	CloseHandle(thr);
+	CloseHandle(thr.hdl);
 	return thrd_success;
 }
 
@@ -139,19 +144,19 @@ int thrd_join(thrd_t thr, int *res)
 {
 	DWORD w, code;
 
-	w = WaitForSingleObject(thr, INFINITE);
+	w = WaitForSingleObject(thr.hdl, INFINITE);
 	if (w != WAIT_OBJECT_0)
 		return thrd_error;
 
 	if (res) {
-		if (!GetExitCodeThread(thr, &code)) {
-			CloseHandle(thr);
+		if (!GetExitCodeThread(thr.hdl, &code)) {
+			CloseHandle(thr.hdl);
 			return thrd_error;
 		}
 		*res = (int)code;
 	}
 
-	CloseHandle(thr);
+	CloseHandle(thr.hdl);
 	return thrd_success;
 }
 

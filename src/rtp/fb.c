@@ -48,24 +48,6 @@ int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp)
 }
 
 
-/**
- * Encode an RTCP Slice Loss Indication (SLI) message
- *
- * @param mb     Buffer to encode into
- * @param first  Macroblock (MB) address of the first lost macroblock
- * @param number Number of lost macroblocks
- * @param picid  Picture ID
- *
- * @return 0 for success, otherwise errorcode
- */
-int rtcp_psfb_sli_encode(struct mbuf *mb, uint16_t first, uint16_t number,
-			 uint8_t picid)
-{
-	const uint32_t v = first<<19 | number<<6 | picid;
-	return mbuf_write_u32(mb, htonl(v));
-}
-
-
 /* Decode functions */
 
 

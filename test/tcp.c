@@ -227,3 +227,67 @@ int test_tcp(void)
 
 	return err;
 }
+
+
+#if !defined(WIN32)
+static int tcp_tos(const char *addr)
+{
+	struct tcp_test *tt;
+	struct sa srv;
+	int err;
+
+	tt = mem_zalloc(sizeof(*tt), destructor);
+	if (!tt)
+		return ENOMEM;
+
+	err = sa_set_str(&srv, addr, 0);
+	TEST_ERR(err);
+
+	err = tcp_listen(&tt->ts, &srv, tcp_server_conn_handler, tt);
+	TEST_ERR(err);
+
+	err  = tcp_settos(tt->ts, 184);
+	TEST_ERR(err);
+
+	err = tcp_local_get(tt->ts, &srv);
+	TEST_ERR(err);
+
+	err = tcp_connect(&tt->tc, &srv, tcp_client_estab_handler,
+			  tcp_client_recv_handler, tcp_client_close_handler,
+			  tt);
+	TEST_ERR(err);
+
+	err = re_main_timeout(500);
+	TEST_ERR(err);
+
+	if (tt->err)
+		err = tt->err;
+
+ out:
+	mem_deref(tt);
+
+	return err;
+}
+
+
+int test_tcp_tos(void)
+{
+	int err;
+
+	err = tcp_tos("127.0.0.1");
+	TEST_ERR(err);
+
+	err = tcp_tos("::1");
+	TEST_ERR(err);
+
+ out:
+	return err;
+}
+#else
+/* Outcome of the TOS test on Windows would be dependent on the
+ * DisableUserTOSSetting Windows registry setting. */
+int test_tcp_tos(void)
+{
+	return 0;
+}
+#endif

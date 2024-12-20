@@ -37,4 +37,8 @@ jobs:
 
     - name: make
       run: |
-        cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j
+        cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j 16 -t retest
+
+    - name: retest
+      run: |
+        ./build/test/retest -r -v

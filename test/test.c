@@ -147,6 +147,7 @@ static const struct test tests[] = {
 	TEST(test_mqueue),
 	TEST(test_odict),
 	TEST(test_odict_array),
+	TEST(test_odict_pl),
 	TEST(test_pcp),
 	TEST(test_remain),
 	TEST(test_re_assert_se),
@@ -215,8 +216,10 @@ static const struct test tests[] = {
 	TEST(test_sys_fs_fopen),
 	TEST(test_sys_getenv),
 	TEST(test_tcp),
+	TEST(test_tcp_tos),
 	TEST(test_telev),
 	TEST(test_text2pcap),
+	TEST(test_fmt_trim),
 #ifdef USE_TLS
 	TEST(test_tls),
 	TEST(test_tls_ec),
@@ -235,6 +238,7 @@ static const struct test tests[] = {
 	TEST(test_turn),
 	TEST(test_turn_tcp),
 	TEST(test_udp),
+	TEST(test_udp_tos),
 	TEST(test_unixsock),
 	TEST(test_uri),
 	TEST(test_uri_encode),
@@ -845,7 +849,7 @@ int test_multithread(void)
 	for (i=0; i<RE_ARRAY_SIZE(threadv); i++) {
 
 		if (threadv[i].err != 0) {
-			re_printf("%u failed: %-30s  [%d] [%m]\n", i,
+			re_printf("%zu failed: %-30s  [%d] [%m]\n", i,
 				  threadv[i].test->name,
 				  threadv[i].err, threadv[i].err);
 			err = threadv[i].err;
@@ -1109,7 +1113,7 @@ int test_integration(const char *name, bool verbose)
 		if (str_isset(name) && test->name)
 			continue;
 
-		(void)re_fprintf(stderr, "  %-28s: ", test->name);
+		(void)re_fprintf(stderr, "  %-32s: ", test->name);
 
 		if (test->exec)
 			err = test->exec();

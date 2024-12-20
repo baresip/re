@@ -33,5 +33,4 @@ const char *tls_cert_host(struct tls_cert *hc);
 const struct list *tls_certs(const struct tls *tls);
 
 struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni);
-int tls_verify_handler(int ok, X509_STORE_CTX *ctx);
 void tls_enable_sni(struct tls *tls);

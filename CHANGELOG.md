@@ -6,9 +6,92 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [v3.14.0] - 2024-07-23
+## v3.18.0 - 2024-12-11
 
 ## What's Changed
+* odict: add odict_pl_add() by @cspiel1 in https://github.com/baresip/re/pull/1208
+* ci/build: remove Ubuntu 20.04, add 24.04, use GCC 14 on 24.04 by @robert-scheck in https://github.com/baresip/re/pull/1210
+* test: vertical alignment of integration test names by @alfredh in https://github.com/baresip/re/pull/1212
+* sip: update doxygen comment by @alfredh in https://github.com/baresip/re/pull/1215
+* test/http: decrease test runs from 20 to 3 to decrease test time by @fAuernigg in https://github.com/baresip/re/pull/1216
+* sip/transp: allow requests w/o Max-Forwards header by @cspiel1 in https://github.com/baresip/re/pull/1217
+* test: remove unused fuzz mock by @alfredh in https://github.com/baresip/re/pull/1220
+* rtp: use rtp_pt_is_rtcp() for RTCP demultiplexing by @alfredh in https://github.com/baresip/re/pull/1221
+* aes: remove 192-bits CTR-mode (looks unused) by @alfredh in https://github.com/baresip/re/pull/1219
+* rtp: send all RTCP packets as compound packets by @maximilianfridrich in https://github.com/baresip/re/pull/1222
+* rtp/sess.c: lock rtcp_sess in rtcp_set_srate_tx to fix data race by @maximilianfridrich in https://github.com/baresip/re/pull/1223
+* Update Doxyfile by @alfredh in https://github.com/baresip/re/pull/1224
+* test: remove unused packet-filter mock by @alfredh in https://github.com/baresip/re/pull/1227
+* bump version to 3.18.0 by @alfredh in https://github.com/baresip/re/pull/1230
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.17.0...v3.18.0
+
+
+## v3.17.0 - 2024-11-06
+
+### What's Changed
+* types: remove old BREAKPOINT macro by @alfredh in https://github.com/baresip/re/pull/1194
+* dnsc: Fallback to getaddrinfo without any DNS servers by @weili-jiang in https://github.com/baresip/re/pull/1195
+* dns/client: return ENOTSUP if no server or not getaddrinfo by @sreimers in https://github.com/baresip/re/pull/1196
+* conf: add conf_get_float by @juha-h in https://github.com/baresip/re/pull/1198
+* ci/run-on-arch: use ubuntu 22.04 by @sreimers in https://github.com/baresip/re/pull/1204
+* thread: fix thrd_equal win32 handle by @sreimers in https://github.com/baresip/re/pull/1203
+* test: add pktsize to test_h264_packet_base() by @alfredh in https://github.com/baresip/re/pull/1205
+* tls: make tls_verify_handler() static by @alfredh in https://github.com/baresip/re/pull/1201
+* types: fix clang-tidy warning (gcc bit fields workaround) by @sreimers in https://github.com/baresip/re/pull/1206
+
+### New Contributors
+* @weili-jiang made their first contribution in https://github.com/baresip/re/pull/1195
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.16.0...v3.17.0
+
+
+## v3.16.0 - 2024-10-02
+
+### What's Changed
+* thread: fix pthread_setname_np NetBSD by @leleliu008 in https://github.com/baresip/re/pull/1182
+* ice: AI_V4MAPPED macro is missing on some BSD systems by @leleliu008 in https://github.com/baresip/re/pull/1181
+* rtp/rtcp: add RTCP Generic NACK packet send (RFC 4585 6.2.1) by @sreimers in https://github.com/baresip/re/pull/1186
+* main/fd_listen: return EMFILE if maxfds is reached by @sreimers in https://github.com/baresip/re/pull/1185
+* ci: build retest for android by @alfredh in https://github.com/baresip/re/pull/1187
+* test: minor cmake cleanup by @alfredh in https://github.com/baresip/re/pull/1188
+* test: fix re_printf format string for multithread test by @alfredh in https://github.com/baresip/re/pull/1190
+* ci: run retest on Fedora by @alfredh in https://github.com/baresip/re/pull/1191
+
+### New Contributors
+* @leleliu008 made their first contribution in https://github.com/baresip/re/pull/1182
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.15.0...v3.16.0
+
+
+## v3.15.0 - 2024-08-28
+
+### What's Changed
+* misc: remove HAVE_INET6 by @sreimers in https://github.com/baresip/re/pull/1159
+* dns/rr: fix dns_rr_print underflow by @sreimers in https://github.com/baresip/re/pull/1162
+* test/async: remove AI_ADDRCONFIG by @sreimers in https://github.com/baresip/re/pull/1165
+* retest: update usage message by @robert-scheck in https://github.com/baresip/re/pull/1166
+* add filter_registrar option by @maximilianfridrich in https://github.com/baresip/re/pull/1160
+* sa: add utility function to check if address is multicast by @cmfitch1 in https://github.com/baresip/re/pull/1168
+* tls/sni: skip SNI check if we are client or server_name absent by @maximilianfridrich in https://github.com/baresip/re/pull/1169
+* tls/sni: do not enable client verification when SNI matching is done by @maximilianfridrich in https://github.com/baresip/re/pull/1172
+* dd: Dependency Descriptor RTP header extension by @alfredh in https://github.com/baresip/re/pull/1170
+* aubuf: add AUBUF_TRACE mode with id by @sreimers in https://github.com/baresip/re/pull/1174
+* sip/transp: add client certificate to all TLS transports by @maximilianfridrich in https://github.com/baresip/re/pull/1173
+* tmr: add TMR_INIT by @sreimers in https://github.com/baresip/re/pull/1177
+* sipsess/reply: fix heap-use-after-free bug by @sreimers in https://github.com/baresip/re/pull/1179
+* version 3.15.0 by @alfredh in https://github.com/baresip/re/pull/1180
+
+### New Contributors
+* @cmfitch1 made their first contribution in https://github.com/baresip/re/pull/1168
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.14.0...v3.15.0
+
+
+## [v3.14.0] - 2024-07-23
+
+### What's Changed
 * aumix: use mutex_alloc() by @alfredh in https://github.com/baresip/re/pull/1142
 * sipreg/reg.c: stop retrying registers early after 401/407 by @maximilianfridrich in https://github.com/baresip/re/pull/1143
 * aumix: add locking in aumix_source_count() by @alfredh in https://github.com/baresip/re/pull/1145
@@ -32,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v3.13.0] - 2024-06-19
 
-## What's Changed
+### What's Changed
 * http/client: use dynamically sized buffers for PEM setters by @maximilianfridrich in https://github.com/baresip/re/pull/1117
 * tls: allow secure TLS renegotiation by @maximilianfridrich in https://github.com/baresip/re/pull/1121
 * tls: always enable USE_OPENSSL_SRTP by @alfredh in https://github.com/baresip/re/pull/1122
@@ -59,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v3.12.0] - 2024-05-15
 
-## What's Changed
+### What's Changed
 * cmake: fix static library build (vcpkg) by @alfredh in https://github.com/baresip/re/pull/1096
 * h264: add STAP-A decode with long startcodes by @alfredh in https://github.com/baresip/re/pull/1101
 * sess,request: deref request and ctrans immediately by @maximilianfridrich in https://github.com/baresip/re/pull/1099

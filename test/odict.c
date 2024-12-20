@@ -188,6 +188,39 @@ int test_odict(void)
 }
 
 
+int test_odict_pl(void)
+{
+	struct odict *od = NULL;
+	const struct odict_entry *e;
+	int err;
+
+	static struct pl pl=PL("liajsdoiausdoaudoaisudaoisdjal");
+
+	err = odict_alloc(&od, 64);
+	if (err)
+		goto out;
+
+	/* add pl */
+	err = odict_pl_add(od, "pl1", &pl);
+	TEST_ERR(err);
+
+	e = odict_lookup(od, "pl1");
+	TEST_ASSERT(e != NULL);
+
+	TEST_STRCMP(pl.p, pl.l,
+	     odict_entry_str(e), str_len(odict_entry_str(e)));
+
+	mem_deref((struct odict_entry *) e);
+	/* entry should not exist anymore */
+	e = (struct odict_entry *)odict_lookup(od, "pl1");
+	TEST_ASSERT(e == NULL);
+
+ out:
+	mem_deref(od);
+	return err;
+}
+
+
 int test_odict_array(void)
 {
 	struct odict *arr = NULL;

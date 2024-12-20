@@ -16,6 +16,7 @@ int conf_get_str(const struct conf *conf, const char *name, char *str,
 		 size_t size);
 int conf_get_u32(const struct conf *conf, const char *name, uint32_t *num);
 int conf_get_i32(const struct conf *conf, const char *name, int32_t *num);
+int conf_get_float(const struct conf *conf, const char *name, double *num);
 int conf_get_bool(const struct conf *conf, const char *name, bool *val);
 int conf_apply(const struct conf *conf, const char *name,
 	       conf_h *ch, void *arg);

@@ -27,6 +27,11 @@ static int rtcp_quick_send(struct rtp_sock *rs, enum rtcp_type type,
 
 	mb->pos = RTCP_HEADROOM;
 
+	err  = rtcp_make_sr(rs, mb);
+	err |= rtcp_make_sdes_cname(rs, mb);
+	if (err)
+		goto out;
+
 	va_start(ap, count);
 	err = rtcp_vencode(mb, type, count, ap);
 	va_end(ap);
@@ -36,6 +41,10 @@ static int rtcp_quick_send(struct rtp_sock *rs, enum rtcp_type type,
 	if (!err)
 		err = rtcp_send(rs, mb);
 
+	if (!err)
+		rtcp_schedule_report(rs);
+
+out:
 	mem_deref(mb);
 
 	return err;
@@ -86,6 +95,34 @@ int rtcp_send_fir(struct rtp_sock *rs, uint32_t ssrc)
 int rtcp_send_nack(struct rtp_sock *rs, uint16_t fsn, uint16_t blp)
 {
 	return rtcp_quick_send(rs, RTCP_NACK, 0, rtp_sess_ssrc(rs), fsn, blp);
+}
+
+
+static int encode_gnack(struct mbuf *mb, void *arg)
+{
+	struct gnack *fci = arg;
+
+	return rtcp_rtpfb_gnack_encode(mb, fci->pid, fci->blp);
+}
+
+
+/**
+ * Send an RTCP Generic NACK packet (RFC 4585 6.2.1)
+ *
+ * @param rs   RTP Socket
+ * @param ssrc SSRC of the target encoder
+ * @param fsn  First Sequence Number lost
+ * @param blp  Bitmask of lost packets
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_send_gnack(struct rtp_sock *rs, uint32_t ssrc, uint16_t fsn,
+		    uint16_t blp)
+{
+	struct gnack fci = {fsn, blp};
+	return rtcp_quick_send(rs, RTCP_RTPFB, RTCP_RTPFB_GNACK,
+			       rtp_sess_ssrc(rs), ssrc, &encode_gnack,
+			       &fci);
 }
 
 

@@ -17,12 +17,14 @@ int test_conf(void)
 	static const char *cfg =
 		"string_val\trattarei\n"
 		"u32_val       42\n"
-		"i32_val       -23\n";
+		"i32_val       -23\n"
+		"float_val     1.5\n";
 	char str[256];
 	struct conf *conf;
 	struct pl pl;
 	uint32_t u32;
 	int32_t i32;
+	double fl;
 	int err;
 
 	err = conf_alloc_buf(&conf, (uint8_t *)cfg, strlen(cfg));
@@ -41,6 +43,10 @@ int test_conf(void)
 	err = conf_get_i32(conf, "i32_val", &i32);
 	TEST_ERR(err);
 	TEST_EQUALS(-23, i32);
+
+	err = conf_get_float(conf, "float_val", &fl);
+	TEST_ERR(err);
+	TEST_EQUALS(1.5, fl);
 
 	/* Non-existing parameters */
 	if (0 == conf_get(conf, "rattarei", &pl))

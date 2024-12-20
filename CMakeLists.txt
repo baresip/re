@@ -14,13 +14,13 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(re
-  VERSION 3.14.0
+  VERSION 3.18.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 26) # bump if ABI breaks
+set(PROJECT_SOVERSION 28) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -74,7 +74,7 @@ else()
     -Wnested-externs
     -Wno-strict-aliasing
     -Wold-style-definition
-    -Wshadow -Waggregate-return
+    -Wshadow
     -Wstrict-prototypes
     -Wuninitialized
     -Wvla
@@ -85,6 +85,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(
       -Wshorten-64-to-32
       -Wno-gnu-zero-variadic-macro-arguments
+      -Wno-c2x-extensions
     )
 endif()
 
@@ -605,6 +606,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND SRCS
     src/net/linux/rt.c
+    src/net/linux/addrs.c
   )
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   list(APPEND SRCS

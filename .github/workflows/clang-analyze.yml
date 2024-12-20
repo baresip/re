@@ -10,7 +10,7 @@ on:
 
 jobs:
   clang-analyze:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -23,10 +23,10 @@ jobs:
     - name: Install clang-tools
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main"
-        sudo apt-get update && sudo apt-get install -y clang-tools-17
+        sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main"
+        sudo apt-get update && sudo apt-get install -y clang-tools-18
 
     - name: analyze
       run: | 
-        cmake -B build -DCMAKE_C_COMPILER=clang-17
-        analyze-build-17 --cdb build/compile_commands.json --status-bugs -v
+        cmake -B build -DCMAKE_C_COMPILER=clang-18
+        analyze-build-18 --cdb build/compile_commands.json --status-bugs -v

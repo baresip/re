@@ -270,7 +270,7 @@ int fs_fread(struct mbuf **mbp, const char *path)
 		return EINVAL;
 
 	err = fs_fopen(&f, path, "r");
-	if (err) {
+	if (err || !f) {
 		DEBUG_WARNING("Could not open file '%s'\n", path);
 		return err;
 	}

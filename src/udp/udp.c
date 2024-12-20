@@ -628,6 +628,7 @@ int udp_settos(struct udp_sock *us, uint8_t tos)
 {
 	int err = 0;
 	int v = tos;
+	struct sa sa;
 #ifdef WIN32
 	QOS_VERSION qos_version = { 1 , 0 };
 	QOS_TRAFFIC_TYPE qos_type = QOSTrafficTypeBestEffort;
@@ -660,7 +661,20 @@ int udp_settos(struct udp_sock *us, uint8_t tos)
 			return WSAGetLastError();
 	}
 #endif
-	err = udp_setsockopt(us, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	err = udp_local_get(us, &sa);
+	if (err)
+		return err;
+
+	if (sa_af(&sa) == AF_INET) {
+		err = udp_setsockopt(us, IPPROTO_IP, IP_TOS, &v, sizeof(v));
+	}
+#if defined(IPV6_TCLASS) && !defined(WIN32)
+	else if (sa_af(&sa) == AF_INET6) {
+		err = udp_setsockopt(us, IPPROTO_IPV6, IPV6_TCLASS, &v,
+				     sizeof(v));
+	}
+#endif
+
 	return err;
 }
 

@@ -610,7 +610,13 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h *fh,
 
 		DEBUG_INFO("fd_listen/new: fd=%d flags=0x%02x\n", fd, flags);
 
-		++re->nfds;
+		if (++re->nfds > re->maxfds) {
+			DEBUG_WARNING("fd_listen maxfds reached %d > %d\n",
+				      re->nfds, re->maxfds);
+			--re->nfds;
+			err = EMFILE;
+			goto out;
+		}
 	}
 	else {
 		if (unlikely(fhs->fd != fd)) {
@@ -649,6 +655,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h *fh,
 		break;
 	}
 
+out:
 	if (err) {
 		mem_deref(fhs);
 		DEBUG_WARNING("fd_listen err: fd=%d flags=0x%02x (%m)\n", fd,

@@ -19,7 +19,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # Module/Package Includes
 #
 
-#find_package(RE REQUIRED)
 
 ##############################################################################
 #
@@ -43,9 +42,11 @@ else()
     -Wmissing-declarations
     -Wmissing-prototypes
     -Wnested-externs
+    -Wno-strict-aliasing
     -Wold-style-definition
-    -Wshadow -Waggregate-return
+    -Wshadow
     -Wstrict-prototypes
+    -Wuninitialized
     -Wvla
   )
 endif()
@@ -101,12 +102,9 @@ set(SRCS
   md5.c
   mem.c
   mock/dnssrv.c
-  mock/fuzz.c
   mock/nat.c
-  mock/pf.c
   mock/sipsrv.c
   mock/stunsrv.c
-  mock/tcpsrv.c
   mock/turnsrv.c
   mqueue.c
   net.c
