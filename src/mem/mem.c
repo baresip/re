@@ -45,7 +45,7 @@ static const size_t mem_magic = 0xe7fb9ac4;
 static ssize_t threshold = -1;  /**< Memory threshold, disabled by default */
 
 static struct memstat memstat = {
-	0,0,0,0
+	0,0
 };
 
 static once_flag flag = ONCE_FLAG_INIT;
@@ -72,9 +72,7 @@ static inline void mem_unlock(void)
 #define STAT_ALLOC(_m, _size) \
 	mem_lock(); \
 	memstat.bytes_cur += (_size); \
-	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	++memstat.blocks_cur; \
-	memstat.blocks_peak = max(memstat.blocks_cur, memstat.blocks_peak); \
 	mem_unlock(); \
 	(_m)->size = (uint32_t)(_size); \
 	(_m)->magic = mem_magic;
@@ -83,7 +81,6 @@ static inline void mem_unlock(void)
 #define STAT_REALLOC(_m, _size) \
 	mem_lock(); \
 	memstat.bytes_cur += ((_size) - (_m)->size); \
-	memstat.bytes_peak = max(memstat.bytes_cur, memstat.bytes_peak); \
 	mem_unlock(); \
 	(_m)->size = (uint32_t)(_size)
 
@@ -533,11 +530,6 @@ int mem_status(struct re_printf *pf, void *unused)
 			  stat.blocks_cur, stat.bytes_cur,
 			  stat.bytes_cur
 			  + (stat.blocks_cur * (size_t)mem_header_size));
-	err |= re_hprintf(pf,
-			  " Peak: %zu blocks, %zu bytes (total %zu bytes)\n",
-			  stat.blocks_peak, stat.bytes_peak,
-			  stat.bytes_peak
-			  + (stat.blocks_peak * (size_t)mem_header_size));
 	err |= re_hprintf(pf, " Total %u blocks allocated\n", c);
 
 	return err;
