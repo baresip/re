@@ -16,9 +16,7 @@ typedef void (mem_destroy_h)(void *data);
 /** Memory Statistics */
 struct memstat {
 	size_t bytes_cur;    /**< Current bytes allocated      */
-	size_t bytes_peak;   /**< Peak bytes allocated         */
 	size_t blocks_cur;   /**< Current blocks allocated     */
-	size_t blocks_peak;  /**< Peak blocks allocated        */
 };
 
 void    *mem_alloc(size_t size, mem_destroy_h *dh);
