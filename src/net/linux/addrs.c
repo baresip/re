@@ -149,7 +149,10 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	struct {
 		struct nlmsghdr nlh;
-		struct ifaddrmsg ifa;
+		union {
+			struct ifinfomsg ifi;
+			struct ifaddrmsg ifa;
+		} u;
 	} req;
 
 	if (!ifh)
@@ -166,7 +169,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	/* GETLINK */
 	memset(&req, 0, sizeof(req));
-	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
 	req.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
 	req.nlh.nlmsg_type  = RTM_GETLINK;
 
