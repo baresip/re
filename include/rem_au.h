@@ -19,4 +19,11 @@ enum aufmt {
 size_t      aufmt_sample_size(enum aufmt fmt);
 const char *aufmt_name(enum aufmt fmt);
 
-uint32_t calc_nsamp(uint32_t srate, uint8_t channels, uint16_t ptime);
+uint32_t au_calc_nsamp(uint32_t srate, uint8_t channels, uint16_t ptime);
+
+/* todo: remove backwards wrapper later */
+static inline uint32_t calc_nsamp(uint32_t srate, uint8_t channels,
+				  uint16_t ptime)
+{
+	return au_calc_nsamp(srate, channels, ptime);
+}
