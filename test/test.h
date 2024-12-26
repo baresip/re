@@ -157,6 +157,7 @@ extern enum test_mode test_mode;
 int test_aac(void);
 int test_aes(void);
 int test_aes_gcm(void);
+int test_au(void);
 int test_aubuf(void);
 int test_aulevel(void);
 int test_aulength(void);
