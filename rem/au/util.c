@@ -17,7 +17,7 @@
  *
  * @return Number of samples
  */
-uint32_t calc_nsamp(uint32_t srate, uint8_t channels, uint16_t ptime)
+uint32_t au_calc_nsamp(uint32_t srate, uint8_t channels, uint16_t ptime)
 {
 	return srate * channels * ptime / 1000;
 }
