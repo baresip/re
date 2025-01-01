@@ -373,7 +373,7 @@ static int test_vidconv_center(void)
 	struct vidframe *dst = NULL;
 	struct vidframe *src = NULL;
 
-	static struct test {
+	struct test {
 		struct vidrect r;
 		struct vidsz src_sz;
 		struct vidsz dst_sz;
