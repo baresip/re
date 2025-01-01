@@ -17,6 +17,10 @@ release:
 dist: build
 	cmake --install build --prefix dist
 
+.PHONY: deb
+deb: release
+	cd build && cpack -G DEB
+
 .PHONY: test
 test: build
 	cmake --build build --parallel -t retest

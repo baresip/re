@@ -674,14 +674,11 @@ if(LIBRE_BUILD_STATIC)
   endif()
 endif()
 
+
 ##############################################################################
 #
-# Packaging section
+# PKGCONF section
 #
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  add_subdirectory(packaging)
-endif()
 
 if(NOT PC_LIBNAME)
   set(PC_LIBNAME "re")
@@ -712,7 +709,6 @@ configure_file(packaging/libre.pc.in libre.pc @ONLY)
 #
 # Install section
 #
-
 
 install(TARGETS ${RE_INSTALL_TARGETS}
   EXPORT libre
@@ -767,6 +763,16 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libre.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
   COMPONENT Development
 )
+
+
+##############################################################################
+#
+# Packaging section
+#
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  add_subdirectory(packaging)
+endif()
 
 
 ##############################################################################
