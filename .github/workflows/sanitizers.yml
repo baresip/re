@@ -14,10 +14,10 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         sanitizer: [thread, address, undefined]
     env:
-      CC: clang-17
+      CC: clang-18
       CMAKE_GENERATOR: Ninja
       CFLAGS: "-fsanitize=${{ matrix.sanitizer }} -fno-sanitize-recover=all -fno-sanitize=function"
       ASAN_OPTIONS: fast_unwind_on_malloc=0
@@ -41,8 +41,8 @@ jobs:
     - name: Install clang-tools
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main"
-        sudo apt-get update && sudo apt-get install -y clang-17
+        sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main"
+        sudo apt-get update && sudo apt-get install -y clang-tools-18
 
     - name: make info
       run: |

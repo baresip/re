@@ -81,6 +81,7 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
 		struct sa sa;
 		uint32_t flags;
+		void *addr;
 		char if_name[IF_NAMESIZE];
 
 		if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -109,13 +110,19 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 				continue;
 		}
 
+		if (rta_tb[IFA_LOCAL])
+			/* looks like point-to-point network, use local
+			 * address, instead of peer */
+			addr = RTA_DATA(rta_tb[IFA_LOCAL]);
+		else
+			addr = RTA_DATA(rta_tb[IFA_ADDRESS]);
+
 		if (ifa->ifa_family == AF_INET) {
 			sa_init(&sa, AF_INET);
-			sa.u.in.sin_addr.s_addr =
-				*(uint32_t *)RTA_DATA(rta_tb[IFA_ADDRESS]);
+			sa.u.in.sin_addr.s_addr = *(uint32_t *)addr;
 		}
 		else if (ifa->ifa_family == AF_INET6) {
-			sa_set_in6(&sa, RTA_DATA(rta_tb[IFA_ADDRESS]), 0);
+			sa_set_in6(&sa, addr, 0);
 			sa_set_scopeid(&sa, ifa->ifa_index);
 		}
 		else
@@ -142,7 +149,10 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	struct {
 		struct nlmsghdr nlh;
-		struct ifaddrmsg ifa;
+		union {
+			struct ifinfomsg ifi;
+			struct ifaddrmsg ifa;
+		} u;
 	} req;
 
 	if (!ifh)
@@ -159,7 +169,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	/* GETLINK */
 	memset(&req, 0, sizeof(req));
-	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+	req.nlh.nlmsg_len   = NLMSG_LENGTH(sizeof(struct ifinfomsg));
 	req.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
 	req.nlh.nlmsg_type  = RTM_GETLINK;
 

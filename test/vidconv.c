@@ -157,9 +157,7 @@ static void write_pattern(uint8_t *buf, size_t len)
  */
 static int test_vidconv_scaling_base(enum vidfmt via_fmt)
 {
-#define WIDTH 40
-#define HEIGHT 30
-#define SCALE 2
+	enum { WIDTH = 40, HEIGHT = 30, SCALE = 2 };
 	struct vidframe *f0 = NULL, *f1 = NULL, *f2 = NULL;
 	const struct vidsz size0 = {WIDTH, HEIGHT};
 	const struct vidsz size1 = {WIDTH*SCALE, HEIGHT*SCALE};
@@ -369,12 +367,72 @@ int test_vidconv_pixel_formats(void)
 }
 
 
+static int test_vidconv_center(void)
+{
+	int err;
+	struct vidframe *dst = NULL;
+	struct vidframe *src = NULL;
+
+	struct test {
+		struct vidrect r;
+		struct vidsz src_sz;
+		struct vidsz dst_sz;
+	} testv[] = {
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 320, .h = 180},
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 180, .h = 320},
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 1920, .h = 1080},
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 1080, .h = 1920},
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 640, .h = 720},
+		 .src_sz = {.w = 1920, .h = 1080},
+		 .dst_sz = {.w = 1280, .h = 720}},
+		{.r	 = {.x = 960, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 1024, .h = 768}, /* 4:3 */
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 320, .h = 320}, /* square */
+		 .dst_sz = {.w = 1920, .h = 1080}},
+	};
+
+	for (size_t i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+		struct test *test    = &testv[i];
+
+		err = vidframe_alloc(&src, VID_FMT_YUV420P, &test->src_sz);
+		err |= vidframe_alloc(&dst, VID_FMT_YUV420P, &test->dst_sz);
+		TEST_ERR(err);
+
+		vidconv_center(dst, src, &test->r);
+
+		src = mem_deref(src);
+		dst = mem_deref(dst);
+	}
+
+out:
+	src = mem_deref(src);
+	dst = mem_deref(dst);
+
+	return err;
+}
+
+
 int test_vidconv(void)
 {
 	int err;
 
 	err = test_vid_rgb2yuv();
+	TEST_ERR(err);
 
+	err = test_vidconv_center();
+	TEST_ERR(err);
+
+out:
 	return err;
 }
 

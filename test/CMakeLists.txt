@@ -70,6 +70,7 @@ set(SRCS
   aac.c
   aes.c
   async.c
+  au.c
   aubuf.c
   aulength.c
   aulevel.c
