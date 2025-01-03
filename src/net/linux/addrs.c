@@ -12,6 +12,8 @@
 
 #include <re_types.h>
 #include <re_fmt.h>
+#include <re_list.h>
+#include <re_mem.h>
 #include <re_sa.h>
 #include <re_net.h>
 #include "macros.h"
@@ -20,7 +22,12 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-enum { BUFSZ = 8192, MAXIF = 255 };
+enum { BUFSZ = 8192 };
+
+struct iff_up_e {
+	struct le le;
+	uint32_t ifi_index;
+};
 
 
 static void parse_rtattr(struct rtattr *tb[], struct rtattr *rta, int len)
@@ -45,51 +52,56 @@ static bool is_ipv6_deprecated(uint32_t flags)
 }
 
 
-static bool parse_msg_link(struct nlmsghdr *msg, ssize_t len, int *iff_up)
+static int parse_msg_link(struct nlmsghdr *msg, ssize_t len,
+			  struct list *iff_up_l)
 {
 	struct nlmsghdr *nlh;
 	struct ifinfomsg *ifi;
 
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
 		if (nlh->nlmsg_type == NLMSG_DONE) {
-			return true;
+			return 0;
 		}
 		if (nlh->nlmsg_type == NLMSG_ERROR) {
 			DEBUG_WARNING("netlink recv error\n");
-			return true;
+			return EBADMSG;
 		}
 
 		ifi = NLMSG_DATA(nlh);
 
-		if (ifi->ifi_index >= MAXIF) {
-			DEBUG_WARNING("Max interface index [%d] reached!\n",
-				      MAXIF);
-			return false;
-		}
+		if (!(ifi->ifi_flags & IFF_UP))
+			continue;
 
-		iff_up[ifi->ifi_index] = ifi->ifi_flags & IFF_UP;
+		struct iff_up_e *e = mem_zalloc(sizeof(struct iff_up_e), NULL);
+		if (!e)
+			return ENOMEM;
+
+		e->ifi_index = ifi->ifi_index;
+
+		list_append(iff_up_l, &e->le, e);
 	}
 
-	return false;
+	return EALREADY;
 }
 
 
-static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
-			   net_ifaddr_h *ifh, int *iff_up, void *arg)
+static int parse_msg_addr(struct nlmsghdr *msg, ssize_t len, net_ifaddr_h *ifh,
+			  struct list *iff_up_l, void *arg)
 {
 	struct nlmsghdr *nlh;
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
 		struct sa sa;
 		uint32_t flags;
+		bool iff_up = false;
 		void *addr;
 		char if_name[IF_NAMESIZE];
 
 		if (nlh->nlmsg_type == NLMSG_DONE) {
-			return true;
+			return 0;
 		}
 		if (nlh->nlmsg_type == NLMSG_ERROR) {
 			DEBUG_WARNING("netlink recv error\n");
-			return true;
+			return EBADMSG;
 		}
 
 		struct ifaddrmsg *ifa = NLMSG_DATA(nlh);
@@ -101,7 +113,17 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 		if (!rta_tb[IFA_ADDRESS])
 			continue;
 
-		if (ifa->ifa_index < MAXIF && !iff_up[ifa->ifa_index])
+		struct le *le;
+		LIST_FOREACH(iff_up_l, le)
+		{
+			struct iff_up_e *e = le->data;
+			if (ifa->ifa_index == e->ifi_index) {
+				iff_up = true;
+				break;
+			}
+		}
+
+		if (!iff_up)
 			continue;
 
 		if (rta_tb[IFA_FLAGS] && ifa->ifa_family == AF_INET6) {
@@ -132,10 +154,10 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 			continue;
 
 		if (ifh(if_name, &sa, arg))
-			return true;
+			return 0;
 	}
 
-	return false;
+	return EALREADY;
 }
 
 
@@ -145,11 +167,12 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	char buffer[BUFSZ];
 	re_sock_t sock;
 	ssize_t len;
-	int iff_up[MAXIF] = {0};
+	struct list iff_up_l = LIST_INIT;
 
 	struct {
 		struct nlmsghdr nlh;
-		union {
+		union
+		{
 			struct ifinfomsg ifi;
 			struct ifaddrmsg ifa;
 		} u;
@@ -180,9 +203,13 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_link((struct nlmsghdr *)buffer, len, iff_up))
+		err = parse_msg_link((struct nlmsghdr *)buffer, len,
+				     &iff_up_l);
+		if (err != EALREADY)
 			break;
 	}
+	if (err)
+		goto out;
 
 	if (len < 0) {
 		err = errno;
@@ -203,10 +230,13 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh, iff_up,
-				   arg))
+		err = (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh,
+				      &iff_up_l, arg));
+		if (err != EALREADY)
 			break;
 	}
+	if (err)
+		goto out;
 
 	if (len < 0) {
 		err = errno;
@@ -215,6 +245,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 out:
 	close(sock);
+	list_flush(&iff_up_l);
 
 	return err;
 }
