@@ -68,8 +68,13 @@ int net_if_getname(char *ifname, size_t sz, int af, const struct sa *ip)
 	ife.found  = false;
 
 	err = net_if_apply(if_getname_handler, &ife);
+	if (err)
+		return err;
 
-	return ife.found ? err : ENODEV;
+	if (!ife.found)
+		return ENODEV;
+
+	return 0;
 }
 
 
