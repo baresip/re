@@ -24,7 +24,7 @@ static bool ipv6_handler(const char *ifname, const struct sa *sa, void *arg)
 }
 
 
-static bool ipv6_supported(void)
+bool test_ipv6_supported(void)
 {
 	bool supp = false;
 
@@ -51,7 +51,7 @@ int test_net_dst_source_addr_get(void)
 
 	TEST_ASSERT(sa_is_loopback(&ip));
 
-	if (ipv6_supported()) {
+	if (test_ipv6_supported()) {
 
 		sa_init(&dst, AF_INET6);
 		sa_init(&ip, AF_UNSPEC);

@@ -405,6 +405,7 @@ int test_load_file(struct mbuf *mb, const char *filename);
 int test_write_file(struct mbuf *mb, const char *filename);
 void test_set_datapath(const char *path);
 const char *test_datapath(void);
+bool test_ipv6_supported(void);
 
 
 /*

@@ -277,8 +277,10 @@ int test_tcp_tos(void)
 	err = tcp_tos("127.0.0.1");
 	TEST_ERR(err);
 
-	err = tcp_tos("::1");
-	TEST_ERR(err);
+	if (test_ipv6_supported()) {
+		err = tcp_tos("::1");
+		TEST_ERR(err);
+	}
 
  out:
 	return err;
