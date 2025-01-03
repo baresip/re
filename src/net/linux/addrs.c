@@ -52,19 +52,19 @@ static bool is_ipv6_deprecated(uint32_t flags)
 }
 
 
-static bool parse_msg_link(struct nlmsghdr *msg, ssize_t len,
-			   struct list *iff_up_l)
+static int parse_msg_link(struct nlmsghdr *msg, ssize_t len,
+			  struct list *iff_up_l)
 {
 	struct nlmsghdr *nlh;
 	struct ifinfomsg *ifi;
 
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
 		if (nlh->nlmsg_type == NLMSG_DONE) {
-			return true;
+			return 0;
 		}
 		if (nlh->nlmsg_type == NLMSG_ERROR) {
 			DEBUG_WARNING("netlink recv error\n");
-			return true;
+			return EBADMSG;
 		}
 
 		ifi = NLMSG_DATA(nlh);
@@ -74,19 +74,19 @@ static bool parse_msg_link(struct nlmsghdr *msg, ssize_t len,
 
 		struct iff_up_e *e = mem_zalloc(sizeof(struct iff_up_e), NULL);
 		if (!e)
-			return true;
+			return ENOMEM;
 
 		e->ifi_index = ifi->ifi_index;
 
 		list_append(iff_up_l, &e->le, e);
 	}
 
-	return false;
+	return EALREADY;
 }
 
 
-static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
-			   net_ifaddr_h *ifh, struct list *iff_up_l, void *arg)
+static int parse_msg_addr(struct nlmsghdr *msg, ssize_t len, net_ifaddr_h *ifh,
+			  struct list *iff_up_l, void *arg)
 {
 	struct nlmsghdr *nlh;
 	for (nlh = msg; NLMSG_OK(nlh, len); nlh = NLMSG_NEXT(nlh, len)) {
@@ -97,11 +97,11 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 		char if_name[IF_NAMESIZE];
 
 		if (nlh->nlmsg_type == NLMSG_DONE) {
-			return true;
+			return 0;
 		}
 		if (nlh->nlmsg_type == NLMSG_ERROR) {
 			DEBUG_WARNING("netlink recv error\n");
-			return true;
+			return EBADMSG;
 		}
 
 		struct ifaddrmsg *ifa = NLMSG_DATA(nlh);
@@ -154,10 +154,10 @@ static bool parse_msg_addr(struct nlmsghdr *msg, ssize_t len,
 			continue;
 
 		if (ifh(if_name, &sa, arg))
-			return true;
+			return 0;
 	}
 
-	return false;
+	return EALREADY;
 }
 
 
@@ -203,9 +203,13 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_link((struct nlmsghdr *)buffer, len, &iff_up_l))
+		err = parse_msg_link((struct nlmsghdr *)buffer, len,
+				     &iff_up_l);
+		if (err != EALREADY)
 			break;
 	}
+	if (err)
+		goto out;
 
 	if (len < 0) {
 		err = errno;
@@ -226,10 +230,13 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		if (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh,
-				   &iff_up_l, arg))
+		err = (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh,
+				      &iff_up_l, arg));
+		if (err != EALREADY)
 			break;
 	}
+	if (err)
+		goto out;
 
 	if (len < 0) {
 		err = errno;
