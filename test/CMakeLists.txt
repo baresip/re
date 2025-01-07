@@ -30,6 +30,7 @@ include(sanitizer)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
   add_compile_options("/W3")
@@ -152,6 +153,8 @@ if(USE_OPENSSL)
     mock/cert.c
   )
 endif()
+
+list(APPEND SRCS cplusplus.cpp)
 
 
 ##############################################################################
