@@ -108,6 +108,7 @@ set(SRCS
   mbuf.c
   md5.c
   mem.c
+  mem_pool.c
   mock/dnssrv.c
   mock/nat.c
   mock/sipsrv.c
