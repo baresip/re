@@ -39,3 +39,16 @@ int      mem_get_stat(struct memstat *mstat);
 /* Secure memory functions */
 int mem_seccmp(const uint8_t *s1, const uint8_t *s2, size_t n);
 void mem_secclean(void *data, size_t size);
+
+
+/* Mem Pool */
+struct mem_pool;
+struct mem_pool_entry;
+int mem_pool_alloc(struct mem_pool **poolp, size_t nmemb, size_t membsize,
+		   mem_destroy_h *dh);
+int mem_pool_extend(struct mem_pool *pool, size_t num);
+struct mem_pool_entry *mem_pool_borrow(struct mem_pool *pool);
+struct mem_pool_entry *mem_pool_borrow_extend(struct mem_pool *pool);
+void *mem_pool_release(struct mem_pool *pool, struct mem_pool_entry *e);
+void *mem_pool_member(const struct mem_pool_entry *entry);
+void mem_pool_flush(struct mem_pool *pool);

@@ -299,6 +299,7 @@ set(SRCS
   src/md5/wrap.c
 
   src/mem/mem.c
+  src/mem/mem_pool.c
   src/mem/secure.c
 
   src/mod/mod.c

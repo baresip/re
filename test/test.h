@@ -247,6 +247,7 @@ int test_list_sort(void);
 int test_mbuf(void);
 int test_md5(void);
 int test_mem(void);
+int test_mem_pool(void);
 int test_mem_reallocarray(void);
 int test_mem_secure(void);
 int test_mqueue(void);
