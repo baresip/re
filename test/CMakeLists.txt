@@ -53,7 +53,7 @@ else()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wshorten-64-to-32>")
 endif()
 
 include_directories(

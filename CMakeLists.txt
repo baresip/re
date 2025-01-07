@@ -91,7 +91,7 @@ endif()
 
 check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
 if(COMPILER_SUPPORTS_WATOMIC)
-  add_compile_options(-Watomic-implicit-seq-cst)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Watomic-implicit-seq-cst>")
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
