@@ -36,7 +36,7 @@ if(MSVC)
   add_compile_options("/W3")
 else()
 
- set(c_flags
+  set(c_flags
     -Wall
     -Wbad-function-cast
     -Wcast-align
