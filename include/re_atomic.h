@@ -599,7 +599,7 @@ static __forceinline unsigned __int64 _re_atomic_load(
 
 	switch (size) {
 	case 1u:
-		v = __iso_volatile_load8((const unsigned __int8*)a);
+		v = __iso_volatile_load8((const volatile __int8*)a);
 		break;
 	case 2u:
 		v = __iso_volatile_load16((const unsigned __int16*)a);
