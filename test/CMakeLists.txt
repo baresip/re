@@ -35,7 +35,8 @@ set(CMAKE_CXX_STANDARD 11)
 if(MSVC)
   add_compile_options("/W3")
 else()
-  add_compile_options(
+
+ set(c_flags
     -Wall
     -Wbad-function-cast
     -Wcast-align
@@ -49,6 +50,10 @@ else()
     -Wstrict-prototypes
     -Wuninitialized
     -Wvla
+  )
+
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
   )
 endif()
 
