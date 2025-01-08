@@ -64,6 +64,8 @@ void vidframe_init(struct vidframe *vf, enum vidfmt fmt,
 
 	vf->size = *sz;
 	vf->fmt = fmt;
+	vf->xoffs = 0;
+	vf->yoffs = 0;
 }
 
 
@@ -156,6 +158,8 @@ void vidframe_init_buf(struct vidframe *vf, enum vidfmt fmt,
 
 	vf->size = *sz;
 	vf->fmt = fmt;
+	vf->xoffs = 0;
+	vf->yoffs = 0;
 }
 
 
