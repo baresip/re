@@ -18,10 +18,12 @@
 
 #define AUBUF_DEBUG 0
 
+enum { POOL_FRAMES = 25 };
 
 /** Locked audio-buffer with almost zero-copy */
 struct aubuf {
 	struct list afl;
+	struct mem_pool *pool;
 	struct pl *id;          /**< Audio buffer Identifier                 */
 	mtx_t *lock;
 	size_t wish_sz;
@@ -49,13 +51,13 @@ struct frame {
 	struct le le;
 	struct mbuf *mb;
 	struct auframe af;
+	struct mem_pool_entry *e;
 };
 
 
-static void frame_destructor(void *arg)
+static void frame_destructor(void *data)
 {
-	struct frame *f = arg;
-
+	struct frame *f = data;
 	list_unlink(&f->le);
 	mem_deref(f->mb);
 }
@@ -65,10 +67,10 @@ static void aubuf_destructor(void *arg)
 {
 	struct aubuf *ab = arg;
 
-	list_flush(&ab->afl);
 	mem_deref(ab->lock);
 	mem_deref(ab->ajb);
 	mem_deref(ab->id);
+	mem_deref(ab->pool);
 }
 
 
@@ -100,7 +102,7 @@ static void read_auframe(struct aubuf *ab, struct auframe *af)
 		}
 
 		if (!mbuf_get_left(f->mb)) {
-			mem_deref(f);
+			mem_pool_release(ab->pool, f->e);
 		}
 		else if (af->srate && af->ch && sample_size) {
 
@@ -138,6 +140,11 @@ int aubuf_alloc(struct aubuf **abp, size_t min_sz, size_t max_sz)
 	ab = mem_zalloc(sizeof(*ab), aubuf_destructor);
 	if (!ab)
 		return ENOMEM;
+
+	err = mem_pool_alloc(&ab->pool, POOL_FRAMES, sizeof(struct frame),
+			     frame_destructor);
+	if (err)
+		goto out;
 
 	err = mutex_alloc(&ab->lock);
 	if (err)
@@ -269,9 +276,12 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 	if (!ab || !mb)
 		return EINVAL;
 
-	f = mem_zalloc(sizeof(*f), frame_destructor);
-	if (!f)
+	struct mem_pool_entry *e = mem_pool_borrow_extend(ab->pool);
+	if (!e)
 		return ENOMEM;
+
+	f    = mem_pool_member(e);
+	f->e = e;
 
 	f->mb = mem_ref(mb);
 	if (af)
@@ -299,7 +309,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 		f = list_ledata(ab->afl.head);
 		if (f) {
 			ab->cur_sz -= mbuf_get_left(f->mb);
-			mem_deref(f);
+			mem_pool_release(ab->pool, f->e);
 		}
 	}
 
@@ -415,7 +425,7 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		struct frame *f = list_ledata(ab->afl.head);
 		if (f) {
 			ab->cur_sz -= mbuf_get_left(f->mb);
-			mem_deref(f);
+			mem_pool_release(ab->pool, f->e);
 		}
 	}
 
@@ -499,7 +509,8 @@ void aubuf_flush(struct aubuf *ab)
 
 	mtx_lock(ab->lock);
 
-	list_flush(&ab->afl);
+	list_clear(&ab->afl);
+	mem_pool_flush(ab->pool);
 	ab->fill_sz = ab->wish_sz;
 	ab->cur_sz  = 0;
 	ab->wr_sz   = 0;
