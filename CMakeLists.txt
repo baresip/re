@@ -83,15 +83,15 @@ endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(
-      -Wshorten-64-to-32
       -Wno-gnu-zero-variadic-macro-arguments
       -Wno-c2x-extensions
     )
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wshorten-64-to-32>")
 endif()
 
 check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
 if(COMPILER_SUPPORTS_WATOMIC)
-  add_compile_options(-Watomic-implicit-seq-cst)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Watomic-implicit-seq-cst>")
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")

@@ -388,6 +388,16 @@ int  test_integration(const char *name, bool verbose);
 int  test_sipevent_network(void);
 int  test_sip_drequestf_network(void);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int  test_cplusplus(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 /* High-level API */
 int  test_reg(const char *name, bool verbose);
 int  test_oom(const char *name, bool verbose);
