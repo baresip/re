@@ -459,7 +459,7 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 int test_oom(const char *name, bool verbose)
 {
 	size_t i;
-	const int levels = 64;
+	const int levels = 128;
 	int err = 0;
 
 	test_mode = TEST_MEMORY;
