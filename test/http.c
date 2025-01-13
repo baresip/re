@@ -499,6 +499,8 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 	if (err)
 		goto out;
 
+	http_set_max_body_size(sock, 1024 * 1024 / 2);
+
 	err = tcp_sock_local_get(http_sock_tcp(sock), &srv);
 	if (err)
 		goto out;
