@@ -31,6 +31,7 @@ struct http_sock {
 	struct tls *tls;
 	http_req_h *reqh;
 	https_verify_msg_h *verifyh;
+	size_t max_body_size;
 	void *arg;
 };
 
@@ -212,7 +213,8 @@ static void recv_handler(struct mbuf *mb, void *arg)
 
 		const size_t len = mbuf_get_left(mb), pos = conn->mb->pos;
 
-		if ((mbuf_get_left(conn->mb) + len) > BUFSIZE_MAX) {
+		if ((mbuf_get_left(conn->mb) + len) >
+		    conn->sock->max_body_size) {
 			err = EOVERFLOW;
 			goto out;
 		}
@@ -376,6 +378,7 @@ int http_listen_fd(struct http_sock **sockp, re_sock_t fd, http_req_h *reqh,
 
 	sock->reqh = reqh;
 	sock->arg  = arg;
+	sock->max_body_size = BUFSIZE_MAX;
 
 out:
 	if (err)
@@ -416,6 +419,7 @@ int http_listen(struct http_sock **sockp, const struct sa *laddr,
 
 	sock->reqh = reqh;
 	sock->arg  = arg;
+	sock->max_body_size = BUFSIZE_MAX;
 
  out:
 	if (err)
@@ -493,6 +497,21 @@ int  https_set_verify_msgh(struct http_sock *sock,
 	sock->verifyh = verifyh;
 
 	return 0;
+}
+
+
+/**
+ * Set Request buffer size limit
+ *
+ * @param sock  HTTP socket
+ * @param limit New limit in bytes
+ */
+void http_set_max_body_size(struct http_sock *sock, size_t limit)
+{
+	if (!sock)
+		return;
+
+	sock->max_body_size = limit;
 }
 
 
