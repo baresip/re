@@ -202,6 +202,7 @@ int  https_listen(struct http_sock **sockp, const struct sa *laddr,
 		  const char *cert, http_req_h *reqh, void *arg);
 int  https_set_verify_msgh(struct http_sock *sock,
 			   https_verify_msg_h *verifyh);
+void http_set_max_body_size(struct http_sock *sock, size_t limit);
 struct tcp_sock *http_sock_tcp(struct http_sock *sock);
 struct tls *http_sock_tls(const struct http_sock *conn);
 const struct sa *http_conn_peer(const struct http_conn *conn);
