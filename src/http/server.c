@@ -22,7 +22,7 @@
 enum {
 	TIMEOUT_IDLE = 600000,
 	TIMEOUT_INIT = 10000,
-	BUFSIZE_MAX  = 524288,
+	BUFSIZE_MAX  = 1024 * 1024 * 1, /* 1 MB */
 };
 
 struct http_sock {
