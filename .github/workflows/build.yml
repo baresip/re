@@ -59,7 +59,7 @@ jobs:
 
     - name: cmake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -Werror -DCMAKE_C_FLAGS="-Werror"
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_C_FLAGS="-Werror" -DCMAKE_CXX_FLAGS="-Werror"
         cmake --build build -t retest
     
     - name: retest

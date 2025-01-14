@@ -63,7 +63,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(MSVC)
   add_compile_options("/W3")
 else()
-  add_compile_options(
+
+  set(c_flags
     -pedantic
     -Wall
     -Wbad-function-cast
@@ -78,6 +79,10 @@ else()
     -Wstrict-prototypes
     -Wuninitialized
     -Wvla
+  )
+
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
   )
 endif()
 
