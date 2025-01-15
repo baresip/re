@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.19.0 - 2025-01-15
+
+## What's Changed
+* fmt: fix pl trim methods and add tests by @maximilianfridrich in https://github.com/baresip/re/pull/1226
+* sipsess: add sipsess_msg getter function by @cspiel1 in https://github.com/baresip/re/pull/1225
+* rtp/sess: fix missing srate_tx locking by @sreimers in https://github.com/baresip/re/pull/1231
+* rtcp: use rtcp_rtpfb_gnack_encode() function by @alfredh in https://github.com/baresip/re/pull/1233
+* net/linux: add net_netlink_addrs by @sreimers in https://github.com/baresip/re/pull/1232
+* tcp,udp: set TOS (TCLASS) for IPv6 sockets by @maximilianfridrich in https://github.com/baresip/re/pull/1218
+* sys/fs: fix fs_fopen return null check by @sreimers in https://github.com/baresip/re/pull/1237
+* test: remove mock tcp-server (unused) by @alfredh in https://github.com/baresip/re/pull/1235
+* rtp: remove rtcp_psfb_sli_encode() (unused) by @alfredh in https://github.com/baresip/re/pull/1234
+* ci/clang: bump clang-18 and use ubuntu 24.04 by @sreimers in https://github.com/baresip/re/pull/1236
+* net/linux/addrs: fix point-to-point peer address bug by @sreimers in https://github.com/baresip/re/pull/1239
+* ci/coverage: bump min_cov by @sreimers in https://github.com/baresip/re/pull/1241
+* ci/sanitizers: bump clang and ubuntu by @sreimers in https://github.com/baresip/re/pull/1242
+* net/linux/addrs: fix netlink kernel warnings by @sreimers in https://github.com/baresip/re/pull/1243
+* rem: add au_ prefix to calc_nsamp() by @alfredh in https://github.com/baresip/re/pull/1244
+* rem/vidconv: add vidconv_center and x and y source offsets by @sreimers in https://github.com/baresip/re/pull/1240
+* test: add testcode for rem au-module by @alfredh in https://github.com/baresip/re/pull/1245
+* mem: remove peak from memstat by @alfredh in https://github.com/baresip/re/pull/1238
+* debian: replace with CPack DEB Generator by @sreimers in https://github.com/baresip/re/pull/1247
+* copyright: happy new year 2025 by @sreimers in https://github.com/baresip/re/pull/1246
+* test/vidconv: remove static struct test by @sreimers in https://github.com/baresip/re/pull/1248
+* net/linux/addrs: use list instead of fixed array for interface up by @sreimers in https://github.com/baresip/re/pull/1251
+* test: optional IPv6 for tcp/udp tos test by @alfredh in https://github.com/baresip/re/pull/1252
+* cmake: update min requirement and use range by @sreimers in https://github.com/baresip/re/pull/1253
+* rem/vid/frame: fix vidframe init by @sreimers in https://github.com/baresip/re/pull/1257
+* atomic: fix compilation for C++ and Windows-ARM64 by @alfredh in https://github.com/baresip/re/pull/1259
+* test: add test for C++ applications by @alfredh in https://github.com/baresip/re/pull/1254
+* ci: use ubuntu-22.04 were needed by @sreimers in https://github.com/baresip/re/pull/1261
+* cmake: enable compiler warnings for C only by @alfredh in https://github.com/baresip/re/pull/1263
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.18.0...v3.19.0
+
+
 ## v3.18.0 - 2024-12-11
 
 ## What's Changed
