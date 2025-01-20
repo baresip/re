@@ -387,6 +387,35 @@ static const struct test *find_test_int(const char *name)
 }
 
 
+static int test_exec(const struct test *test)
+{
+	if (!test)
+		return EINVAL;
+
+	struct memstat mstat_before;
+	struct memstat mstat_after;
+
+	mem_get_stat(&mstat_before);
+
+	int err = test->exec();
+	re_fhs_flush();
+
+	mem_get_stat(&mstat_after);
+
+	if (mstat_after.blocks_cur > mstat_before.blocks_cur) {
+		mem_debug();
+		re_assert(false && "Test leaks memory blocks");
+	}
+
+	if (mstat_after.bytes_cur > mstat_before.bytes_cur) {
+		mem_debug();
+		re_assert(false && "Test leaks memory bytes");
+	}
+
+	return err;
+}
+
+
 /**
  * Run a single testcase in OOM (Out-of-memory) mode.
  *
@@ -418,7 +447,7 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 
 		mem_threshold_set(i);
 
-		err = test->exec();
+		err = test_exec(test);
 		if (err == 0) {
 			/* success, stop now */
 			break;
@@ -522,7 +551,7 @@ static int test_unit(const char *name, bool verbose)
 			goto out;
 		}
 
-		err = test->exec();
+		err = test_exec(test);
 		if (err) {
 			DEBUG_WARNING("%s: test failed (%m)\n", name, err);
 			goto out;
@@ -595,7 +624,7 @@ static int testcase_perf(const struct test *test, double *usec_avgp)
 	usec_start = tmr_jiffies_usec();
 	for (i = 1; i <= DRYRUN_MAX; i++) {
 
-		err = test->exec();
+		err = test_exec(test);
 		if (err)
 			return err;
 
@@ -613,7 +642,7 @@ static int testcase_perf(const struct test *test, double *usec_avgp)
 	/* now for the real measurement */
 	usec_start = tmr_jiffies_usec();
 	for (i=0; i<n; i++) {
-		err = test->exec();
+		err = test_exec(test);
 		if (err)
 			return err;
 	}
