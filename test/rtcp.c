@@ -146,7 +146,7 @@ static int test_loss(const uint16_t *seqv, size_t seqc,
 	if (err) {
 		if (err == ENOENT)
 			err = ENOMEM;
-		goto out;
+		TEST_ERR(err);
 	}
 
 	/* in OOM-test, detect if member/sender was not allocated */
@@ -155,8 +155,11 @@ static int test_loss(const uint16_t *seqv, size_t seqc,
 	    stats.rx.jit == 0) {
 
 		err = ENOMEM;
-		goto out;
+		TEST_ERR(err);
 	}
+
+	if (test_mode == TEST_MEMORY)
+		goto out;
 
 	/* verify expected packets sent and packet loss */
 	TEST_EQUALS(seqc, stats.rx.sent);
@@ -181,14 +184,22 @@ int test_rtcp_packetloss(void)
 	static const uint16_t seqv7[] = {1,2,8,9,10};
 	int err = 0;
 
-	err |= test_loss(seqv1, RE_ARRAY_SIZE(seqv1), 0);
-	err |= test_loss(seqv2, RE_ARRAY_SIZE(seqv2), 0);
-	err |= test_loss(seqv3, RE_ARRAY_SIZE(seqv3), 0);
-	err |= test_loss(seqv4, RE_ARRAY_SIZE(seqv4), 1);
-	err |= test_loss(seqv5, RE_ARRAY_SIZE(seqv5), 2);
-	err |= test_loss(seqv6, RE_ARRAY_SIZE(seqv6), 1);
-	err |= test_loss(seqv7, RE_ARRAY_SIZE(seqv7), 5);
+	err = test_loss(seqv1, RE_ARRAY_SIZE(seqv1), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv2, RE_ARRAY_SIZE(seqv2), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv3, RE_ARRAY_SIZE(seqv3), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv4, RE_ARRAY_SIZE(seqv4), 1);
+	TEST_ERR(err);
+	err = test_loss(seqv5, RE_ARRAY_SIZE(seqv5), 2);
+	TEST_ERR(err);
+	err = test_loss(seqv6, RE_ARRAY_SIZE(seqv6), 1);
+	TEST_ERR(err);
+	err = test_loss(seqv7, RE_ARRAY_SIZE(seqv7), 5);
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
