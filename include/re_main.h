@@ -71,6 +71,7 @@ void re_thread_async_cancel(intptr_t id);
 void re_thread_async_main_cancel(intptr_t id);
 
 void re_set_mutex(void *mutexp);
+void re_fhs_flush(void);
 
 struct tmrl *re_tmrl_get(void);
 
