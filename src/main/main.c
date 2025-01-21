@@ -1654,3 +1654,23 @@ void re_thread_async_main_cancel(intptr_t id)
 
 	re_async_cancel(re->async, id);
 }
+
+
+/**
+ * Flush file descriptors handlers if re loop is not running
+ */
+void re_fhs_flush(void)
+{
+	struct re *re = re_get();
+	if (!re) {
+		DEBUG_WARNING("re_fhs_flush: re not ready\n");
+		return;
+	}
+
+	if (re_atomic_rlx(&re->polling)) {
+		DEBUG_WARNING("re_fhs_flush: re polling is running\n");
+		return;
+	}
+
+	fhsld_flush(re);
+}

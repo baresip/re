@@ -369,7 +369,7 @@ int test_vidconv_pixel_formats(void)
 
 static int test_vidconv_center(void)
 {
-	int err;
+	int err = 0;
 	struct vidframe *dst = NULL;
 	struct vidframe *src = NULL;
 

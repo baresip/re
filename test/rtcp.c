@@ -146,7 +146,7 @@ static int test_loss(const uint16_t *seqv, size_t seqc,
 	if (err) {
 		if (err == ENOENT)
 			err = ENOMEM;
-		goto out;
+		TEST_ERR(err);
 	}
 
 	/* in OOM-test, detect if member/sender was not allocated */
@@ -155,8 +155,11 @@ static int test_loss(const uint16_t *seqv, size_t seqc,
 	    stats.rx.jit == 0) {
 
 		err = ENOMEM;
-		goto out;
+		TEST_ERR(err);
 	}
+
+	if (test_mode == TEST_MEMORY)
+		goto out;
 
 	/* verify expected packets sent and packet loss */
 	TEST_EQUALS(seqc, stats.rx.sent);
@@ -181,14 +184,22 @@ int test_rtcp_packetloss(void)
 	static const uint16_t seqv7[] = {1,2,8,9,10};
 	int err = 0;
 
-	err |= test_loss(seqv1, RE_ARRAY_SIZE(seqv1), 0);
-	err |= test_loss(seqv2, RE_ARRAY_SIZE(seqv2), 0);
-	err |= test_loss(seqv3, RE_ARRAY_SIZE(seqv3), 0);
-	err |= test_loss(seqv4, RE_ARRAY_SIZE(seqv4), 1);
-	err |= test_loss(seqv5, RE_ARRAY_SIZE(seqv5), 2);
-	err |= test_loss(seqv6, RE_ARRAY_SIZE(seqv6), 1);
-	err |= test_loss(seqv7, RE_ARRAY_SIZE(seqv7), 5);
+	err = test_loss(seqv1, RE_ARRAY_SIZE(seqv1), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv2, RE_ARRAY_SIZE(seqv2), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv3, RE_ARRAY_SIZE(seqv3), 0);
+	TEST_ERR(err);
+	err = test_loss(seqv4, RE_ARRAY_SIZE(seqv4), 1);
+	TEST_ERR(err);
+	err = test_loss(seqv5, RE_ARRAY_SIZE(seqv5), 2);
+	TEST_ERR(err);
+	err = test_loss(seqv6, RE_ARRAY_SIZE(seqv6), 1);
+	TEST_ERR(err);
+	err = test_loss(seqv7, RE_ARRAY_SIZE(seqv7), 5);
+	TEST_ERR(err);
 
+out:
 	return err;
 }
 
@@ -200,6 +211,7 @@ struct agent {
 	unsigned psfb_count;
 	unsigned rtpfb_count;
 	unsigned gnack_count;
+	unsigned app_count;
 };
 
 
@@ -223,6 +235,10 @@ static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
 	(void)src;
 
 	switch (msg->hdr.pt) {
+
+	case RTCP_APP:
+		++ag->app_count;
+		break;
 
 	case RTCP_RTPFB:
 		if (msg->r.fb.fci.gnackv->pid == 42)
@@ -274,6 +290,9 @@ static int test_rtcp_loop_base(bool mux)
 	rtcp_start(a.rtp_sock, "cname", &b.laddr_rtcp);
 	rtcp_start(b.rtp_sock, "cname", &a.laddr_rtcp);
 
+	err = rtcp_send_app(a.rtp_sock, "PING", (void *)"PONG", 4);
+	TEST_ERR(err);
+
 	err = rtcp_send_gnack(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock), 42, 0);
 	TEST_ERR(err);
 
@@ -285,10 +304,13 @@ static int test_rtcp_loop_base(bool mux)
 
 	ASSERT_EQ(0, a.rtp_count);
 	ASSERT_EQ(0, a.psfb_count);
+	ASSERT_EQ(0, a.app_count);
+
 	ASSERT_EQ(0, b.rtp_count);
 	ASSERT_EQ(1, b.psfb_count);
 	ASSERT_EQ(1, b.rtpfb_count);
 	ASSERT_EQ(1, b.gnack_count);
+	ASSERT_EQ(1, b.app_count);
 
  out:
 	mem_deref(b.rtp_sock);

@@ -247,6 +247,7 @@ int test_list_sort(void);
 int test_mbuf(void);
 int test_md5(void);
 int test_mem(void);
+int test_mem_pool(void);
 int test_mem_reallocarray(void);
 int test_mem_secure(void);
 int test_mqueue(void);
@@ -388,6 +389,16 @@ int  test_integration(const char *name, bool verbose);
 int  test_sipevent_network(void);
 int  test_sip_drequestf_network(void);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int  test_cplusplus(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 /* High-level API */
 int  test_reg(const char *name, bool verbose);
 int  test_oom(const char *name, bool verbose);
@@ -405,6 +416,7 @@ int test_load_file(struct mbuf *mb, const char *filename);
 int test_write_file(struct mbuf *mb, const char *filename);
 void test_set_datapath(const char *path);
 const char *test_datapath(void);
+bool test_ipv6_supported(void);
 
 
 /*

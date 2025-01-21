@@ -1,4 +1,4 @@
-name: CMake and Windows
+name: Windows
 
 on:
   push:

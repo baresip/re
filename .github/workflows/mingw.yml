@@ -10,7 +10,7 @@ on:
 
 jobs:
   MinGW-w64-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     env:
       CMAKE_GENERATOR: Ninja

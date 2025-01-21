@@ -274,8 +274,10 @@ int test_udp_tos(void)
 	err = udp_tos("127.0.0.1");
 	TEST_ERR(err);
 
-	err = udp_tos("::1");
-	TEST_ERR(err);
+	if (test_ipv6_supported()) {
+		err = udp_tos("::1");
+		TEST_ERR(err);
+	}
 
  out:
 	return err;

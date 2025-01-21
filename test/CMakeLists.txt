@@ -30,11 +30,13 @@ include(sanitizer)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
   add_compile_options("/W3")
 else()
-  add_compile_options(
+
+  set(c_flags
     -Wall
     -Wbad-function-cast
     -Wcast-align
@@ -49,10 +51,14 @@ else()
     -Wuninitialized
     -Wvla
   )
+
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
+  )
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wshorten-64-to-32)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wshorten-64-to-32>")
 endif()
 
 include_directories(
@@ -102,6 +108,7 @@ set(SRCS
   mbuf.c
   md5.c
   mem.c
+  mem_pool.c
   mock/dnssrv.c
   mock/nat.c
   mock/sipsrv.c
@@ -152,6 +159,8 @@ if(USE_OPENSSL)
     mock/cert.c
   )
 endif()
+
+list(APPEND SRCS cplusplus.cpp)
 
 
 ##############################################################################

@@ -11,16 +11,16 @@
 # Versioning
 #
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15...3.31)
 
 project(re
-  VERSION 3.18.0
+  VERSION 3.19.0
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
 )
 
-set(PROJECT_SOVERSION 28) # bump if ABI breaks
+set(PROJECT_SOVERSION 29) # bump if ABI breaks
 
 # Pre-release identifier, comment out on a release
 # Increment for breaking changes (dev2, dev3...)
@@ -63,7 +63,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(MSVC)
   add_compile_options("/W3")
 else()
-  add_compile_options(
+
+  set(c_flags
     -pedantic
     -Wall
     -Wbad-function-cast
@@ -79,19 +80,23 @@ else()
     -Wuninitialized
     -Wvla
   )
+
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:C>:${c_flags}>"
+  )
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(
-      -Wshorten-64-to-32
       -Wno-gnu-zero-variadic-macro-arguments
       -Wno-c2x-extensions
     )
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wshorten-64-to-32>")
 endif()
 
 check_c_compiler_flag("-Watomic-implicit-seq-cst" COMPILER_SUPPORTS_WATOMIC)
 if(COMPILER_SUPPORTS_WATOMIC)
-  add_compile_options(-Watomic-implicit-seq-cst)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Watomic-implicit-seq-cst>")
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
@@ -299,6 +304,7 @@ set(SRCS
   src/md5/wrap.c
 
   src/mem/mem.c
+  src/mem/mem_pool.c
   src/mem/secure.c
 
   src/mod/mod.c
