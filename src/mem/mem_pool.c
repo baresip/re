@@ -146,7 +146,7 @@ int mem_pool_extend(struct mem_pool *pool, size_t num)
 
 	/* Allocate new members */
 	for (; i < nmemb; i++) {
-		objs[i].member = mem_zalloc(pool->membsize, NULL);
+		objs[i].member = mem_zalloc(pool->membsize, pool->membdh);
 		if (!objs[i].member) {
 			mem_deref(objs);
 			mtx_unlock(pool->lock);
