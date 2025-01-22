@@ -235,6 +235,8 @@ static int copy_obu(struct mbuf *mb_bs, const uint8_t *buf, size_t size)
 		return err;
 	}
 
+	DEBUG_NOTICE(".... copy_obu: %H\n", av1_obu_print, &hdr);
+
 	switch (hdr.type) {
 
 	case AV1_OBU_SEQUENCE_HEADER:
