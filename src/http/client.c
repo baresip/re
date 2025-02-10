@@ -293,6 +293,9 @@ static int req_recv(struct http_req *req, struct mbuf *mb, bool *last)
 		return 0;
 	}
 
+	tmr_start(&req->conn->tmr, req->cli->conf.recv_timeout,
+		  timeout_handler, req->conn);
+
 	while (mbuf_get_left(mb)) {
 
 		if (req->rx_len == 0) {
