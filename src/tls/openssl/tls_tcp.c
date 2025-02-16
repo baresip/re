@@ -252,6 +252,12 @@ static bool recv_handler(int *err, struct mbuf *mb, bool *estab, void *arg)
 		tc->up = true;
 	}
 
+	r = verify_ocsp_status(tc->ssl, tls_get_ocsp_stapling(tc->tls));
+	if (r) {
+		*err = r;
+		return true;
+	}
+
 	mbuf_set_pos(mb, 0);
 
 	for (;;) {
@@ -365,7 +371,10 @@ int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 		  int layer)
 {
+	enum tls_ocsp_stapling stapling_mode;
+	long ocsp_status_type;
 	struct tls_conn *tc;
+	long ok;
 	int err;
 
 	if (!ptc || !tls || !tcp)
@@ -419,6 +428,16 @@ int tls_start_tcp(struct tls_conn **ptc, struct tls *tls, struct tcp_conn *tcp,
 	BIO_set_data(tc->sbio_out, tc);
 
 	SSL_set_bio(tc->ssl, tc->sbio_in, tc->sbio_out);
+
+	stapling_mode = tls_get_ocsp_stapling(tc->tls);
+	ocsp_status_type = stapling_mode ? TLSEXT_STATUSTYPE_ocsp : 0;
+	ok = SSL_set_tlsext_status_type(tc->ssl, ocsp_status_type);
+	if (!ok) {
+		DEBUG_WARNING("SSL: failed to set tlsext STATUSTYPE_ocsp\n");
+		ERR_clear_error();
+		err = EFAULT;
+		goto out;
+	}
 
 	err = 0;
 
