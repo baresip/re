@@ -34,3 +34,4 @@ const struct list *tls_certs(const struct tls *tls);
 
 struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni);
 void tls_enable_sni(struct tls *tls);
+int verify_ocsp_status(SSL *ssl, enum tls_ocsp_stapling stapling_mode);

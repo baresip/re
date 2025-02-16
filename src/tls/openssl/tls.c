@@ -47,6 +47,7 @@ struct tls {
 	char *pass;          /**< password for private key             */
 	bool verify_server;  /**< Enable SIP TLS server verification   */
 	bool verify_client;  /**< Enable SIP TLS client verification   */
+	enum tls_ocsp_stapling ocsp_stapling;  /**< OCSP stapling mode */
 	struct session_reuse reuse;
 	struct list certs;   /**< Certificates for SNI selection       */
 };
@@ -2119,7 +2120,7 @@ int tls_verify_client_post_handshake(struct tls_conn *tc)
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
+int tls_set_resumption(struct tls *tls, enum tls_resume_mode mode)
 {
 	long ok = 1;
 
@@ -2150,6 +2151,38 @@ int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
 	}
 
 	return 0;
+}
+
+
+/**
+ * Set TLS OCSP stapling mode
+ *
+ * @param tls  TLS Object
+ * @param mode TLS OCSP stapling mode
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tls_set_ocsp_stapling(struct tls *tls, enum tls_ocsp_stapling mode)
+{
+	if (!tls)
+		return EINVAL;
+
+	tls->ocsp_stapling = mode;
+
+	return 0;
+}
+
+
+/**
+ * Get TLS OCSP stapling mode
+ *
+ * @param tls  TLS Object
+ *
+ * @return TLS OCSP stapling mode
+ */
+enum tls_ocsp_stapling tls_get_ocsp_stapling(const struct tls *tls)
+{
+	return tls ? tls->ocsp_stapling : TLS_OCSP_STAPLE_DISABLED;
 }
 
 

@@ -35,6 +35,12 @@ enum tls_resume_mode {
 	TLS_RESUMPTION_ALL	= TLS_RESUMPTION_IDS | TLS_RESUMPTION_TICKETS,
 };
 
+enum tls_ocsp_stapling {
+	TLS_OCSP_STAPLE_DISABLED = 0,
+	TLS_OCSP_STAPLE_ENABLED,
+	TLS_OCSP_STAPLE_REQUIRED,
+};
+
 struct tls_conn_d {
 	int (*verifyh) (int ok, void *arg);
 	void *arg;
@@ -85,7 +91,9 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 void tls_enable_verify_client(struct tls *tls, bool enable);
-int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode);
+int tls_set_resumption(struct tls *tls, enum tls_resume_mode mode);
+int tls_set_ocsp_stapling(struct tls *tls, enum tls_ocsp_stapling mode);
+enum tls_ocsp_stapling tls_get_ocsp_stapling(const struct tls *tls);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
