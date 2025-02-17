@@ -231,6 +231,7 @@ static const struct test tests[] = {
 	TEST(test_tls_cli_conn_change_cert),
 	TEST(test_tls_session_reuse_tls_v12),
 	TEST(test_tls_sni),
+	TEST(test_tls_ocsp_stapling),
 #endif
 	TEST(test_trice_cand),
 	TEST(test_trice_candpair),
