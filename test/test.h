@@ -373,6 +373,7 @@ int test_tls_cli_conn_change_cert(void);
 int test_tls_session_reuse_tls_v12(void);
 int test_tls_session_reuse(void);
 int test_tls_sni(void);
+int test_tls_ocsp_stapling(void);
 #endif
 
 #ifdef USE_TLS
