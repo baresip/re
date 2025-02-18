@@ -575,8 +575,11 @@ int pl_strncasecmp(const struct pl *pl, const char *str, size_t n)
 
 	if (pl->l < n)
 		return EINVAL;
-
+#ifdef WIN32
+	return _strnicmp(pl->p, str, n) == 0 ? 0 : EINVAL;
+#else
 	return strncasecmp(pl->p, str, n) == 0 ? 0 : EINVAL;
+#endif
 }
 
 
