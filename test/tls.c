@@ -645,3 +645,113 @@ int test_tls_sni(void)
 
 	return err;
 }
+
+
+static int ocsp_stapling_test(enum tls_ocsp_stapling stapling_mode)
+{
+	struct tls_test tt;
+	struct sa srv;
+	int err;
+	const char *dp = test_datapath();
+	char path[256];
+
+	memset(&tt, 0, sizeof(tt));
+
+	err = sa_set_str(&srv, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	/* UAC cert + intermediate CA */
+	re_snprintf(path, sizeof(path), "%s/sni/client-interm.pem", dp);
+	err = tls_alloc(&tt.tls, TLS_METHOD_SSLV23, path, NULL);
+	TEST_ERR(err);
+
+	/* UAS cert + intermediate CA */
+	re_snprintf(path, sizeof(path), "%s/sni/server-interm.pem", dp);
+	err = tls_alloc(&tt.tls2, TLS_METHOD_TLS, path, NULL);
+	TEST_ERR(err);
+
+	err = tls_set_ocsp_stapling(tt.tls2, stapling_mode);
+	TEST_ERR(err);
+
+	/* set root CA at UAC and UAS */
+	re_snprintf(path, sizeof(path), "%s/sni/root-ca.pem", dp);
+	err  = tls_add_ca(tt.tls, path);
+	err |= tls_add_ca(tt.tls2, path);
+	TEST_ERR(err);
+
+	/* UAC listens (as TLS server)*/
+	err = tcp_listen(&tt.ts, &srv, server_conn_handler, &tt);
+	TEST_ERR(err);
+
+	err = tcp_sock_local_get(tt.ts, &srv);
+	TEST_ERR(err);
+
+	/* UAS connects to UAC (as TLS client) */
+	err = tcp_connect(&tt.tc_cli, &srv, client_estab_handler,
+			  client_recv_handler, client_close_handler, &tt);
+	TEST_ERR(err);
+
+	err = tls_start_tcp(&tt.sc_cli, tt.tls2, tt.tc_cli, 0);
+	TEST_ERR(err);
+
+	err = re_main_timeout(800);
+	TEST_ERR(err);
+
+	if (stapling_mode == TLS_OCSP_STAPLE_REQUIRED) {
+		if (tt.err != EPROTO) {
+			err = tt.err;
+			goto out;
+		}
+		TEST_ASSERT(!tt.estab_cli);
+		TEST_ASSERT(!tt.estab_srv);
+		ASSERT_EQ(0, tt.recv_cli);
+		ASSERT_EQ(0, tt.recv_srv);
+	}
+	else {
+		if (tt.err != 0) {
+			err = tt.err;
+			goto out;
+		}
+		TEST_ASSERT(tt.estab_cli);
+		TEST_ASSERT(tt.estab_srv);
+		ASSERT_EQ(1, tt.recv_cli);
+		ASSERT_EQ(1, tt.recv_srv);
+	}
+
+ out:
+	/* NOTE: close context first */
+	mem_deref(tt.tls);
+	mem_deref(tt.tls2);
+	mem_deref(tt.sc_cli);
+	mem_deref(tt.sc_srv);
+	mem_deref(tt.tc_cli);
+	mem_deref(tt.tc_srv);
+	mem_deref(tt.ts);
+
+	return err;
+}
+
+
+/**
+ * OCSP Stapling Test
+ *
+ * UAS opens a TLS connection to UAC with status_request extension
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int test_tls_ocsp_stapling(void)
+{
+	int err;
+
+	err = ocsp_stapling_test(TLS_OCSP_STAPLE_REQUIRED);
+	TEST_ERR(err);
+
+	err = ocsp_stapling_test(TLS_OCSP_STAPLE_ENABLED);
+	TEST_ERR(err);
+
+	err = ocsp_stapling_test(TLS_OCSP_STAPLE_DISABLED);
+	TEST_ERR(err);
+
+out:
+	return err;
+}

@@ -396,6 +396,12 @@ static void conn_recv(struct tls_conn *tc, struct mbuf *mb)
 		}
 	}
 
+	err = verify_ocsp_status(tc->ssl, tls_get_ocsp_stapling(tc->tls));
+	if (err) {
+		conn_close(tc, err);
+		return;
+	}
+
 	mbuf_set_pos(mb, 0);
 
 	for (;;) {
@@ -450,7 +456,10 @@ static int conn_alloc(struct tls_conn **ptc, struct tls *tls,
 		      dtls_estab_h *estabh, dtls_recv_h *recvh,
 		      dtls_close_h *closeh, void *arg)
 {
+	enum tls_ocsp_stapling stapling_mode;
+	long ocsp_status_type;
 	struct tls_conn *tc;
+	long ok;
 	int err = 0;
 
 	if (sock->single_conn) {
@@ -510,6 +519,16 @@ static int conn_alloc(struct tls_conn **ptc, struct tls *tls,
 	SSL_set_bio(tc->ssl, tc->sbio_in, tc->sbio_out);
 
 	SSL_set_read_ahead(tc->ssl, 1);
+
+	stapling_mode = tls_get_ocsp_stapling(tc->tls);
+	ocsp_status_type = stapling_mode ? TLSEXT_STATUSTYPE_ocsp : 0;
+	ok = SSL_set_tlsext_status_type(tc->ssl, ocsp_status_type);
+	if (!ok) {
+		DEBUG_WARNING("SSL: failed to set tlsext STATUSTYPE_ocsp\n");
+		ERR_clear_error();
+		err = EFAULT;
+		goto out;
+	}
 
  out:
 	if (err)

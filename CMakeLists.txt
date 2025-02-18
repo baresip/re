@@ -535,6 +535,7 @@ if(USE_OPENSSL)
     src/tls/openssl/tls_udp.c
     src/tls/openssl/tls.c
     src/tls/openssl/sni.c
+    src/tls/openssl/ocsp.c
     src/hmac/openssl/hmac.c
   )
 elseif(APPLE)
