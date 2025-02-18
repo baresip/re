@@ -47,6 +47,7 @@ int      pl_strdup(char **dst, const struct pl *src);
 int      pl_dup(struct pl *dst, const struct pl *src);
 int      pl_strcmp(const struct pl *pl, const char *str);
 int      pl_strncmp(const struct pl *pl, const char *str, size_t n);
+int      pl_strncasecmp(const struct pl *pl, const char *str, size_t n);
 int      pl_strcasecmp(const struct pl *pl, const char *str);
 int      pl_cmp(const struct pl *pl1, const struct pl *pl2);
 int      pl_casecmp(const struct pl *pl1, const struct pl *pl2);
