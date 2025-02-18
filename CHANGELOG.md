@@ -6,9 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.20.0 - 2025-02-18
+
+### What's Changed
+* http/server: increase BUFSIZE_MAX to 1 MB and add http_set_max_body_size by @sreimers in https://github.com/baresip/re/pull/1262
+* test: init err to zero (fixes cppcheck warning) by @alfredh in https://github.com/baresip/re/pull/1265
+* test: add RTCP_APP to RTCP test by @alfredh in https://github.com/baresip/re/pull/1266
+* mem,aubuf: add pre-allocated memory pool management by @sreimers in https://github.com/baresip/re/pull/1255
+* test: increase test_oom levels and oom fixes by @sreimers in https://github.com/baresip/re/pull/1260
+* mem/mem_pool: fix mem_pool_extend new member destructor by @sreimers in https://github.com/baresip/re/pull/1267
+* ci: bump version and min_cov by @sreimers in https://github.com/baresip/re/pull/1268
+* av1: remove duplicate/unused getbit.c by @alfredh in https://github.com/baresip/re/pull/1272
+* test/cmake: link C++ lib by @sreimers in https://github.com/baresip/re/pull/1269
+* http: restart timer for each chunk by @fAuernigg in https://github.com/baresip/re/pull/1273
+* ci/valgrind: use ubuntu-latest by @sreimers in https://github.com/baresip/re/pull/1274
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.19.0...v3.20.0
+
+
 ## v3.19.0 - 2025-01-15
 
-## What's Changed
+### What's Changed
 * fmt: fix pl trim methods and add tests by @maximilianfridrich in https://github.com/baresip/re/pull/1226
 * sipsess: add sipsess_msg getter function by @cspiel1 in https://github.com/baresip/re/pull/1225
 * rtp/sess: fix missing srate_tx locking by @sreimers in https://github.com/baresip/re/pull/1231
@@ -45,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v3.18.0 - 2024-12-11
 
-## What's Changed
+### What's Changed
 * odict: add odict_pl_add() by @cspiel1 in https://github.com/baresip/re/pull/1208
 * ci/build: remove Ubuntu 20.04, add 24.04, use GCC 14 on 24.04 by @robert-scheck in https://github.com/baresip/re/pull/1210
 * test: vertical alignment of integration test names by @alfredh in https://github.com/baresip/re/pull/1212
