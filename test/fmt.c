@@ -17,6 +17,7 @@
 
 int test_fmt_pl(void)
 {
+	int err;
 	const struct pl pl   = PL("rattarei");
 	const struct pl pl0  = PL("rattarei");
 	const struct pl pl0_ = PL("rAtTaReI");
@@ -93,6 +94,16 @@ int test_fmt_pl(void)
 		goto out;
 	if (0 == pl_strcmp(&pl3, str0))
 		goto out;
+
+	/* pl_strncmp() */
+	err = pl_strncmp(&pl, "rat", 3);
+	TEST_ERR(err);
+	err = pl_strncmp(&pl, "RAT", 3);
+	TEST_EQUALS(EINVAL, err);
+
+	/* pl_strncasecmp() */
+	err = pl_strncasecmp(&pl, "RaT", 3);
+	TEST_ERR(err);
 
 	/* pl_strcasecmp() */
 	if (EINVAL != pl_strcasecmp(NULL, NULL))
