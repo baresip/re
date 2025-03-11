@@ -203,7 +203,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		err = parse_msg_link((struct nlmsghdr *)buffer, len,
+		err = parse_msg_link((struct nlmsghdr *)(void *)buffer, len,
 				     &iff_up_l);
 		if (err != EALREADY)
 			break;
@@ -230,7 +230,8 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 	}
 
 	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-		err = (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh,
+		err = (parse_msg_addr((struct nlmsghdr *)(void *)buffer,
+				      len, ifh,
 				      &iff_up_l, arg));
 		if (err != EALREADY)
 			break;
