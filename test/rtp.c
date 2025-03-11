@@ -92,7 +92,7 @@ int test_rtp(void)
 
 		if (RTP_HEADER_SIZE != mb->pos ||
 		    (RTP_HEADER_SIZE + PAYLOAD_SIZE) != mb->end) {
-			DEBUG_WARNING("invalid mbuf size (pos=%u end=%u)\n",
+			DEBUG_WARNING("invalid mbuf size (pos=%zu end=%zu)\n",
 				      mb->pos, mb->end);
 			err = EBADMSG;
 			break;
