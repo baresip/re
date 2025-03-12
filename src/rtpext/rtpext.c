@@ -248,3 +248,26 @@ int rtpext_decode_long(struct rtpext *ext, struct mbuf *mb)
 
 	return 0;
 }
+
+
+/**
+ * Finds an RTP extension by its ID
+ *
+ * @param extv Pointer to an array of RTP extensions
+ * @param extc Number of elements in the RTP extension array
+ * @param id   The ID of the RTP extension to find
+ *
+ * @return Pointer to the matching RTP extension on success, otherwise NULL
+ */
+const struct rtpext *rtpext_find(const struct rtpext *extv, size_t extc,
+				 uint8_t id)
+{
+	for (size_t i = 0; i < extc; i++) {
+		const struct rtpext *rtpext = &extv[i];
+
+		if (rtpext->id == id)
+			return rtpext;
+	}
+
+	return NULL;
+}
