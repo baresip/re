@@ -248,7 +248,9 @@ static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
 
 	case RTCP_PSFB:
 		++ag->psfb_count;
-		re_cancel();
+
+		if (msg->hdr.count == RTCP_PSFB_PLI)
+			re_cancel();
 		break;
 
 	default:
@@ -290,6 +292,11 @@ static int test_rtcp_loop_base(bool mux)
 	rtcp_start(a.rtp_sock, "cname", &b.laddr_rtcp);
 	rtcp_start(b.rtp_sock, "cname", &a.laddr_rtcp);
 
+	const uint8_t fir_seqn = 22;
+	err = rtcp_send_fir_rfc5104(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock),
+				    fir_seqn);
+	TEST_ERR(err);
+
 	err = rtcp_send_app(a.rtp_sock, "PING", (void *)"PONG", 4);
 	TEST_ERR(err);
 
@@ -307,7 +314,7 @@ static int test_rtcp_loop_base(bool mux)
 	ASSERT_EQ(0, a.app_count);
 
 	ASSERT_EQ(0, b.rtp_count);
-	ASSERT_EQ(1, b.psfb_count);
+	ASSERT_EQ(2, b.psfb_count);
 	ASSERT_EQ(1, b.rtpfb_count);
 	ASSERT_EQ(1, b.gnack_count);
 	ASSERT_EQ(1, b.app_count);
