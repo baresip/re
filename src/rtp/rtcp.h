@@ -35,8 +35,8 @@ struct rtp_member {
 
 
 /* Member */
-struct rtp_member *member_add(struct hash *ht, uint32_t src);
-struct rtp_member *member_find(struct hash *ht, uint32_t src);
+struct rtp_member *rtp_member_add(struct hash *ht, uint32_t src);
+struct rtp_member *rtp_member_find(struct hash *ht, uint32_t src);
 
 
 /* RR (Reception report) */

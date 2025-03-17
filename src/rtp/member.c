@@ -24,7 +24,7 @@ static void destructor(void *data)
 }
 
 
-struct rtp_member *member_add(struct hash *ht, uint32_t src)
+struct rtp_member *rtp_member_add(struct hash *ht, uint32_t src)
 {
 	struct rtp_member *mbr;
 
@@ -47,7 +47,7 @@ static bool hash_cmp_handler(struct le *le, void *arg)
 }
 
 
-struct rtp_member *member_find(struct hash *ht, uint32_t src)
+struct rtp_member *rtp_member_find(struct hash *ht, uint32_t src)
 {
 	return list_ledata(hash_lookup(ht, src, hash_cmp_handler, &src));
 }
