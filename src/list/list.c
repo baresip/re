@@ -25,6 +25,7 @@ void list_init(struct list *list)
 
 	list->head = NULL;
 	list->tail = NULL;
+	list->cnt = 0;
 }
 
 
@@ -109,6 +110,7 @@ void list_append(struct list *list, struct le *le, void *data)
 		list->tail->next = le;
 
 	list->tail = le;
+	++list->cnt;
 }
 
 
@@ -141,6 +143,7 @@ void list_prepend(struct list *list, struct le *le, void *data)
 		list->tail = le;
 
 	list->head = le;
+	++list->cnt;
 }
 
 
@@ -174,6 +177,7 @@ void list_insert_before(struct list *list, struct le *le, struct le *ile,
 	ile->data = data;
 
 	le->prev = ile;
+	++list->cnt;
 }
 
 
@@ -207,6 +211,8 @@ void list_insert_after(struct list *list, struct le *le, struct le *ile,
 	ile->data = data;
 
 	le->next = ile;
+
+	++list->cnt;
 }
 
 
@@ -271,6 +277,8 @@ void list_unlink(struct le *le)
 	le->next = NULL;
 	le->prev = NULL;
 	le->list = NULL;
+
+	--list->cnt;
 }
 
 
@@ -399,14 +407,5 @@ struct le *list_tail(const struct list *list)
  */
 uint32_t list_count(const struct list *list)
 {
-	uint32_t n = 0;
-	struct le *le;
-
-	if (!list)
-		return 0;
-
-	for (le = list->head; le; le = le->next)
-		++n;
-
-	return n;
+	return list ? (uint32_t)list->cnt : 0;
 }

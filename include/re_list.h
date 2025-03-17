@@ -21,10 +21,11 @@ struct le {
 struct list {
 	struct le *head;  /**< First list element */
 	struct le *tail;  /**< Last list element  */
+	size_t cnt;       /**< Number of elements */
 };
 
 /** Linked list Initializer */
-#define LIST_INIT {NULL, NULL}
+#define LIST_INIT {NULL, NULL, 0}
 
 
 /**
