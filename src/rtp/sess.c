@@ -84,14 +84,14 @@ static struct rtp_member *get_member(struct rtcp_sess *sess, uint32_t src)
 {
 	struct rtp_member *mbr;
 
-	mbr = member_find(sess->members, src);
+	mbr = rtp_member_find(sess->members, src);
 	if (mbr)
 		return mbr;
 
 	if (sess->memberc >= MAX_MEMBERS)
 		return NULL;
 
-	mbr = member_add(sess->members, src);
+	mbr = rtp_member_add(sess->members, src);
 	if (!mbr)
 		return NULL;
 
@@ -198,7 +198,7 @@ static void handle_incoming_bye(struct rtcp_sess *sess,
 
 		struct rtp_member *mbr;
 
-		mbr = member_find(sess->members, msg->r.bye.srcv[i]);
+		mbr = rtp_member_find(sess->members, msg->r.bye.srcv[i]);
 		if (mbr) {
 			if (mbr->s)
 				--sess->senderc;
@@ -685,7 +685,7 @@ int rtcp_stats(struct rtp_sock *rs, uint32_t ssrc, struct rtcp_stats *stats)
 		return EINVAL;
 
 	mtx_lock(sess->lock);
-	mbr = member_find(sess->members, ssrc);
+	mbr = rtp_member_find(sess->members, ssrc);
 	if (!mbr) {
 		err = ENOENT;
 		goto out;
