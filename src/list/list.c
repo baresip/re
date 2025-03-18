@@ -278,7 +278,8 @@ void list_unlink(struct le *le)
 	le->prev = NULL;
 	le->list = NULL;
 
-	--list->cnt;
+	if (list->cnt)
+		--list->cnt;
 }
 
 
