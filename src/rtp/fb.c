@@ -48,6 +48,33 @@ int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp)
 }
 
 
+/**
+ * Encode an RTCP Transport-wide congestion control Feedback Message
+ *
+ * @param mb   Buffer to encode into
+ * @param twcc Transport-wide CC message
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_rtpfb_twcc_encode(struct mbuf *mb, struct twcc *twcc)
+{
+	int err;
+
+	uint32_t reftime_fbcount = twcc->fbcount; /* 8 bit */
+	reftime_fbcount |= twcc->reftime << 8;	  /* 24 bit */
+
+	err = mbuf_write_u16(mb, htons(twcc->seq));
+	err |= mbuf_write_u16(mb, htons(twcc->count));
+	err |= mbuf_write_u32(mb, htons(reftime_fbcount));
+	err |= mbuf_write_mem(mb, mbuf_buf(twcc->chunks),
+			      mbuf_get_left(twcc->chunks));
+	err |= mbuf_write_mem(mb, mbuf_buf(twcc->deltas),
+			      mbuf_get_left(twcc->deltas));
+
+	return err;
+}
+
+
 /* Decode functions */
 
 
