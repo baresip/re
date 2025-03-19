@@ -65,7 +65,7 @@ int rtcp_rtpfb_twcc_encode(struct mbuf *mb, struct twcc *twcc)
 
 	err = mbuf_write_u16(mb, htons(twcc->seq));
 	err |= mbuf_write_u16(mb, htons(twcc->count));
-	err |= mbuf_write_u32(mb, htons(reftime_fbcount));
+	err |= mbuf_write_u32(mb, htonl(reftime_fbcount));
 	err |= mbuf_write_mem(mb, mbuf_buf(twcc->chunks),
 			      mbuf_get_left(twcc->chunks));
 	err |= mbuf_write_mem(mb, mbuf_buf(twcc->deltas),
