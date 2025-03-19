@@ -126,6 +126,30 @@ int rtcp_send_gnack(struct rtp_sock *rs, uint32_t ssrc, uint16_t fsn,
 }
 
 
+static int encode_twcc(struct mbuf *mb, void *arg)
+{
+	struct twcc *twcc = arg;
+
+	return rtcp_rtpfb_twcc_encode(mb, twcc);
+}
+
+
+/**
+ * Send an RTCP Transport-wide congestion control Feedback Message
+ *
+ * @param rs   RTP Socket
+ * @param ssrc SSRC of the target encoder
+ * @param twcc Transport-wide CC message
+ *
+ * @return 0 for success, otherwise errorcode
+ */
+int rtcp_send_twcc(struct rtp_sock *rs, uint32_t ssrc, struct twcc *twcc)
+{
+	return rtcp_quick_send(rs, RTCP_RTPFB, RTCP_RTPFB_TWCC,
+			       rtp_sess_ssrc(rs), ssrc, &encode_twcc, twcc);
+}
+
+
 /**
  * Send an RTCP Picture Loss Indication (PLI) packet
  *

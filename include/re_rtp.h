@@ -270,6 +270,7 @@ int   rtcp_send_fir(struct rtp_sock *rs, uint32_t ssrc);
 int   rtcp_send_nack(struct rtp_sock *rs, uint16_t fsn, uint16_t blp);
 int   rtcp_send_gnack(struct rtp_sock *rs, uint32_t ssrc, uint16_t fsn,
 		    uint16_t blp);
+int   rtcp_send_twcc(struct rtp_sock *rs, uint32_t ssrc, struct twcc *twcc);
 int   rtcp_send_pli(struct rtp_sock *rs, uint32_t fb_ssrc);
 int   rtcp_send_fir_rfc5104(struct rtp_sock *rs, uint32_t ssrc,
 			    uint8_t fir_seqn);
