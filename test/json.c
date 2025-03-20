@@ -13,12 +13,12 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-
 enum {
 	DICT_BSIZE = 32,
 	MAX_LEVELS =  8,
 };
 
+#define SIMPLE_ARRAY_JSON "[0]"
 
 static int test_json_basic_parser(void)
 {
@@ -260,6 +260,14 @@ static int test_json_verify_decode(void)
 			"}"
 		},
 
+		/* simple nested array */
+		{
+			1,
+			1,
+			SIMPLE_ARRAY_JSON
+		},
+
+
 		/* nested arrays */
 		{
 			1,
@@ -402,6 +410,7 @@ static int test_json_verify_decode(void)
 	struct mbuf *mb_enc = NULL;
 	unsigned i;
 	int err = 0;
+	char *json = NULL;
 
 	for (i=0; i<RE_ARRAY_SIZE(testv); i++) {
 
@@ -436,12 +445,23 @@ static int test_json_verify_decode(void)
 
 		TEST_ASSERT(odict_compare(dict, dict2, false));
 
+		if (!str_cmp(t->str, SIMPLE_ARRAY_JSON)) {
+			mbuf_write_u8(mb_enc, 0);
+			mbuf_set_pos(mb_enc, 0);
+			err = mbuf_strdup(mb_enc, &json, mbuf_get_left(mb_enc));
+			TEST_ERR(err);
+
+			TEST_ASSERT(!str_casecmp(t->str, json));
+			json = mem_deref(json);
+		}
+
 		dict = mem_deref(dict);
 		dict2 = mem_deref(dict2);
 		mb_enc = mem_deref(mb_enc);
 	}
 
  out:
+	mem_deref(json);
 	mem_deref(dict2);
 	mem_deref(dict);
 	mem_deref(mb_enc);
