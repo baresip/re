@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.21.0 - 2025-03-26
+
+## What's Changed
+* fmt/pl: add pl_strncasecmp and tests by @sreimers in https://github.com/baresip/re/pull/1277
+* ci: upgrade run-on-arch-action to fix random segfaults by @alfredh in https://github.com/baresip/re/pull/1280
+* test: add testing of RTCP FIR-RFC5104 by @alfredh in https://github.com/baresip/re/pull/1281
+* rtpext: add rtpext_find by @sreimers in https://github.com/baresip/re/pull/1282
+* rtp: add rtp_ prefix to member functions by @alfredh in https://github.com/baresip/re/pull/1283
+* rtp/rtcp: add rtcp_send_twcc and rtcp_rtpfb_twcc_encode by @sreimers in https://github.com/baresip/re/pull/1285
+* list: optimize list_count by @sreimers in https://github.com/baresip/re/pull/1284
+* bump version to 3.21.0 by @alfredh in https://github.com/baresip/re/pull/1286
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.20.0...v3.21.0
+
+
 ## v3.20.0 - 2025-02-18
 
 ### What's Changed
