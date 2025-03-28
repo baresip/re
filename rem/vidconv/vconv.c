@@ -827,16 +827,20 @@ void vidconv_center(struct vidframe *dst, const struct vidframe *src,
 	struct vidframe sc = *src;
 
 	if (src->size.w >= src->size.h) {
-		double rh = (double)src->size.h / (double)r->h;
+		double rh = (double)src->size.h / r->h;
 		sc.size.w =
 			(unsigned)min((double)src->size.w, (double)r->w * rh);
 		sc.xoffs = ((unsigned)(src->size.w / rh) - r->w) / 2;
+		if (sc.xoffs >= src->size.w)
+			sc.xoffs = 0;
 	}
 	else {
-		double rw = (double)src->size.w / (double)r->w;
+		double rw = (double)src->size.w / r->w;
 		sc.size.h =
 			(unsigned)min((double)src->size.h, (double)r->h * rw);
 		sc.yoffs = ((unsigned)(src->size.h / rw) - r->h) / 2;
+		if (sc.yoffs >= src->size.h)
+			sc.yoffs = 0;
 	}
 
 	vidconv(dst, &sc, r);
