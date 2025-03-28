@@ -399,6 +399,12 @@ static int test_vidconv_center(void)
 		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
 		 .src_sz = {.w = 320, .h = 320}, /* square */
 		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 1080},
+		 .src_sz = {.w = 1078, .h = 1080}, /* yoffs underflow */
+		 .dst_sz = {.w = 1920, .h = 1080}},
+		{.r	 = {.x = 0, .y = 0, .w = 960, .h = 900},
+		 .src_sz = {.w = 1080, .h = 1080}, /* xoffs underflow */
+		 .dst_sz = {.w = 1920, .h = 1296}},
 	};
 
 	for (size_t i = 0; i < RE_ARRAY_SIZE(testv); i++) {
