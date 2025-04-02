@@ -229,7 +229,7 @@ void *mem_realloc(void *data, size_t size)
 	if (re_atomic_acq(&m->nrefs) > 1u) {
 		void* p = mem_alloc(size, m->dh);
 		if (p) {
-			memcpy(p, data, m->size);
+			memcpy(p, data, (m->size < size) ? m->size : size);
 			mem_deref(data);
 		}
 		return p;
