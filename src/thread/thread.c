@@ -13,6 +13,9 @@
 #include <windows.h>
 #include <processthreadsapi.h>
 #endif
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 #ifdef OPENBSD
@@ -89,8 +92,10 @@ static int handler(void *p)
 	(void)prctl(PR_SET_NAME, th.name);
 #elif defined(WIN32)
 	/* Not implemented */
-#elif defined(DARWIN)
+#elif __APPLE__
+#if defined(TARGET_OS_MAC) || defined(TARGET_OS_IPHONE)
 	(void)pthread_setname_np(th.name);
+#endif
 #elif defined(HAVE_PTHREAD)
 #if defined(OPENBSD)
 	(void)pthread_set_name_np(*th.thr, th.name);
