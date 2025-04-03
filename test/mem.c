@@ -39,7 +39,7 @@ static void destructor(void *arg)
 
 int test_mem(void)
 {
-	struct obj *obj, *old;
+	struct obj *obj, *old = NULL, *tmp = NULL;
 	int err = EINVAL;
 
 	obj = mem_alloc(sizeof(*obj), destructor);
@@ -62,7 +62,7 @@ int test_mem(void)
 	obj = mem_realloc(old, sizeof(*obj) + 16);
 
 	if (!obj) {
-		mem_deref(old);
+		old = mem_deref(old);
 		err = ENOMEM;
 		TEST_ERR(err);
 	}
@@ -77,10 +77,23 @@ int test_mem(void)
 	mem_deref(old);
 	TEST_EQUALS(1, mem_nrefs(obj));
 
+	old = mem_ref(obj);
+	TEST_EQUALS(2, mem_nrefs(obj));
+
+	tmp = mem_realloc(obj, sizeof(*obj) + 16);
+	if (!tmp) {
+		mem_deref(obj);
+		err = ENOMEM;
+		TEST_ERR(err);
+	}
+	TEST_EQUALS(1, mem_nrefs(old));
+	TEST_EQUALS(1, mem_nrefs(tmp));
+
 	err = 0;
 
  out:
-	mem_deref(obj);
+	mem_deref(tmp);
+	mem_deref(old);
 	return err;
 }
 
