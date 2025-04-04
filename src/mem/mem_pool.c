@@ -161,6 +161,7 @@ int mem_pool_extend(struct mem_pool *pool, size_t num)
 		}
 		objs[i]->member = mem_zalloc(pool->membsize, pool->membdh);
 		if (!objs[i]->member) {
+			mem_deref(objs[i]);
 			mem_deref(objs);
 			mtx_unlock(pool->lock);
 			return ENOMEM;
