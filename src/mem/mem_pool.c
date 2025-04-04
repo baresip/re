@@ -21,7 +21,7 @@ struct mem_pool {
 	size_t membsize;
 	struct mem_pool_entry *freel; /* single linked list */
 	mem_destroy_h *membdh;
-	struct mem_pool_entry *objs;
+	struct mem_pool_entry **objs;
 	mtx_t *lock;
 };
 
@@ -36,7 +36,8 @@ static void mem_pool_destroy(void *data)
 	struct mem_pool *p = data;
 
 	for (size_t i = 0; i < p->nmemb; i++) {
-		mem_deref(p->objs[i].member);
+		mem_deref(p->objs[i]->member);
+		mem_deref(p->objs[i]);
 	}
 
 	mem_deref(p->objs);
@@ -81,7 +82,8 @@ int mem_pool_alloc(struct mem_pool **poolp, size_t nmemb, size_t membsize,
 	p->nmemb    = nmemb;
 	p->membsize = membsize;
 	p->membdh   = dh;
-	p->objs	    = mem_zalloc(nmemb * sizeof(struct mem_pool_entry), NULL);
+
+	p->objs = mem_zalloc(nmemb * sizeof(struct mem_pool_entry *), NULL);
 	if (!p->objs) {
 		err = ENOMEM;
 		goto error;
@@ -94,12 +96,17 @@ int mem_pool_alloc(struct mem_pool **poolp, size_t nmemb, size_t membsize,
 		goto error;
 
 	for (size_t i = 0; i < nmemb; i++) {
-		p->objs[i].member = mem_zalloc(membsize, dh);
-		if (!p->objs[i].member) {
+		p->objs[i] = mem_zalloc(sizeof(struct mem_pool_entry), NULL);
+		if (!p->objs[i]) {
 			err = ENOMEM;
 			goto error;
 		}
-		next_free(p, &p->objs[i]);
+		p->objs[i]->member = mem_zalloc(membsize, dh);
+		if (!p->objs[i]->member) {
+			err = ENOMEM;
+			goto error;
+		}
+		next_free(p, p->objs[i]);
 	}
 
 	*poolp = p;
@@ -130,8 +137,8 @@ int mem_pool_extend(struct mem_pool *pool, size_t num)
 	mtx_lock(pool->lock);
 	size_t nmemb = pool->nmemb + num;
 
-	struct mem_pool_entry *objs;
-	objs = mem_zalloc(nmemb * sizeof(struct mem_pool_entry), NULL);
+	struct mem_pool_entry **objs;
+	objs = mem_zalloc(nmemb * sizeof(struct mem_pool_entry *), NULL);
 	if (!objs) {
 		mtx_unlock(pool->lock);
 		return ENOMEM;
@@ -140,19 +147,24 @@ int mem_pool_extend(struct mem_pool *pool, size_t num)
 	/* Copy old members */
 	size_t i = 0;
 	for (; i < pool->nmemb; i++) {
-		objs[i].next   = pool->objs[i].next;
-		objs[i].member = pool->objs[i].member;
+		objs[i] = pool->objs[i];
 	}
 
 	/* Allocate new members */
 	for (; i < nmemb; i++) {
-		objs[i].member = mem_zalloc(pool->membsize, pool->membdh);
-		if (!objs[i].member) {
+		objs[i] = mem_zalloc(sizeof(struct mem_pool_entry), NULL);
+		if (!objs[i]) {
 			mem_deref(objs);
 			mtx_unlock(pool->lock);
 			return ENOMEM;
 		}
-		next_free(pool, &objs[i]);
+		objs[i]->member = mem_zalloc(pool->membsize, pool->membdh);
+		if (!objs[i]->member) {
+			mem_deref(objs);
+			mtx_unlock(pool->lock);
+			return ENOMEM;
+		}
+		next_free(pool, objs[i]);
 	}
 
 	mem_deref(pool->objs);
@@ -253,7 +265,7 @@ void mem_pool_flush(struct mem_pool *pool)
 {
 	mtx_lock(pool->lock);
 	for (size_t i = 0; i < pool->nmemb; i++) {
-		struct mem_pool_entry *e = &pool->objs[i];
+		struct mem_pool_entry *e = pool->objs[i];
 		if (pool->membdh)
 			pool->membdh(e->member);
 		memset(e->member, 0, pool->membsize);
