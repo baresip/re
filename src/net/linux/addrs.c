@@ -22,7 +22,7 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-enum { BUFSZ = 8192 };
+enum { RE_NETLINK_BUFSZ = 8192 };
 
 struct iff_up_e {
 	struct le le;
@@ -164,7 +164,6 @@ static int parse_msg_addr(struct nlmsghdr *msg, ssize_t len, net_ifaddr_h *ifh,
 int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 {
 	int err = 0;
-	char buffer[BUFSZ];
 	re_sock_t sock;
 	ssize_t len;
 	struct list iff_up_l = LIST_INIT;
@@ -180,6 +179,10 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 
 	if (!ifh)
 		return EINVAL;
+
+	void *buffer = mem_zalloc(RE_NETLINK_BUFSZ, NULL);
+	if (!buffer)
+		return ENOMEM;
 
 	if ((sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE)) < 0) {
 		err = errno;
@@ -202,7 +205,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 		goto out;
 	}
 
-	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+	while ((len = recv(sock, buffer, RE_NETLINK_BUFSZ, 0)) > 0) {
 		err = parse_msg_link((struct nlmsghdr *)buffer, len,
 				     &iff_up_l);
 		if (err != EALREADY)
@@ -229,7 +232,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 		goto out;
 	}
 
-	while ((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+	while ((len = recv(sock, buffer, RE_NETLINK_BUFSZ, 0)) > 0) {
 		err = (parse_msg_addr((struct nlmsghdr *)buffer, len, ifh,
 				      &iff_up_l, arg));
 		if (err != EALREADY)
@@ -246,6 +249,7 @@ int net_netlink_addrs(net_ifaddr_h *ifh, void *arg)
 out:
 	close(sock);
 	list_flush(&iff_up_l);
+	mem_deref(buffer);
 
 	return err;
 }
