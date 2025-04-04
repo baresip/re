@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.21.1 - 2025-04-04
+
+### What's Changed
+* vidconv: fix vidconv_center underflows by @sreimers in https://github.com/baresip/re/pull/1287
+* mem: fix buffer overflow in mem_realloc by @maximilianfridrich in https://github.com/baresip/re/pull/1289
+* mem/mem_pool: use pointer-pointer to prevent heap-use-after-free by @sreimers in https://github.com/baresip/re/pull/1290
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.21.0...v3.21.1
+
+
 ## v3.21.0 - 2025-03-26
 
-## What's Changed
+### What's Changed
 * fmt/pl: add pl_strncasecmp and tests by @sreimers in https://github.com/baresip/re/pull/1277
 * ci: upgrade run-on-arch-action to fix random segfaults by @alfredh in https://github.com/baresip/re/pull/1280
 * test: add testing of RTCP FIR-RFC5104 by @alfredh in https://github.com/baresip/re/pull/1281
