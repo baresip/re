@@ -36,7 +36,8 @@ static void mem_pool_destroy(void *data)
 	struct mem_pool *p = data;
 
 	for (size_t i = 0; i < p->nmemb; i++) {
-		mem_deref(p->objs[i]->member);
+		if (p->objs[i])
+			mem_deref(p->objs[i]->member);
 		mem_deref(p->objs[i]);
 	}
 
