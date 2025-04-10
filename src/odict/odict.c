@@ -50,25 +50,46 @@ int odict_alloc(struct odict **op, uint32_t hash_size)
 }
 
 
-const struct odict_entry *odict_lookup(const struct odict *o, const char *key)
+static const struct odict_entry *lookup_key_idx(const struct odict *o,
+						     const char* key, int idx)
 {
 	struct le *le;
 
-	if (!o || !key)
+	if (!o || (!key && idx == -1))
 		return NULL;
 
-	le = list_head(hash_list(o->ht, hash_fast_str(key)));
+	uint32_t hashval;
+	if (str_isset(key))
+		hashval = hash_fast_str(key);
+	else
+		hashval = idx;
+
+	le = list_head(hash_list(o->ht, hashval));
 
 	while (le) {
 		const struct odict_entry *e = le->data;
 
-		if (!str_cmp(e->key, key))
+		if (e->tuple && str_isset(key) && !str_cmp(e->key.name, key))
+			return e;
+		else if (!e->tuple && idx >= 0 && e->key.idx == idx)
 			return e;
 
 		le = le->next;
 	}
 
 	return NULL;
+}
+
+const struct odict_entry *odict_lookup(const struct odict *o, const char *key)
+{
+	return lookup_key_idx(o, key, -1);
+}
+
+
+const struct odict_entry *odict_lookup_idx(const struct odict *o,
+				    	int idx)
+{
+	return lookup_key_idx(o, NULL, idx);
 }
 
 
@@ -202,12 +223,16 @@ bool odict_compare(const struct odict *dict1, const struct odict *dict2,
 		const struct odict_entry *e1 = le1->data;
 		const struct odict_entry *e2;
 
-		if (ignore_order)
-			e2 = odict_lookup(dict2, odict_entry_key(e1));
-		else
+		if (ignore_order) {
+			if (odict_entry_tuple(e1))
+				e2 = odict_lookup(dict2, odict_entry_key(e1));
+			else
+				e2 = odict_lookup_idx(dict2, odict_entry_idx(e1));
+		} else
 			e2 = le2->data;
 
-		if (0 != str_cmp(odict_entry_key(e1), odict_entry_key(e2)))
+		if (odict_entry_tuple(e1) &&
+			0 != str_cmp(odict_entry_key(e1), odict_entry_key(e2)))
 			return false;
 
 		if (!odict_value_compare(e1, e2, ignore_order))

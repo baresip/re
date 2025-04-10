@@ -75,28 +75,55 @@ static int encode_entry(struct re_printf *pf, const struct odict_entry *e)
 	return err;
 }
 
+enum odict_bracket {
+	OB_Init = 0,
+	OB_None,
+	OB_Curly,
+	OB_Square,
+};
 
 int json_encode_odict(struct re_printf *pf, const struct odict *o)
 {
 	struct le *le;
-	int err;
+	int err = 0;
+	enum odict_bracket b = OB_Init;
 
 	if (!o)
 		return 0;
-
-	err = re_hprintf(pf, "{");
 
 	for (le=o->lst.head; le; le=le->next) {
 
 		const struct odict_entry *e = le->data;
 
-		err |= re_hprintf(pf, "\"%H\":%H%s",
-				  utf8_encode, odict_entry_key(e),
-				  encode_entry, e,
-				  le->next ? "," : "");
+		if (b == OB_Init) {
+			if (str_isset(odict_entry_key(e))) {
+				err = re_hprintf(pf, "{");
+				b = OB_Curly;
+			}
+			else if (odict_entry_array(e)) {
+				err = re_hprintf(pf, "[");
+				b = OB_Square;
+			} else
+				b = OB_None;
+		}
+
+		if (str_isset(odict_entry_key(e)))
+			err |= re_hprintf(pf, "\"%H\":%H%s",
+					utf8_encode, odict_entry_key(e),
+					encode_entry, e,
+					le->next ? "," : "");
+		else
+			err |= re_hprintf(pf, "%H%s",
+					encode_entry, e,
+					le->next ? "," : "");
 	}
 
-	err |= re_hprintf(pf, "}");
+	if (b == OB_Curly)
+		err |= re_hprintf(pf, "}");
+	else if (b == OB_Square)
+		err |= re_hprintf(pf, "]");
+	else if (b == OB_Init)
+		err |= re_hprintf(pf, "{}");
 
 	return err;
 }

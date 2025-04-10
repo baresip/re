@@ -1,6 +1,10 @@
 struct odict_entry {
 	struct le le, he;
-	char *key;
+	bool tuple;
+	union {
+		char *name;
+		int   idx;
+	} key;
 	union {
 		struct odict *odict;   /* ODICT_OBJECT / ODICT_ARRAY */
 		char *str;             /* ODICT_STRING */

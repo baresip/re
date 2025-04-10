@@ -24,11 +24,15 @@ struct odict_entry;
 
 int odict_alloc(struct odict **op, uint32_t hash_size);
 const struct odict_entry *odict_lookup(const struct odict *o, const char *key);
+const struct odict_entry *odict_lookup_idx(const struct odict *o,
+				    	int idx);
 size_t odict_count(const struct odict *o, bool nested);
 int odict_debug(struct re_printf *pf, const struct odict *o);
 
-int odict_entry_add(struct odict *o, const char *key,
-		    int type, ...);
+int odict_entry_add(struct odict *o, const char *key, int type, ...);
+int odict_entry_add_key_idx(struct odict *o, const char *key, int idx,
+		 int type, ...);
+
 int odict_pl_add(struct odict *od, const char *key,
 		 const struct pl *val);
 void odict_entry_del(struct odict *o, const char *key);
@@ -45,6 +49,8 @@ const char *odict_type_name(enum odict_type type);
 
 const struct odict_entry *odict_get_type(const struct odict *o,
 					enum odict_type type, const char *key);
+const struct odict_entry *odict_get_type_idx(const struct odict *o,
+					enum odict_type type, int idx);
 const char *odict_string(const struct odict *o, const char *key);
 bool odict_get_number(const struct odict *o, uint64_t *num, const char *key);
 bool odict_get_boolean(const struct odict *o, bool *value, const char *key);
@@ -56,6 +62,8 @@ struct odict *odict_get_array(const struct odict *o, const char *key);
 
 enum odict_type odict_entry_type(const struct odict_entry *e);
 const char *odict_entry_key(const struct odict_entry *e);
+int odict_entry_idx(const struct odict_entry *e);
+bool odict_entry_tuple(const struct odict_entry *e);
 struct odict *odict_entry_object(const struct odict_entry *e);
 struct odict *odict_entry_array(const struct odict_entry *e);
 char *odict_entry_str(const struct odict_entry *e);

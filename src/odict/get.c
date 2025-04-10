@@ -107,10 +107,28 @@ enum odict_type odict_entry_type(const struct odict_entry *e)
 
 const char *odict_entry_key(const struct odict_entry *e)
 {
-	if (!e)
+	if (!e || !e->tuple)
 		return NULL;
 
-	return e->key;
+	return e->key.name;
+}
+
+
+int odict_entry_idx(const struct odict_entry *e)
+{
+	if (!e || e->tuple)
+		return -1;
+
+	return e->key.idx;
+}
+
+
+bool odict_entry_tuple(const struct odict_entry *e)
+{
+	if (!e)
+		return false;
+
+	return e->tuple;
 }
 
 
@@ -131,6 +149,26 @@ const struct odict_entry *odict_get_type(const struct odict *o,
 
 	return entry;
 }
+
+
+const struct odict_entry *odict_get_type_idx(const struct odict *o,
+					 enum odict_type type, int idx)
+{
+	const struct odict_entry *entry;
+
+	if (!o || idx < 0)
+		return NULL;
+
+	entry = odict_lookup_idx(o, idx);
+	if (!entry)
+		return NULL;
+
+	if (entry->type != type)
+		return NULL;
+
+	return entry;
+}
+
 
 
 const char *odict_string(const struct odict *o, const char *key)
