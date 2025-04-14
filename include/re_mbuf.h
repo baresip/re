@@ -141,6 +141,9 @@ static inline size_t mbuf_get_space(const struct mbuf *mb)
  */
 static inline void mbuf_set_pos(struct mbuf *mb, size_t pos)
 {
+	if (!mb)
+		return;
+
 	mb->pos = pos;
 	MBUF_CHECK_POS(mb);
 }
@@ -154,6 +157,9 @@ static inline void mbuf_set_pos(struct mbuf *mb, size_t pos)
  */
 static inline void mbuf_set_end(struct mbuf *mb, size_t end)
 {
+	if (!mb)
+		return;
+
 	mb->end = end;
 	MBUF_CHECK_END(mb);
 }
@@ -167,6 +173,9 @@ static inline void mbuf_set_end(struct mbuf *mb, size_t end)
  */
 static inline void mbuf_advance(struct mbuf *mb, ssize_t n)
 {
+	if (!mb)
+		return;
+
 	mb->pos += n;
 	MBUF_CHECK_POS(mb);
 }
@@ -179,6 +188,9 @@ static inline void mbuf_advance(struct mbuf *mb, ssize_t n)
  */
 static inline void mbuf_rewind(struct mbuf *mb)
 {
+	if (!mb)
+		return;
+
 	mb->pos = mb->end = 0;
 }
 
@@ -190,6 +202,9 @@ static inline void mbuf_rewind(struct mbuf *mb)
  */
 static inline void mbuf_skip_to_end(struct mbuf *mb)
 {
+	if (!mb)
+		return;
+
 	mb->pos = mb->end;
 }
 
