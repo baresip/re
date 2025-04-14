@@ -83,11 +83,11 @@ static int test_json_basic_parser(void)
 	TEST_ASSERT(o != NULL);
 	TEST_EQUALS(ODICT_ARRAY, odict_entry_type(o));
 	TEST_EQUALS(5U, odict_count(odict_entry_array(o), false));
-	e = odict_get_type(odict_entry_array(o), ODICT_INT, "0");
+	e = odict_get_type_idx(odict_entry_array(o), ODICT_INT, 0);
 	TEST_EQUALS(1, odict_entry_int(e));
-	e = odict_get_type(odict_entry_array(o), ODICT_INT, "1");
+	e = odict_get_type_idx(odict_entry_array(o), ODICT_INT, 1);
 	TEST_EQUALS(2, odict_entry_int(e));
-	e = odict_get_type(odict_entry_array(o), ODICT_INT, "2");
+	e = odict_get_type_idx(odict_entry_array(o), ODICT_INT, 2);
 	TEST_EQUALS(3, odict_entry_int(e));
 
 	o = odict_lookup(dict, "negative");
