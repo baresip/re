@@ -29,7 +29,6 @@ struct rtp_sock {
 		uint16_t seq;   /**< Sequence number       */
 		uint32_t ssrc;  /**< Synchronizing source  */
 	} enc;
-	int proto;              /**< Transport Protocol    */
 	void *sock_rtp;         /**< RTP Socket            */
 	void *sock_rtcp;        /**< RTCP Socket           */
 	struct sa local;        /**< Local RTP Address     */
@@ -142,16 +141,8 @@ static void destructor(void *data)
 {
 	struct rtp_sock *rs = data;
 
-	switch (rs->proto) {
-
-	case IPPROTO_UDP:
-		udp_handler_set(rs->sock_rtp, NULL, NULL);
-		udp_handler_set(rs->sock_rtcp, NULL, NULL);
-		break;
-
-	default:
-		break;
-	}
+	udp_handler_set(rs->sock_rtp, NULL, NULL);
+	udp_handler_set(rs->sock_rtcp, NULL, NULL);
 
 	/* Destroy RTCP Session now */
 	mem_deref(rs->rtcp);
@@ -319,7 +310,6 @@ int rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 	if (err)
 		return err;
 
-	rs->proto = proto;
 	rs->recvh = recvh;
 	rs->rtcph = rtcph;
 	rs->arg   = arg;
@@ -369,8 +359,6 @@ int rtp_open(struct rtp_sock **rsp, int af)
 	err = rtp_alloc(&rs);
 	if (err)
 		return err;
-
-	rs->proto = IPPROTO_UDP;
 
 	us_rtp = NULL;
 	err = udp_open(&us_rtp, af);
