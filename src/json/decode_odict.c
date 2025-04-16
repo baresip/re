@@ -123,3 +123,43 @@ int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str,
 
 	return err;
 }
+
+
+int json_decode_odict_full(struct odict **op, uint32_t hash_size,
+			   const char *str, size_t len, unsigned maxdepth)
+{
+	struct odict *o;
+	int err;
+
+	if (!op || !str)
+		return EINVAL;
+
+	err = odict_alloc(&o, hash_size);
+	if (err)
+		return err;
+
+	struct json_handlers h = {object_handler, array_handler,
+				  object_entry_handler, array_entry_handler,
+				  o};
+
+	switch (*str) {
+		case '{':
+			container_add(NULL, 0, ODICT_OBJECT, &h);
+			break;
+		case '[':
+			container_add(NULL, 0, ODICT_ARRAY, &h);
+			break;
+		default:
+			return EBADMSG;
+	}
+
+
+	err = json_decode(str, len, maxdepth, object_handler, array_handler,
+			  object_entry_handler, array_entry_handler, h.arg);
+	if (err)
+		mem_deref(o);
+	else
+		*op = o;
+
+	return err;
+}
