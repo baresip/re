@@ -41,3 +41,5 @@ int rtpext_encode_long(struct mbuf *mb, uint8_t id, uint8_t len,
 		       const uint8_t *data);
 int rtpext_decode(struct rtpext *ext, struct mbuf *mb);
 int rtpext_decode_long(struct rtpext *ext, struct mbuf *mb);
+const struct rtpext *rtpext_find(const struct rtpext *extv, size_t extc,
+				 uint8_t id);

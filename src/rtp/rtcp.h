@@ -35,8 +35,8 @@ struct rtp_member {
 
 
 /* Member */
-struct rtp_member *member_add(struct hash *ht, uint32_t src);
-struct rtp_member *member_find(struct hash *ht, uint32_t src);
+struct rtp_member *rtp_member_add(struct hash *ht, uint32_t src);
+struct rtp_member *rtp_member_find(struct hash *ht, uint32_t src);
 
 
 /* RR (Reception report) */
@@ -53,6 +53,7 @@ int rtcp_make_sdes_cname(const struct rtp_sock *rs, struct mbuf *mb);
 
 /* RTCP Feedback */
 int rtcp_rtpfb_gnack_encode(struct mbuf *mb, uint16_t pid, uint16_t blp);
+int rtcp_rtpfb_twcc_encode(struct mbuf *mb, struct twcc *twcc);
 int rtcp_rtpfb_twcc_decode(struct mbuf *mb, struct twcc *msg, int n);
 int rtcp_rtpfb_decode(struct mbuf *mb, struct rtcp_msg *msg);
 int rtcp_psfb_decode(struct mbuf *mb, struct rtcp_msg *msg);

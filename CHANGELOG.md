@@ -6,9 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.21.1 - 2025-04-04
+
+### What's Changed
+* vidconv: fix vidconv_center underflows by @sreimers in https://github.com/baresip/re/pull/1287
+* mem: fix buffer overflow in mem_realloc by @maximilianfridrich in https://github.com/baresip/re/pull/1289
+* mem/mem_pool: use pointer-pointer to prevent heap-use-after-free by @sreimers in https://github.com/baresip/re/pull/1290
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.21.0...v3.21.1
+
+
+## v3.21.0 - 2025-03-26
+
+### What's Changed
+* fmt/pl: add pl_strncasecmp and tests by @sreimers in https://github.com/baresip/re/pull/1277
+* ci: upgrade run-on-arch-action to fix random segfaults by @alfredh in https://github.com/baresip/re/pull/1280
+* test: add testing of RTCP FIR-RFC5104 by @alfredh in https://github.com/baresip/re/pull/1281
+* rtpext: add rtpext_find by @sreimers in https://github.com/baresip/re/pull/1282
+* rtp: add rtp_ prefix to member functions by @alfredh in https://github.com/baresip/re/pull/1283
+* rtp/rtcp: add rtcp_send_twcc and rtcp_rtpfb_twcc_encode by @sreimers in https://github.com/baresip/re/pull/1285
+* list: optimize list_count by @sreimers in https://github.com/baresip/re/pull/1284
+* bump version to 3.21.0 by @alfredh in https://github.com/baresip/re/pull/1286
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.20.0...v3.21.0
+
+
+## v3.20.0 - 2025-02-18
+
+### What's Changed
+* http/server: increase BUFSIZE_MAX to 1 MB and add http_set_max_body_size by @sreimers in https://github.com/baresip/re/pull/1262
+* test: init err to zero (fixes cppcheck warning) by @alfredh in https://github.com/baresip/re/pull/1265
+* test: add RTCP_APP to RTCP test by @alfredh in https://github.com/baresip/re/pull/1266
+* mem,aubuf: add pre-allocated memory pool management by @sreimers in https://github.com/baresip/re/pull/1255
+* test: increase test_oom levels and oom fixes by @sreimers in https://github.com/baresip/re/pull/1260
+* mem/mem_pool: fix mem_pool_extend new member destructor by @sreimers in https://github.com/baresip/re/pull/1267
+* ci: bump version and min_cov by @sreimers in https://github.com/baresip/re/pull/1268
+* av1: remove duplicate/unused getbit.c by @alfredh in https://github.com/baresip/re/pull/1272
+* test/cmake: link C++ lib by @sreimers in https://github.com/baresip/re/pull/1269
+* http: restart timer for each chunk by @fAuernigg in https://github.com/baresip/re/pull/1273
+* ci/valgrind: use ubuntu-latest by @sreimers in https://github.com/baresip/re/pull/1274
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.19.0...v3.20.0
+
+
 ## v3.19.0 - 2025-01-15
 
-## What's Changed
+### What's Changed
 * fmt: fix pl trim methods and add tests by @maximilianfridrich in https://github.com/baresip/re/pull/1226
 * sipsess: add sipsess_msg getter function by @cspiel1 in https://github.com/baresip/re/pull/1225
 * rtp/sess: fix missing srate_tx locking by @sreimers in https://github.com/baresip/re/pull/1231
@@ -45,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v3.18.0 - 2024-12-11
 
-## What's Changed
+### What's Changed
 * odict: add odict_pl_add() by @cspiel1 in https://github.com/baresip/re/pull/1208
 * ci/build: remove Ubuntu 20.04, add 24.04, use GCC 14 on 24.04 by @robert-scheck in https://github.com/baresip/re/pull/1210
 * test: vertical alignment of integration test names by @alfredh in https://github.com/baresip/re/pull/1212

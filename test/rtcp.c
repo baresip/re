@@ -205,14 +205,105 @@ out:
 
 
 struct agent {
+	struct agent *peer;
 	struct rtp_sock *rtp_sock;
+	struct sa laddr_rtp;
 	struct sa laddr_rtcp;
+	unsigned step;
 	unsigned rtp_count;
 	unsigned psfb_count;
 	unsigned rtpfb_count;
 	unsigned gnack_count;
 	unsigned app_count;
+	int err;
 };
+
+
+static bool agents_are_complete(const struct agent *ag)
+{
+	return ag->app_count && ag->peer->app_count;
+}
+
+
+static int agent_send_rtcp_packet(struct agent *ag)
+{
+	struct mbuf *mb_chunks = NULL;
+	struct mbuf *mb_deltas = NULL;
+	const uint8_t fir_seqn = 22;
+	int err = 0;
+
+	switch (ag->step) {
+
+	case 0:
+		err = rtcp_send_fir_rfc5104(ag->rtp_sock,
+					    rtp_sess_ssrc(ag->peer->rtp_sock),
+					    fir_seqn);
+		break;
+
+	case 1:
+		err = rtcp_send_gnack(ag->rtp_sock,
+				      rtp_sess_ssrc(ag->peer->rtp_sock),
+				      42, 0);
+		break;
+
+	case 2:
+		err = rtcp_send_pli(ag->rtp_sock,
+				    rtp_sess_ssrc(ag->peer->rtp_sock));
+		break;
+
+	case 3: {
+		mb_chunks = mbuf_alloc(32);
+		mb_deltas = mbuf_alloc(32);
+		if (!mb_chunks || !mb_deltas) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		static const uint8_t chunks[] = {
+			0xad, 0xe0
+		};
+		static const uint8_t deltas[] = {
+			0x14, 0x18, 0x18, 0x38, 0x00, 0x00, 0x00
+		};
+		mbuf_write_mem(mb_chunks, chunks, sizeof(chunks));
+		mbuf_write_mem(mb_deltas, deltas, sizeof(deltas));
+
+		mbuf_set_pos(mb_chunks, 0);
+		mbuf_set_pos(mb_deltas, 0);
+
+		struct twcc twcc = {
+			.seq     = 11,
+			.count   = 22,
+			.reftime = 33,
+			.fbcount = 44,
+			.chunks  = mb_chunks,
+			.deltas  = mb_deltas,
+		};
+
+		err = rtcp_send_twcc(ag->rtp_sock,
+				     rtp_sess_ssrc(ag->peer->rtp_sock), &twcc);
+	}
+		break;
+
+	case 4:
+		/* NOTE: must be last */
+		err = rtcp_send_app(ag->rtp_sock, "PING", (void *)"PONG", 4);
+		break;
+
+	default:
+		DEBUG_NOTICE("agent_send_rtcp_packet: invalid step (%u)\n",
+			     ag->step);
+		break;
+	}
+
+	++ag->step;
+
+ out:
+	mem_deref(mb_chunks);
+	mem_deref(mb_deltas);
+
+	return err;
+}
 
 
 static void rtp_recv_handler(const struct sa *src,
@@ -225,6 +316,15 @@ static void rtp_recv_handler(const struct sa *src,
 	(void)mb;
 
 	++ag->rtp_count;
+
+	if (ag->step == 0) {
+
+		int err = agent_send_rtcp_packet(ag);
+		if (err) {
+			ag->err = err;
+			re_cancel();
+		}
+	}
 }
 
 
@@ -232,27 +332,48 @@ static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
 			      void *arg)
 {
 	struct agent *ag = arg;
+	int err = 0;
 	(void)src;
 
 	switch (msg->hdr.pt) {
-
-	case RTCP_APP:
-		++ag->app_count;
-		break;
 
 	case RTCP_RTPFB:
 		if (msg->r.fb.fci.gnackv->pid == 42)
 			++ag->gnack_count;
 		++ag->rtpfb_count;
+		err = agent_send_rtcp_packet(ag);
 		break;
 
 	case RTCP_PSFB:
 		++ag->psfb_count;
-		re_cancel();
+
+		err = agent_send_rtcp_packet(ag);
+		break;
+
+	case RTCP_APP:
+		++ag->app_count;
+		break;
+
+	case RTCP_SR:
+	case RTCP_SDES:
+		/* ignore */
 		break;
 
 	default:
+		DEBUG_WARNING("unexpected RTCP message: %H\n",
+			      rtcp_msg_print, msg);
+		err = EPROTO;
 		break;
+	}
+
+	if (agents_are_complete(ag)) {
+		re_cancel();
+		return;
+	}
+
+	if (err) {
+		ag->err = err;
+		re_cancel();
 	}
 }
 
@@ -271,15 +392,17 @@ static int agent_init(struct agent *ag, bool mux)
 
 	rtcp_enable_mux(ag->rtp_sock, mux);
 
+	udp_local_get(rtp_sock(ag->rtp_sock), &ag->laddr_rtp);
 	udp_local_get(rtcp_sock(ag->rtp_sock), &ag->laddr_rtcp);
 
 	return 0;
 }
 
 
-static int test_rtcp_loop_base(bool mux)
+static int test_rtcp_loop_param(bool mux)
 {
 	struct agent a = {0}, b = {0};
+	struct mbuf *mb = NULL;
 	int err;
 
 	err = agent_init(&a, mux);
@@ -287,34 +410,58 @@ static int test_rtcp_loop_base(bool mux)
 	err = agent_init(&b, mux);
 	TEST_ERR(err);
 
+	a.peer = &b;
+	b.peer = &a;
+
 	rtcp_start(a.rtp_sock, "cname", &b.laddr_rtcp);
 	rtcp_start(b.rtp_sock, "cname", &a.laddr_rtcp);
 
-	err = rtcp_send_app(a.rtp_sock, "PING", (void *)"PONG", 4);
-	TEST_ERR(err);
+	mb = mbuf_alloc(RTP_HEADER_SIZE + 1);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
 
-	err = rtcp_send_gnack(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock), 42, 0);
-	TEST_ERR(err);
+	mbuf_fill(mb, 0x00, RTP_HEADER_SIZE + 1);
 
-	err = rtcp_send_pli(a.rtp_sock, rtp_sess_ssrc(b.rtp_sock));
-	TEST_ERR(err);
+	/* Send some RTP-packets to enable RTCP-SR */
+	for (unsigned i=0; i<4; i++) {
+
+		uint64_t jfs = tmr_jiffies_rt_usec();
+
+		mb->pos = RTP_HEADER_SIZE;
+
+		err = rtp_send(a.rtp_sock, &b.laddr_rtp, false,
+			       false, 0, 160, jfs, mb);
+		TEST_ERR(err);
+
+		mb->pos = RTP_HEADER_SIZE;
+
+		err = rtp_send(b.rtp_sock, &a.laddr_rtp, false,
+			       false, 0, 160, jfs, mb);
+		TEST_ERR(err);
+	}
 
 	err = re_main_timeout(1000);
 	TEST_ERR(err);
 
-	ASSERT_EQ(0, a.rtp_count);
-	ASSERT_EQ(0, a.psfb_count);
-	ASSERT_EQ(0, a.app_count);
+	ASSERT_EQ(0, a.err);
+	ASSERT_EQ(0, b.err);
 
-	ASSERT_EQ(0, b.rtp_count);
-	ASSERT_EQ(1, b.psfb_count);
-	ASSERT_EQ(1, b.rtpfb_count);
+	ASSERT_TRUE(a.rtp_count >= 1);
+	ASSERT_EQ(2, a.psfb_count);
+	ASSERT_EQ(1, a.app_count);
+
+	ASSERT_TRUE(b.rtp_count >= 1);
+	ASSERT_EQ(2, b.psfb_count);
+	ASSERT_EQ(2, b.rtpfb_count);
 	ASSERT_EQ(1, b.gnack_count);
 	ASSERT_EQ(1, b.app_count);
 
  out:
 	mem_deref(b.rtp_sock);
 	mem_deref(a.rtp_sock);
+	mem_deref(mb);
 
 	return err;
 }
@@ -324,10 +471,10 @@ int test_rtcp_loop(void)
 {
 	int err;
 
-	err = test_rtcp_loop_base(false);
+	err = test_rtcp_loop_param(false);
 	TEST_ERR(err);
 
-	err = test_rtcp_loop_base(true);
+	err = test_rtcp_loop_param(true);
 	TEST_ERR(err);
 
  out:

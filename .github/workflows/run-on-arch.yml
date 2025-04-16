@@ -23,13 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: uraimo/run-on-arch-action@v3
         name: Build artifact
         id: build
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
-          base_image: '--platform=linux/aarch64 ubuntu:20.04'
 
           # Not required, but speeds up builds
           githubToken: ${{ github.token }}
