@@ -12,7 +12,7 @@
 
 static int encode_entry(struct re_printf *pf, const struct odict_entry *e)
 {
-	struct odict *array;
+	struct odict *o;
 	struct le *le;
 	int err;
 
@@ -22,17 +22,30 @@ static int encode_entry(struct re_printf *pf, const struct odict_entry *e)
 	switch (odict_entry_type(e)) {
 
 	case ODICT_OBJECT:
-		err = json_encode_odict(pf, odict_entry_object(e));
+		o = odict_entry_object(e);
+		if (!o)
+			return 0;
+
+		err = re_hprintf(pf, "{");
+		for (le = o->lst.head; le; le = le->next) {
+
+			const struct odict_entry *oe = le->data;
+
+			err |= re_hprintf(pf, "\"%H\":%H%s", utf8_encode,
+					  odict_entry_key(oe), encode_entry,
+					  oe, le->next ? "," : "");
+		}
+		err |= re_hprintf(pf, "}");
 		break;
 
 	case ODICT_ARRAY:
-		array = odict_entry_array(e);
-		if (!array)
+		o = odict_entry_array(e);
+		if (!o)
 			return 0;
 
 		err = re_hprintf(pf, "[");
 
-		for (le=array->lst.head; le; le=le->next) {
+		for (le=o->lst.head; le; le=le->next) {
 
 			const struct odict_entry *ae = le->data;
 
@@ -85,18 +98,35 @@ int json_encode_odict(struct re_printf *pf, const struct odict *o)
 		return 0;
 
 	err = re_hprintf(pf, "{");
+	for (le = o->lst.head; le; le = le->next) {
 
-	for (le=o->lst.head; le; le=le->next) {
+		const struct odict_entry *oe = le->data;
 
-		const struct odict_entry *e = le->data;
-
-		err |= re_hprintf(pf, "\"%H\":%H%s",
-				  utf8_encode, odict_entry_key(e),
-				  encode_entry, e,
-				  le->next ? "," : "");
+		err |= re_hprintf(pf, "\"%H\":%H%s", utf8_encode,
+				  odict_entry_key(oe), encode_entry,
+				  oe, le->next ? "," : "");
 	}
-
 	err |= re_hprintf(pf, "}");
+
+	return err;
+}
+
+
+int json_encode_odict_full(struct re_printf *pf, const struct odict *o)
+{
+	struct le *le;
+	int err;
+
+	if (!o)
+		return 0;
+
+	le = o->lst.head;
+	if (!le)
+		return 0;
+
+	struct odict_entry *oe = le->data;
+
+	err = encode_entry(pf, oe);
 
 	return err;
 }
