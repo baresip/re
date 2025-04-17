@@ -277,6 +277,7 @@ int test_rtcp_decode(void);
 int test_rtcp_decode_badmsg(void);
 int test_rtcp_packetloss(void);
 int test_rtcp_twcc(void);
+int test_rtcp_xr_rrtr(void);
 int test_rtcp_loop(void);
 int test_sa_class(void);
 int test_sa_cmp(void);

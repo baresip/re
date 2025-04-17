@@ -74,6 +74,17 @@ enum rtcp_psfb {
 	RTCP_PSFB_AFB  = 15,  /**< Application layer Feedback Messages */
 };
 
+/** Extended Report Block */
+enum rtcp_xr {
+	RTCP_XR_LRRB  = 1,  /**< Loss RLE Report Block */
+	RTCP_XR_DULRR = 2,  /**< Duplicate RLE Report Block   */
+	RTCP_XR_PRTR  = 3,  /**< Packet Receipt Times Report Block */
+	RTCP_XR_RRTR  = 4,  /**< Receiver Reference Time Report Block */
+	RTCP_XR_DLRR  = 5,  /**< DLRR Report Block */
+	RTCP_XR_SSR   = 6,  /**< Statistics Summary Report Block */
+	RTCP_XR_VMR   = 7,  /**< VoIP Metrics Report Block */
+};
+
 /** Reception report block */
 struct rtcp_rr {
 	uint32_t ssrc;            /**< Data source being reported      */
@@ -185,6 +196,26 @@ struct rtcp_msg {
 				void *p;
 			} fci;
 		} fb;
+
+		/** Extended Report (XR) packet */
+		/** https://datatracker.ietf.org/doc/html/rfc3611#section-4 */
+		struct {
+			uint32_t ssrc;
+			uint8_t bt;         /**< Block type */
+			uint16_t block_len; /**< Number of 32-bit words */
+			/** Report blocks (RB) */
+			union {
+				struct {
+					uint32_t ntp_msw;
+					uint32_t ntp_lsw;
+				} rrtrb;
+				struct {
+					uint32_t ssrc;
+					uint32_t lrr;
+					uint32_t dlrr;
+				} dlrrb;
+			} rb;
+		} xr;
 	} r;
 };
 
