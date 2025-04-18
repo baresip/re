@@ -226,6 +226,14 @@ int rtcp_vencode(struct mbuf *mb, enum rtcp_type type, uint32_t count,
 			err |= ench(mb, arg);
 		break;
 
+	case RTCP_XR:
+		err = mbuf_write_u32(mb, htonl(va_arg(ap, uint32_t)));
+		ench = va_arg(ap, rtcp_encode_h *);
+		arg = va_arg(ap, void *);
+		if (ench)
+			err |= ench(mb, arg);
+		break;
+
 	default:
 		return EINVAL;
 	}
@@ -486,6 +494,35 @@ int rtcp_decode(struct rtcp_msg **msgp, struct mbuf *mb)
 		msg->r.fb.n = msg->hdr.length - 2;
 
 		err = rtcp_psfb_decode(mb, msg);
+		break;
+
+	case RTCP_XR:
+		if (mbuf_get_left(mb) < RTCP_HEADROOM)
+			goto badmsg;
+		msg->r.xr.ssrc = ntohl(mbuf_read_u32(mb));
+		msg->r.xr.bt = mbuf_read_u8(mb);
+
+		/* reserve */
+		mbuf_read_u8(mb);
+		msg->r.xr.block_len = ntohs(mbuf_read_u16(mb));
+
+		if (msg->r.xr.bt == RTCP_XR_RRTR) {
+
+			if (msg->r.xr.block_len != 2)
+				goto badmsg;
+
+			msg->r.xr.rb.rrtrb.ntp_msw = ntohl(mbuf_read_u32(mb));
+			msg->r.xr.rb.rrtrb.ntp_lsw = ntohl(mbuf_read_u32(mb));
+		}
+		else if (msg->r.xr.bt == RTCP_XR_DLRR) {
+
+			if (msg->r.xr.block_len != 3)
+				goto badmsg;
+
+			msg->r.xr.rb.dlrrb.ssrc = ntohl(mbuf_read_u32(mb));
+			msg->r.xr.rb.dlrrb.lrr = ntohl(mbuf_read_u32(mb));
+			msg->r.xr.rb.dlrrb.dlrr = ntohl(mbuf_read_u32(mb));
+		}
 		break;
 
 	default:
