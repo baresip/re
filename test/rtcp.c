@@ -497,7 +497,7 @@ static int rrtr_encode_handler(struct mbuf *mb, void *arg)
 }
 
 
-int test_rtcp_xr_rrtr(void)
+static int test_rtcp_xr_rrtr(void)
 {
 	const uint8_t packet[] = {
 		/* header */
@@ -539,5 +539,89 @@ int test_rtcp_xr_rrtr(void)
 out:
 	mem_deref(buf);
 	mem_deref(msg);
+	return err;
+}
+
+
+static int dlrr_encode_handler(struct mbuf *mb, void *arg)
+{
+	const uint16_t block_length = 3;
+	const uint32_t ssrc = 0xa534b254;
+	const uint32_t lrr = 0x03040506;
+	const uint32_t dlrr = 0x00008376;
+	int err;
+	(void)arg;
+
+	err  = mbuf_write_u8(mb, RTCP_XR_DLRR);
+	err |= mbuf_write_u8(mb, 0); /* reserved */
+	err |= mbuf_write_u16(mb, htons(block_length));
+	err |= mbuf_write_u32(mb, htonl(ssrc));
+	err |= mbuf_write_u32(mb, htonl(lrr));
+	err |= mbuf_write_u32(mb, htonl(dlrr));
+
+	return err;
+}
+
+
+static int test_rtcp_xr_dlrr(void)
+{
+	/* RTCP-XR packet from Chrome 126 */
+	static const uint8_t packet[] = {
+
+		/* header */
+		0x80, 0xcf, 0x00, 0x05,
+
+		/* RTCP-XR */
+		0x62, 0x8e, 0x09, 0xbd,
+		0x05, 0x00, 0x00, 0x03,
+		0xa5, 0x34, 0xb2, 0x54,
+		0x03, 0x04, 0x05, 0x06,
+		0x00, 0x00, 0x83, 0x76,
+	};
+
+	struct mbuf *mb = mbuf_alloc(sizeof(packet));
+	if (!mb)
+		return ENOMEM;
+
+	struct rtcp_msg *msg = NULL;
+	const uint32_t ssrc = 0x628e09bd;
+
+	int err = rtcp_encode(mb, RTCP_XR, 0, ssrc, dlrr_encode_handler, NULL);
+	TEST_ERR(err);
+
+	mbuf_set_pos(mb, 0);
+
+	TEST_MEMCMP(packet, sizeof(packet), mbuf_buf(mb), mbuf_get_left(mb));
+
+	err = rtcp_decode(&msg, mb);
+	TEST_ERR(err);
+
+	ASSERT_EQ(RTCP_XR,      msg->hdr.pt);
+	ASSERT_EQ(ssrc,         msg->r.xr.ssrc);
+	ASSERT_EQ(RTCP_XR_DLRR, msg->r.xr.bt);
+	ASSERT_EQ(3,            msg->r.xr.block_len);
+	ASSERT_EQ(0xa534b254,   msg->r.xr.rb.dlrrb.ssrc);
+	ASSERT_EQ(0x03040506,   msg->r.xr.rb.dlrrb.lrr);
+	ASSERT_EQ(0x00008376,   msg->r.xr.rb.dlrrb.dlrr);
+
+ out:
+	mem_deref(msg);
+	mem_deref(mb);
+
+	return err;
+}
+
+
+int test_rtcp_xr(void)
+{
+	int err;
+
+	err = test_rtcp_xr_dlrr();
+	TEST_ERR(err);
+
+	err = test_rtcp_xr_rrtr();
+	TEST_ERR(err);
+
+ out:
 	return err;
 }
