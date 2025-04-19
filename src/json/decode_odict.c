@@ -20,18 +20,12 @@ static int container_add(const char *name, unsigned idx,
 	char index[64];
 	int err;
 
-	if (!name) {
-		if (re_snprintf(index, sizeof(index), "%u", idx) < 0)
-			return ENOMEM;
-
-		name = index;
-	}
-
 	err = odict_alloc(&oc, hash_bsize(o->ht));
 	if (err)
 		return err;
 
-	err = odict_entry_add(o, name, type, oc);
+	err = odict_entry_add_key_idx(o, name, idx, type, oc);
+
 	mem_deref(oc);
 	h->arg = oc;
 
@@ -53,25 +47,25 @@ static int array_handler(const char *name, unsigned idx,
 }
 
 
-static int entry_add(struct odict *o, const char *name,
+static int entry_add(struct odict *o, const char *name, unsigned idx,
 		     const struct json_value *val)
 {
 	switch (val->type) {
 
 	case JSON_STRING:
-		return odict_entry_add(o, name, ODICT_STRING, val->v.str);
+		return odict_entry_add_key_idx(o, name, idx, ODICT_STRING, val->v.str);
 
 	case JSON_INT:
-		return odict_entry_add(o, name, ODICT_INT, val->v.integer);
+		return odict_entry_add_key_idx(o, name, idx, ODICT_INT, val->v.integer);
 
 	case JSON_DOUBLE:
-		return odict_entry_add(o, name, ODICT_DOUBLE, val->v.dbl);
+		return odict_entry_add_key_idx(o, name, idx, ODICT_DOUBLE, val->v.dbl);
 
 	case JSON_BOOL:
-		return odict_entry_add(o, name, ODICT_BOOL, val->v.boolean);
+		return odict_entry_add_key_idx(o, name, idx, ODICT_BOOL, val->v.boolean);
 
 	case JSON_NULL:
-		return odict_entry_add(o, name, ODICT_NULL);
+		return odict_entry_add_key_idx(o, name, idx, ODICT_NULL);
 
 	default:
 		return ENOSYS;
@@ -84,7 +78,7 @@ static int object_entry_handler(const char *name, const struct json_value *val,
 {
 	struct odict *o = arg;
 
-	return entry_add(o, name, val);
+	return entry_add(o, name, -1, val);
 }
 
 
@@ -92,12 +86,8 @@ static int array_entry_handler(unsigned idx, const struct json_value *val,
 			       void *arg)
 {
 	struct odict *o = arg;
-	char index[64];
 
-	if (re_snprintf(index, sizeof(index), "%u", idx) < 0)
-		return ENOMEM;
-
-	return entry_add(o, index, val);
+	return entry_add(o, NULL, idx, val);
 }
 
 
