@@ -9,4 +9,5 @@ struct odict_entry {
 		bool boolean;          /* ODICT_BOOL   */
 	} u;
 	enum odict_type type;
+	bool rootnode;
 };

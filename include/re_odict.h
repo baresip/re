@@ -29,6 +29,8 @@ int odict_debug(struct re_printf *pf, const struct odict *o);
 
 int odict_entry_add(struct odict *o, const char *key,
 		    int type, ...);
+int odict_entry_add_node(struct odict *o, int rootnode, const char *key,
+		    int type, ...);
 int odict_pl_add(struct odict *od, const char *key,
 		 const struct pl *val);
 void odict_entry_del(struct odict *o, const char *key);
@@ -64,3 +66,4 @@ double odict_entry_dbl(const struct odict_entry *e);
 bool odict_entry_boolean(const struct odict_entry *e);
 bool odict_value_compare(const struct odict_entry *e1,
 	const struct odict_entry *e2, bool ignore_order);
+bool odict_entry_rootnode(const struct odict_entry *e);

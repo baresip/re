@@ -38,12 +38,11 @@ static void destructor(void *arg)
 }
 
 
-int odict_entry_add(struct odict *o, const char *key,
-		    int type, ...)
+static int entry_add_node(struct odict *o, const char *key,
+			int type, bool rootnode, va_list ap)
 {
 	struct odict_entry *e;
-	va_list ap;
-	int err;
+	int err = 0;
 
 	if (!o || !key)
 		return EINVAL;
@@ -53,12 +52,11 @@ int odict_entry_add(struct odict *o, const char *key,
 		return ENOMEM;
 
 	e->type = type;
+	e->rootnode = rootnode;
 
 	err = str_dup(&e->key, key);
 	if (err)
 		goto out;
-
-	va_start(ap, type);
 
 	switch (e->type) {
 
@@ -91,15 +89,13 @@ int odict_entry_add(struct odict *o, const char *key,
 		break;
 	}
 
-	va_end(ap);
-
 	if (err)
 		goto out;
 
 	list_append(&o->lst, &e->le, e);
 	hash_append(o->ht, hash_fast_str(e->key), &e->he, e);
 
- out:
+out:
 	if (err)
 		mem_deref(e);
 
@@ -107,8 +103,36 @@ int odict_entry_add(struct odict *o, const char *key,
 }
 
 
+int odict_entry_add_node(struct odict *o, int rootnode, const char *key,
+	int type, ...)
+{
+	int err;
+	va_list ap;
+
+	va_start(ap, type);
+	err = entry_add_node(o, key, type, rootnode, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+int odict_entry_add(struct odict *o, const char *key,
+			int type, ...)
+{
+	int err;
+	va_list ap;
+
+	va_start(ap, type);
+	err = entry_add_node(o, key, type, false, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
 int odict_pl_add(struct odict *od, const char *key,
-		 const struct pl *val)
+		const struct pl *val)
 {
 	char *str;
 	int err = pl_strdup(&str, val);

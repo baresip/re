@@ -189,3 +189,12 @@ bool odict_get_boolean(const struct odict *o, bool *value, const char *key)
 
 	return true;
 }
+
+
+bool odict_entry_rootnode(const struct odict_entry *e)
+{
+	if (!e)
+		return false;
+
+	return e->rootnode;
+}
