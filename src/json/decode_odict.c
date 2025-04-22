@@ -14,7 +14,8 @@
 
 
 static int container_add(const char *name, unsigned idx,
-			 enum odict_type type, struct json_handlers *h)
+			 enum odict_type type, bool rootnode,
+			 struct json_handlers *h)
 {
 	struct odict *o = h->arg, *oc;
 	char index[64];
@@ -31,7 +32,7 @@ static int container_add(const char *name, unsigned idx,
 	if (err)
 		return err;
 
-	err = odict_entry_add(o, name, type, oc);
+	err = odict_entry_add_node(o, rootnode, name, type, oc);
 	mem_deref(oc);
 	h->arg = oc;
 
@@ -42,14 +43,14 @@ static int container_add(const char *name, unsigned idx,
 static int object_handler(const char *name, unsigned idx,
 			  struct json_handlers *h)
 {
-	return container_add(name, idx, ODICT_OBJECT, h);
+	return container_add(name, idx, ODICT_OBJECT, false, h);
 }
 
 
 static int array_handler(const char *name, unsigned idx,
 			 struct json_handlers *h)
 {
-	return container_add(name, idx, ODICT_ARRAY, h);
+	return container_add(name, idx, ODICT_ARRAY, false, h);
 }
 
 
@@ -145,13 +146,15 @@ int json_decode_odict_full(struct odict **op, uint32_t hash_size,
 	while (len && *str) {
 		switch (*str) {
 			case '{':
-				err = container_add(NULL, 0, ODICT_OBJECT, &h);
+				err = container_add(NULL, 0, ODICT_OBJECT,
+				     true, &h);
 				if (err)
 					goto out;
 				goto decode;
 				break;
 			case '[':
-				err = container_add(NULL, 0, ODICT_ARRAY, &h);
+				err = container_add(NULL, 0, ODICT_ARRAY,
+					true, &h);
 				if (err)
 					goto out;
 				goto decode;
