@@ -462,7 +462,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 				"application/sdp", desc, NULL, NULL, false,
 				offer_handler_b, answer_handler_b,
 				estab_handler_b, NULL, NULL, close_handler,
-				test, hdrs);
+				NULL, test, hdrs);
 		if (err != test->progr_ret_code) {
 			test->progr_ret_code = err;
 			goto out;
@@ -502,7 +502,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 				test->rel100_b, "b", "application/sdp",
 				desc, NULL, NULL, false, offer_handler_b,
 				answer_handler_b, estab_handler_b, NULL, NULL,
-				close_handler, test, hdrs);
+				close_handler, NULL, test, hdrs);
 		if (err != test->answ_ret_code) {
 			test->answ_ret_code = err;
 			goto out;
@@ -514,7 +514,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 				"application/sdp", NULL, NULL, NULL, false,
 				offer_handler_b, answer_handler_b,
 				estab_handler_b, NULL, NULL, close_handler,
-				test, hdrs);
+				NULL, test, hdrs);
 		if (err != test->answ_ret_code) {
 			test->answ_ret_code = err;
 			goto out;
@@ -605,7 +605,7 @@ int test_sipsess(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
-			      close_handler, &test, NULL);
+			      close_handler, NULL, &test, NULL);
 	mem_deref(callid);
 	TEST_ERR(err);
 
@@ -705,7 +705,7 @@ int test_sipsess_reject(void)
 			      callid, desc_handler,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
-			      close_handler, &test, NULL);
+			      close_handler, NULL, &test, NULL);
 	mem_deref(callid);
 	TEST_ERR(err);
 
@@ -787,7 +787,7 @@ int test_sipsess_blind_transfer(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
-			      close_handler, &test, NULL);
+			      close_handler, NULL, &test, NULL);
 	mem_deref(callid);
 	TEST_ERR(err);
 
@@ -868,7 +868,7 @@ int test_sipsess_100rel_caller_require(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test,
+			      NULL, close_handler, NULL, &test,
 			      "Require: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -953,7 +953,7 @@ int test_sipsess_100rel_supported(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test,
+			      NULL, close_handler, NULL, &test,
 			      "Supported: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -1040,7 +1040,7 @@ int test_sipsess_100rel_answer_not_allowed(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test,
+			      NULL, close_handler, NULL, &test,
 			      "Supported: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -1118,7 +1118,7 @@ int test_sipsess_100rel_420(void)
 			      callid, desc_handler,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
-			      close_handler, &test,
+			      close_handler, NULL, &test,
 			      "Require: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -1192,7 +1192,7 @@ int test_sipsess_100rel_421(void)
 			      callid, desc_handler,
 			      offer_handler_a, answer_handler_a, NULL,
 			      estab_handler_a, NULL, NULL,
-			      close_handler, &test, NULL);
+			      close_handler, NULL, &test, NULL);
 	mem_deref(callid);
 	TEST_ERR(err);
 
@@ -1266,7 +1266,7 @@ int test_sipsess_update_uac(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test,
+			      NULL, close_handler, NULL, &test,
 			      "Supported: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -1353,7 +1353,7 @@ int test_sipsess_update_uas(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test,
+			      NULL, close_handler, NULL, &test,
 			      "Supported: 100rel\r\n");
 	mem_deref(callid);
 	TEST_ERR(err);
@@ -1439,7 +1439,7 @@ int test_sipsess_update_no_sdp(void)
 			      callid, desc_handler_a,
 			      offer_handler_a, answer_handler_a,
 			      progr_handler_a, estab_handler_a, NULL,
-			      NULL, close_handler, &test, NULL);
+			      NULL, close_handler, NULL, &test, NULL);
 	mem_deref(callid);
 	TEST_ERR(err);
 
