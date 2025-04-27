@@ -31,10 +31,9 @@ static void cancel_handler(void *arg, const struct sip_msg *msg)
 	if (sess->terminated)
 		return;
 	cancelh = sess->cancelh;
-	arg = sess->arg;
 
 	if (cancelh)
-		cancelh(msg, arg);
+		cancelh(msg, sess->arg);
 
 	sipsess_terminate(sess, ECONNRESET, NULL);
 }

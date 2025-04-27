@@ -139,9 +139,10 @@ static bool cmp_merge_handler(struct le *le, void *arg)
 }
 
 
-static void dummy_handler(void *arg)
+static void dummy_handler(void *arg, const struct sip_msg *msg)
 {
 	(void)arg;
+	(void)msg;
 }
 
 
