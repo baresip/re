@@ -18,9 +18,10 @@
 #include "sipsess.h"
 
 
-static void cancel_handler(void *arg)
+static void cancel_handler(void *arg, const struct sip_msg *msg)
 {
 	struct sipsess *sess = arg;
+	sipsess_cancel_h *cancelh;
 
 	(void)sip_treply(&sess->st, sess->sip, sess->msg,
 			 487, "Request Terminated");
@@ -29,6 +30,11 @@ static void cancel_handler(void *arg)
 
 	if (sess->terminated)
 		return;
+	cancelh = sess->cancelh;
+	arg = sess->arg;
+
+	if (cancelh)
+		cancelh(msg, arg);
 
 	sipsess_terminate(sess, ECONNRESET, NULL);
 }
@@ -68,6 +74,7 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 		   sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		   sipsess_estab_h *estabh, sipsess_info_h *infoh,
 		   sipsess_refer_h *referh, sipsess_close_h *closeh,
+		   sipsess_cancel_h *cancelh,
 		   void *arg, const char *fmt, ...)
 {
 	struct sipsess *sess;
@@ -80,7 +87,7 @@ int sipsess_accept(struct sipsess **sessp, struct sipsess_sock *sock,
 
 	err = sipsess_alloc(&sess, sock, cuser, ctype, NULL, authh, aarg, aref,
 			    NULL, offerh, answerh, NULL, estabh, infoh, referh,
-			    closeh, arg);
+			    closeh, cancelh, arg);
 	if (err)
 		return err;
 

@@ -219,7 +219,7 @@ static bool cancel_handler(struct sip *sip, const struct sip_msg *msg)
 
 	case TRYING:
 	case PROCEEDING:
-		st->cancelh(st->arg);
+		st->cancelh(st->arg, msg);
 		break;
 
 	default:

@@ -167,7 +167,7 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 		  sipsess_offer_h *offerh, sipsess_answer_h *answerh,
 		  sipsess_progr_h *progrh, sipsess_estab_h *estabh,
 		  sipsess_info_h *infoh, sipsess_refer_h *referh,
-		  sipsess_close_h *closeh, void *arg)
+		  sipsess_close_h *closeh, sipsess_cancel_h *cancelh, void *arg)
 {
 	struct sipsess *sess;
 	int err;
@@ -199,6 +199,7 @@ int sipsess_alloc(struct sipsess **sessp, struct sipsess_sock *sock,
 	sess->infoh   = infoh;
 	sess->referh  = referh;
 	sess->closeh  = closeh  ? closeh  : internal_close_handler;
+	sess->cancelh = cancelh;
 	sess->arg     = arg;
 
  out:
