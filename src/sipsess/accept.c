@@ -18,7 +18,7 @@
 #include "sipsess.h"
 
 
-static void cancel_handler(void *arg, const struct sip_msg *msg)
+static void cancel_handler(const struct sip_msg *msg, void *arg)
 {
 	struct sipsess *sess = arg;
 	sipsess_cancel_h *cancelh;

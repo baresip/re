@@ -275,7 +275,7 @@ typedef int(sip_send_h)(enum sip_transp tp, struct sa *src,
 typedef int(sip_conn_h)(struct sa *src, const struct sa *dst, struct mbuf *mb,
 			void *arg);
 typedef void(sip_resp_h)(int err, const struct sip_msg *msg, void *arg);
-typedef void(sip_cancel_h)(void *arg, const struct sip_msg *msg);
+typedef void(sip_cancel_h)(const struct sip_msg *msg, void *arg);
 typedef void(sip_exit_h)(void *arg);
 typedef int(sip_auth_h)(char **username, char **password, const char *realm,
 			void *arg);
