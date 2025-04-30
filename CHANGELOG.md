@@ -5,6 +5,28 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.22.0 - 2025-04-30
+
+### What's Changed
+* rtp: remove unused int proto by @alfredh in https://github.com/baresip/re/pull/1296
+* mbuf: null pointer checks for inline functions by @cspiel1 in https://github.com/baresip/re/pull/1294
+* test: more coverage in rtcp_loop by @alfredh in https://github.com/baresip/re/pull/1295
+* ci: remove version from choco install openssl by @alfredh in https://github.com/baresip/re/pull/1297
+* net/linux/addrs: use malloc for buffer by @sreimers in https://github.com/baresip/re/pull/1298
+* cmake: update cmake_minimum_required 3.18...4.0 by @sreimers in https://github.com/baresip/re/pull/1291
+* ci: upgrade mingw to openssl 3.5.0 by @alfredh in https://github.com/baresip/re/pull/1299
+* ci/abi: bump ref version by @sreimers in https://github.com/baresip/re/pull/1300
+* rtp: RTCP Extended report by @shrim27 in https://github.com/baresip/re/pull/1302
+* test: move test_rtcp_xr_rrtr to rtcp.c by @alfredh in https://github.com/baresip/re/pull/1306
+* Handle "w" properly in the AV1 packetizer by @npcook in https://github.com/baresip/re/pull/1305
+* test: add coverage of RTCP-XR DLRR by @alfredh in https://github.com/baresip/re/pull/1307
+* av1: remove deprecated av1_packetize_one_w() by @alfredh in https://github.com/baresip/re/pull/1308
+
+## New Contributors
+* @shrim27 made their first contribution in https://github.com/baresip/re/pull/1302
+* @npcook made their first contribution in https://github.com/baresip/re/pull/1305
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.21.1...v3.22.0
 
 ## v3.21.1 - 2025-04-04
 
