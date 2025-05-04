@@ -373,7 +373,6 @@ int pl_bool(bool *val, const struct pl *pl)
 {
 	const char *tval[] = {"1", "true",  "enable",  "yes", "on"};
 	const char *fval[] = {"0", "false", "disable", "no",  "off"};
-	int err = EINVAL;
 	size_t i;
 
 	if (!val || !pl)
@@ -382,18 +381,18 @@ int pl_bool(bool *val, const struct pl *pl)
 	for (i = 0; i < RE_ARRAY_SIZE(tval); ++i) {
 		if (!pl_strcasecmp(pl, tval[i])) {
 			*val = true;
-			err = 0;
+			return 0;
 		}
 	}
 
 	for (i = 0; i < RE_ARRAY_SIZE(fval); ++i) {
 		if (!pl_strcasecmp(pl, fval[i])) {
 			*val = false;
-			err = 0;
+			return 0;
 		}
 	}
 
-	return err;
+	return EINVAL;
 }
 
 
