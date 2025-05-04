@@ -1067,6 +1067,12 @@ int test_fmt_str_bool(void)
 		err = str_bool(&en, truestr[i]);
 		TEST_ERR(err);
 		TEST_EQUALS(true, en);
+
+		struct pl s;
+		pl_set_str(&s, truestr[i]);
+		err = pl_bool(&en, &s);
+		TEST_ERR(err);
+		TEST_EQUALS(true, en);
 	}
 
 	state = STATE_FALSE;
@@ -1074,11 +1080,22 @@ int test_fmt_str_bool(void)
 		err = str_bool(&en, falsestr[i]);
 		TEST_ERR(err);
 		TEST_EQUALS(false, en);
+
+		struct pl s;
+		pl_set_str(&s, falsestr[i]);
+		err = pl_bool(&en, &s);
+		TEST_ERR(err);
+		TEST_EQUALS(false, en);
 	}
 
 	state = STATE_UNSUP;
 	for (i = 0; i < RE_ARRAY_SIZE(notsup); i++) {
 		err = str_bool(&en, notsup[i]);
+		TEST_EQUALS(err, EINVAL);
+
+		struct pl s;
+		pl_set_str(&s, notsup[i]);
+		err = pl_bool(&en, &s);
 		TEST_EQUALS(err, EINVAL);
 	}
 
