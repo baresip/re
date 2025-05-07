@@ -40,19 +40,6 @@ void unix2ntp(struct rtp_ntp_time *ntp, const struct timeval *tv)
 
 
 /**
- * Convert from NTP time to Unix time
- *
- * @param tv  Unix time to convert to (output)
- * @param ntp NTP time to convert from (input)
- */
-void ntp2unix(struct timeval *tv, const struct rtp_ntp_time *ntp)
-{
-	tv->tv_sec  = ntp->hi - UNIX_NTP_OFFSET;
-	tv->tv_usec = (uint32_t)(1.0e6 * (double) ntp->lo / (1LL<<32));
-}
-
-
-/**
  * Obtain the current wallclock time in NTP and jiffies formats
  *
  * @param ntp NTP time
