@@ -139,9 +139,10 @@ static bool cmp_merge_handler(struct le *le, void *arg)
 }
 
 
-static void dummy_handler(void *arg)
+static void dummy_handler(const struct sip_msg *msg, void *arg)
 {
 	(void)arg;
+	(void)msg;
 }
 
 
@@ -219,7 +220,7 @@ static bool cancel_handler(struct sip *sip, const struct sip_msg *msg)
 
 	case TRYING:
 	case PROCEEDING:
-		st->cancelh(st->arg);
+		st->cancelh(msg, st->arg);
 		break;
 
 	default:
