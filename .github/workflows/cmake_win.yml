@@ -19,7 +19,7 @@ jobs:
         - {
             name: "Windows Debug",
             os: windows-2025,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2025\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja",
             build: "Debug",
             openssl: true,
@@ -29,7 +29,7 @@ jobs:
         - {
             name: "Windows Release",
             os: windows-2025,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2025\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",
             generators: "Ninja",
             build: "Release",
             openssl: true,
@@ -39,7 +39,7 @@ jobs:
         - {
             name: "Windows Debug 32-bit",
             os: windows-2025,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2025\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_x86.bat",
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_x86.bat",
             generators: "Ninja",
             build: "Debug",
             openssl: false,
@@ -50,7 +50,7 @@ jobs:
         - {
             name: "Windows Debug ARM64",
             os: windows-2025,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2025\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
+            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
             generators: "Ninja",
             build: "Debug",
             openssl: false,
