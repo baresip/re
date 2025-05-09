@@ -495,7 +495,7 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 {
 	int err;
 	int i;
-	X509_PURPOSE *xptmp;
+	const X509_PURPOSE *xptmp;
 
 	if (!tls || !purpose)
 		return EINVAL;
