@@ -156,6 +156,7 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 	int64_t sn;
 	bool uc = false;
 	double dbl;
+	int errnum;
 
 	if (!fmt || !vph)
 		return EINVAL;
@@ -296,8 +297,8 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 			break;
 
 		case 'm':
-			RE_VA_ARG(ap, ch, int, safe);
-			str = str_error(ch, msg, sizeof(msg));
+			RE_VA_ARG(ap, errnum, int, safe);
+			str = str_error(errnum, msg, sizeof(msg));
 			err |= write_padded(str, str_len(str), pad,
 					    ' ', plr, NULL, vph, arg);
 			break;
