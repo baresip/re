@@ -76,6 +76,7 @@ static void conn_destructor(void *arg)
 
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
+	tmr_cancel(&conn->verify_cert_tmr);
 	mem_deref(conn->sc);
 	mem_deref(conn->tc);
 	mem_deref(conn->mb);
@@ -86,6 +87,7 @@ static void conn_close(struct http_conn *conn)
 {
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
+	tmr_cancel(&conn->verify_cert_tmr);
 	conn->sc = mem_deref(conn->sc);
 	conn->tc = mem_deref(conn->tc);
 	conn->sock = NULL;
@@ -178,7 +180,6 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 		d->reason = "Request Timeout";
 		d->msg = msg;
 
-		tmr_init(&conn->verify_cert_tmr);
 		tmr_start(&conn->verify_cert_tmr, TIMEOUT_IDLE,
 			verify_cert_done, d);
 
