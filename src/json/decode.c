@@ -292,7 +292,7 @@ static int _json_decode(const char **str, size_t *len,
 	struct pl name = PL_INIT, val = PL_INIT;
 	size_t ws = 0;
 	unsigned idx = 0;
-	int err;
+	int err = 0;
 
 	for (; *len>0; ++(*str), --(*len)) {
 
