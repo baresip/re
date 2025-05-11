@@ -235,7 +235,7 @@ struct mem_pool_entry *mem_pool_borrow_extend(struct mem_pool *pool)
  * for future use
  *
  * @param pool  Pointer to the memory pool
- * @param entry Pointer to the memory pool entry to release
+ * @param e     Pointer to the memory pool entry to release
  *
  * @return Always NULL
  */
@@ -261,7 +261,7 @@ void *mem_pool_release(struct mem_pool *pool, struct mem_pool_entry *e)
 /**
  * Flush mem_pool members
  *
- * @param entry Pointer to the memory pool entry
+ * @param pool Pointer to the memory pool entry
  */
 void mem_pool_flush(struct mem_pool *pool)
 {
