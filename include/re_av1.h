@@ -60,9 +60,6 @@ typedef int (av1_packet_h)(bool marker, uint64_t rtp_ts,
 int av1_packetize_new(bool *newp, bool marker, uint64_t rtp_ts,
 		       const uint8_t *buf, size_t len, size_t maxlen,
 		       av1_packet_h *pkth, void *arg);
-int av1_packetize_high(bool *newp, bool marker, uint64_t rtp_ts,
-		       const uint8_t *buf, size_t len, size_t maxlen,
-		       av1_packet_h *pkth, void *arg);
 
 
 enum {
