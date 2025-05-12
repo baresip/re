@@ -13,11 +13,12 @@
  * Mapping of feature macros
  */
 
-#if !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(LIBRESSL_VERSION_NUMBER)
+typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
+#else
 #define SSL_state SSL_get_state
 #define SSL_ST_OK TLS_ST_OK
 #endif
-
 
 typedef X509_NAME*(tls_get_certfield_h)(const X509 *);
 
