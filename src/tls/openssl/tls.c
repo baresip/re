@@ -1706,10 +1706,7 @@ static int tls_session_update_cache(const struct tls_conn *tc,
 					     session_cmp_handler, &peer));
 	mem_deref(e);
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L) && \
-	(!defined(LIBRESSL_VERSION_NUMBER) || \
-	  defined(LIBRESSL_HAS_TLS1_3) || \
-	  defined(LIBRESSL_INTERNAL) )
+#if !defined(LIBRESSL_VERSION_NUMBER)
 	if (!SSL_SESSION_is_resumable(sess)) {
 		return EINVAL;
 	}
