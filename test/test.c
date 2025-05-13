@@ -120,6 +120,8 @@ static const struct test tests[] = {
 	TEST(test_https_loop),
 	TEST(test_http_client_set_tls),
 	TEST(test_https_large_body),
+#endif
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 	TEST(test_https_conn_post_handshake),
 #endif
 	TEST(test_httpauth_chall),

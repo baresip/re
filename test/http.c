@@ -814,10 +814,9 @@ int test_dns_cache_http_integration(void)
 	return test_http_loop_base(false, "GET", true, true, true, false);
 }
 
-#ifdef USE_TLS
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 int test_https_conn_post_handshake(void)
 {
 	return test_http_loop_base(true, "GET", true, false, false, true);
 }
-
 #endif
