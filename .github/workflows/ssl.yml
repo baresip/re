@@ -34,7 +34,7 @@ jobs:
 
     - name: Download pre-compiled OpenSSL/LibreSSL
       run: |
-        wget "https://github.com/baresip/tools/releases/download/v2024.05.0/assets.tar.gz"
+        wget "https://github.com/baresip/tools/releases/download/v2025.05.1/assets.tar.gz"
         tar -xf assets.tar.gz
 
     - name: make
