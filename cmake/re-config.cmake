@@ -5,6 +5,7 @@ include(CheckTypeSize)
 include(CheckCXXSourceCompiles)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
+option(USE_TLS1_3_PHA "Enable TLS 1.3 Post-Handshake Auth" ON)
 
 find_package(Backtrace)
 find_package(Threads REQUIRED)
@@ -27,7 +28,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 check_symbol_exists(LIBRESSL_VERSION_NUMBER "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" HAVE_LIBRESSL)
-if(NOT HAVE_LIBRESSL AND NOT USE_MBEDTLS AND OPENSSL_FOUND)
+if(USE_TLS1_3_PHA AND NOT HAVE_LIBRESSL AND NOT USE_MBEDTLS AND OPENSSL_FOUND)
   list(APPEND RE_DEFINITIONS HAVE_TLS1_3_POST_HANDSHAKE_AUTH)
 endif()
 
