@@ -59,6 +59,8 @@ static void destructor(void *arg)
 }
 
 const struct sip_msg *sipsess_cancel_msg(struct sip_strans *st) {
+	if (!st)
+		return NULL;
 	return st->cancel_msg;
 }
 

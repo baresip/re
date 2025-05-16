@@ -21,6 +21,7 @@
 static void cancel_handler(void *arg)
 {
 	struct sipsess *sess = arg;
+	const struct sip_msg *cancel_msg = sipsess_cancel_msg(sess->st);
 
 	(void)sip_treply(&sess->st, sess->sip, sess->msg,
 			 487, "Request Terminated");
@@ -30,7 +31,7 @@ static void cancel_handler(void *arg)
 	if (sess->terminated)
 		return;
 
-	sipsess_terminate(sess, ECONNRESET, sipsess_cancel_msg(sess->st));
+	sipsess_terminate(sess, ECONNRESET, cancel_msg);
 }
 
 
