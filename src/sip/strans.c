@@ -36,6 +36,7 @@ struct sip_strans {
 	struct sa dst;
 	struct sip *sip;
 	struct sip_msg *msg;
+	struct sip_msg *cancel_msg;
 	struct mbuf *mb;
 	sip_cancel_h *cancelh;
 	void *arg;
@@ -43,7 +44,6 @@ struct sip_strans {
 	uint32_t txc;
 	bool invite;
 };
-
 
 static void destructor(void *arg)
 {
@@ -54,9 +54,13 @@ static void destructor(void *arg)
 	tmr_cancel(&st->tmr);
 	tmr_cancel(&st->tmrg);
 	mem_deref(st->msg);
+	mem_deref(st->cancel_msg);
 	mem_deref(st->mb);
 }
 
+const struct sip_msg *sipsess_cancel_msg(struct sip_strans *st) {
+	return st->cancel_msg;
+}
 
 static bool strans_cmp(const struct sip_msg *msg1, const struct sip_msg *msg2)
 {
@@ -219,6 +223,7 @@ static bool cancel_handler(struct sip *sip, const struct sip_msg *msg)
 
 	case TRYING:
 	case PROCEEDING:
+		st->cancel_msg = mem_ref((void *)msg);
 		st->cancelh(st->arg);
 		break;
 

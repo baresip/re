@@ -104,3 +104,5 @@ int  sip_keepalive_udp(struct sip_keepalive *ka, struct sip *sip,
 /* sip_conncfg */
 struct sip_conncfg *sip_conncfg_find(struct sip *sip,
 				     const struct sa *paddr);
+
+const struct sip_msg *sipsess_cancel_msg(struct sip_strans *st);

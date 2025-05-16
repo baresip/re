@@ -30,7 +30,7 @@ static void cancel_handler(void *arg)
 	if (sess->terminated)
 		return;
 
-	sipsess_terminate(sess, ECONNRESET, NULL);
+	sipsess_terminate(sess, ECONNRESET, sipsess_cancel_msg(sess->st));
 }
 
 
