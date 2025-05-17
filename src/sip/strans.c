@@ -45,6 +45,7 @@ struct sip_strans {
 	bool invite;
 };
 
+
 static void destructor(void *arg)
 {
 	struct sip_strans *st = arg;
@@ -58,7 +59,7 @@ static void destructor(void *arg)
 	mem_deref(st->mb);
 }
 
-const struct sip_msg *sipsess_cancel_msg(struct sip_strans *st) {
+const struct sip_msg *sip_trans_cancel_msg(struct sip_strans *st) {
 	if (!st)
 		return NULL;
 	return st->cancel_msg;
@@ -225,6 +226,7 @@ static bool cancel_handler(struct sip *sip, const struct sip_msg *msg)
 
 	case TRYING:
 	case PROCEEDING:
+		mem_deref(st->cancel_msg);
 		st->cancel_msg = mem_ref((void *)msg);
 		st->cancelh(st->arg);
 		break;

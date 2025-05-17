@@ -104,5 +104,3 @@ int  sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 			   sip_resp_h *resph, void *arg);
 struct sipsess *sipsess_find(struct sipsess_sock *sock,
 			     const struct sip_msg *msg);
-
-const struct sip_msg *sipsess_cancel_msg(struct sip_strans *st);
