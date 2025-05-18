@@ -590,6 +590,18 @@ const char *sip_dialog_uri(const struct sip_dialog *dlg)
 }
 
 
+const char *sip_dialog_ltag(const struct sip_dialog *dlg)
+{
+	return dlg ? dlg->ltag : NULL;
+}
+
+
+const char *sip_dialog_rtag(const struct sip_dialog *dlg)
+{
+	return dlg ? dlg->rtag : NULL;
+}
+
+
 const struct uri *sip_dialog_route(const struct sip_dialog *dlg)
 {
 	return dlg ? &dlg->route : NULL;
