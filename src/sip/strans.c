@@ -59,7 +59,7 @@ static void destructor(void *arg)
 	mem_deref(st->mb);
 }
 
-const struct sip_msg *sip_trans_cancel_msg(struct sip_strans *st) {
+const struct sip_msg *sip_strans_cancel_msg(struct sip_strans *st) {
 	if (!st)
 		return NULL;
 	return st->cancel_msg;
