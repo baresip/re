@@ -368,7 +368,7 @@ int  sip_replyf(struct sip *sip, const struct sip_msg *msg, uint16_t scode,
 int  sip_reply(struct sip *sip, const struct sip_msg *msg, uint16_t scode,
 	       const char *reason);
 void sip_reply_addr(struct sa *addr, const struct sip_msg *msg, bool rport);
-
+const struct sip_msg *sip_strans_cancel_msg(struct sip_strans *st);
 
 /* auth */
 int  sip_auth_authenticate(struct sip_auth *auth, const struct sip_msg *msg);
