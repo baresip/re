@@ -32,6 +32,9 @@ int test_h265(void)
 	ASSERT_EQ(32, hdr.nal_unit_type);
 	ASSERT_EQ(TID, hdr.nuh_temporal_id_plus1);
 
+	ASSERT_TRUE(!h265_is_keyframe(H265_NAL_VPS_NUT));
+	ASSERT_TRUE( h265_is_keyframe(H265_NAL_IDR_W_RADL));
+
  out:
 	return err;
 }

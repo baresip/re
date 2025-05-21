@@ -94,6 +94,8 @@ const char *h265_nalunit_name(enum h265_naltype type)
 	case H265_NAL_IDR_W_RADL:      return "IDR_W_RADL";
 	case H265_NAL_IDR_N_LP:        return "IDR_N_LP";
 	case H265_NAL_CRA_NUT:         return "CRA_NUT";
+	case H265_NAL_RSV_IRAP_VCL22:  return "H265_NAL_RSV_IRAP_VCL22";
+	case H265_NAL_RSV_IRAP_VCL23:  return "H265_NAL_RSV_IRAP_VCL23";
 
 	/* non-VCL class */
 	case H265_NAL_VPS_NUT:         return "VPS_NUT";
@@ -117,7 +119,7 @@ const char *h265_nalunit_name(enum h265_naltype type)
 
 bool h265_is_keyframe(enum h265_naltype type)
 {
-	/* between 16 and 21 (inclusive) */
+	/* between 16 and 23 (inclusive) */
 	switch (type) {
 
 	case H265_NAL_BLA_W_LP:
@@ -126,6 +128,8 @@ bool h265_is_keyframe(enum h265_naltype type)
 	case H265_NAL_IDR_W_RADL:
 	case H265_NAL_IDR_N_LP:
 	case H265_NAL_CRA_NUT:
+	case H265_NAL_RSV_IRAP_VCL22:
+	case H265_NAL_RSV_IRAP_VCL23:
 		return true;
 	default:
 		return false;
