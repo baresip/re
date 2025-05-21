@@ -5,8 +5,10 @@
  * Copyright (C) 2022 Sebastian Reimers <hallo@studio-link.de>
  */
 
+#include <stdio.h>
 #include <re_types.h>
 #include <re_mbuf.h>
+#include <re_fmt.h>
 #ifdef USE_OPENSSL
 #include <openssl/sha.h>
 #elif defined (__APPLE__)
