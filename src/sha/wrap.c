@@ -37,14 +37,17 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 	HCRYPTHASH hash;
 	BOOL ret;
 
-	printf(".... compute_hash: alg_id=%d\n", (int)alg_id);
+	printf(".... compute_hash: alg_id=0x%x\n", (unsigned)alg_id);
 
 	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,
 				  CRYPT_VERIFYCONTEXT);
 
 	printf(".... CryptAcquireContext: ret=%d\n", ret);
 
-	CryptCreateHash(context, alg_id, 0, 0, &hash);
+	ret = CryptCreateHash(context, alg_id, 0, 0, &hash);
+
+	printf(".... CryptCreateHash: ret=%d\n", ret);
+
 	CryptHashData(hash, (BYTE*)data, (DWORD)data_size, 0);
 	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
 
