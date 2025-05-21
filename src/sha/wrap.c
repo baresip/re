@@ -39,7 +39,7 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 
 	printf(".... compute_hash: alg_id=0x%x\n", (unsigned)alg_id);
 
-	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,
+	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_AES,
 				  CRYPT_VERIFYCONTEXT);
 
 	printf(".... CryptAcquireContext: ret=%d\n", ret);
