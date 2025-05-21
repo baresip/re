@@ -48,6 +48,14 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 
 	printf(".... CryptCreateHash: ret=%d\n", ret);
 
+	if (!ret) {
+		DEBUG_WARNING(".... CryptCreateHash failed"
+				" -- GetLastError=%d\n",
+				(int)GetLastError());
+		CryptReleaseContext(context, 0);
+		return;
+	}
+
 	CryptHashData(hash, (BYTE*)data, (DWORD)data_size, 0);
 	CryptGetHashParam(hash, HP_HASHVAL, md, &hash_size, 0);
 
