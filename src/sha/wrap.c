@@ -26,14 +26,21 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
+
 #if !defined (USE_OPENSSL) && defined (WIN32)
 static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 			 uint8_t *md, DWORD hash_size)
 {
 	HCRYPTPROV context;
 	HCRYPTHASH hash;
+	BOOL ret;
 
-	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
+	printf(".... compute_hash: alg_id=%d\n", (int)alg_id);
+
+	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,
+				  CRYPT_VERIFYCONTEXT);
+
+	printf(".... CryptAcquireContext: ret=%d\n", ret);
 
 	CryptCreateHash(context, alg_id, 0, 0, &hash);
 	CryptHashData(hash, (BYTE*)data, (DWORD)data_size, 0);
