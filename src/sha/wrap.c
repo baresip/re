@@ -26,7 +26,6 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-
 #if !defined (USE_OPENSSL) && defined (WIN32)
 static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 			 uint8_t *md, DWORD hash_size)

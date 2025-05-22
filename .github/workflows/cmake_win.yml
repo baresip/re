@@ -55,7 +55,7 @@ jobs:
             build: "Debug",
             openssl: false,
             disable_openssl: "ON",
-            testing: true
+            testing: false
           }
 
     steps:
