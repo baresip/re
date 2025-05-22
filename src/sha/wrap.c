@@ -37,16 +37,10 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 	HCRYPTHASH hash;
 	BOOL ret;
 
-	printf(".... compute_hash: alg_id=0x%x\n", (unsigned)alg_id);
-
 	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_AES,
 				  CRYPT_VERIFYCONTEXT);
 
-	printf(".... CryptAcquireContext: ret=%d\n", ret);
-
 	ret = CryptCreateHash(context, alg_id, 0, 0, &hash);
-
-	printf(".... CryptCreateHash: ret=%d\n", ret);
 
 	if (!ret) {
 		DEBUG_WARNING(".... CryptCreateHash failed"
