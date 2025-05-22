@@ -635,12 +635,9 @@ int test_httpauth_digest_response(void)
 			testv[i].precalc_digest) != 0) {
 			err = EINVAL;
 			DEBUG_WARNING("[%d]"
-				" Expected response %s, got %s\n", i,
+				" Expected response %s, got %w\n", i,
 				testv[i].precalc_digest,
 				resp->response, resp->hash_length);
-
-			re_printf("expected: %s\n", testv[i].precalc_digest);
-			re_printf("actual:   %s\n", resp->response);
 			goto out;
 		}
 

@@ -45,21 +45,11 @@ jobs:
             openssl: false,
             disable_openssl: "ON",
             choco: "--x86",
-            testing: false
+            testing: true
           }
         - {
             name: "Windows Debug ARM64",
             os: windows-2022,
-            environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
-            generators: "Ninja",
-            build: "Debug",
-            openssl: false,
-            disable_openssl: "ON",
-            testing: false
-          }
-        - {
-            name: "Windows 11 ARM64",
-            os: windows-11-arm,
             environment_script: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsamd64_arm64.bat",
             generators: "Ninja",
             build: "Debug",

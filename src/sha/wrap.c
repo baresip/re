@@ -5,10 +5,8 @@
  * Copyright (C) 2022 Sebastian Reimers <hallo@studio-link.de>
  */
 
-#include <stdio.h>
 #include <re_types.h>
 #include <re_mbuf.h>
-#include <re_fmt.h>
 #ifdef USE_OPENSSL
 #include <openssl/sha.h>
 #elif defined (__APPLE__)
@@ -37,15 +35,13 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 	HCRYPTHASH hash;
 	BOOL ret;
 
-	ret = CryptAcquireContext(&context, 0, 0, PROV_RSA_AES,
-				  CRYPT_VERIFYCONTEXT);
+	CryptAcquireContext(&context, 0, 0, PROV_RSA_AES,CRYPT_VERIFYCONTEXT);
 
 	ret = CryptCreateHash(context, alg_id, 0, 0, &hash);
-
 	if (!ret) {
-		DEBUG_WARNING(".... CryptCreateHash failed"
-				" -- GetLastError=%d\n",
-				(int)GetLastError());
+		DEBUG_WARNING("CryptCreateHash failed"
+			      " -- GetLastError=%u\n",
+			      GetLastError());
 		CryptReleaseContext(context, 0);
 		return;
 	}

@@ -1182,7 +1182,7 @@ int test_srtp_gcm(void)
 	int err;
 
 	if (!have_srtp()) {
-		(void)re_printf("skipping SRTP test\n");
+		(void)re_printf("skipping SRTP GCM test\n");
 		return ESKIPPED;
 	}
 
@@ -1214,7 +1214,7 @@ int test_srtcp_gcm(void)
 	int err;
 
 	if (!have_srtp()) {
-		(void)re_printf("skipping SRTCP test\n");
+		(void)re_printf("skipping SRTCP GCM test\n");
 		return ESKIPPED;
 	}
 
