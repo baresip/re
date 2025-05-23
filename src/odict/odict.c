@@ -53,14 +53,23 @@ int odict_alloc(struct odict **op, uint32_t hash_size)
 const struct odict_entry *odict_lookup(const struct odict *o, const char *key)
 {
 	struct le *le;
+	const struct odict_entry *e = NULL;
 
 	if (!o || !key)
 		return NULL;
 
+	le = list_head(&o->lst);
+	if (le)
+		e = le->data;
+
+	if (e && odict_entry_rootnode(e) &&
+		odict_type_iscontainer(odict_entry_type(e)))
+		o = e->u.odict;
+
 	le = list_head(hash_list(o->ht, hash_fast_str(key)));
 
 	while (le) {
-		const struct odict_entry *e = le->data;
+		e = le->data;
 
 		if (!str_cmp(e->key, key))
 			return e;
@@ -86,6 +95,8 @@ size_t odict_count(const struct odict *o, bool nested)
 	for (le=o->lst.head; le; le=le->next) {
 
 		const struct odict_entry *e = le->data;
+		if (!e)
+			continue;
 
 		switch (e->type) {
 
@@ -188,19 +199,35 @@ bool odict_compare(const struct odict *dict1, const struct odict *dict2,
 	bool ignore_order)
 {
 	struct le *le1, *le2;
+	const struct odict_entry *e1 = NULL, *e2 = NULL;
 
 	if (!dict1 || !dict2)
 		return false;
 
+	le1 = dict1->lst.head;
+	if (le1)
+		e1 = le1->data;
+	if (e1 && odict_entry_rootnode(e1) &&
+		      odict_type_iscontainer(odict_entry_type(e1))) {
+		dict1 = e1->u.odict;
+		le1 = dict1->lst.head;
+	}
+
+	le2 = dict2->lst.head;
+	if (le2)
+		e2 = le2->data;
+	if (e2 && odict_entry_rootnode(e2) &&
+		      odict_type_iscontainer(odict_entry_type(e2))) {
+		dict2 = e2->u.odict;
+		le2 = dict2->lst.head;
+	}
+
 	if (odict_count(dict1, true) != odict_count(dict2, true))
 		return false;
 
-	for (le1 = dict1->lst.head, le2 = dict2->lst.head;
-	     le1 && le2;
-	     le1 = le1->next, le2 = le2->next) {
+	for (;le1 && le2; le1 = le1->next, le2 = le2->next) {
 
-		const struct odict_entry *e1 = le1->data;
-		const struct odict_entry *e2;
+		e1 = le1->data;
 
 		if (ignore_order)
 			e2 = odict_lookup(dict2, odict_entry_key(e1));
