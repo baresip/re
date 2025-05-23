@@ -562,12 +562,8 @@ elseif(UNIX)
   list(APPEND SRCS
     src/mod/dl.c
     src/net/posix/pif.c
+    src/net/ifaddrs.c
   )
-  if(NOT ANDROID)
-    list(APPEND SRCS
-      src/net/ifaddrs.c
-    )
-  endif()
 endif()
 
 list(APPEND SRCS
