@@ -33,7 +33,7 @@ static void compute_hash(ALG_ID alg_id, const void *data, size_t data_size,
 	HCRYPTPROV context;
 	HCRYPTHASH hash;
 
-	CryptAcquireContext(&context, 0, 0, PROV_RSA_FULL,CRYPT_VERIFYCONTEXT);
+	CryptAcquireContext(&context, 0, 0, PROV_RSA_AES,CRYPT_VERIFYCONTEXT);
 
 	CryptCreateHash(context, alg_id, 0, 0, &hash);
 	CryptHashData(hash, (BYTE*)data, (DWORD)data_size, 0);
