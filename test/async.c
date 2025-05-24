@@ -41,7 +41,9 @@ static int blocking_getaddr(void *arg)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
+#ifndef __ANDROID__
 	hints.ai_flags	= AI_V4MAPPED;
+#endif
 
 
 	/* Blocking */
