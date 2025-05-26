@@ -124,7 +124,7 @@ int sipsess_reply_2xx(struct sipsess *sess, const struct sip_msg *msg,
 			desc = NULL;
 
 		if (sess->prack_waiting_cnt > 0)
-			return EINVAL;
+			return EAGAIN;
 
 		reply = mem_zalloc(sizeof(*reply), destructor);
 		if (!reply)
@@ -225,9 +225,8 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 
 	reliably = rel100 && rel100_peer && scode != 100;
 
-	if (reliably && sess->neg_state == SDP_NEG_NONE
-	    && !mbuf_get_left(desc))
-		return EINVAL;
+	if (reliably && sess->prack_waiting_cnt)
+		return EAGAIN;
 
 	if (sess->neg_state == SDP_NEG_NONE) {
 		if (reliably && !mbuf_get_left(desc))
@@ -290,9 +289,9 @@ int sipsess_reply_1xx(struct sipsess *sess, const struct sip_msg *msg,
 		tmr_start(&reply->tmr, 64 * SIP_T1, tmr_handler, reply);
 		tmr_start(&reply->tmrg, SIP_T1, retransmit_handler, reply);
 
+		reply->awaiting_prack = true;
+		++sess->prack_waiting_cnt;
 		if (desc) {
-			++sess->prack_waiting_cnt;
-			reply->awaiting_prack = true;
 			sess->neg_state = mbuf_get_left(msg->mb) ?
 				SDP_NEG_DONE : SDP_NEG_LOCAL_OFFER;
 		}
