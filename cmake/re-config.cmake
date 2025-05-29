@@ -121,6 +121,20 @@ list(APPEND RE_DEFINITIONS
   )
 
 if(UNIX)
+  if(ANDROID)
+    string(REPLACE "android-" "" ANDROID_API_LEVEL ${ANDROID_PLATFORM})
+    if(ANDROID_API_LEVEL GREATER_EQUAL 24)
+      set(HAVE_GETIFADDRS ON CACHE BOOL "" FORCE)
+    endif()
+  else()
+    check_include_file(ifaddrs.h HAVE_GETIFADDRS)
+  endif()
+  if(HAVE_GETIFADDRS)
+    list(APPEND RE_DEFINITIONS HAVE_GETIFADDRS)
+  endif()
+endif()
+
+if(UNIX)
   list(APPEND RE_DEFINITIONS
     HAVE_PWD_H
     HAVE_SETRLIMIT
@@ -132,9 +146,6 @@ if(UNIX)
     HAVE_SIGNAL
     HAVE_FORK
     )
-  if(NOT ANDROID)
-    list(APPEND RE_DEFINITIONS HAVE_GETIFADDRS)
-  endif()
   if(NOT IOS)
     list(APPEND RE_DEFINITIONS HAVE_ROUTE_LIST)
   endif()
