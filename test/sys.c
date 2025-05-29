@@ -179,7 +179,7 @@ int test_sys_fs_fopen(void)
 	 * multiple instances of test
 	 */
 	re_snprintf(filename, sizeof(filename),
-		    "retest_fs_fopen-%llu", rand_u64());
+		"%s/retest_fs_fopen-%llu", test_datapath(), rand_u64());
 
 	err = fs_fopen(&file, filename, "w+");
 	TEST_ERR(err);
