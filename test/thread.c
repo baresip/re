@@ -111,3 +111,25 @@ out:
 	mtx_unlock(&mtx);
 	return err;
 }
+
+
+int test_thread_tss(void)
+{
+	int err = 0;
+	int val = 1234;
+	tss_t key;
+
+	TEST_EQUALS(thrd_success, tss_create(&key, NULL));
+
+	TEST_EQUALS(thrd_success, tss_set(key, &val));
+
+	TEST_EQUALS(&val, tss_get(key));
+
+	TEST_EQUALS(thrd_success, tss_set(key, NULL));
+
+	TEST_EQUALS(NULL, tss_get(key));
+
+out:
+	tss_delete(key);
+	return err;
+}

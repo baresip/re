@@ -258,6 +258,7 @@ static const struct test tests[] = {
 	TEST(test_websock),
 	TEST(test_trace),
 	TEST(test_thread),
+	TEST(test_thread_tss),
 
 #ifdef USE_TLS
 	/* combination tests: */
