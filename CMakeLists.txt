@@ -563,7 +563,7 @@ elseif(UNIX)
     src/mod/dl.c
     src/net/posix/pif.c
   )
-  if(NOT ANDROID)
+  if(HAVE_GETIFADDRS)
     list(APPEND SRCS
       src/net/ifaddrs.c
     )
