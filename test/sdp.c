@@ -976,3 +976,273 @@ int test_sdp_disabled_rejected(void)
 
 	return err;
 }
+
+
+#define TEST_STRCMP_LEN(exp, actual) \
+	TEST_STRCMP(exp, str_len(exp), actual, str_len(actual))
+
+
+struct fixture {
+	struct sdp_session *sess;
+	struct sdp_media *audio;
+};
+
+struct attr {
+	const char *name;
+	const char *value;
+};
+
+struct codec {
+	const char *id;
+	const char *name;
+	uint32_t srate;
+	uint8_t ch;
+};
+
+struct args {
+	const struct attr *attrv;
+	size_t attrc;
+	size_t ix;
+};
+
+
+static int fixture_init(struct fixture *fix,
+			const struct attr *session_attrv,
+			size_t session_attrc,
+			const struct attr *media_attrv,
+			size_t media_attrc,
+			const struct codec *codecv,
+			size_t codecc)
+{
+	struct sa laddr;
+
+	int err = sa_set_str(&laddr, "127.0.0.1", 9);
+	TEST_ERR(err);
+
+	err = sdp_session_alloc(&fix->sess, &laddr);
+	TEST_ERR(err);
+
+	for (size_t i=0; i<session_attrc; i++) {
+		const struct attr *attr = &session_attrv[i];
+
+		err = sdp_session_set_lattr(fix->sess, false,
+					    attr->name, attr->value);
+		TEST_ERR(err);
+	}
+
+	err = sdp_media_add(&fix->audio, fix->sess, "audio",
+			    9, "UDP/TLS/RTP/SAVPF");
+	TEST_ERR(err);
+
+	for (size_t i=0; i<media_attrc; i++) {
+		const struct attr *attr = &media_attrv[i];
+
+		err = sdp_media_set_lattr(fix->audio, false,
+					  attr->name, attr->value);
+		TEST_ERR(err);
+	}
+
+	for (size_t i=0; i<codecc; i++) {
+		const struct codec *codec = &codecv[i];
+
+		err = sdp_format_add(NULL, fix->audio, false, codec->id,
+				     codec->name, codec->srate, codec->ch,
+				     NULL, NULL, NULL, false, NULL);
+		TEST_ERR(err);
+	}
+
+ out:
+	return err;
+}
+
+
+static void fixture_close(struct fixture *fix)
+{
+	mem_deref(fix->sess);
+}
+
+
+static bool sdp_attr_handler(const char *name, const char *value, void *arg)
+{
+	struct args *args = arg;
+	int err = 0;
+
+	if (args->ix >= args->attrc) {
+		DEBUG_WARNING("sdp_attr_handler: attr count mismatch\n");
+		return true;
+	}
+
+	const struct attr *attr = &args->attrv[args->ix];
+
+	TEST_STRCMP_LEN(attr->name, name);
+	TEST_STRCMP_LEN(attr->value, value);
+
+	++args->ix;
+
+ out:
+	return err != 0;
+}
+
+
+static int test_sdp_param(const char *sdp,
+			  const struct attr *session_attrv,
+			  size_t session_attrc,
+			  const struct attr *media_attrv,
+			  size_t media_attrc,
+			  const struct codec *codecv,
+			  size_t codecc)
+{
+	struct fixture fix = { 0 };
+	struct mbuf *offer = mbuf_alloc(1024);
+
+	if (!offer)
+		return ENOMEM;
+
+	mbuf_write_str(offer, sdp);
+	mbuf_set_pos(offer, 0);
+
+	int err = fixture_init(&fix,
+			       session_attrv, session_attrc,
+			       media_attrv, media_attrc,
+			       codecv, codecc);
+	TEST_ERR(err);
+
+	err = sdp_decode(fix.sess, offer, true);
+	TEST_ERR(err);
+
+#if 1
+	DEBUG_NOTICE("%H\n", sdp_session_debug, fix.sess);
+#endif
+
+	for (size_t i=0; i<session_attrc; i++) {
+		const struct attr *attr = &session_attrv[i];
+
+		const char *rattr = sdp_session_rattr(fix.sess, attr->name);
+		TEST_STRCMP_LEN(attr->value, rattr);
+	}
+
+	struct args args = {
+		.attrv = media_attrv,
+		.attrc = media_attrc
+	};
+
+	sdp_media_rattr_apply(fix.audio, NULL, sdp_attr_handler, &args);
+	ASSERT_EQ(media_attrc, args.ix);
+
+	TEST_STRCMP_LEN("UDP/TLS/RTP/SAVPF", sdp_media_proto(fix.audio));
+
+	const struct sdp_format *format = sdp_media_rformat(fix.audio, NULL);
+	TEST_STRCMP_LEN("opus", format->name);
+
+ out:
+	fixture_close(&fix);
+	mem_deref(offer);
+
+	return err;
+}
+
+
+int test_sdp_interop(void)
+{
+	const char sdp_chrome[] =
+"v=0\r\n"
+"o=- 6851975412855494469 2 IN IP4 127.0.0.1\r\n"
+"s=-\r\n"
+"c=IN IP4 127.0.0.1\r\n"
+"t=0 0\r\n"
+"a=group:BUNDLE 0 1\r\n"
+"a=extmap-allow-mixed\r\n"
+"a=msid-semantic: WMS 2a30d377-cd13-4454-974c-0144db0118a6\r\n"
+"m=audio 9 UDP/TLS/RTP/SAVPF 111 63 9 0 8 13 110 126\r\n"
+"c=IN IP4 0.0.0.0\r\n"
+"a=rtcp:9 IN IP4 0.0.0.0\r\n"
+"a=ice-ufrag:ie02\r\n"
+"a=ice-pwd:CWO5WLKWo2j5QmsY1396cvFe\r\n"
+"a=ice-options:trickle\r\n"
+"a=fingerprint:sha-256 A9:1F:F1:FD:FB:90:7D:4D:F7:DF:C4:6E:F8:6A:7B:E7:87:1B"
+  ":07:4E:22:3C:80:99:83:E6:9A:34:BD:93:F5:CE\r\n"
+"a=setup:actpass\r\n"
+"a=mid:0\r\n"
+"a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\n"
+"a=extmap:2 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n"
+"a=extmap:3 http://www.ietf.org/id/"
+  "draft-holmer-rmcat-transport-wide-cc-extensions-01\r\n"
+"a=extmap:4 urn:ietf:params:rtp-hdrext:sdes:mid\r\n"
+"a=sendrecv\r\n"
+"a=msid:2a30d377-cd13-4454-974c-0144db0118a6"
+  " c061a2b9-95bc-45fb-9e5d-6df08d8e1d0f\r\n"
+"a=rtcp-mux\r\n"
+"a=rtcp-rsize\r\n"
+"a=rtpmap:111 opus/48000/2\r\n"
+"a=rtcp-fb:111 transport-cc\r\n"
+"a=fmtp:111 minptime=10;useinbandfec=1\r\n"
+"a=rtpmap:63 red/48000/2\r\n"
+"a=fmtp:63 111/111\r\n"
+"a=rtpmap:9 G722/8000\r\n"
+"a=rtpmap:0 PCMU/8000\r\n"
+"a=rtpmap:8 PCMA/8000\r\n"
+"a=rtpmap:13 CN/8000\r\n"
+"a=rtpmap:110 telephone-event/48000\r\n"
+"a=rtpmap:126 telephone-event/8000\r\n"
+"a=ssrc:2161565476 cname:P6e47zI3iVPviKRL\r\n"
+"a=ssrc:2161565476 msid:2a30d377-cd13-4454-974c-0144db0118a6"
+  " c061a2b9-95bc-45fb-9e5d-6df08d8e1d0f\r\n"
+;
+
+	static const struct attr session_attrv[] = {
+
+	{"group",              "BUNDLE 0 1"},
+	{"extmap-allow-mixed", ""},
+	{"msid-semantic",      " WMS 2a30d377-cd13-4454-974c-0144db0118a6"},
+
+	};
+
+	static const struct attr audio_attrv[] = {
+
+	{"ice-ufrag",     "ie02"},
+	{"ice-pwd",       "CWO5WLKWo2j5QmsY1396cvFe"},
+	{"ice-options",   "trickle"},
+	{"fingerprint",   "sha-256 A9:1F:F1:FD:FB:90:7D:4D:F7:DF:C4:6E:F8:6A"
+	                  ":7B:E7:87:1B:07:4E:22:3C:80"
+	                  ":99:83:E6:9A:34:BD:93:F5:CE"},
+	{"setup",         "actpass"},
+	{"mid",           "0"},
+	{"extmap",        "1 urn:ietf:params:rtp-hdrext:ssrc-audio-level"},
+	{"extmap",        "2 http://www.webrtc.org/experiments/"
+	                  "rtp-hdrext/abs-send-time"},
+	{"extmap",        "3 http://www.ietf.org/id/"
+	                 "draft-holmer-rmcat-transport-wide-cc-extensions-01"},
+	{"extmap",        "4 urn:ietf:params:rtp-hdrext:sdes:mid"},
+	{"msid",          "2a30d377-cd13-4454-974c-0144db0118a6"
+	                  " c061a2b9-95bc-45fb-9e5d-6df08d8e1d0f"},
+	{"rtcp-mux",      ""},
+	{"rtcp-rsize",    ""},
+	{"rtcp-fb",       "111 transport-cc"},
+	{"ssrc",          "2161565476 cname:P6e47zI3iVPviKRL"},
+	{"ssrc",         "2161565476 msid:2a30d377-cd13-4454-974c-0144db0118a6"
+	                 " c061a2b9-95bc-45fb-9e5d-6df08d8e1d0f"},
+	};
+
+	const struct codec codecv[] = {
+
+		{  NULL, "opus",            48000, 2},
+		{  "63", "red",             48000, 2},
+		{   "9", "G722",             8000, 1},
+		{   "0", "PCMU",             8000, 1},
+		{   "8", "PCMA",             8000, 1},
+		{  "13", "CN",               8000, 1},
+		{ "110", "telephone-event", 48000, 1},
+		{ "126", "telephone-event",  8000, 1},
+	};
+
+	int err;
+
+	err = test_sdp_param(sdp_chrome,
+			     session_attrv, RE_ARRAY_SIZE(session_attrv),
+			     audio_attrv, RE_ARRAY_SIZE(audio_attrv),
+			     codecv, RE_ARRAY_SIZE(codecv));
+	TEST_ERR(err);
+
+ out:
+	return err;
+}

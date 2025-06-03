@@ -293,6 +293,7 @@ int test_sdp_parse(void);
 int test_sdp_oa(void);
 int test_sdp_extmap(void);
 int test_sdp_disabled_rejected(void);
+int test_sdp_interop(void);
 int test_sha1(void);
 int test_sip_addr(void);
 int test_sip_auth(void);
