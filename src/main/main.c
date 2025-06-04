@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #undef LIST_INIT
 #undef LIST_FOREACH
+#undef LIST_FOREACH_SAFE
 #endif
 #include <re_types.h>
 #include <re_fmt.h>
