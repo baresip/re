@@ -95,8 +95,28 @@ static inline bool list_isempty(const struct list *list)
 }
 
 
+/**
+ * @def LIST_FOREACH
+ * @brief Iterates over each element in a list
+ *
+ * @param list The list to iterate
+ * @param le   Iterator variable
+ */
 #define LIST_FOREACH(list, le)					\
 	for ((le) = list_head((list)); (le); (le) = (le)->next)
+
+
+/**
+ * @def LIST_FOREACH_SAFE
+ * @brief Safe list iteration allowing element removal
+ *
+ * @param list   The list to iterate
+ * @param le     Iterator variable
+ * @param le_tmp Temporary variable for next element
+ */
+#define LIST_FOREACH_SAFE(list, le, le_tmp)                                   \
+	for ((le) = list_head((list)); (le) && ((le_tmp = le->next) || 1);    \
+			(le) = le_tmp)
 
 
 /**
