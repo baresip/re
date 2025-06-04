@@ -5,6 +5,43 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## v3.23.0 - 2025-06-04
+
+### What's Changed
+* fmt/pl: optimize pl_bool return early by @sreimers in https://github.com/baresip/re/pull/1311
+* ci/coverage: bump min_cov by @sreimers in https://github.com/baresip/re/pull/1312
+* av1: allow OBU type 0 (RESERVED) by @alfredh in https://github.com/baresip/re/pull/1313
+* ci: remove step to install ninja on macOS by @alfredh in https://github.com/baresip/re/pull/1315
+* rtp: remove unused function ntp2unix() by @alfredh in https://github.com/baresip/re/pull/1314
+* tls: fix compiler warning with libressl 4.1.0 by @alfredh in https://github.com/baresip/re/pull/1318
+* vhprintf: change from char to int to store error number from %m by @alfredh in https://github.com/baresip/re/pull/1319
+* http: cancel verify_cert_tmr and skip init by @alfredh in https://github.com/baresip/re/pull/1317
+* mem: update doxygen comments in mem_pool.c by @alfredh in https://github.com/baresip/re/pull/1320
+* tls: fix LibreSSL SSL_verify_cb by @sreimers in https://github.com/baresip/re/pull/1322
+* cmake,http: add HAVE_TLS1_3_POST_HANDSHAKE_AUTH by @sreimers in https://github.com/baresip/re/pull/1323
+* av1: remove deprecated av1_packetize_high() by @alfredh in https://github.com/baresip/re/pull/1321
+* tls: fix SSL_SESSION_is_resumable LibreSSL by @sreimers in https://github.com/baresip/re/pull/1324
+* sip: exposed ltag and rtag in sip dialog by @gordongrech in https://github.com/baresip/re/pull/1326
+* sipsess: add cancel reason to close handler by @KillingSpark in https://github.com/baresip/re/pull/1325
+* h265: add H265_NAL_RSV_IRAP_VCL{22,23} by @alfredh in https://github.com/baresip/re/pull/1327
+* test/httpauth: fix debug warning for digest response by @cspiel1 in https://github.com/baresip/re/pull/1332
+* sha: use PROV_RSA_AES for CryptAcquireContext by @alfredh in https://github.com/baresip/re/pull/1331
+* test: Add test for thread tss by @weili-jiang in https://github.com/baresip/re/pull/1334
+* 100rel improvements by @maximilianfridrich in https://github.com/baresip/re/pull/1333
+* test/async: Remove unsupported AI_V4MAPPED on Android by @weili-jiang in https://github.com/baresip/re/pull/1336
+* test/sys: Use writeable datapath for fs_open test by @weili-jiang in https://github.com/baresip/re/pull/1335
+* net: Support ifaddrs on Android API level >= 24 by @weili-jiang in https://github.com/baresip/re/pull/1338
+* ci: Enable testing on Android by @weili-jiang in https://github.com/baresip/re/pull/1337
+* test/sipsess: fix test_sipsess_100rel_answer_not_allowed by @maximilianfridrich in https://github.com/baresip/re/pull/1340
+
+### New Contributors
+* @gordongrech made their first contribution in https://github.com/baresip/re/pull/1326
+* @KillingSpark made their first contribution in https://github.com/baresip/re/pull/1325
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.22.0...v3.23.0
+
+
 ## v3.22.0 - 2025-04-30
 
 ### What's Changed
