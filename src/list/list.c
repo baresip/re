@@ -94,7 +94,7 @@ void list_append(struct list *list, struct le *le, void *data)
 		return;
 
 	if (le->list) {
-		DEBUG_WARNING("append: le linked to %p\n", le->list);
+		DEBUG_WARNING("append: le already linked to %p!\n", le->list);
 		return;
 	}
 
