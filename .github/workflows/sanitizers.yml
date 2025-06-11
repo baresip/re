@@ -17,8 +17,8 @@ jobs:
         os: [ubuntu-24.04]
         sanitizer: [thread, address, undefined]
     env:
-      CC: clang-18
-      CXX: clang++-18
+      CC: clang-20
+      CXX: clang++-20
       CMAKE_GENERATOR: Ninja
       CFLAGS: "-fsanitize=${{ matrix.sanitizer }} -fno-sanitize-recover=all -fno-sanitize=function"
       CXXFLAGS: "-fsanitize=${{ matrix.sanitizer }} -fno-sanitize-recover=all -fno-sanitize=function"
@@ -32,10 +32,6 @@ jobs:
       run: |
         sudo sed -i 's/azure\./de\./' /etc/apt/sources.list
 
-    - name: mmap rnd_bits workaround
-      run: |
-        sudo sysctl -w vm.mmap_rnd_bits=28
-
     - name: install packages
       run: |
         sudo apt-get update && sudo apt-get install -y ninja-build
@@ -43,8 +39,8 @@ jobs:
     - name: Install clang-tools
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main"
-        sudo apt-get update && sudo apt-get install -y clang-tools-18
+        sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main"
+        sudo apt-get update && sudo apt-get install -y clang-tools-20
 
     - name: make info
       run: |
