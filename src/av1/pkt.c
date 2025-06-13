@@ -388,9 +388,9 @@ out:
  *
  * @return 0 if success, otherwise errorcode
  */
-int av1_packetize_new(bool *newp, bool marker, uint64_t rtp_ts,
-		       const uint8_t *buf, size_t len, size_t maxlen,
-		       av1_packet_h *pkth, void *arg)
+int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
+		  const uint8_t *buf, size_t len, size_t maxlen,
+		  av1_packet_h *pkth, void *arg)
 {
 	struct mbuf *mb_pkt;
 	uint8_t w;

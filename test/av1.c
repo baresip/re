@@ -335,7 +335,7 @@ static int test_av1_packetize_base(unsigned count_bs, unsigned count_rtp,
 		}
 	}
 
-	err = av1_packetize_new(&new_flag, true, dummy_ts,
+	err = av1_packetize(&new_flag, true, dummy_ts,
 			    buf, size, test.pktsize,
 			    av1_packet_handler, &test);
 	if (err)
@@ -860,9 +860,9 @@ static int test_av1_interop(void)
 	err = str_hex(state.buf_packet2, sizeof(state.buf_packet2), packet2);
 	TEST_ERR(err);
 
-	err = av1_packetize_new(&new_flag, true, dummy_ts,
-				 buf, sizeof(buf), 1188,
-				 interop_packet_handler, &state);
+	err = av1_packetize(&new_flag, true, dummy_ts,
+			    buf, sizeof(buf), 1188,
+			    interop_packet_handler, &state);
 	if (err)
 		goto out;
 
