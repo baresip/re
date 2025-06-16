@@ -1,5 +1,5 @@
 /**
- * @file icem.c  ICE Media stream
+ * @file trice.c  ICE Media stream
  *
  * Copyright (C) 2010 Alfred E. Heggestad
  */
