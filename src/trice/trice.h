@@ -1,5 +1,5 @@
 /**
- * @file ice.h  Internal Interface to ICE
+ * @file trice.h  Internal Interface to ICE
  *
  * Copyright (C) 2010 Alfred E. Heggestad
  */
