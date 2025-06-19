@@ -495,7 +495,7 @@ int tls_set_verify_purpose(struct tls *tls, const char *purpose)
 {
 	int err;
 	int i;
-	X509_PURPOSE *xptmp;
+	const X509_PURPOSE *xptmp;
 
 	if (!tls || !purpose)
 		return EINVAL;
@@ -1061,7 +1061,6 @@ static int tls_verify_handler_ud(int ok, X509_STORE_CTX *ctx)
 int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
 	int (*verifyh) (int ok, void *arg), void *arg)
 {
-#if !defined(LIBRESSL_VERSION_NUMBER)
 	int err = 0;
 	SSL_verify_cb tls_cb = tls_verify_handler_ud;
 	if (!tc)
@@ -1082,14 +1081,6 @@ int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
 		tls_cb);
 
 	return err;
-#else
-	(void) tc;
-	(void) depth;
-	(void) verifyh;
-	(void) arg;
-	(void) tls_verify_handler_ud;
-	return ENOSYS;
-#endif
 }
 
 
@@ -1458,8 +1449,6 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
  */
 int tls_verify_client(struct tls_conn *tc)
 {
-#if !defined(LIBRESSL_VERSION_NUMBER)
-
 	if (!tc)
 		return EINVAL;
 
@@ -1470,11 +1459,6 @@ int tls_verify_client(struct tls_conn *tc)
 		       tls_verify_handler);
 
 	return 0;
-#else
-	(void)tc;
-
-	return ENOSYS;
-#endif
 }
 
 
@@ -1722,10 +1706,7 @@ static int tls_session_update_cache(const struct tls_conn *tc,
 					     session_cmp_handler, &peer));
 	mem_deref(e);
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L) && \
-	(!defined(LIBRESSL_VERSION_NUMBER) || \
-	  defined(LIBRESSL_HAS_TLS1_3) || \
-	  defined(LIBRESSL_INTERNAL) )
+#if !defined(LIBRESSL_VERSION_NUMBER)
 	if (!SSL_SESSION_is_resumable(sess)) {
 		return EINVAL;
 	}

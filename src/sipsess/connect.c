@@ -98,8 +98,6 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	sdp = mbuf_get_left(msg->mb) > 0;
 
 	if (msg->scode < 200) {
-		sess->progrh(msg, sess->arg);
-
 		if (msg->scode == 100)
 			return;
 
@@ -112,21 +110,22 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				goto out;
 		}
 
-		if (sdp && sess->neg_state == SDP_NEG_LOCAL_OFFER) {
-			err = sess->answerh(msg, sess->arg);
-			if (err)
-				goto out;
-		}
-
 		if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel")
 				&& sess->rel100_supported) {
 
+			if (sess->rel_seq && msg->rel_seq != (sess->rel_seq+1))
+				return;
+
+			sess->rel_seq = msg->rel_seq;
 			if (sess->neg_state == SDP_NEG_NONE && !sdp)
 				goto out;
+
+			sess->progrh(msg, sess->arg);
 
 			if (sdp) {
 				if (sess->neg_state == SDP_NEG_LOCAL_OFFER) {
 					sess->neg_state = SDP_NEG_DONE;
+					err = sess->answerh(msg, sess->arg);
 				}
 				else if (sess->neg_state == SDP_NEG_NONE) {
 					sess->neg_state = SDP_NEG_REMOTE_OFFER;
@@ -146,8 +145,16 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 			mem_deref(desc);
 			sess->desc = mem_deref(sess->desc);
+			return;
 		}
 
+		sess->progrh(msg, sess->arg);
+
+		if (sdp && sess->neg_state == SDP_NEG_LOCAL_OFFER) {
+			err = sess->answerh(msg, sess->arg);
+			if (err)
+				goto out;
+		}
 		return;
 	}
 	else if (msg->scode < 300) {

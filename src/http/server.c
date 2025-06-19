@@ -76,6 +76,7 @@ static void conn_destructor(void *arg)
 
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
+	tmr_cancel(&conn->verify_cert_tmr);
 	mem_deref(conn->sc);
 	mem_deref(conn->tc);
 	mem_deref(conn->mb);
@@ -86,6 +87,7 @@ static void conn_close(struct http_conn *conn)
 {
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
+	tmr_cancel(&conn->verify_cert_tmr);
 	conn->sc = mem_deref(conn->sc);
 	conn->tc = mem_deref(conn->tc);
 	conn->sock = NULL;
@@ -101,6 +103,7 @@ static void timeout_handler(void *arg)
 }
 
 
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 struct http_verify_msg_d {
 	struct http_conn *conn;
 	struct http_msg *msg;
@@ -130,7 +133,6 @@ static void verify_cert_done(void *arg)
 }
 
 
-#ifdef USE_TLS
 static int http_verify_handler(int ok, void *arg)
 {
 	struct http_verify_msg_d *d = arg;
@@ -148,7 +150,6 @@ static int http_verify_handler(int ok, void *arg)
 
 	return ok;
 }
-#endif
 
 
 static enum re_https_verify_msg verify_msg(struct http_conn *conn,
@@ -178,11 +179,9 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 		d->reason = "Request Timeout";
 		d->msg = msg;
 
-		tmr_init(&conn->verify_cert_tmr);
 		tmr_start(&conn->verify_cert_tmr, TIMEOUT_IDLE,
 			verify_cert_done, d);
 
-#ifdef USE_TLS
 		int err = tls_set_verify_client_handler(http_conn_tls(conn),
 			-1, http_verify_handler, d);
 		if (err) {
@@ -196,12 +195,12 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 			res = HTTPS_MSG_IGNORE;
 			goto out;
 		}
-#endif
 	}
 
 out:
 	return res;
 }
+#endif
 
 
 static void recv_handler(struct mbuf *mb, void *arg)
@@ -279,11 +278,15 @@ static void recv_handler(struct mbuf *mb, void *arg)
 			conn->mb = mem_deref(conn->mb);
 		}
 
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 		if (verify_msg(conn, msg) == HTTPS_MSG_OK) {
 			conn->sock->reqh(conn, msg, conn->sock->arg);
 			mem_deref(msg);
 		}
-
+#else
+		conn->sock->reqh(conn, msg, conn->sock->arg);
+		mem_deref(msg);
+#endif
 		if (!conn->tc) {
 			err = ENOTCONN;
 			goto out;
@@ -474,7 +477,7 @@ int https_listen(struct http_sock **sockp, const struct sa *laddr,
 
 
 /**
- * Set verify http msg handler.
+ * Set verify http msg handler. (Needs TLS v1.3 post-handshake auth)
  *
  * This handler allows to decide whether e.g. a certificate
  * should be requested from the client or not.
@@ -491,12 +494,18 @@ int https_listen(struct http_sock **sockp, const struct sa *laddr,
 int  https_set_verify_msgh(struct http_sock *sock,
 	https_verify_msg_h *verifyh)
 {
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 	if (!sock || !verifyh)
 		return EINVAL;
 
-	sock->verifyh = verifyh;
 
+	sock->verifyh = verifyh;
 	return 0;
+#else
+	(void)sock;
+	(void)verifyh;
+	return ENOTSUP;
+#endif
 }
 
 

@@ -225,6 +225,8 @@ int test_dns_cache_http_integration(void);
 int test_https_loop(void);
 int test_http_client_set_tls(void);
 int test_https_large_body(void);
+#endif
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 int test_https_conn_post_handshake(void);
 #endif
 int test_httpauth_chall(void);
@@ -277,6 +279,7 @@ int test_rtcp_decode(void);
 int test_rtcp_decode_badmsg(void);
 int test_rtcp_packetloss(void);
 int test_rtcp_twcc(void);
+int test_rtcp_xr(void);
 int test_rtcp_loop(void);
 int test_sa_class(void);
 int test_sa_cmp(void);
@@ -290,6 +293,7 @@ int test_sdp_parse(void);
 int test_sdp_oa(void);
 int test_sdp_extmap(void);
 int test_sdp_disabled_rejected(void);
+int test_sdp_interop(void);
 int test_sha1(void);
 int test_sip_addr(void);
 int test_sip_auth(void);
@@ -340,6 +344,7 @@ int test_telev(void);
 int test_text2pcap(void);
 int test_thread(void);
 int test_thread_cnd_timedwait(void);
+int test_thread_tss(void);
 int test_tmr_jiffies(void);
 int test_tmr_jiffies_usec(void);
 int test_try_into(void);

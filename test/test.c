@@ -120,6 +120,8 @@ static const struct test tests[] = {
 	TEST(test_https_loop),
 	TEST(test_http_client_set_tls),
 	TEST(test_https_large_body),
+#endif
+#ifdef HAVE_TLS1_3_POST_HANDSHAKE_AUTH
 	TEST(test_https_conn_post_handshake),
 #endif
 	TEST(test_httpauth_chall),
@@ -166,6 +168,7 @@ static const struct test tests[] = {
 	TEST(test_rtcp_decode_badmsg),
 	TEST(test_rtcp_packetloss),
 	TEST(test_rtcp_twcc),
+	TEST(test_rtcp_xr),
 	TEST(test_rtcp_loop),
 	TEST(test_sa_class),
 	TEST(test_sa_cmp),
@@ -179,6 +182,7 @@ static const struct test tests[] = {
 	TEST(test_sdp_oa),
 	TEST(test_sdp_extmap),
 	TEST(test_sdp_disabled_rejected),
+	TEST(test_sdp_interop),
 	TEST(test_sha1),
 	TEST(test_sip_addr),
 	TEST(test_sip_auth),
@@ -255,6 +259,7 @@ static const struct test tests[] = {
 	TEST(test_websock),
 	TEST(test_trace),
 	TEST(test_thread),
+	TEST(test_thread_tss),
 
 #ifdef USE_TLS
 	/* combination tests: */

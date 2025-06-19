@@ -368,7 +368,7 @@ int  sip_replyf(struct sip *sip, const struct sip_msg *msg, uint16_t scode,
 int  sip_reply(struct sip *sip, const struct sip_msg *msg, uint16_t scode,
 	       const char *reason);
 void sip_reply_addr(struct sa *addr, const struct sip_msg *msg, bool rport);
-
+const struct sip_msg *sip_strans_cancel_msg(struct sip_strans *st);
 
 /* auth */
 int  sip_auth_authenticate(struct sip_auth *auth, const struct sip_msg *msg);
@@ -403,6 +403,8 @@ int  sip_dialog_set_callid(struct sip_dialog *dlg, const char *callid);
 void sip_dialog_set_srcport(struct sip_dialog *dlg, uint16_t srcport);
 uint16_t sip_dialog_srcport(struct sip_dialog *dlg);
 const char *sip_dialog_uri(const struct sip_dialog *dlg);
+const char *sip_dialog_ltag(const struct sip_dialog *dlg);
+const char *sip_dialog_rtag(const struct sip_dialog *dlg);
 uint32_t sip_dialog_lseq(const struct sip_dialog *dlg);
 uint32_t sip_dialog_lseqinv(const struct sip_dialog *dlg);
 enum sip_transp sip_dialog_tp(const struct sip_dialog *dlg);

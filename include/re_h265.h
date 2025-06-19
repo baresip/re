@@ -32,6 +32,8 @@ enum h265_naltype {
 	H265_NAL_IDR_W_RADL      = 19,
 	H265_NAL_IDR_N_LP        = 20,
 	H265_NAL_CRA_NUT         = 21,
+	H265_NAL_RSV_IRAP_VCL22  = 22,
+	H265_NAL_RSV_IRAP_VCL23  = 23,
 
 	/* non-VCL class */
 	H265_NAL_VPS_NUT         = 32,

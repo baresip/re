@@ -5,6 +5,7 @@ include(CheckTypeSize)
 include(CheckCXXSourceCompiles)
 
 option(USE_MBEDTLS "Enable MbedTLS" OFF)
+option(USE_TLS1_3_PHA "Enable TLS 1.3 Post-Handshake Auth" ON)
 
 find_package(Backtrace)
 find_package(Threads REQUIRED)
@@ -25,7 +26,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build."
         FORCE)
 endif()
-    
+
+check_symbol_exists(LIBRESSL_VERSION_NUMBER "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" HAVE_LIBRESSL)
+if(USE_TLS1_3_PHA AND NOT HAVE_LIBRESSL AND NOT USE_MBEDTLS AND OPENSSL_FOUND)
+  list(APPEND RE_DEFINITIONS HAVE_TLS1_3_POST_HANDSHAKE_AUTH)
+endif()
+
 check_symbol_exists("arc4random" "stdlib.h" HAVE_ARC4RANDOM)
 if(HAVE_ARC4RANDOM)
   list(APPEND RE_DEFINITIONS HAVE_ARC4RANDOM)
@@ -115,6 +121,20 @@ list(APPEND RE_DEFINITIONS
   )
 
 if(UNIX)
+  if(ANDROID)
+    string(REPLACE "android-" "" ANDROID_API_LEVEL ${ANDROID_PLATFORM})
+    if(ANDROID_API_LEVEL GREATER_EQUAL 24)
+      set(HAVE_GETIFADDRS ON CACHE BOOL "" FORCE)
+    endif()
+  else()
+    check_include_file(ifaddrs.h HAVE_GETIFADDRS)
+  endif()
+  if(HAVE_GETIFADDRS)
+    list(APPEND RE_DEFINITIONS HAVE_GETIFADDRS)
+  endif()
+endif()
+
+if(UNIX)
   list(APPEND RE_DEFINITIONS
     HAVE_PWD_H
     HAVE_SETRLIMIT
@@ -126,9 +146,6 @@ if(UNIX)
     HAVE_SIGNAL
     HAVE_FORK
     )
-  if(NOT ANDROID)
-    list(APPEND RE_DEFINITIONS HAVE_GETIFADDRS)
-  endif()
   if(NOT IOS)
     list(APPEND RE_DEFINITIONS HAVE_ROUTE_LIST)
   endif()

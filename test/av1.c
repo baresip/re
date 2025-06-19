@@ -157,15 +157,17 @@ static int test_av1_obu(void)
 
 static const uint64_t dummy_ts = 0x0102030405060708ULL;
 
+#define MAX_OBUS 10
+
 struct test {
 	/* input: */
 	size_t pktsize;
 
 	/* output: */
-	struct mbuf *mb;
+	struct mbuf *obus[MAX_OBUS];
+	size_t obu_index;
 	unsigned marker_count;
 	unsigned new_count;
-	uint8_t w_saved;
 };
 
 
@@ -178,6 +180,11 @@ static int av1_packet_handler(bool marker, uint64_t rtp_ts,
 	struct mbuf *mb = mbuf_alloc(hdr_len + pld_len);
 	struct av1_aggr_hdr aggr_hdr;
 	int err = 0;
+	unsigned count = 0;
+	size_t size = 0;
+
+	if (!mb)
+		return ENOMEM;
 
 	ASSERT_EQ(dummy_ts, rtp_ts);
 	ASSERT_TRUE((hdr_len + pld_len) <= test->pktsize);
@@ -193,22 +200,50 @@ static int av1_packet_handler(bool marker, uint64_t rtp_ts,
 	if (err)
 		goto out;
 
-	/* XXX: check Z and Y flags */
-
-	/* Save the first W field */
-	if (test->w_saved == 255)
-		test->w_saved = aggr_hdr.w;
-
 	if (aggr_hdr.n)
 		++test->new_count;
 
-	err = mbuf_write_mem(test->mb, mbuf_buf(mb), mbuf_get_left(mb));
-	if (err)
-		goto out;
+	if (aggr_hdr.z) {
+		ASSERT_TRUE(test->obus[test->obu_index]->pos > 0);
+	}
+	else {
+		ASSERT_EQ(0, test->obus[test->obu_index]->pos);
+	}
+
+	while (mbuf_get_left(mb) > 0) {
+		++count;
+		if (aggr_hdr.w == 0 || count < aggr_hdr.w) {
+			uint64_t decoded_size = 0;
+			err = av1_leb128_decode(mb, &decoded_size);
+			if (err) {
+				goto out;
+			}
+			/* Note: av1_leb128_decode always uses uint64_t,
+			 * but mbuf uses size_t, which can be 32 bits */
+			ASSERT_TRUE(decoded_size <= SIZE_MAX);
+			size = (size_t)decoded_size;
+			ASSERT_TRUE(size <= mbuf_get_left(mb));
+		}
+		else {
+			size = mbuf_get_left(mb);
+		}
+		err = mbuf_write_mem(test->obus[test->obu_index],
+			mbuf_buf(mb), size);
+		if (err) {
+			goto out;
+		}
+		mbuf_advance(mb, size);
+
+		if (mbuf_get_left(mb) > 0 || !aggr_hdr.y) {
+			mbuf_set_pos(test->obus[test->obu_index], 0);
+			++test->obu_index;
+		}
+	}
+
+	ASSERT_TRUE(aggr_hdr.w == 0 || count == aggr_hdr.w);
 
 	if (marker) {
 		++test->marker_count;
-		test->mb->pos = 0;
 	}
 
  out:
@@ -272,83 +307,10 @@ static int copy_obu(struct mbuf *mb_bs, const uint8_t *buf, size_t size)
 }
 
 
-/* Convert RTP OBUs to AV1 bitstream */
-static int convert_rtp_to_bs(struct mbuf *mb_bs, const uint8_t *buf,
-			     size_t buf_size, uint8_t w)
-{
-	struct mbuf mb_rtp = {
-		.buf = (uint8_t *)buf,
-		.size = buf_size,
-		.pos = 0,
-		.end = buf_size
-	};
-	size_t size;
-	int err;
-
-	/* prepend Temporal Delimiter */
-	err = av1_obu_encode(mb_bs, AV1_OBU_TEMPORAL_DELIMITER, true, 0, NULL);
-	if (err)
-		return err;
-
-	if (w) {
-		for (unsigned i=0; i<w; i++) {
-			bool last = (i+1 == w);
-
-			if (last) {
-				/* last OBU element MUST NOT be preceded
-				 * by a length field */
-				size = mbuf_get_left(&mb_rtp);
-			}
-			else {
-				uint64_t val;
-
-				err = av1_leb128_decode(&mb_rtp, &val);
-				if (err)
-					return err;
-
-				if (val > mbuf_get_left(&mb_rtp))
-					return EBADMSG;
-
-				size = (size_t)val;
-			}
-
-			err = copy_obu(mb_bs, mbuf_buf(&mb_rtp), size);
-			if (err)
-				return err;
-
-			mbuf_advance(&mb_rtp, size);
-		}
-	}
-	else {
-		while (mbuf_get_left(&mb_rtp) >= 2) {
-
-			uint64_t val;
-
-			/* each OBU element MUST be preceded by length field */
-			err = av1_leb128_decode(&mb_rtp, &val);
-			if (err)
-				return err;
-
-			if (val > mbuf_get_left(&mb_rtp))
-				return EBADMSG;
-
-			size = (size_t)val;
-
-			err = copy_obu(mb_bs, mbuf_buf(&mb_rtp), size);
-			if (err)
-				return err;
-
-			mbuf_advance(&mb_rtp, size);
-		}
-	}
-
-	return 0;
-}
-
-
 static int test_av1_packetize_base(unsigned count_bs, unsigned count_rtp,
-				   unsigned exp_w_first, size_t pktsize,
-				   const uint8_t *buf, size_t size)
+				   size_t pktsize, const uint8_t *buf,
+				   size_t size, const uint8_t *expected_buf,
+				   size_t expected_size)
 {
 	struct test test;
 	struct mbuf *mb_bs = mbuf_alloc(1024);
@@ -364,15 +326,16 @@ static int test_av1_packetize_base(unsigned count_bs, unsigned count_rtp,
 	ASSERT_EQ(count_rtp, av1_obu_count_rtp(buf, size));
 
 	test.pktsize = pktsize;
-	test.w_saved = 255;
 
-	test.mb = mbuf_alloc(1024);
-	if (!test.mb) {
-		err = ENOMEM;
-		goto out;
+	for (size_t i = 0; i < MAX_OBUS; ++i) {
+		test.obus[i] = mbuf_alloc(1024);
+		if (!test.obus[i]) {
+			err = ENOMEM;
+			goto out;
+		}
 	}
 
-	err = av1_packetize_high(&new_flag, true, dummy_ts,
+	err = av1_packetize(&new_flag, true, dummy_ts,
 			    buf, size, test.pktsize,
 			    av1_packet_handler, &test);
 	if (err)
@@ -380,17 +343,24 @@ static int test_av1_packetize_base(unsigned count_bs, unsigned count_rtp,
 
 	ASSERT_EQ(1, test.marker_count);
 	ASSERT_EQ(1, test.new_count);
-	ASSERT_EQ(exp_w_first, test.w_saved);
 
-	err = convert_rtp_to_bs(mb_bs, test.mb->buf, test.mb->end,
-				test.w_saved);
+	/* prepend Temporal Delimiter */
+	err = av1_obu_encode(mb_bs, AV1_OBU_TEMPORAL_DELIMITER, true, 0, NULL);
 	TEST_ERR(err);
 
+	for (size_t i = 0; i < test.obu_index; ++i) {
+		err = copy_obu(mb_bs,
+			mbuf_buf(test.obus[i]), mbuf_get_left(test.obus[i]));
+		TEST_ERR(err);
+	}
+
 	/* compare bitstream with test-vector */
-	TEST_MEMCMP(buf, size, mb_bs->buf, mb_bs->end);
+	TEST_MEMCMP(expected_buf, expected_size, mb_bs->buf, mb_bs->end);
 
  out:
-	mem_deref(test.mb);
+	for (size_t i = 0; i < MAX_OBUS; ++i) {
+		mem_deref(test.obus[i]);
+	}
 	mem_deref(mb_bs);
 
 	return err;
@@ -435,6 +405,90 @@ static const uint8_t pkt_aom5[] = {
 	0x3b, 0xe3, 0xe1, 0x31, 0xeb, 0x4f, 0x36,
 };
 
+static const uint8_t pkt_aom_metadata[] = {
+
+	/* Temporal Delimiter */
+	0x12, 0x00,
+
+	/* Sequence header */
+	0x0a, 0x0a,
+	0x00, 0x00,  0x00, 0x01, 0x9f, 0xfb, 0xff, 0xf3, 0x00, 0x80,
+
+	/* OBU frame header */
+	0x1a, 0x1b,
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+	0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13,
+	0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x80,
+
+	/* OBU metadata */
+	0x2a, 0x1a,
+	0x02, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+	0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13,
+	0x14, 0x15, 0x16, 0x17, 0x18, 0x80,
+
+	/* OBU metadata */
+	0x2a, 0x06,
+	0x01, 0x01, 0x02, 0x03, 0x04, 0x80,
+
+	/* Frame */
+	0x32, 0x17,
+	0x10, 0x01, 0x92, 0x80, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x57, 0xb6, 0xd3, 0xfb,
+	0x3b, 0xe3, 0xe1, 0x31, 0xeb, 0x4f, 0x36,
+};
+
+static const uint8_t pkt_multi_seq[] = {
+
+	/* Temporal Delimiter */
+	0x12, 0x00,
+
+	/* Padding */
+	0x7a, 0x04,
+	0x01, 0x02, 0x03, 0x04,
+
+	/* Sequence header */
+	0x0a, 0x0a,
+	0x00, 0x00,  0x00, 0x01, 0x9f, 0xfb, 0xff, 0xf3, 0x00, 0x80,
+
+	/* Padding */
+	0x7a, 0x04,
+	0x05, 0x06, 0x07, 0x08,
+
+	/* Padding */
+	0x7a, 0x08,
+	0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+
+	/* Duplicate sequence header */
+	0x0a, 0x0a,
+	0x00, 0x00,  0x00, 0x01, 0x9f, 0xfb, 0xff, 0xf3, 0x00, 0x80,
+
+	/* Frame */
+	0x32, 0x17,
+	0x10, 0x01, 0x92, 0x80, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x57, 0xb6, 0xd3, 0xfb,
+	0x3b, 0xe3, 0xe1, 0x31, 0xeb, 0x4f, 0x36,
+};
+
+static const uint8_t pkt_multi_seq_expected[] = {
+
+	/* Temporal Delimiter */
+	0x12, 0x00,
+
+	/* Sequence header */
+	0x0a, 0x0a,
+	0x00, 0x00,  0x00, 0x01, 0x9f, 0xfb, 0xff, 0xf3, 0x00, 0x80,
+
+	/* Duplicate sequence header */
+	0x0a, 0x0a,
+	0x00, 0x00,  0x00, 0x01, 0x9f, 0xfb, 0xff, 0xf3, 0x00, 0x80,
+
+	/* Frame */
+	0x32, 0x17,
+	0x10, 0x01, 0x92, 0x80, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x57, 0xb6, 0xd3, 0xfb,
+	0x3b, 0xe3, 0xe1, 0x31, 0xeb, 0x4f, 0x36,
+};
+
 
 /*
  * https://dl8.webmfiles.org/BeachDrone-AV1.webm
@@ -469,16 +523,48 @@ static const char pkt_beach[] =
 	;
 
 
+static int test_av1_packetize_range(
+		unsigned count_bs, unsigned count_rtp,
+		const uint8_t *buf, size_t size,
+		const uint8_t *expected_buf, size_t expected_size) {
+	int err = 0;
+	for (size_t i = 10; i <= 120; ++i) {
+		err = test_av1_packetize_base(count_bs, count_rtp, i,
+			buf, size, expected_buf, expected_size);
+		if (err) {
+			return err;
+		}
+	}
+	return err;
+}
+
+
 static int test_av1_packetize(void)
 {
 	uint8_t buf[320];
 	int err;
 
-	err = test_av1_packetize_base(2, 1, 1, 1200, pkt_aom, sizeof(pkt_aom));
+	err = test_av1_packetize_range(2, 1,
+		pkt_aom, sizeof(pkt_aom),
+		pkt_aom, sizeof(pkt_aom));
 	if (err)
 		return err;
 
-	err = test_av1_packetize_base(5, 4, 0, 10, pkt_aom5, sizeof(pkt_aom5));
+	err = test_av1_packetize_range(5, 4,
+		pkt_aom5, sizeof(pkt_aom5),
+		pkt_aom5, sizeof(pkt_aom5));
+	if (err)
+		return err;
+
+	err = test_av1_packetize_range(6, 5,
+		pkt_aom_metadata, sizeof(pkt_aom_metadata),
+		pkt_aom_metadata, sizeof(pkt_aom_metadata));
+	if (err)
+		return err;
+
+	err = test_av1_packetize_range(7, 3,
+		pkt_multi_seq, sizeof(pkt_multi_seq),
+		pkt_multi_seq_expected, sizeof(pkt_multi_seq_expected));
 	if (err)
 		return err;
 
@@ -486,7 +572,9 @@ static int test_av1_packetize(void)
 	if (err)
 		return err;
 
-	err = test_av1_packetize_base(3, 2, 2, 100, buf, sizeof(buf));
+	err = test_av1_packetize_range(3, 2,
+		buf, sizeof(buf),
+		buf, sizeof(buf));
 	if (err)
 		return err;
 
@@ -772,9 +860,9 @@ static int test_av1_interop(void)
 	err = str_hex(state.buf_packet2, sizeof(state.buf_packet2), packet2);
 	TEST_ERR(err);
 
-	err = av1_packetize_high(&new_flag, true, dummy_ts,
-				 buf, sizeof(buf), 1188,
-				 interop_packet_handler, &state);
+	err = av1_packetize(&new_flag, true, dummy_ts,
+			    buf, sizeof(buf), 1188,
+			    interop_packet_handler, &state);
 	if (err)
 		goto out;
 

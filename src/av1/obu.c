@@ -119,7 +119,7 @@ int av1_obu_encode(struct mbuf *mb, uint8_t type, bool has_size,
 	uint8_t val;
 	int err;
 
-	if (!mb || type==0)
+	if (!mb)
 		return EINVAL;
 
 	val  = (type&0xf) << 3;
@@ -170,12 +170,6 @@ int av1_obu_decode(struct av1_obu_hdr *hdr, struct mbuf *mb)
 		DEBUG_WARNING("av1: header: obu forbidden bit!"
 			" [type=%u, x=%d, s=%d, left=%zu bytes]\n",
 			hdr->type, hdr->x, hdr->s, mbuf_get_left(mb));
-		return EBADMSG;
-	}
-
-	if (hdr->type == 0) {
-		DEBUG_WARNING("av1: header: obu type 0 is reserved [%H]\n",
-			      av1_obu_print, hdr);
 		return EBADMSG;
 	}
 

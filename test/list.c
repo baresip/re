@@ -22,14 +22,11 @@ struct node {
 
 int test_list(void)
 {
-	struct node node1, node2;
+	struct node node1 = {.value = 1}, node2 = {.value = 2};
 	struct list list;
 	int err = EINVAL;
 
 	list_init(&list);
-
-	memset(&node1, 0, sizeof(node1));
-	memset(&node2, 0, sizeof(node2));
 
 	/* Test empty list */
 	TEST_EQUALS(0, list_count(&list));
@@ -52,6 +49,29 @@ int test_list(void)
 	TEST_EQUALS(1, list_count(&list));
 
 	list_unlink(&node2.le);
+
+	/* Test empty list */
+	TEST_EQUALS(0, list_count(&list));
+
+	list_append(&list, &node1.le, &node1);
+	list_append(&list, &node2.le, &node2);
+
+	struct le *le;
+	int i = 0;
+	LIST_FOREACH(&list, le) {
+		struct node *n = list_ledata(le);
+		++i;
+		TEST_EQUALS(i, n->value);
+	}
+
+	struct le *tmp;
+	i = 0;
+	LIST_FOREACH_SAFE(&list, le, tmp) {
+		struct node *n = list_ledata(le);
+		++i;
+		TEST_EQUALS(i, n->value);
+		list_unlink(le);
+	}
 
 	/* Test empty list */
 	TEST_EQUALS(0, list_count(&list));
