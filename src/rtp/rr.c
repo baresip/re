@@ -40,7 +40,7 @@ int rtcp_rr_encode(struct mbuf *mb, const struct rtcp_rr *rr)
 		return EINVAL;
 
 	err  = mbuf_write_u32(mb, htonl(rr->ssrc));
-	err |= mbuf_write_u32(mb, htonl(rr->fraction<<24 |
+	err |= mbuf_write_u32(mb, htonl((uint32_t)rr->fraction<<24 |
 					(rr->lost & 0x00ffffff)));
 	err |= mbuf_write_u32(mb, htonl(rr->last_seq));
 	err |= mbuf_write_u32(mb, htonl(rr->jitter));
