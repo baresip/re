@@ -917,6 +917,7 @@ static int exchange_candidates(struct trice *dst, const struct trice *src)
 static int checklist_tcp_simple(enum ice_tcptype tcptype)
 {
 	struct le *le;
+	char *buf = NULL;
 	FIXTURE_INIT;
 
 #if 0
@@ -954,9 +955,9 @@ static int checklist_tcp_simple(enum ice_tcptype tcptype)
 
 	TEST_ERR(f->err);
 
-#if 0
-	re_printf("\n\n%H\n", trice_debug, f->icem);
-#endif
+	err = re_sdprintf(&buf, "%H", trice_debug, f->icem);
+	TEST_ERR(err);
+	ASSERT_TRUE(str_isset(buf));
 
 	TEST_ASSERT(f->n_estabh > 0);
 
@@ -984,6 +985,7 @@ static int checklist_tcp_simple(enum ice_tcptype tcptype)
 
  out:
 	fixture_close(f);
+	mem_deref(buf);
 	return err;
 }
 
@@ -1048,6 +1050,7 @@ static int checklist_udp_loop(bool fw_a, bool fw_b)
 	struct ice_lcand *lcand, *lcand2;
 	struct sa laddr2;
 	uint32_t prio;
+	char *buf = NULL;
 	FIXTURE_INIT;
 
 #if 0
@@ -1118,10 +1121,9 @@ static int checklist_udp_loop(bool fw_a, bool fw_b)
 
 	TEST_ERR(f->err);
 
-#if 0
-	re_printf("\nA:\n%H\n", trice_debug, f->icem);
-	re_printf("\nB:\n%H\n", trice_debug, f->icem2);
-#endif
+	err = re_sdprintf(&buf, "%H", trice_debug, f->icem);
+	TEST_ERR(err);
+	ASSERT_TRUE(str_isset(buf));
 
 	TEST_ASSERT(f->n_estabh > 0);
 
@@ -1135,6 +1137,7 @@ static int checklist_udp_loop(bool fw_a, bool fw_b)
 
  out:
 	fixture_close(f);
+	mem_deref(buf);
 	return err;
 }
 
