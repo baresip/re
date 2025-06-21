@@ -13,12 +13,10 @@
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
-
 enum {
 	DICT_BSIZE = 32,
 	MAX_LEVELS =  8,
 };
-
 
 static int test_json_basic_parser(void)
 {
@@ -139,273 +137,359 @@ static int test_json_basic_parser(void)
 	return err;
 }
 
+static const struct test {
+	unsigned num;
+	unsigned num_total;
+	unsigned full_num;
+	unsigned full_num_total;
+	char *str;
+} testjson[] = {
+	{
+		0,
+		0,
+		1,
+		0,
+		"{}"
+	},
+	{
+		1,
+		1,
+		1,
+		1,
+		"\"yyyyyyyyyy\""
+	},
+	{
+		1,
+		1,
+		1,
+		1,
+		"42"
+	},
+	{
+		1,
+		1,
+		1,
+		1,
+		"1.30142114406914976E17"
+	},
+	{
+		1,
+		1,
+		1,
+		1,
+		"true"
+	},
+	{
+		1,
+		1,
+		1,
+		1,
+		"{\"a\":1}"
+	},
+	{
+		2,
+		2,
+		1,
+		2,
+		"{\"a\":1,\"b\":2}"
+	},
+	{
+		5,
+		5,
+		1,
+		5,
+		"{"
+		"  \"aaaaa\"  :  \"yyyyyyyyyy\","
+		"  \"bbbbb\"  :  \"yyyyyyyyyy\","
+		"  \"ccccc\"  :  \"yyyyyyyyyy\","
+		"  \"ddddd\"  :  \"yyyyyyyyyy\","
+		"  \"eeeee\"  :  \"yyyyyyyyyy\""
+		"}"
+	},
+	{
+		2,
+		2,
+		1,
+		2,
+		"{\"num\":42,\"str\":\"hei du\"}"
+	},
+	{
+		6,
+		6,
+		1,
+		6,
+		"{"
+		"  \"zero\"  : 0,"
+		"  \"one\"   : 1,"
+		"  \"false\" : 0,"
+		"  \"true\"  : 1,"
+		"  \"0\"     : false,"
+		"  \"1\"     : true"
+		"}"
+	},
+
+	/* arrays */
+	{
+		2,
+		8,
+		1,
+		8,
+		"{"
+		"  \"array\" : [1,2,3,4,5],"
+		"  \"arraz\" : [\"ole\", \"dole\", \"doffen\"]"
+		"}"
+	},
+
+	{
+		1,
+		0,
+		1,
+		0,
+		"{"
+		"  \"empty_array\" : []"
+		"}"
+	},
+
+	{
+		1,
+		1,
+		1,
+		1,
+		"{"
+		"  \"array_with_object\" : [ { \"key\" : 42 } ]"
+		"}"
+	},
+
+	{
+		1,
+		3,
+		1,
+		3,
+		"{"
+		"  \"array_with_bool_and_null\" : ["
+		"    true, false, null"
+		"  ]"
+		"}"
+	},
+
+	{
+		1,
+		30,
+		1,
+		30,
+		"{"
+		"  \"array\" : ["
+		"     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,"
+		"    10,11,12,13,14,15,16,17,18,19,"
+		"    20,21,22,23,24,25,26,27,28,29"
+		"  ]"
+		"}"
+	},
+
+	/* simple array */
+	{
+		1,
+		1,
+		1,
+		1,
+		"[42]"
+	},
+
+	/* larger array */
+	{
+		3,
+		3,
+		1,
+		3,
+		"[42, 43, 44]"
+	},
+
+	/* simplest json, just an integer */
+	{
+		1,
+		1,
+		1,
+		1,
+		"43"
+	},
+
+
+	/* nested arrays */
+	{
+		1,
+		4,
+		1,
+		4,
+		"{"
+		"   \"array\": ["
+		"     1,"
+		"     2,"
+		"     ["
+		"       \"[][][][\","
+		"       \"][][][\""
+		"     ]"
+		"   ]"
+		"}"
+	},
+
+	/* null */
+	{
+		1,
+		1,
+		1,
+		1,
+		"{"
+		"   \"empty\": null"
+		"}"
+	},
+
+	/* escaped string */
+	{
+		2,
+		2,
+		1,
+		2,
+		"{"
+		"  \"string1\": \"\\\"\\/\\b\\f\\n\\r\\t\", "
+		"  \"string2\": \"\\\"/\\b\\f\\n\\r\\t\""
+		" }"
+	},
+
+	{
+		2,
+		2,
+		1,
+		2,
+		"{"
+		"    \"string\"  : \"\\r\\n\" , "
+		"    \"boolean\" : true"
+		"}"
+	},
+
+	{
+		2,
+		2,
+		1,
+		2,
+		"{"
+		"    \"string\"  : \"a\\r\\n\" , "
+		"    \"null\"    : null"
+		"}"
+	},
+
+	/* key with escaped string */
+	{
+		1,
+		1,
+		1,
+		1,
+		"{ \"\\\"\\b\\f\\n\\r\\t\":\"value\"}"
+	},
+
+	{
+		2,
+		3,
+		1,
+		3,
+		"{"
+		"  \"type\": \"object\","
+		"  \"properties\": {"
+		"    \"id\": {"
+		"      \"description\": \"The unique identifier\","
+		"      \"type\": \"integer\""
+		"    }"
+		"  }"
+		"}"
+	},
+
+	{
+		1,
+		2,
+		1,
+		2,
+		"{"
+		"  \"a\": {"
+		"    \"b\": {"
+		"      \"c\": {"
+		"        \"d\": {"
+		"          \"e\": {"
+		"            \"f\": {"
+		"              \"string\": \"hei hei\","
+		"              \"number\": 4242"
+		"            }"
+		"          }"
+		"        }"
+		"      }"
+		"    }"
+		"  }"
+		"}"
+	},
+
+	/* unicode */
+	{
+		1,
+		1,
+		1,
+		1,
+		"{  \"\\u0001key\": \"val\\u0002\" }"
+	},
+
+	/* numbers */
+
+	{
+		2,
+		2,
+		1,
+		2,
+		"{  \"start\":  1372701600000,  "
+		"   \"stop\":  -1372701600000  }"
+	},
+
+	{
+		4,
+		4,
+		1,
+		4,
+		"{"
+		"    \"a\":  1.30142114406914976E17, "
+		"    \"b\":  1.7555215491128452E-19, "
+		"    \"c\": -4.57371918053102129E18, "
+		"    \"d\": -1.3014211440691497E-17  "
+		"}"
+	},
+
+	/* array with objects (legal JSON) */
+	{
+		2,
+		4,
+		1,
+		4,
+		"["
+		"  {"
+		"    \"foo\" : 111,"
+		"    \"bar\" : 111"
+		"  },"
+		"  {"
+		"    \"foo\" : 222,"
+		"    \"bar\" : 222"
+		"  }"
+		"]"
+	}
+};
+
 
 /* verify a bunch of JSON messages */
 static int test_json_verify_decode(void)
 {
-	static const struct test {
-		unsigned num;
-		unsigned num_total;
-		char *str;
-	} testv[] = {
-		{
-			0,
-			0,
-			"{}"
-		},
-		{
-			1,
-			1,
-			"\"yyyyyyyyyy\""
-		},
-		{
-			1,
-			1,
-			"42"
-		},
-		{
-			1,
-			1,
-			"1.30142114406914976E17"
-		},
-		{
-			1,
-			1,
-			"true"
-		},
-		{
-			1,
-			1,
-			"{\"a\":1}"
-		},
-		{
-			2,
-			2,
-			"{\"a\":1,\"b\":2}"
-		},
-		{
-			5,
-			5,
-			"{"
-			"  \"aaaaa\"  :  \"yyyyyyyyyy\","
-			"  \"bbbbb\"  :  \"yyyyyyyyyy\","
-			"  \"ccccc\"  :  \"yyyyyyyyyy\","
-			"  \"ddddd\"  :  \"yyyyyyyyyy\","
-			"  \"eeeee\"  :  \"yyyyyyyyyy\""
-			"}"
-		},
-		{
-			2,
-			2,
-			"{\"num\":42,\"str\":\"hei du\"}"
-		},
-		{
-			6,
-			6,
-			"{"
-			"  \"zero\"  : 0,"
-			"  \"one\"   : 1,"
-			"  \"false\" : 0,"
-			"  \"true\"  : 1,"
-			"  \"0\"     : false,"
-			"  \"1\"     : true"
-			"}"
-		},
-
-		/* arrays */
-		{
-			2,
-			8,
-			"{"
-			"  \"array\" : [1,2,3,4,5],"
-			"  \"arraz\" : [\"ole\", \"dole\", \"doffen\"]"
-			"}"
-		},
-
-		{
-			1,
-			0,
-			"{"
-			"  \"empty_array\" : []"
-			"}"
-		},
-
-		{
-			1,
-			1,
-			"{"
-			"  \"array_with_object\" : [ { \"key\" : 42 } ]"
-			"}"
-		},
-
-		{
-			1,
-			3,
-			"{"
-			"  \"array_with_bool_and_null\" : ["
-			"    true, false, null"
-			"  ]"
-			"}"
-		},
-
-		{
-			1,
-			30,
-			"{"
-			"  \"array\" : ["
-			"     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,"
-			"    10,11,12,13,14,15,16,17,18,19,"
-			"    20,21,22,23,24,25,26,27,28,29"
-			"  ]"
-			"}"
-		},
-
-		/* nested arrays */
-		{
-			1,
-			4,
-			"{"
-			"   \"array\": ["
-			"     1,"
-			"     2,"
-			"     ["
-			"       \"[][][][\","
-			"       \"][][][\""
-			"     ]"
-			"   ]"
-			"}"
-		},
-
-		/* null */
-		{
-			1,
-			1,
-			"{"
-			"   \"empty\": null"
-			"}"
-		},
-
-		/* escaped string */
-		{
-			2,
-			2,
-			"{"
-			"  \"string1\": \"\\\"\\/\\b\\f\\n\\r\\t\", "
-			"  \"string2\": \"\\\"/\\b\\f\\n\\r\\t\""
-			" }"
-		},
-
-		{
-			2,
-			2,
-			"{"
-			"    \"string\"  : \"\\r\\n\" , "
-			"    \"boolean\" : true"
-			"}"
-		},
-
-		{
-			2,
-			2,
-			"{"
-			"    \"string\"  : \"a\\r\\n\" , "
-			"    \"null\"    : null"
-			"}"
-		},
-
-		/* key with escaped string */
-		{
-			1,
-			1,
-			"{ \"\\\"\\b\\f\\n\\r\\t\":\"value\"}"
-		},
-
-		{
-			2,
-			3,
-			"{"
-			"  \"type\": \"object\","
-			"  \"properties\": {"
-			"    \"id\": {"
-			"      \"description\": \"The unique identifier\","
-			"      \"type\": \"integer\""
-			"    }"
-			"  }"
-			"}"
-		},
-
-		{
-			1,
-			2,
-			"{"
-			"  \"a\": {"
-			"    \"b\": {"
-			"      \"c\": {"
-			"        \"d\": {"
-			"          \"e\": {"
-			"            \"f\": {"
-			"              \"string\": \"hei hei\","
-			"              \"number\": 4242"
-			"            }"
-			"          }"
-			"        }"
-			"      }"
-			"    }"
-			"  }"
-			"}"
-		},
-
-		/* unicode */
-		{
-			1,
-			1,
-			"{  \"\\u0001key\": \"val\\u0002\" }"
-		},
-
-		/* numbers */
-
-		{
-			2,
-			2,
-			"{  \"start\":  1372701600000,  "
-			"   \"stop\":  -1372701600000  }"
-		},
-
-		{
-			4,
-			4,
-			"{"
-			"    \"a\":  1.30142114406914976E17, "
-			"    \"b\":  1.7555215491128452E-19, "
-			"    \"c\": -4.57371918053102129E18, "
-			"    \"d\": -1.3014211440691497E-17  "
-			"}"
-		},
-
-		/* array with objects (legal JSON) */
-		{
-			2,
-			4,
-			"["
-			"  {"
-			"    \"foo\" : 111,"
-			"    \"bar\" : 111"
-			"  },"
-			"  {"
-			"    \"foo\" : 222,"
-			"    \"bar\" : 222"
-			"  }"
-			"]"
-		}
-	};
 	struct odict *dict = NULL, *dict2 = NULL;
 	struct mbuf *mb_enc = NULL;
 	unsigned i;
 	int err = 0;
+	char *json = NULL;
 
-	for (i=0; i<RE_ARRAY_SIZE(testv); i++) {
+	for (i=0; i<RE_ARRAY_SIZE(testjson); i++) {
 
-		const struct test *t = &testv[i];
+		const struct test *t = &testjson[i];
 
 		/* check with native JSON decoder */
 		err = json_decode_odict(&dict, DICT_BSIZE,
@@ -442,6 +526,72 @@ static int test_json_verify_decode(void)
 	}
 
  out:
+	mem_deref(json);
+	mem_deref(dict2);
+	mem_deref(dict);
+	mem_deref(mb_enc);
+
+	return err;
+}
+
+
+/* verify a JSON messages with full decode */
+static int test_json_verify_full_decode(void)
+{
+	struct odict *dict = NULL, *dict2 = NULL;
+	struct mbuf *mb_enc = NULL;
+	unsigned i;
+	int err = 0;
+	char *json = NULL;
+
+	for (i=0; i<RE_ARRAY_SIZE(testjson); i++) {
+
+		const struct test *t = &testjson[i];
+
+		/* check with native JSON decoder */
+		err = json_decode_odict_full(&dict, DICT_BSIZE,
+			t->str, str_len(t->str), MAX_LEVELS);
+		if (err)
+			goto out;
+
+		TEST_EQUALS(t->full_num,       odict_count(dict, false));
+		TEST_EQUALS(t->full_num_total, odict_count(dict, true));
+
+		mb_enc = mbuf_alloc(1024);
+		if (!mb_enc) {
+			err = ENOMEM;
+			goto out;
+		}
+
+		/* verify that the JSON object can be encoded */
+		err = mbuf_printf(mb_enc, "%H", json_encode_odict_full, dict);
+		TEST_ERR(err);
+
+		/* full json decode again */
+		err = json_decode_odict_full(&dict2, DICT_BSIZE,
+			(void *)mb_enc->buf, mb_enc->end,
+			MAX_LEVELS);
+		if (err)
+			goto out;
+
+		TEST_ASSERT(odict_compare(dict, dict2, false));
+
+		/*mbuf_write_u8(mb_enc, 0);
+		mbuf_set_pos(mb_enc, 0);
+		err = mbuf_strdup(mb_enc, &json, mbuf_get_left(mb_enc));
+		TEST_ERR(err);
+
+		printf("t->str: %s, encoded: %s\n", t->str, json);
+		TEST_ASSERT(!str_casecmp(t->str, json));
+		json = mem_deref(json);*/
+
+		dict = mem_deref(dict);
+		dict2 = mem_deref(dict2);
+		mb_enc = mem_deref(mb_enc);
+	}
+
+ out:
+	mem_deref(json);
 	mem_deref(dict2);
 	mem_deref(dict);
 	mem_deref(mb_enc);
@@ -505,6 +655,9 @@ int test_json(void)
 	TEST_ERR(err);
 
 	err = test_json_verify_decode();
+	TEST_ERR(err);
+
+	err = test_json_verify_full_decode();
 	TEST_ERR(err);
 
 out:

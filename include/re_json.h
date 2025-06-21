@@ -47,4 +47,7 @@ int json_decode(const char *str, size_t len, unsigned maxdepth,
 
 int json_decode_odict(struct odict **op, uint32_t hash_size, const char *str,
 		      size_t len, unsigned maxdepth);
+int json_decode_odict_full(struct odict **op, uint32_t hash_size,
+			   const char *str, size_t len, unsigned maxdepth);
 int json_encode_odict(struct re_printf *pf, const struct odict *o);
+int json_encode_odict_full(struct re_printf *pf, const struct odict *o);
