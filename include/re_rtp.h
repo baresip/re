@@ -348,6 +348,20 @@ static inline int16_t rtp_seq_diff(uint16_t x, uint16_t y)
 }
 
 
+/**
+ * Compare two RTP sequence numbers
+ *
+ * @param x First sequence number
+ * @param y Second sequence number
+ *
+ * @return true if x is less than y; false otherwise
+ */
+static inline bool rtp_seq_less(uint16_t x, uint16_t y)
+{
+	return ((int16_t)(x - y)) < 0;
+}
+
+
 /** NTP Time */
 struct rtp_ntp_time {
 	uint32_t hi;  /**< Seconds since 0h UTC on 1 January 1900 */
