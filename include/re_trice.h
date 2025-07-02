@@ -12,7 +12,6 @@ struct trice_conf {
 					    checks                           */
 	bool ansi;                     /**< Enable ANSI colors for debug
 					   output                            */
-	bool enable_prflx;             /**< Enable Peer-Reflexive candidates */
 	bool optimize_loopback_pairing;/**< Reduce candidate pairs when
 					    using loopback addresses         */
 };

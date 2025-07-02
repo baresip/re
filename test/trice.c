@@ -283,8 +283,7 @@ static void ice_failed_handler2(int err, uint16_t scode,
 static int fixture_init(struct fixture *f)
 {
 	const struct trice_conf conf = {
-		.debug = DEBUG,
-		.enable_prflx = true
+		.debug = DEBUG
 	};
 	int err;
 

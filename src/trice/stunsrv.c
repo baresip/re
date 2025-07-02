@@ -56,21 +56,18 @@ static int handle_stun_full(struct trice *icem, struct ice_lcand *lcand,
 				 lcand->attr.proto, src);
 	if (!rcand) {
 
-		if (icem->conf.enable_prflx) {
+		err = trice_rcand_add(&rcand, icem,
+				      lcand->attr.compid,
+				      "444", lcand->attr.proto, prio,
+				      src, ICE_CAND_TYPE_PRFLX,
+				      tcptype_rev);
+		if (err)
+			return err;
 
-			err = trice_rcand_add(&rcand, icem,
-					      lcand->attr.compid,
-					      "444", lcand->attr.proto, prio,
-					      src, ICE_CAND_TYPE_PRFLX,
-					      tcptype_rev);
-			if (err)
-				return err;
-
-			trice_printf(icem, "{%u} added PRFLX "
-				     "remote candidate (%H)\n",
-				     lcand->attr.compid,
-				     trice_cand_print, rcand);
-		}
+		trice_printf(icem, "{%u} added PRFLX "
+			     "remote candidate (%H)\n",
+			     lcand->attr.compid,
+			     trice_cand_print, rcand);
 	}
 
 	/* already valid, skip */
@@ -81,11 +78,9 @@ static int handle_stun_full(struct trice *icem, struct ice_lcand *lcand,
 	/* note: the candidate-pair can exist in either list */
 	pair = trice_candpair_find(&icem->checkl, lcand, rcand);
 	if (!pair) {
-		if (icem->conf.enable_prflx) {
-			DEBUG_WARNING("{%u} candidate pair not found:"
-				      " source=%J\n",
-				      lcand->attr.compid, src);
-		}
+		DEBUG_WARNING("{%u} candidate pair not found:"
+			      " source=%J\n",
+			      lcand->attr.compid, src);
 		goto out;
 	}
 
