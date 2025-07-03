@@ -397,3 +397,19 @@ void rtp_source_calc_jitter(struct rtp_source *s, uint32_t rtp_ts,
 			uint32_t arrival);
 int  rtp_source_calc_lost(const struct rtp_source *s);
 uint8_t rtp_source_calc_fraction_lost(struct rtp_source *s);
+
+
+/* RTP Extensions for Transport-wide Congestion Control */
+enum twcc_packet_state {
+	TWCC_PK_NOT_RECEIVED = 0,
+	TWCC_PK_RECEIVED,   /**< Packet received, small delta                */
+	TWCC_PK_LARGE_DELTA /**< Packet received, large or negative delta    */
+};
+
+struct rtcp_twcc_packet {
+	struct le le;
+	uint64_t ts;
+	int32_t delta;
+	enum twcc_packet_state state;
+	uint16_t tseq;
+};
