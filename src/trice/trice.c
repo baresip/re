@@ -49,7 +49,6 @@ static void trice_destructor(void *data)
 	mem_deref(icem->rpwd);
 	mem_deref(icem->lufrag);
 	mem_deref(icem->lpwd);
-	mem_deref(icem->sw);
 }
 
 
@@ -142,20 +141,6 @@ int trice_set_remote_pwd(struct trice *icem, const char *rpwd)
 	icem->rpwd = mem_deref(icem->rpwd);
 
 	return str_dup(&icem->rpwd, rpwd);
-}
-
-
-int trice_set_software(struct trice *icem, const char *sw)
-{
-	if (!icem)
-		return EINVAL;
-
-	icem->sw = mem_deref(icem->sw);
-
-	if (sw)
-		return str_dup(&icem->sw, sw);
-
-	return 0;
 }
 
 
