@@ -1038,6 +1038,8 @@ int test_trice_checklist(void)
 	TEST_ERR(err);
 	err |= checklist_tcp_simple(ICE_TCP_PASSIVE);
 	TEST_ERR(err);
+	err = checklist_tcp_simple(ICE_TCP_SO);
+	TEST_ERR(err);
 
 out:
 	return err;
