@@ -1181,6 +1181,11 @@ int test_srtp_gcm(void)
 {
 	int err;
 
+	if (!have_srtp()) {
+		re_printf("skipping SRTP GCM test\n");
+		return ESKIPPED;
+	}
+
 	err = test_srtp_loop(0, SRTP_AES_128_GCM, 3);
 	TEST_ERR(err);
 
@@ -1207,6 +1212,11 @@ out:
 int test_srtcp_gcm(void)
 {
 	int err;
+
+	if (!have_srtp()) {
+		re_printf("skipping SRTCP GCM test\n");
+		return ESKIPPED;
+	}
 
 	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_BYE);
 	TEST_ERR(err);
