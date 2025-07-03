@@ -110,7 +110,7 @@ static void handle_success(struct trice *icem, struct ice_candpair *pair,
 
 	compid = pair->lcand->attr.compid;
 
-	if (icem && icem->conf.enable_prflx &&
+	if (icem &&
 	    !trice_lcand_find(icem, -1, compid,
 			      pair->lcand->attr.proto, mapped_addr)) {
 
