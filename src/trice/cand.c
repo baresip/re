@@ -21,6 +21,13 @@
 #include "trice.h"
 
 
+/**
+ * Get the string for the ICE TCP type
+ *
+ * @param tcptype ICE tcp type
+ *
+ * @return String with ICE-TCP type name
+ */
 const char *ice_tcptype_name(enum ice_tcptype tcptype)
 {
 	switch (tcptype) {
@@ -33,7 +40,14 @@ const char *ice_tcptype_name(enum ice_tcptype tcptype)
 }
 
 
-/*
+/**
+ * Get the reverse TCP-type
+ *
+ * @param type ICE tcp type
+ *
+ * @return The reverse ICE-TCP type
+ *
+ * \verbatim
    Local           Remote
    Candidate       Candidate
    ---------------------------
@@ -41,6 +55,7 @@ const char *ice_tcptype_name(enum ice_tcptype tcptype)
    tcp-active      tcp-passive
    tcp-passive     tcp-active
 
+ * \endverbatim
  */
 enum ice_tcptype ice_tcptype_reverse(enum ice_tcptype type)
 {
@@ -54,6 +69,13 @@ enum ice_tcptype ice_tcptype_reverse(enum ice_tcptype type)
 }
 
 
+/**
+ * Get the base type of the candidate type
+ *
+ * @param type Candidate type
+ *
+ * @return Base candidate type
+ */
 enum ice_cand_type ice_cand_type_base(enum ice_cand_type type)
 {
 	switch (type) {
@@ -67,6 +89,14 @@ enum ice_cand_type ice_cand_type_base(enum ice_cand_type type)
 }
 
 
+/**
+ * Print debug information for the ICE candidate
+ *
+ * @param pf   Print function for debug output
+ * @param cand ICE candidate
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int trice_cand_print(struct re_printf *pf, const struct ice_cand_attr *cand)
 {
 	int err = 0;
