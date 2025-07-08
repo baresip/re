@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v3.24.0 - 2025-07-09
+
+## What's Changed
+* list: add LIST_FOREACH_SAFE helper macro by @sreimers in https://github.com/baresip/re/pull/1343
+* test: SDP interop testing by @alfredh in https://github.com/baresip/re/pull/1341
+* ci/abi: bump old ref version by @sreimers in https://github.com/baresip/re/pull/1344
+* list: improve already linked warning by @sreimers in https://github.com/baresip/re/pull/1345
+* ci/mingw: use windows-latest by @sreimers in https://github.com/baresip/re/pull/1346
+* ci/clang: use clang-20 by @sreimers in https://github.com/baresip/re/pull/1348
+* av1: rename av1_packetize_new() and add wrapper by @alfredh in https://github.com/baresip/re/pull/1349
+* trice: update header to match filename by @alfredh in https://github.com/baresip/re/pull/1350
+* rtp/rr: fix fraction left shift promotion by @sreimers in https://github.com/baresip/re/pull/1353
+* test/sipsess: cast rel100_mode by @sreimers in https://github.com/baresip/re/pull/1354
+* test: print trice_debug to buffer to test debug functions by @alfredh in https://github.com/baresip/re/pull/1352
+* trice: update doxygen documentation by @alfredh in https://github.com/baresip/re/pull/1351
+* rtp: add rtp_seq_less inline function helper by @sreimers in https://github.com/baresip/re/pull/1355
+* trice: remove trice_set_software() by @alfredh in https://github.com/baresip/re/pull/1359
+* trice: always enable PRFLX candidates by @alfredh in https://github.com/baresip/re/pull/1360
+* rtp: add TWCC packet definition helpers by @sreimers in https://github.com/baresip/re/pull/1357
+* test: add support check for SRTP GCM test cases by @alfredh in https://github.com/baresip/re/pull/1361
+* trice: add more doxygen comments by @alfredh in https://github.com/baresip/re/pull/1362
+* prepare for release -- bump version to 3.24.0 by @alfredh in https://github.com/baresip/re/pull/1365
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.23.0...v3.24.0
+
+
 ## v3.23.0 - 2025-06-04
 
 ### What's Changed
