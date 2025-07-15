@@ -1006,19 +1006,12 @@ int tcp_conn_bind(struct tcp_conn *tc, const struct sa *local)
 		/* bind to local address */
 		if (bind(tc->fdc, r->ai_addr, SIZ_CAST r->ai_addrlen) < 0) {
 
-			/* Special case for mingw32/wine */
-			/* @TODO: is this needed anymore? */
-			if (0 == errno) {
-				goto ok;
-			}
-
 			err = RE_ERRNO_SOCK;
 			DEBUG_WARNING("conn_bind: bind(): %J: %m\n",
 				      local, err);
 			continue;
 		}
 
-	ok:
 		/* OK */
 		err = 0;
 		break;
