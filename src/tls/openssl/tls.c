@@ -1729,7 +1729,6 @@ static int tls_session_update_cache(const struct tls_conn *tc,
 }
 
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 static int session_new_cb(struct ssl_st *ssl, SSL_SESSION *sess)
 {
 	BIO *wbio = NULL;
@@ -1787,7 +1786,6 @@ static void session_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 	/* iterate over all hash table entries and search for session */
 	(void) hash_apply(tls->reuse.ht_sessions, remove_handler, sess);
 }
-#endif
 
 
 /**
@@ -1813,14 +1811,10 @@ int tls_set_session_reuse(struct tls *tls, int enabled)
 	if (!tls->reuse.enabled)
 		return 0;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 	SSL_CTX_sess_set_new_cb(tls->ctx, session_new_cb);
 	SSL_CTX_sess_set_remove_cb(tls->ctx, session_remove_cb);
 
 	return 0;
-#else
-	return EOPNOTSUPP;
-#endif
 }
 
 

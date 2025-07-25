@@ -268,7 +268,6 @@ legend:
 
 ### Supported versions of OpenSSL
 
-* OpenSSL version 1.1.1
 * OpenSSL version 3.x.x
 * LibreSSL version 3.x
 
