@@ -218,6 +218,7 @@ legend:
 * [RFC 7350](https://tools.ietf.org/html/rfc7350) - DTLS as Transport for STUN
 * [RFC 7616](https://tools.ietf.org/html/rfc7616) - HTTP Digest Access Authentication
 * [RFC 7714](https://tools.ietf.org/html/rfc7714) - AES-GCM Authenticated Encryption in SRTP
+* [AV1-RTP](https://aomediacodec.github.io/av1-rtp-spec/) - RTP Payload Format For AV1
 
 
 ## Supported platforms

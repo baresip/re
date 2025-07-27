@@ -245,7 +245,7 @@ static int template_dependency_structure(struct dd *dd, struct getbit *gb)
 
 	template_chains(dd, gb);
 
-	/* TODO  decode_target_layers() */
+	/* note:  decode_target_layers() */
 
 	if (getbit_get_left(gb) < 1)
 		return EBADMSG;
