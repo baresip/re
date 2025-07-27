@@ -85,7 +85,7 @@ int test_uri(void)
 		err = pl_cmp(&pl, &pl0);
 		if (err) {
 			DEBUG_WARNING("uri comp: ref=(%s), gen=(%r) (%m)\n",
-				      &uriv[i], &pl, err);
+				      uriv[i], &pl, err);
 			goto out;
 		}
 	}
@@ -155,7 +155,7 @@ int test_uri_encode(void)
 		err = pl_strcmp(&pl, uriv[i].enc);
 		if (err) {
 			DEBUG_WARNING("uri enc: ref=(%s), gen=(%r) (%m)\n",
-				      &uriv[i].enc, &pl, err);
+				      uriv[i].enc, &pl, err);
 			goto out;
 		}
 	}
