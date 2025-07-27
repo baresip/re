@@ -228,7 +228,7 @@ legend:
 | Linux | Tier 1 | musl >= 1.2 | |
 | macOS | Tier 1 | macOS >= 10.10 | |
 | Windows | Tier 1 | >= Windows 10 | MinGW-w64, >= VS 2022 |
-| Android | Tier 2 | | |
+| Android | Tier 2 | Android 8 (API Level 26)| |
 | iOS | Tier 2 | | |
 | FreeBSD | Tier 2 | >= 12 | |
 | OpenBSD | Tier 2 | >= 7.4 | |
