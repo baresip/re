@@ -228,7 +228,7 @@ legend:
 | Linux | Tier 1 | glibc >= 2.27 | |
 | Linux | Tier 1 | musl >= 1.2 | |
 | macOS | Tier 1 | macOS >= 10.10 | |
-| Windows | Tier 1 | >= Windows 8 | MinGW-w64, >= VS 2019 |
+| Windows | Tier 1 | >= Windows 10 | MinGW-w64, >= VS 2022 |
 | Android | Tier 2 | | |
 | iOS | Tier 2 | | |
 | FreeBSD | Tier 2 | >= 12 | |
