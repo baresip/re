@@ -261,9 +261,9 @@ legend:
 
 ### Supported compilers:
 
-* gcc 4.9 or later
-* MSVC 2019
-* clang 3.x or later
+* gcc 9 or later
+* MSVC 2022
+* clang 9.x or later
 
 
 ### Supported versions of OpenSSL
