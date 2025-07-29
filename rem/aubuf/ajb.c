@@ -175,7 +175,6 @@ struct ajb {
 	int32_t avbuftime;   /**< average buffered time [us]      */
 	bool started;        /**< Started flag                    */
 	size_t wish_sz;      /**< Wish size of buffer [Bytes]     */
-	struct auframe af;   /**< Audio frame of last ajb_get()   */
 	uint32_t dropped;    /**< Dropped audio frames counter    */
 	double silence;      /**< Silence audio level             */
 };
@@ -422,7 +421,6 @@ enum ajb_state ajb_get(struct ajb *ajb, struct auframe *af)
 		return AJB_GOOD;
 
 	mtx_lock(ajb->lock);
-	ajb->af = *af;
 
 	/* ptime in [us] */
 	ptime = (uint32_t) (af->sampc * AUDIO_TIMEBASE / (af->srate * af->ch));
