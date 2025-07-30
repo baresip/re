@@ -767,12 +767,6 @@ int websock_close(struct websock_conn *conn, enum websock_scode scode,
 }
 
 
-const struct sa *websock_peer(const struct websock_conn *conn)
-{
-	return conn ? &conn->peer : NULL;
-}
-
-
 struct tcp_conn *websock_tcp(const struct websock_conn *conn)
 {
 	return conn ? conn->tc : NULL;
