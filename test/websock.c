@@ -24,7 +24,15 @@ struct test {
 	int err;
 };
 
-static const char test_payload[]     = "hello websockets";
+static const char test_payload[]     =
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef";
 static const char custom_useragent[] = "Retest v0.1";
 static const char proto[] = "test";
 
