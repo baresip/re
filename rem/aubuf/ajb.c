@@ -215,35 +215,6 @@ static void plot_ajb(struct ajb *ajb, uint64_t tr)
 #endif
 
 
-#ifdef RE_AUBUF_TRACE
-void plot_underrun(struct ajb *ajb)
-{
-	uint64_t tr;
-	uint32_t treal;
-	if (!ajb)
-		return;
-
-	tr = tmr_jiffies();
-	if (!ajb->tr00)
-		ajb->tr00 = tr;
-
-	treal = (uint32_t) (tr - ajb->tr00);
-	re_snprintf(ajb->buf, sizeof(ajb->buf), "%s, 0x%p, %u, %i",
-			__func__,               /* row 1  - grep */
-			ajb,                    /* row 2  - grep optional */
-			treal,                  /* row 3  - plot optional */
-			1);                     /* row 4  - plot */
-	re_trace_event("ajb", "plot", 'U', NULL, RE_TRACE_ARG_STRING_COPY,
-		       "line", ajb->buf);
-}
-#else
-void plot_underrun(struct ajb *ajb)
-{
-	(void)ajb;
-}
-#endif
-
-
 /**
  * Initializes the adaptive jitter buffer statistics
  *
