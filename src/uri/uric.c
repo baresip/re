@@ -86,22 +86,6 @@ static bool is_user(char c)
 }
 
 
-static bool is_password(char c)
-{
-	switch (c) {
-
-	case '&':
-	case '=':
-	case '+':
-	case '$':
-	case ',':
-		return true;
-	default:
-		return is_unreserved(c);
-	}
-}
-
-
 static bool is_param_unreserved(char c)
 {
 	switch (c) {
@@ -219,34 +203,6 @@ int uri_user_escape(struct re_printf *pf, const struct pl *pl)
 int uri_user_unescape(struct re_printf *pf, const struct pl *pl)
 {
 	return comp_unescape(pf, pl, is_user);
-}
-
-
-/**
- * Escape a URI password component
- *
- * @param pf Print function
- * @param pl String to escape
- *
- * @return 0 if success, otherwise errorcode
- */
-int uri_password_escape(struct re_printf *pf, const struct pl *pl)
-{
-	return comp_escape(pf, pl, is_password);
-}
-
-
-/**
- * Unescape a URI password component
- *
- * @param pf Print function
- * @param pl String to unescape
- *
- * @return 0 if success, otherwise errorcode
- */
-int uri_password_unescape(struct re_printf *pf, const struct pl *pl)
-{
-	return comp_unescape(pf, pl, is_password);
 }
 
 

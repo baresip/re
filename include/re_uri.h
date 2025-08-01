@@ -9,7 +9,6 @@
 struct uri {
 	struct pl scheme;    /**< URI scheme e.g. "sip:" "sips:"    */
 	struct pl user;      /**< Username                          */
-	struct pl password;  /**< Optional password                 */
 	struct pl host;      /**< Hostname or IP-address            */
 	int af;              /**< Address family of host IP-address */
 	uint16_t port;       /**< Port number                       */
@@ -37,8 +36,6 @@ int  uri_headers_apply(const struct pl *pl, uri_apply_h *ah, void *arg);
 /* Special URI escaping/unescaping */
 int uri_user_escape(struct re_printf *pf, const struct pl *pl);
 int uri_user_unescape(struct re_printf *pf, const struct pl *pl);
-int uri_password_escape(struct re_printf *pf, const struct pl *pl);
-int uri_password_unescape(struct re_printf *pf, const struct pl *pl);
 int uri_param_escape(struct re_printf *pf, const struct pl *pl);
 int uri_param_unescape(struct re_printf *pf, const struct pl *pl);
 int uri_header_escape(struct re_printf *pf, const struct pl *pl);
