@@ -86,6 +86,14 @@ int test_uri(void)
 		}
 	}
 
+	const struct pl uri_pass = PL("sip:user:pass@host");
+
+	err = uri_decode(&uri, &uri_pass);
+	TEST_ERR(err);
+
+	TEST_STRCMP("user", 4, uri.user.p, uri.user.l);
+	TEST_STRCMP("host", 4, uri.host.p, uri.host.l);
+
  out:
 	mbuf_reset(&mb);
 	return err;
