@@ -112,7 +112,7 @@ static void sip_resp_handler(int err, const struct sip_msg *msg, void *arg)
 #define CPARAMS "some-param=test;other-param=123;"
 
 
-static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
+static int reg_test(enum sip_transp tp, uint16_t srcport)
 {
 	struct test test;
 	struct sip_server *srv = NULL;
@@ -127,40 +127,29 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 	test.srcport = srcport;
 
 	err = sip_server_alloc(&srv);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = sipstack_fixture(&sip);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	err = sip_server_uri(srv, reg_uri, sizeof(reg_uri), tp);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
-	if (deprecated) {
-		err = sipreg_register(&reg, sip, reg_uri,
-			      "sip:x@test", NULL,
-			      "sip:x@test",
-			      3600, "x", NULL, 0, 0, NULL, NULL, false,
-			      sip_resp_handler, &test, NULL, NULL);
-	}
-	else {
-		err = sipreg_alloc(&reg, sip, reg_uri,
-			      "sip:x@test", NULL,
-			      "sip:x@test",
-			      3600, "x", NULL, 0, 0, NULL, NULL, false,
-			      sip_resp_handler, &test, NULL, NULL);
-		err |= sipreg_set_contact_params(reg, CPARAMS);
+	err = sipreg_alloc(&reg, sip, reg_uri,
+		      "sip:x@test", NULL,
+		      "sip:x@test",
+		      3600, "x", NULL, 0, 0, NULL, NULL, false,
+		      sip_resp_handler, &test, NULL, NULL);
+	TEST_ERR(err);
 
-		if (srcport)
-			sipreg_set_srcport(reg, srcport);
+	err = sipreg_set_contact_params(reg, CPARAMS);
+	TEST_ERR(err);
 
-		err |= sipreg_send(reg);
-	}
+	if (srcport)
+		sipreg_set_srcport(reg, srcport);
 
-	if (err)
-		goto out;
+	err = sipreg_send(reg);
+	TEST_ERR(err);
 
 	err = re_main_timeout(1000);
 	TEST_ERR(err);
@@ -173,14 +162,12 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 	TEST_ASSERT(srv->n_register_req > 0);
 	TEST_ASSERT(test.n_resp > 0);
 
-	if (!deprecated) {
-		contact_hdr = sip_msg_hdr(
-				srv->sip_msgs[srv->n_register_req - 1],
-				SIP_HDR_CONTACT);
-		err = re_regex(contact_hdr->val.p, contact_hdr->val.l,
-			";" CPARAMS ">;expires=", NULL);
-		TEST_ERR(err);
-	}
+	contact_hdr = sip_msg_hdr(
+			srv->sip_msgs[srv->n_register_req - 1],
+			SIP_HDR_CONTACT);
+	err = re_regex(contact_hdr->val.p, contact_hdr->val.l,
+		";" CPARAMS ">;expires=", NULL);
+	TEST_ERR(err);
 
 
  out:
@@ -197,31 +184,19 @@ static int reg_test(enum sip_transp tp, bool deprecated, uint16_t srcport)
 
 int test_sipreg_udp(void)
 {
-	int err;
-
-	err  = reg_test(SIP_TRANSP_UDP, true, 0);
-	err |= reg_test(SIP_TRANSP_UDP, false, 0);
-	return err;
+	return reg_test(SIP_TRANSP_UDP, 0);
 }
 
 
 int test_sipreg_tcp(void)
 {
-	int err;
-
-	err  = reg_test(SIP_TRANSP_TCP, true, 0);
-	err |= reg_test(SIP_TRANSP_TCP, false, 0);
-	return err;
+	return reg_test(SIP_TRANSP_TCP, 0);
 }
 
 
 #ifdef USE_TLS
 int test_sipreg_tls(void)
 {
-	int err;
-
-	err  = reg_test(SIP_TRANSP_TLS, true, 0);
-	err |= reg_test(SIP_TRANSP_TLS, false, 0);
-	return err;
+	return reg_test(SIP_TRANSP_TLS, 0);
 }
 #endif
