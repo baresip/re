@@ -59,7 +59,6 @@ int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
 				  size_t len_chain);
 int tls_set_certificate_chain(struct tls *tls, const char *path);
-void tls_set_verify_client(struct tls *tls);
 void tls_set_verify_client_trust_all(struct tls *tls);
 int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
 	int (*verifyh) (int ok, void *arg), void *arg);
