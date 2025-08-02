@@ -37,9 +37,6 @@ int uri_encode(struct re_printf *pf, const struct uri *uri)
 	if (pl_isset(&uri->user)) {
 		err = re_hprintf(pf, "%r", &uri->user);
 
-		if (pl_isset(&uri->password))
-			err |= re_hprintf(pf, ":%r", &uri->password);
-
 		err |= pf->vph("@", 1, pf->arg);
 
 		if (err)
@@ -117,7 +114,7 @@ int uri_decode(struct uri *uri, const struct pl *pl)
 	memset(uri, 0, sizeof(*uri));
 	if (0 == re_regex(pl->p, pl->l,
 			  "[^:]+:[^@:]*[:]*[^@]*@[^/;? ]+[^;? ]*[^?]*[^]*",
-			  &uri->scheme, &uri->user, NULL, &uri->password,
+			  &uri->scheme, &uri->user, NULL, NULL,
 			  &hostport, &uri->path, &uri->params,
 			  &uri->headers)) {
 
@@ -310,11 +307,6 @@ static int uri_escape_helper(struct re_printf *pf, const struct pl *pl,
 	if (pl_isset(&uri.user)) {
 		err = re_hprintf(pf, "%H", unescape ? uri_user_unescape :
 				 uri_user_escape, &uri.user);
-
-		if (pl_isset(&uri.password))
-			err |= re_hprintf(pf, ":%H", unescape ?
-					  uri_password_unescape :
-					  uri_password_escape, &uri.password);
 
 		err |= pf->vph("@", 1, pf->arg);
 		if (err)
