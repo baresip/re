@@ -466,7 +466,7 @@ int test_tls_cli_conn_change_cert(void)
 	if (err)
 		goto out;
 
-	tls_set_verify_client(tt.tls);
+	tls_set_verify_client_trust_all(tt.tls);
 
 	err = tls_set_certificate(tt.tls, test_certificate_ecdsa,
 		strlen(test_certificate_ecdsa));

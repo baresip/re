@@ -976,22 +976,6 @@ void tls_set_verify_client_trust_all(struct tls *tls)
 }
 
 
-/**
- * Set TLS server context to request certificate from peer
- * and set trust all certificates of peer.
- *
- * @deprecated Use tls_set_verify_peer_trust_all instead
- * @param tls    TLS Context
- */
-void tls_set_verify_client(struct tls *tls)
-{
-	if (!tls)
-		return;
-
-	tls_set_verify_client_trust_all(tls);
-}
-
-
 static int tls_verify_handler_ud(int ok, X509_STORE_CTX *ctx)
 {
 	int ret = ok;
