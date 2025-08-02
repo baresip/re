@@ -745,17 +745,12 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
  * Get the File Descriptor from a UDP Socket
  *
  * @param us  UDP Socket
- * @param af  Address Family [deprecated, ignored]
  *
  * @return File Descriptor, or RE_BAD_SOCK for errors
  */
-re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
+re_sock_t udp_sock_fd(const struct udp_sock *us)
 {
-	(void)af;
-	if (!us)
-		return RE_BAD_SOCK;
-
-	return us->fd;
+	return us ? us->fd : RE_BAD_SOCK;
 }
 
 
