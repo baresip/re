@@ -24,7 +24,15 @@ struct test {
 	int err;
 };
 
-static const char test_payload[]     = "hello websockets";
+static const char test_payload[]     =
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef"
+	"0123456789abcdef";
 static const char custom_useragent[] = "Retest v0.1";
 static const char proto[] = "test";
 
@@ -87,8 +95,9 @@ static void http_req_handler(struct http_conn *conn,
 	TEST_ASSERT(http_msg_xhdr_has_value(msg, "Sec-WebSocket-Protocol",
 					    proto));
 
+	unsigned kaint = 1;
 	err = websock_accept_proto(&test->wc_srv, proto, test->ws, conn, msg,
-			     0, srv_websock_recv_handler,
+			     kaint, srv_websock_recv_handler,
 			     srv_websock_close_handler, test);
  out:
 	if (err)
@@ -182,8 +191,9 @@ static int test_websock_loop(void)
 
 	(void)re_snprintf(uri, sizeof(uri),
 			  "http://127.0.0.1:%u/", sa_port(&srv));
+	unsigned kaint = 1;
 	err = websock_connect_proto(&test.wc_cli, proto, test.ws,
-			      http_cli, uri, 0,
+			      http_cli, uri, kaint,
 			      cli_websock_estab_handler,
 			      cli_websock_recv_handler,
 			      cli_websock_close_handler, &test,
