@@ -246,6 +246,8 @@ static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp)
 	err = dtls_listen(&test.sock_cli, &cli, NULL, 4, 0, NULL, NULL);
 	TEST_ERR(err);
 
+	dtls_set_single(test.sock_cli, true);
+
 	err = dtls_connect(&test.conn_cli, test.tls, test.sock_cli,
 			   &srv, cli_estab_handler,
 			   cli_recv_handler, cli_close_handler, &test);
