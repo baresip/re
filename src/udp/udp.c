@@ -556,8 +556,6 @@ int udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb)
  * @param local The returned local network address
  *
  * @return 0 if success, otherwise errorcode
- *
- * @todo bug no way to specify AF
  */
 int udp_local_get(const struct udp_sock *us, struct sa *local)
 {
