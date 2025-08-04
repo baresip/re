@@ -62,17 +62,6 @@ int av1_packetize(bool *newp, bool marker, uint64_t rtp_ts,
 		  av1_packet_h *pkth, void *arg);
 
 
-/* XXX: wrapper for backwards compat -- remove later */
-static inline int av1_packetize_new(bool *newp, bool marker, uint64_t rtp_ts,
-				    const uint8_t *buf, size_t len,
-				    size_t maxlen,
-				    av1_packet_h *pkth, void *arg)
-{
-	return av1_packetize(newp, marker, rtp_ts, buf, len,
-			     maxlen, pkth, arg);
-}
-
-
 enum {
 	AV1_AGGR_HDR_SIZE = 1,
 };
