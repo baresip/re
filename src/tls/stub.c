@@ -55,15 +55,6 @@ int tls_add_crlpem(const struct tls *tls, const char *pem)
 }
 
 
-int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
-{
-	(void)tls;
-	(void)cn;
-	(void)bits;
-	return ENOSYS;
-}
-
-
 int tls_set_selfsigned_ec(struct tls *tls, const char *cn,
 	const char *curve_n)
 {
