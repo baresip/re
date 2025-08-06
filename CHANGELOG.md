@@ -5,10 +5,40 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.0.0 - 2025-08-06
+### What's Changed
+
+This major release drops obsolete API functions, OpenSSL 1.1.1 support and support for old OS versions.
+The breaking changes are discussed here: https://github.com/baresip/re/discussions/1372
+
+* rem: remove backwards wrapper for au_calc_nsamp() by @alfredh in https://github.com/baresip/re/pull/1366
+* rem: remove local macros, include stdint.h instead by @alfredh in https://github.com/baresip/re/pull/1369
+* mod: remove unused MOD_PRE macro by @alfredh in https://github.com/baresip/re/pull/1370
+* tcp: remove special case for mingw32/wine by @alfredh in https://github.com/baresip/re/pull/1367
+* dd: update AV1 and DD docs by @alfredh in https://github.com/baresip/re/pull/1376
+* test: fix formatted string arguments in URI testcode by @alfredh in https://github.com/baresip/re/pull/1375
+* tls: drop OpenSSL 1.1.1 support by @sreimers in https://github.com/baresip/re/pull/1371
+* Update supported OS versions by @sreimers in https://github.com/baresip/re/pull/1373
+* readme: update supported compilers by @sreimers in https://github.com/baresip/re/pull/1374
+* tls: disable tls_conn_change_cert for LibreSSL by @sreimers in https://github.com/baresip/re/pull/1377
+* ci/ssl: bump ssl tools assets by @sreimers in https://github.com/baresip/re/pull/1127
+* aubuf: remove unused struct auframe in ajb.c by @alfredh in https://github.com/baresip/re/pull/1378
+* aubuf: remove unused private function plot_underrun() by @alfredh in https://github.com/baresip/re/pull/1380
+* readme: bump supported GNU C library (glibc) 2.31 by @sreimers in https://github.com/baresip/re/pull/1379
+* misc: remove deprecated functions/params by @sreimers in https://github.com/baresip/re/pull/1384
+* uri: remove password field by @alfredh in https://github.com/baresip/re/pull/1382
+* websock: increase test coverage by @alfredh in https://github.com/baresip/re/pull/1381
+* udp: remove obsolete todo in udp_local_get() by @alfredh in https://github.com/baresip/re/pull/1386
+* av1: remove av1_packetize_new() -- backwards compat wrapper by @alfredh in https://github.com/baresip/re/pull/1385
+* tls: remove tls_set_selfsigned_rsa() -- use Elliptic Curve instead by @alfredh in https://github.com/baresip/re/pull/1388
+* test: enable dtls_set_single() for DTLS client test by @alfredh in https://github.com/baresip/re/pull/1387
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v3.24.0...v4.0.0
 
 ## v3.24.0 - 2025-07-09
 
-## What's Changed
+### What's Changed
 * list: add LIST_FOREACH_SAFE helper macro by @sreimers in https://github.com/baresip/re/pull/1343
 * test: SDP interop testing by @alfredh in https://github.com/baresip/re/pull/1341
 * ci/abi: bump old ref version by @sreimers in https://github.com/baresip/re/pull/1344
