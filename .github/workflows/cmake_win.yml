@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     name: ${{ matrix.config.name }}
+    openssl_version: 3.5.2
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -61,13 +62,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download OpenSSL
-        if: ${{ matrix.config.openssl }}
-        shell: cmd
-        run: |
-          curl -LO https://www.openssl.org/source/openssl-3.3.2.tar.gz
-          tar -xzf openssl-3.3.2.tar.gz
-
       - name: Install NASM
         shell: bash
         run: |
@@ -77,14 +71,24 @@ jobs:
           unzip nasm-${NASM_VERSION}-win64.zip -d nasm
           echo "${GITHUB_WORKSPACE}\nasm\nasm-${NASM_VERSION}" >> $GITHUB_PATH
 
+      - name: Download OpenSSL
+        if: ${{ matrix.config.openssl }}
+        shell: cmd
+        run: |
+          curl -LO https://www.openssl.org/source/openssl-${openssl_version}.tar.gz
+          tar -xzf openssl-${openssl_version}.tar.gz
+
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
-          cd openssl-3.3.2
+          cd openssl-${openssl_version}
           perl Configure VC-WIN64A
+          set CL=/MP
           nmake
+          nmake install DESTDIR=..\openssl
+          dir ..\openssl
 
       - name: Build
         shell: cmd
