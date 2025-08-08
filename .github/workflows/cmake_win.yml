@@ -68,6 +68,10 @@ jobs:
           curl -LO https://www.openssl.org/source/openssl-3.3.2.tar.gz
           tar -xzf openssl-3.3.2.tar.gz
 
+      - name: Install NASM
+        if: ${{ matrix.config.openssl }}
+        run: choco install nasm -y
+
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
         shell: cmd
