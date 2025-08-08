@@ -75,13 +75,13 @@ jobs:
           curl -LO https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/win64/nasm-${NASM_VERSION}-win64.zip
           mkdir nasm
           unzip nasm-${NASM_VERSION}-win64.zip -d nasm
-          echo "${GITHUB_WORKSPACE}/nasm" >> $GITHUB_PATH
 
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
+          "${GITHUB_WORKSPACE}/nasm" | Out-File -FilePath "$env:GITHUB_PATH" -Append
           cd openssl-3.3.2
           perl Configure VC-WIN64A
 
