@@ -86,10 +86,8 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           cd openssl-${{ env.openssl_version }}
           perl Configure VC-WIN64A
-          set CL=/MP
           nmake
-          nmake install DESTDIR=..\openssl
-          dir ..\openssl
+          nmake install
 
       - name: Build
         shell: cmd
