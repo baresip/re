@@ -76,7 +76,6 @@ jobs:
           mkdir nasm
           unzip nasm-${NASM_VERSION}-win64.zip -d nasm
           echo "${GITHUB_WORKSPACE}\nasm\nasm-${NASM_VERSION}" >> $GITHUB_PATH
-          cat $GITHUB_PATH
 
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
@@ -85,6 +84,7 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           cd openssl-3.3.2
           perl Configure VC-WIN64A
+          nmake
 
       - name: Build
         shell: cmd
