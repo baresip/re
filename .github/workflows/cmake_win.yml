@@ -86,6 +86,7 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           cd openssl-${{ env.openssl_version }}
           perl Configure VC-WIN64A
+          rmdir /s /q C:\Program Files\OpenSSL
           nmake
           nmake install
 
