@@ -81,7 +81,8 @@ jobs:
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
-          "$env:HOMEPATH/nasm" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+          dir
+          "$env:GITHUB_WORKSPACE/nasm" | Out-File -FilePath "$env:GITHUB_PATH" -Append
           cd openssl-3.3.2
           perl Configure VC-WIN64A
 
