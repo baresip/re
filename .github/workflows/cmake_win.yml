@@ -69,8 +69,13 @@ jobs:
           tar -xzf openssl-3.3.2.tar.gz
 
       - name: Install NASM
-        if: ${{ matrix.config.openssl }}
-        run: choco install nasm -y
+        shell: bash
+        run: |
+          NASM_VERSION=2.16.03
+          curl -LO https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/win64/nasm-${NASM_VERSION}-win64.zip
+          mkdir nasm
+          unzip nasm-${NASM_VERSION}-win64.zip -d nasm
+          echo "${GITHUB_WORKSPACE}/nasm" >> $GITHUB_PATH
 
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
