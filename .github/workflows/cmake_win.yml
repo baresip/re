@@ -61,12 +61,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build OpenSSL
+      - name: Download OpenSSL
         if: ${{ matrix.config.openssl }}
+        shell: cmd
         run: |
-          call "${{ matrix.config.environment_script }}"
           curl -LO https://www.openssl.org/source/openssl-3.3.2.tar.gz
           tar -xzf openssl-3.3.2.tar.gz
+
+      - name: Build OpenSSL
+        if: ${{ matrix.config.openssl }}
+        shell: cmd
+        run: |
+          call "${{ matrix.config.environment_script }}"
           cd openssl-3.3.2
           perl Configure VC-WIN64A
 
