@@ -61,10 +61,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OpenSSL
+      - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
         run: |
-          choco install --no-progress ${{ matrix.config.choco }} openssl
+          call "${{ matrix.config.environment_script }}"
+          curl -LO https://www.openssl.org/source/openssl-3.3.2.tar.gz
+          tar -xzf openssl-3.3.2.tar.gz
+          cd openssl-3.3.2
+          perl Configure VC-WIN64A
 
       - name: Build
         shell: cmd
