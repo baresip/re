@@ -76,15 +76,15 @@ jobs:
         if: ${{ matrix.config.openssl }}
         shell: cmd
         run: |
-          curl -LO https://www.openssl.org/source/openssl-${openssl_version}.tar.gz
-          tar -xzf openssl-${openssl_version}.tar.gz
+          curl -LO https://www.openssl.org/source/openssl-${{ env.openssl_version }}.tar.gz
+          tar -xzf openssl-${{ env.openssl_version }}.tar.gz
 
       - name: Build OpenSSL
         if: ${{ matrix.config.openssl }}
         shell: cmd
         run: |
           call "${{ matrix.config.environment_script }}"
-          cd openssl-${openssl_version}
+          cd openssl-${{ env.openssl_version }}
           perl Configure VC-WIN64A
           set CL=/MP
           nmake
