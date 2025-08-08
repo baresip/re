@@ -220,8 +220,10 @@ int test_udp(void)
 	int err = test_udp_param("127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_udp_param("::1");
-	TEST_ERR(err);
+	if (test_ipv6_supported()) {
+		err = test_udp_param("::1");
+		TEST_ERR(err);
+	}
 
  out:
 	return err;
