@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     name: ${{ matrix.config.name }}
+    env:
+      openssl_version: 3.5.2
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -61,10 +63,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OpenSSL
-        if: ${{ matrix.config.openssl }}
+      - name: Install NASM
+        shell: bash
         run: |
-          choco install --no-progress ${{ matrix.config.choco }} openssl
+          NASM_VERSION=2.16.03
+          curl -LO https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/win64/nasm-${NASM_VERSION}-win64.zip
+          mkdir nasm
+          unzip nasm-${NASM_VERSION}-win64.zip -d nasm
+          echo "${GITHUB_WORKSPACE}\nasm\nasm-${NASM_VERSION}" >> $GITHUB_PATH
+
+      - name: Download OpenSSL
+        if: ${{ matrix.config.openssl }}
+        shell: cmd
+        run: |
+          curl -LO https://www.openssl.org/source/openssl-${{ env.openssl_version }}.tar.gz
+          tar -xzf openssl-${{ env.openssl_version }}.tar.gz
+
+      - name: Build OpenSSL
+        if: ${{ matrix.config.openssl }}
+        shell: cmd
+        run: |
+          call "${{ matrix.config.environment_script }}"
+          cd openssl-${{ env.openssl_version }}
+          perl Configure VC-WIN64A
+          rmdir /s /q C:\Program Files\OpenSSL
+          nmake
+          nmake install
 
       - name: Build
         shell: cmd
