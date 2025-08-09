@@ -45,7 +45,7 @@ jobs:
             openssl: false,
             disable_openssl: "ON",
             choco: "--x86",
-            testing: false
+            testing: true
           }
         - {
             name: "Windows Debug ARM64",
