@@ -148,7 +148,7 @@ static bool udp_helper_recv(struct sa *src, struct mbuf *mb, void *arg)
 }
 
 
-int test_udp(void)
+static int test_udp_param(const char *addr)
 {
 	struct udp_sock *uss2;
 	struct udp_test *ut;
@@ -159,8 +159,8 @@ int test_udp(void)
 	if (!ut)
 		return ENOMEM;
 
-	err  = sa_set_str(&ut->cli, "127.0.0.1", 0);
-	err |= sa_set_str(&ut->srv, "127.0.0.1", 0);
+	err  = sa_set_str(&ut->cli, addr, 0);
+	err |= sa_set_str(&ut->srv, addr, 0);
 	if (err)
 		goto out;
 
@@ -211,6 +211,21 @@ int test_udp(void)
  out:
 	mem_deref(ut);
 
+	return err;
+}
+
+
+int test_udp(void)
+{
+	int err = test_udp_param("127.0.0.1");
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_udp_param("::1");
+		TEST_ERR(err);
+	}
+
+ out:
 	return err;
 }
 
