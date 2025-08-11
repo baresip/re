@@ -44,7 +44,6 @@ struct websock {
 
 struct websock_conn {
 	struct tmr tmr;
-	struct sa peer;
 	char nonce[24];
 	struct websock *sock;
 	struct tcp_conn *tc;
@@ -419,7 +418,6 @@ static void http_resp_handler(int err, const struct http_msg *msg, void *arg)
 	/* here we are ok */
 
 	conn->state = OPEN;
-	(void)tcp_conn_peer_get(conn->tc, &conn->peer);
 
 	if (conn->kaint)
 		tmr_start(&conn->tmr, conn->kaint, keepalive_handler, conn);
@@ -614,7 +612,6 @@ int websock_accept_proto(struct websock_conn **connp, const char *proto,
 	if (err)
 		goto out;
 
-	sa_cpy(&conn->peer, http_conn_peer(htconn));
 	conn->sock   = mem_ref(sock);
 	conn->tc     = mem_ref(http_conn_tcp(htconn));
 	conn->sc     = mem_ref(http_conn_tls(htconn));
