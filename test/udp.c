@@ -169,6 +169,14 @@ static int test_udp_param(const char *addr)
 	if (err)
 		goto out;
 
+	udp_rxsz_set(ut->usc, 65536);
+	udp_rxsz_set(ut->uss, 65536);
+
+	err = udp_sockbuf_set(ut->usc, 65536);
+	TEST_ERR(err);
+	err = udp_sockbuf_set(ut->uss, 65536);
+	TEST_ERR(err);
+
 	udp_rxbuf_presz_set(ut->uss, 16);
 
 	err  = udp_local_get(ut->usc, &ut->cli);
