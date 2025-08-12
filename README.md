@@ -236,6 +236,14 @@ legend:
 | Linux | Tier 2 | uClibc | |
 
 
+### Known bugs
+
+macOS clang-1600.0.26.3 (Xcode 16.0) and clang-1600.0.26.4 (Xcode 16.1) have a optimization bug:
+
+- https://github.com/baresip/re/pull/1399
+- https://github.com/baresip/baresip/issues/3240
+
+
 ### Support types
 
 * **Tier 1**: Officially supported and tested with CI. Any contributed patch
