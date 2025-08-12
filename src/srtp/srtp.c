@@ -210,7 +210,7 @@ int srtp_encrypt(struct srtp *srtp, struct mbuf *mb)
 
 	ix = 65536ULL * strm->roc + hdr.seq;
 
-	fprintf(stderr, ".... srtp_encrypt: ix=%llu\n", ix);
+	re_fprintf(stderr, ".... srtp_encrypt: ix=%llu\n", ix);
 
 	if (comp->aes && comp->mode == AES_MODE_CTR) {
 		union vect128 iv;
@@ -322,7 +322,7 @@ int srtp_decrypt(struct srtp *srtp, struct mbuf *mb)
 
 	ix = srtp_get_index(strm->roc, strm->s_l, hdr.seq);
 
-	fprintf(stderr, ".... srtp_decrypt: ix=%llu\n", ix);
+	re_fprintf(stderr, ".... srtp_decrypt: ix=%llu\n", ix);
 
 	if (comp->hmac) {
 		uint8_t tag_calc[SHA_DIGEST_LENGTH] = {0};
