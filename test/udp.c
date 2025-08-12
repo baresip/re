@@ -103,6 +103,9 @@ static void udp_recv_server(const struct sa *src, struct mbuf *mb, void *arg)
 	err = udp_send(ut->uss, src, mb);
 	if (err)
 		ut->err = err;
+
+	/* Receive a UDP Datagram on this UDP socket */
+	udp_recv_packet(ut->usc, &ut->srv, mb);
 }
 
 
