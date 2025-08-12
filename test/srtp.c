@@ -362,9 +362,6 @@ static int test_srtp_loop(size_t offset, enum srtp_suite suite, uint16_t seq)
 		hdr.seq  = seq++;
 		hdr.ssrc = SSRC;
 
-		fprintf(stderr, ".... test_srtp_loop: i=%u seq=%u\n",
-			i, hdr.seq);
-
 		err = rtp_hdr_encode(mb, &hdr);
 		if (err)
 			break;
