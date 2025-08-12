@@ -204,6 +204,9 @@ int srtp_encrypt(struct srtp *srtp, struct mbuf *mb)
 
 	/* Roll-Over Counter (ROC) */
 	if (seq_diff(strm->s_l, hdr.seq) <= -32768) {
+
+		fprintf(stderr, ".... srtp_encrypt: ROC\n");
+
 		strm->roc++;
 		strm->s_l = 0;
 	}
