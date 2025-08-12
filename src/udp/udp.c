@@ -900,11 +900,11 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 	struct sa hsrc;
 	struct le *le;
 
-	if (!us || !src || !mb || !uhx)
+	if (!us || !src || !mb)
 		return;
 
 	mtx_lock(us->lock);
-	le = uhx->le.next;
+	le = uhx ? uhx->le.next : us->helpers.head;
 	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
@@ -992,32 +992,5 @@ void udp_flush(const struct udp_sock *us)
 void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb)
 {
-	struct sa hsrc;
-	struct le *le;
-
-	if (!us || !src || !mb)
-		return;
-
-	mtx_lock(us->lock);
-	le = us->helpers.head;
-	mtx_unlock(us->lock);
-	while (le) {
-		struct udp_helper *uh = le->data;
-		bool hdld;
-
-		mtx_lock(us->lock);
-		le = le->next;
-		mtx_unlock(us->lock);
-
-		if (src != &hsrc) {
-			sa_cpy(&hsrc, src);
-			src = &hsrc;
-		}
-
-		hdld = uh->recvh(&hsrc, mb, uh->arg);
-		if (hdld)
-			return;
-	}
-
-	us->rh(src, mb, us->arg);
+	udp_recv_helper(us, src, mb, NULL);
 }
