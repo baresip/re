@@ -337,6 +337,9 @@ static int test_srtp_loop(size_t offset, enum srtp_suite suite, uint16_t seq)
 		0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
 	};
 
+	fprintf(stderr, ".... test_srtp_loop: offset=%zu, suite=%d"
+		" seq=%u\n", offset, suite, seq);
+
 	mb = mbuf_alloc(offset + 32);
 	if (!mb)
 		return ENOMEM;
