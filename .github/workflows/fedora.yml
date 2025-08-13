@@ -23,7 +23,7 @@ jobs:
       CMAKE_GENERATOR: Ninja
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: install devel tools
       run: |
         yum -y install gcc clang cmake make openssl-devel zlib-devel ninja-build
