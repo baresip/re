@@ -181,7 +181,7 @@ static void process_msg(struct turnserver *turn, int proto, void *sock,
 
 		turn->cli = *src;
 
-		err = sa_set_str(&laddr, "127.0.0.1", 0);
+		err = sa_set_str(&laddr, turn->addr, 0);
 		if (err)
 			goto out;
 
@@ -440,7 +440,7 @@ static void destructor(void *arg)
 }
 
 
-int turnserver_alloc(struct turnserver **turnp)
+int turnserver_alloc(struct turnserver **turnp, const char *addr)
 {
 	struct turnserver *turn;
 	struct sa laddr;
@@ -453,7 +453,9 @@ int turnserver_alloc(struct turnserver **turnp)
 	if (!turn)
 		return ENOMEM;
 
-	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	str_ncpy(turn->addr, addr, sizeof(turn->addr));
+
+	err = sa_set_str(&laddr, addr, 0);
 	if (err)
 		goto out;
 

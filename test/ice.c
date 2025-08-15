@@ -472,7 +472,7 @@ static int agent_alloc(struct agent **agentp, struct ice_test *it,
 	agent->offerer = offerer;
 
 	if (agent->use_turn) {
-		err = turnserver_alloc(&agent->turn);
+		err = turnserver_alloc(&agent->turn, "127.0.0.1");
 		if (err)
 			goto out;
 	}
