@@ -162,7 +162,10 @@ static void turnc_handler(int err, uint16_t scode, const char *reason,
 	if (err)
 		goto out;
 
-	err |= send_payload(tt, 36, &tt->peer, test_payload);
+	/* Headroom for IPv4/IPv6 STUN headers */
+	const size_t offset = 48;
+
+	err |= send_payload(tt, offset, &tt->peer, test_payload);
 	if (err) {
 		DEBUG_WARNING("failed to send payload (%m)\n", err);
 		complete_test(tt, err);
@@ -344,7 +347,8 @@ static void tcp_close_handler(int err, void *arg)
 }
 
 
-static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime)
+static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime,
+			  const char *addr)
 {
 	struct turntest *tt;
 	struct sa laddr;
@@ -363,7 +367,7 @@ static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime)
 	tt->proto    = proto;
 	tt->lifetime = lifetime;
 
-	err  = sa_set_str(&laddr, "127.0.0.1", 0);
+	err  = sa_set_str(&laddr, addr, 0);
 	if (err)
 		goto out;
 
@@ -385,7 +389,7 @@ static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime)
 	if (err)
 		goto out;
 
-	err = turnserver_alloc(&tt->turnsrv);
+	err = turnserver_alloc(&tt->turnsrv, addr);
 	if (err)
 		goto out;
 
@@ -417,12 +421,12 @@ static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime)
 }
 
 
-int test_turn(void)
+static int test_turn_param(const char *addr)
 {
 	struct turntest *tt;
 	int err;
 
-	err = turntest_alloc(&tt, IPPROTO_UDP, 600);
+	err = turntest_alloc(&tt, IPPROTO_UDP, 600, addr);
 	if (err)
 		return err;
 
@@ -450,12 +454,27 @@ int test_turn(void)
 }
 
 
+int test_turn(void)
+{
+	int err = test_turn_param("127.0.0.1");
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_turn_param("::1");
+		TEST_ERR(err);
+	}
+
+ out:
+	return err;
+}
+
+
 int test_turn_tcp(void)
 {
 	struct turntest *tt;
 	int err;
 
-	err = turntest_alloc(&tt, IPPROTO_TCP, 600);
+	err = turntest_alloc(&tt, IPPROTO_TCP, 600, "127.0.0.1");
 	if (err)
 		return err;
 
@@ -527,7 +546,7 @@ int test_turn_thread(void)
 	struct turntest *tt;
 	int err;
 
-	err = turntest_alloc(&tt, IPPROTO_UDP, 0);
+	err = turntest_alloc(&tt, IPPROTO_UDP, 0, "127.0.0.1");
 	if (err)
 		return err;
 

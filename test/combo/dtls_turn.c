@@ -286,7 +286,7 @@ static int agent_alloc(struct agent **agp, uint16_t lport,
 	if (use_turn) {
 		ag->turn_channels = turn_channels;
 
-		err = turnserver_alloc(&ag->turnsrv);
+		err = turnserver_alloc(&ag->turnsrv, "127.0.0.1");
 		if (err)
 			goto out;
 
