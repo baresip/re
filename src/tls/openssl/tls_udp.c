@@ -654,28 +654,6 @@ int dtls_send(struct tls_conn *tc, struct mbuf *mb)
 
 
 /**
- * Set handlers on a DTLS Connection
- *
- * @param tc     DTLS Connection
- * @param estabh DTLS Connection Established handler
- * @param recvh  DTLS Connection Receive data handler
- * @param closeh DTLS Connection Close handler
- * @param arg    Handler argument
- */
-void dtls_set_handlers(struct tls_conn *tc, dtls_estab_h *estabh,
-		       dtls_recv_h *recvh, dtls_close_h *closeh, void *arg)
-{
-	if (!tc)
-		return;
-
-	tc->estabh = estabh;
-	tc->recvh  = recvh;
-	tc->closeh = closeh;
-	tc->arg    = arg;
-}
-
-
-/**
  * Get the remote peer of a DTLS Connection
  *
  * @param tc DTLS Connection
