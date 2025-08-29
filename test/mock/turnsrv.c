@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+#include <time.h>
 #include <re.h>
 #include "test.h"
 
