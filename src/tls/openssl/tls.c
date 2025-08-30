@@ -149,19 +149,6 @@ static int password_cb(char *buf, int size, int rwflag, void *userdata)
 }
 
 
-static int keytype2int(enum tls_keytype type)
-{
-	switch (type) {
-	case TLS_KEYTYPE_EC:
-		return EVP_PKEY_EC;
-	case TLS_KEYTYPE_RSA:
-		return EVP_PKEY_RSA;
-	default:
-		return EVP_PKEY_NONE;
-	}
-}
-
-
 /**
  * OpenSSL verify handler for debugging purposes. Prints only warnings in the
  * default build
@@ -771,79 +758,6 @@ int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 		BIO_free(bio);
 	if (kbio)
 		BIO_free(kbio);
-	if (err)
-		ERR_clear_error();
-
-	return err;
-}
-
-
-/**
- * Set the certificate and private key on a TLS context
- *
- * @param tls      TLS Context
- * @param keytype  Private key type
- * @param cert     Certificate in DER format
- * @param len_cert Length of certificate DER bytes
- * @param key      Private key in DER format, will be read from cert if NULL
- * @param len_key  Length of private key DER bytes
- *
- * @return 0 if success, otherwise errorcode
- */
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key)
-{
-	const uint8_t *buf_cert;
-	X509 *x509 = NULL;
-	EVP_PKEY *pkey = NULL;
-	int r, type, err = ENOMEM;
-
-	if (!tls || !cert || !len_cert || (key && !len_key))
-		return EINVAL;
-
-	type = keytype2int(keytype);
-	if (type == EVP_PKEY_NONE)
-		return EINVAL;
-
-	buf_cert = cert;
-
-	x509 = d2i_X509(NULL, &buf_cert, (long)len_cert);
-	if (!x509)
-		goto out;
-
-	if (!key) {
-		key = buf_cert;
-		len_key = len_cert - (buf_cert - cert);
-	}
-
-	pkey = d2i_PrivateKey(type, NULL, &key, (long)len_key);
-	if (!pkey)
-		goto out;
-
-	r = SSL_CTX_use_certificate(tls->ctx, x509);
-	if (r != 1)
-		goto out;
-
-	r = SSL_CTX_use_PrivateKey(tls->ctx, pkey);
-	if (r != 1) {
-		DEBUG_WARNING("set_certificate_der: use_PrivateKey failed\n");
-		goto out;
-	}
-
-	if (tls->cert)
-		X509_free(tls->cert);
-
-	tls->cert = x509;
-	x509 = NULL;
-
-	err = 0;
-
- out:
-	if (x509)
-		X509_free(x509);
-	if (pkey)
-		EVP_PKEY_free(pkey);
 	if (err)
 		ERR_clear_error();
 
