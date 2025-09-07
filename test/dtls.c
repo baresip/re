@@ -246,6 +246,9 @@ static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp,
 
 	dtls_set_single(test.sock_cli, true);
 
+	/* Set a low MTU to force fragmentation and reassembly */
+	dtls_set_mtu(test.sock_srv, 128);
+
 	err = dtls_connect(&test.conn_cli, test.tls, test.sock_cli,
 			   &srv, cli_estab_handler,
 			   cli_recv_handler, cli_close_handler, &test);
