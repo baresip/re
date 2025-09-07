@@ -457,6 +457,8 @@ struct turnserver {
 	struct sa cli;
 	struct sa relay;
 	char addr[64];
+	const char *auth_realm;
+	uint64_t auth_secret;
 
 	struct channel {
 		uint16_t nr;
