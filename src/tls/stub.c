@@ -77,20 +77,6 @@ int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 }
 
 
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key)
-{
-	(void)tls;
-	(void)keytype;
-	(void)cert;
-	(void)len_cert;
-	(void)key;
-	(void)len_key;
-	return ENOSYS;
-}
-
-
 int tls_set_certificate(struct tls *tls, const char *pem, size_t len)
 {
 	(void)tls;

@@ -51,9 +51,6 @@ int tls_set_selfsigned_ec(struct tls *tls, const char *cn,
 	const char *curve_n);
 int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 			    const char *key, size_t len_key);
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key);
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
 				  size_t len_chain);
