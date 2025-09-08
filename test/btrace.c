@@ -33,7 +33,13 @@ int test_btrace(void)
 	int err = btrace(&btraces);
 	TEST_ERR(err);
 
+	err = btrace_print(&pf_devnull, &btraces);
+	TEST_ERR(err);
+
 	err = btrace_println(&pf_devnull, &btraces);
+	TEST_ERR(err);
+
+	err = btrace_print_json(&pf_devnull, &btraces);
 	TEST_ERR(err);
 
  out:
