@@ -80,7 +80,7 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 void tls_enable_verify_client(struct tls *tls, bool enable);
-int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode);
+int tls_set_resumption(struct tls *tls, enum tls_resume_mode mode);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
