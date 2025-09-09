@@ -16,7 +16,6 @@
 int test_uri(void)
 {
 	const char *uriv[] = {
-		"sip:user:pass@host:5060;transport=udp",
 		"sip:user@host:5060;transport=udp",
 		"sip:user@host:5060",
 		"sip:host:5060",
@@ -29,9 +28,9 @@ int test_uri(void)
 
 		/* RFC 3261 */
 		"sip:alice@atlanta.com",
-		"sip:alice:secretword@atlanta.com;transport=tcp",
+		"sip:alice@atlanta.com;transport=tcp",
 		"sips:alice@atlanta.com?subject=project%20&priority=urgent",
-		"sip:+1-212-555-1212:1234@gateway.com;user=phone",
+		"sip:+1-212-555-1212@gateway.com;user=phone",
 		"sips:1212@gateway.com",
 		"sip:alice@192.0.2.4",
 		"sip:atlanta.com;method=REGISTER?to=alice%40atlanta.com",
@@ -41,11 +40,8 @@ int test_uri(void)
 		"sip:[::1];transport=udp",
 		"sip:[::1]:1234;transport=udp",
 		"sip:user@[::1];transport=udp",
-		"sip:user:pass@[::1];transport=udp",
 		"sip:user@[::1]:1234;transport=udp",
-		"sip:user:pass@[::1]:1234;transport=udp",
 		"sip:user@[::1]:1234;transport=udp?foo=bar",
-		"sip:user:pass@[::1]:1234;transport=udp?foo=bar",
 
 		/* draft-ietf-sipping-ipv6-torture-tests-00 */
 		"sip:[2001:db8::10]",
@@ -85,10 +81,18 @@ int test_uri(void)
 		err = pl_cmp(&pl, &pl0);
 		if (err) {
 			DEBUG_WARNING("uri comp: ref=(%s), gen=(%r) (%m)\n",
-				      &uriv[i], &pl, err);
+				      uriv[i], &pl, err);
 			goto out;
 		}
 	}
+
+	const struct pl uri_pass = PL("sip:user:pass@host");
+
+	err = uri_decode(&uri, &uri_pass);
+	TEST_ERR(err);
+
+	TEST_STRCMP("user", 4, uri.user.p, uri.user.l);
+	TEST_STRCMP("host", 4, uri.host.p, uri.host.l);
 
  out:
 	mbuf_reset(&mb);
@@ -104,27 +108,24 @@ int test_uri_encode(void)
 	} uriv[] = {
 		{{PL("sip"),
 		  PL("user"),
-		  PL("pass"),
 		  PL("host"), 0,
 		  5060,
 		  PL(""),
 		  PL(";transport=udp"),
 		  PL("")},
-		 "sip:user:pass@host:5060;transport=udp"
+		 "sip:user@host:5060;transport=udp"
 		},
 		{{PL("sip"),
 		  PL("user"),
-		  PL("pass"),
 		  PL("host"), 0,
 		  443,
 		  PL("/wss/"),
 		  PL(";transport=wss"),
 		  PL("")},
-		 "sip:user:pass@host:443/wss/;transport=wss"
+		 "sip:user@host:443/wss/;transport=wss"
 		},
 		{{PL("sip"),
 		  PL("user"),
-		  PL(""),
 		  PL("::1"), AF_INET6,
 		  1234,
 		  PL(""),
@@ -155,7 +156,7 @@ int test_uri_encode(void)
 		err = pl_strcmp(&pl, uriv[i].enc);
 		if (err) {
 			DEBUG_WARNING("uri enc: ref=(%s), gen=(%r) (%m)\n",
-				      &uriv[i].enc, &pl, err);
+				      uriv[i].enc, &pl, err);
 			goto out;
 		}
 	}

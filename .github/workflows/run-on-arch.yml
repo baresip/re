@@ -16,12 +16,12 @@ jobs:
       matrix:
         include:
           - arch: aarch64
-            distro: bullseye
+            distro: bookworm
           - arch: armv7
             distro: ubuntu22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: uraimo/run-on-arch-action@v3
         name: Build artifact
@@ -35,7 +35,7 @@ jobs:
 
           install: |
             case "${{ matrix.distro }}" in
-              ubuntu*|jessie|stretch|buster|bullseye)
+              ubuntu*|jessie|stretch|buster|bullseye|bookworm)
                 apt-get update -q -y
                 apt-get install -q -y cmake gcc g++ libssl-dev ninja-build
                 ;;

@@ -175,7 +175,6 @@ struct ajb {
 	int32_t avbuftime;   /**< average buffered time [us]      */
 	bool started;        /**< Started flag                    */
 	size_t wish_sz;      /**< Wish size of buffer [Bytes]     */
-	struct auframe af;   /**< Audio frame of last ajb_get()   */
 	uint32_t dropped;    /**< Dropped audio frames counter    */
 	double silence;      /**< Silence audio level             */
 };
@@ -212,35 +211,6 @@ static void plot_ajb(struct ajb *ajb, uint64_t tr)
 			ajb->plot.as);          /* row 10 - plot */
 	re_trace_event("ajb", "plot", 'P', NULL, RE_TRACE_ARG_STRING_COPY,
 		       "line", ajb->buf);
-}
-#endif
-
-
-#ifdef RE_AUBUF_TRACE
-void plot_underrun(struct ajb *ajb)
-{
-	uint64_t tr;
-	uint32_t treal;
-	if (!ajb)
-		return;
-
-	tr = tmr_jiffies();
-	if (!ajb->tr00)
-		ajb->tr00 = tr;
-
-	treal = (uint32_t) (tr - ajb->tr00);
-	re_snprintf(ajb->buf, sizeof(ajb->buf), "%s, 0x%p, %u, %i",
-			__func__,               /* row 1  - grep */
-			ajb,                    /* row 2  - grep optional */
-			treal,                  /* row 3  - plot optional */
-			1);                     /* row 4  - plot */
-	re_trace_event("ajb", "plot", 'U', NULL, RE_TRACE_ARG_STRING_COPY,
-		       "line", ajb->buf);
-}
-#else
-void plot_underrun(struct ajb *ajb)
-{
-	(void)ajb;
 }
 #endif
 
@@ -422,7 +392,6 @@ enum ajb_state ajb_get(struct ajb *ajb, struct auframe *af)
 		return AJB_GOOD;
 
 	mtx_lock(ajb->lock);
-	ajb->af = *af;
 
 	/* ptime in [us] */
 	ptime = (uint32_t) (af->sampc * AUDIO_TIMEBASE / (af->srate * af->ch));

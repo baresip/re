@@ -456,6 +456,9 @@ struct turnserver {
 	struct udp_sock *us_relay;
 	struct sa cli;
 	struct sa relay;
+	char addr[64];
+	const char *auth_realm;
+	uint64_t auth_secret;
 
 	struct channel {
 		uint16_t nr;
@@ -474,7 +477,7 @@ struct turnserver {
 	size_t n_recv;
 };
 
-int turnserver_alloc(struct turnserver **turnp);
+int turnserver_alloc(struct turnserver **turnp, const char *addr);
 
 
 enum natbox_type {

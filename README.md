@@ -218,21 +218,30 @@ legend:
 * [RFC 7350](https://tools.ietf.org/html/rfc7350) - DTLS as Transport for STUN
 * [RFC 7616](https://tools.ietf.org/html/rfc7616) - HTTP Digest Access Authentication
 * [RFC 7714](https://tools.ietf.org/html/rfc7714) - AES-GCM Authenticated Encryption in SRTP
+* [AV1-RTP](https://aomediacodec.github.io/av1-rtp-spec/) - RTP Payload Format For AV1
 
 
 ## Supported platforms
 
 |  System | Support type | Supported versions | Notes |
 |---|---|---|---|
-| Linux | Tier 1 | glibc >= 2.27 | |
+| Linux | Tier 1 | glibc >= 2.31 | |
 | Linux | Tier 1 | musl >= 1.2 | |
 | macOS | Tier 1 | macOS >= 10.10 | |
-| Windows | Tier 1 | >= Windows 8 | MinGW-w64, >= VS 2019 |
-| Android | Tier 2 | | |
+| Windows | Tier 1 | >= Windows 10 | MinGW-w64, >= VS 2022 |
+| Android | Tier 2 | Android 8 (API Level 26)| |
 | iOS | Tier 2 | | |
 | FreeBSD | Tier 2 | >= 12 | |
 | OpenBSD | Tier 2 | >= 7.4 | |
 | Linux | Tier 2 | uClibc | |
+
+
+### Known bugs
+
+macOS clang-1600.0.26.3 (Xcode 16.0) and clang-1600.0.26.4 (Xcode 16.1) have a optimization bug:
+
+- https://github.com/baresip/re/pull/1399
+- https://github.com/baresip/baresip/issues/3240
 
 
 ### Support types
@@ -260,14 +269,13 @@ legend:
 
 ### Supported compilers:
 
-* gcc 4.9 or later
-* MSVC 2019
-* clang 3.x or later
+* gcc 9 or later
+* MSVC 2022
+* clang 9.x or later
 
 
 ### Supported versions of OpenSSL
 
-* OpenSSL version 1.1.1
 * OpenSSL version 3.x.x
 * LibreSSL version 3.x
 

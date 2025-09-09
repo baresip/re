@@ -16,7 +16,7 @@ jobs:
       CMAKE_GENERATOR: Ninja
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: fix flaky azure mirrors
       if: ${{ runner.os == 'Linux' }}

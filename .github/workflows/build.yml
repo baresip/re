@@ -29,7 +29,11 @@ jobs:
       CMAKE_GENERATOR: Ninja
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+
+    - name: Set Xcode version
+      if: ${{ runner.os == 'macOS' }}
+      run: sudo xcode-select -s /Applications/Xcode_16.2.app 
 
     - name: openssl path macos
       if: ${{ runner.os == 'macOS' }}

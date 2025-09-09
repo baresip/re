@@ -26,7 +26,6 @@ static const struct trice_conf conf_default = {
 	false,
 	false,
 	false,
-	true,
 	false
 };
 
@@ -49,7 +48,6 @@ static void trice_destructor(void *data)
 	mem_deref(icem->rpwd);
 	mem_deref(icem->lufrag);
 	mem_deref(icem->lpwd);
-	mem_deref(icem->sw);
 }
 
 
@@ -108,6 +106,14 @@ int trice_alloc(struct trice **icemp, const struct trice_conf *conf,
 }
 
 
+/**
+ * Set the remote username fragment
+ *
+ * @param icem    ICE Media object
+ * @param rufrag  Remote username fragment
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int trice_set_remote_ufrag(struct trice *icem, const char *rufrag)
 {
 	if (!icem || !rufrag)
@@ -118,6 +124,14 @@ int trice_set_remote_ufrag(struct trice *icem, const char *rufrag)
 }
 
 
+/**
+ * Set the remote password
+ *
+ * @param icem  ICE Media object
+ * @param rpwd  Remote password
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int trice_set_remote_pwd(struct trice *icem, const char *rpwd)
 {
 	if (!icem || !rpwd)
@@ -129,20 +143,13 @@ int trice_set_remote_pwd(struct trice *icem, const char *rpwd)
 }
 
 
-int trice_set_software(struct trice *icem, const char *sw)
-{
-	if (!icem)
-		return EINVAL;
-
-	icem->sw = mem_deref(icem->sw);
-
-	if (sw)
-		return str_dup(&icem->sw, sw);
-
-	return 0;
-}
-
-
+/**
+ * Get the ICE Configuration
+ *
+ * @param icem ICE Media object
+ *
+ * @return ICE Configuration
+ */
 struct trice_conf *trice_conf(struct trice *icem)
 {
 	return icem ? &icem->conf : NULL;
@@ -530,6 +537,16 @@ int trice_reqbuf_append(struct trice *icem, struct ice_lcand *lcand,
 	return 0;
 }
 
+
+/**
+ * Set the port range for local sockets
+ *
+ * @param trice     ICE Media object
+ * @param min_port  Minimum port
+ * @param max_port  Maximum port
+ *
+ * @return 0 if success, otherwise errorcode
+ */
 int trice_set_port_range(struct trice *trice,
 			 uint16_t min_port, uint16_t max_port)
 {

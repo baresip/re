@@ -1,5 +1,5 @@
 /**
- * @file re_ice.h  Interface to Interactive Connectivity Establishment (ICE)
+ * @file re_trice.h  Interface to Interactive Connectivity Establishment (ICE)
  *
  * Copyright (C) 2010 Alfred E. Heggestad
  */
@@ -12,7 +12,6 @@ struct trice_conf {
 					    checks                           */
 	bool ansi;                     /**< Enable ANSI colors for debug
 					   output                            */
-	bool enable_prflx;             /**< Enable Peer-Reflexive candidates */
 	bool optimize_loopback_pairing;/**< Reduce candidate pairs when
 					    using loopback addresses         */
 };
@@ -23,6 +22,18 @@ struct ice_candpair;
 struct stun_conf;
 
 
+/**
+ * Handler for receiving packets on candidate
+ *
+ * @param lcand Local candidate
+ * @param proto Network protocol (UDP or TCP)
+ * @param sock  Local socket (struct udp_sock or struct tcp_conn)
+ * @param src   Source address
+ * @param mb    Data packet
+ * @param arg   Handler argument
+ *
+ * @return True if handled, False if not
+ */
 typedef bool (ice_cand_recv_h)(struct ice_lcand *lcand,
 			       int proto, void *sock, const struct sa *src,
 			       struct mbuf *mb, void *arg);
@@ -30,26 +41,22 @@ typedef bool (ice_cand_recv_h)(struct ice_lcand *lcand,
 
 /** Local candidate */
 struct ice_lcand {
-	struct ice_cand_attr attr;   /**< Base class (inheritance)           */
-	struct le le;                /**< List element                       */
+	struct ice_cand_attr attr; /**< Base class (inheritance)           */
+	struct le le;              /**< List element                       */
+	struct sa base_addr;       /**< IP-address of "base" candidate     */
+	struct udp_sock *us;       /**< UDP socket                         */
+	struct udp_helper *uh;     /**< UDP helper to intercept packets    */
+	struct tcp_sock *ts;       /**< TCP for simultaneous-open/passive  */
+	char ifname[32];           /**< Network interface, for diagnostics */
+	int layer;                 /**< Protocol layer                     */
+	ice_cand_recv_h *recvh;    /**< Handler for receiving packets      */
+	void *arg;                 /**< Handler argument                   */
+	struct trice *icem;        /**< Pointer to parent                  */
 
-	/* Base-address only set for SRFLX, PRFLX, RELAY */
-	struct sa base_addr;    /* IP-address of "base" candidate (optional) */
-
-	struct udp_sock *us;
-	struct udp_helper *uh;
-	struct tcp_sock *ts;    /* TCP for simultaneous-open or passive. */
-	char ifname[32];        /**< Network interface, for diagnostics */
-	int layer;
-	ice_cand_recv_h *recvh;
-	void *arg;
-
-	// todo: remove
-	struct trice *icem;           /* parent */
-
+	/** Packet statistics */
 	struct {
-		size_t n_tx;
-		size_t n_rx;
+		size_t n_tx;  /**< Number of packets sent */
+		size_t n_rx;  /**< Number of packets received */
 	} stats;
 };
 
@@ -62,29 +69,41 @@ struct ice_rcand {
 
 /** Defines a candidate pair */
 struct ice_candpair {
-	struct le le;                /**< List element                       */
-	struct ice_lcand *lcand;     /**< Local candidate                    */
-	struct ice_rcand *rcand;     /**< Remote candidate                   */
-	enum ice_candpair_state state;/**< Candidate pair state              */
-	uint64_t pprio;              /**< Pair priority                      */
-      //bool def;                    /**< Default flag                       */
-	bool valid;                  /**< Valid flag                         */
-	bool nominated;              /**< Nominated flag                     */
-	bool estab;
-	bool trigged;
-	int err;                     /**< Saved error code, if failed        */
-	uint16_t scode;              /**< Saved STUN code, if failed         */
-
-	struct tcp_conn *tc;
-
-	struct ice_tcpconn *conn;    /* the TCP-connection used */
+	struct le le;                  /**< List element                   */
+	struct ice_lcand *lcand;       /**< Local candidate                */
+	struct ice_rcand *rcand;       /**< Remote candidate               */
+	enum ice_candpair_state state; /**< Candidate pair state           */
+	uint64_t pprio;                /**< Pair priority                  */
+	bool valid;                    /**< Valid flag                     */
+	bool nominated;                /**< Nominated flag                 */
+	bool estab;                    /**< Pair is established            */
+	bool trigged;                  /**< Pair was triggered             */
+	int err;                       /**< Saved error code, if failed    */
+	uint16_t scode;                /**< Saved STUN code, if failed     */
+	struct tcp_conn *tc;           /**< TCP-connection used            */
+	struct ice_tcpconn *conn;      /**< the ICE-TCP-connection used    */
 };
 
 
+/**
+ * Handler for established candidate pair
+ *
+ * @param pair Which candidate pair was established
+ * @param msg  STUN message
+ * @param arg  Handler argument
+ */
 typedef void (trice_estab_h)(struct ice_candpair *pair,
 			     const struct stun_msg *msg, void *arg);
 
 
+/**
+ * Handler for failed candidate pair
+ *
+ * @param err   Posix error code
+ * @param scode STUN status code
+ * @param pair  Candidate pair
+ * @param arg   Handler argument
+ */
 typedef void (trice_failed_h)(int err, uint16_t scode,
 			    struct ice_candpair *pair, void *arg);
 
@@ -93,7 +112,6 @@ int  trice_alloc(struct trice **icemp, const struct trice_conf *conf,
 		 enum ice_role role, const char *lufrag, const char *lpwd);
 int  trice_set_remote_ufrag(struct trice *icem, const char *rufrag);
 int  trice_set_remote_pwd(struct trice *icem, const char *rpwd);
-int  trice_set_software(struct trice *icem, const char *sw);
 int  trice_set_role(struct trice *trice, enum ice_role role);
 enum ice_role trice_local_role(const struct trice *icem);
 int  trice_debug(struct re_printf *pf, const struct trice *icem);

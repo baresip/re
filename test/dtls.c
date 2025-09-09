@@ -23,8 +23,8 @@ struct dtls_test {
 
 	struct {
 		enum srtp_suite suite;
-		uint8_t cli_key[30];
-		uint8_t srv_key[30];
+		uint8_t cli_key[12+32];
+		uint8_t srv_key[12+32];
 	} cli, srv;
 
 	uint8_t fp[32];
@@ -193,11 +193,9 @@ static void conn_handler(const struct sa *src, void *arg)
 }
 
 
-static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp)
+static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp,
+			       const char *srtp_suites)
 {
-	static const char *srtp_suites =
-		"SRTP_AES128_CM_SHA1_80:"
-		"SRTP_AES128_CM_SHA1_32";
 	struct dtls_test test;
 	struct udp_sock *us = NULL;
 	struct sa cli, srv;
@@ -245,6 +243,11 @@ static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp)
 
 	err = dtls_listen(&test.sock_cli, &cli, NULL, 4, 0, NULL, NULL);
 	TEST_ERR(err);
+
+	dtls_set_single(test.sock_cli, true);
+
+	/* Set a low MTU to force fragmentation and reassembly */
+	dtls_set_mtu(test.sock_srv, 128);
 
 	err = dtls_connect(&test.conn_cli, test.tls, test.sock_cli,
 			   &srv, cli_estab_handler,
@@ -320,7 +323,7 @@ int test_dtls(void)
 		return ESKIPPED;
 	}
 	else {
-		err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false);
+		err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false, NULL);
 		if (err)
 			return err;
 	}
@@ -338,9 +341,22 @@ int test_dtls_srtp(void)
 		return ESKIPPED;
 	}
 
-	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true);
-	if (err)
-		return err;
+	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+				  "SRTP_AES128_CM_SHA1_80");
+	TEST_ERR(err);
 
-	return 0;
+	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+				  "SRTP_AES128_CM_SHA1_32");
+	TEST_ERR(err);
+
+	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+				  "SRTP_AEAD_AES_128_GCM");
+	TEST_ERR(err);
+
+	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+				  "SRTP_AEAD_AES_256_GCM");
+	TEST_ERR(err);
+
+ out:
+	return err;
 }

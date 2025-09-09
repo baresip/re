@@ -21,7 +21,7 @@ jobs:
       OPENSSL_ROOT_DIR: "assets/${{ matrix.ssl }}"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: fix flaky azure mirrors
       if: ${{ runner.os == 'Linux' }}
@@ -34,7 +34,15 @@ jobs:
 
     - name: Download pre-compiled OpenSSL/LibreSSL
       run: |
-        wget "https://github.com/baresip/tools/releases/download/v2023.11.0/assets.tar.gz"
+        wget "https://github.com/baresip/tools/releases/download/v2025.05.1/assets.tar.gz"
         tar -xf assets.tar.gz
+
     - name: make
-      run: cmake -B build -DCMAKE_C_FLAGS="-Werror" && cmake --build build -j
+      run: |
+        cmake -B build -DCMAKE_C_FLAGS="-Werror"
+        cmake --build build -j
+        cmake --build build -t retest
+
+    - name: retest
+      run: |
+        ./build/test/retest -r -v

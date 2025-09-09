@@ -327,10 +327,10 @@ static int answer_handler_a(const struct sip_msg *msg, void *arg)
 		test->sdp_state = ANSWER_RECEIVED;
 
 	if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED, "100rel"))
-		test->rel100_a |= REL100_SUPPORTED;
+		test->rel100_a |= (enum rel100_mode)REL100_SUPPORTED;
 
 	if (sip_msg_hdr_has_value(msg, SIP_HDR_REQUIRE, "100rel"))
-		test->rel100_a |= REL100_REQUIRE;
+		test->rel100_a |= (enum rel100_mode)REL100_REQUIRE;
 
 	if (!pl_strcmp(&msg->cseq.met, "UPDATE")) {
 		if (msg->scode < 200 || msg->scode > 299) {

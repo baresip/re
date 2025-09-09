@@ -55,15 +55,6 @@ int tls_add_crlpem(const struct tls *tls, const char *pem)
 }
 
 
-int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
-{
-	(void)tls;
-	(void)cn;
-	(void)bits;
-	return ENOSYS;
-}
-
-
 int tls_set_selfsigned_ec(struct tls *tls, const char *cn,
 	const char *curve_n)
 {
@@ -78,20 +69,6 @@ int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 			    const char *key, size_t len_key)
 {
 	(void)tls;
-	(void)cert;
-	(void)len_cert;
-	(void)key;
-	(void)len_key;
-	return ENOSYS;
-}
-
-
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key)
-{
-	(void)tls;
-	(void)keytype;
 	(void)cert;
 	(void)len_cert;
 	(void)key;
@@ -405,17 +382,6 @@ int dtls_send(struct tls_conn *tc, struct mbuf *mb)
 	(void)tc;
 	(void)mb;
 	return ENOSYS;
-}
-
-
-void dtls_set_handlers(struct tls_conn *tc, dtls_estab_h *estabh,
-		       dtls_recv_h *recvh, dtls_close_h *closeh, void *arg)
-{
-	(void)tc;
-	(void)estabh;
-	(void)recvh;
-	(void)closeh;
-	(void)arg;
 }
 
 

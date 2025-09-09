@@ -556,8 +556,6 @@ int udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb)
  * @param local The returned local network address
  *
  * @return 0 if success, otherwise errorcode
- *
- * @todo bug no way to specify AF
  */
 int udp_local_get(const struct udp_sock *us, struct sa *local)
 {
@@ -745,17 +743,12 @@ void udp_error_handler_set(struct udp_sock *us, udp_error_h *eh)
  * Get the File Descriptor from a UDP Socket
  *
  * @param us  UDP Socket
- * @param af  Address Family [deprecated, ignored]
  *
  * @return File Descriptor, or RE_BAD_SOCK for errors
  */
-re_sock_t udp_sock_fd(const struct udp_sock *us, int af)
+re_sock_t udp_sock_fd(const struct udp_sock *us)
 {
-	(void)af;
-	if (!us)
-		return RE_BAD_SOCK;
-
-	return us->fd;
+	return us ? us->fd : RE_BAD_SOCK;
 }
 
 
@@ -907,11 +900,11 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 	struct sa hsrc;
 	struct le *le;
 
-	if (!us || !src || !mb || !uhx)
+	if (!us || !src || !mb)
 		return;
 
 	mtx_lock(us->lock);
-	le = uhx->le.next;
+	le = uhx ? uhx->le.next : us->helpers.head;
 	mtx_unlock(us->lock);
 	while (le) {
 		struct udp_helper *uh = le->data;
@@ -999,32 +992,5 @@ void udp_flush(const struct udp_sock *us)
 void udp_recv_packet(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb)
 {
-	struct sa hsrc;
-	struct le *le;
-
-	if (!us || !src || !mb)
-		return;
-
-	mtx_lock(us->lock);
-	le = us->helpers.head;
-	mtx_unlock(us->lock);
-	while (le) {
-		struct udp_helper *uh = le->data;
-		bool hdld;
-
-		mtx_lock(us->lock);
-		le = le->next;
-		mtx_unlock(us->lock);
-
-		if (src != &hsrc) {
-			sa_cpy(&hsrc, src);
-			src = &hsrc;
-		}
-
-		hdld = uh->recvh(&hsrc, mb, uh->arg);
-		if (hdld)
-			return;
-	}
-
-	us->rh(src, mb, us->arg);
+	udp_recv_helper(us, src, mb, NULL);
 }

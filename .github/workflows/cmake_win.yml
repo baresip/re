@@ -45,7 +45,7 @@ jobs:
             openssl: false,
             disable_openssl: "ON",
             choco: "--x86",
-            testing: false
+            testing: true
           }
         - {
             name: "Windows Debug ARM64",
@@ -59,12 +59,12 @@ jobs:
           }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install OpenSSL
         if: ${{ matrix.config.openssl }}
         run: |
-          choco install --no-progress ${{ matrix.config.choco }} openssl
+          choco install --no-progress ${{ matrix.config.choco }} openssl --version 3.5.2
 
       - name: Build
         shell: cmd

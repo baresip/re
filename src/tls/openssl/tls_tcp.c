@@ -323,20 +323,13 @@ static bool send_handler(int *err, struct mbuf *mb, void *arg)
  */
 int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 {
-	int r = 0;
-
 	if (!tc || !file)
 		return EINVAL;
 
 #if !defined(LIBRESSL_VERSION_NUMBER)
 	SSL_certs_clear(tc->ssl);
-#endif
 
-#if !defined(LIBRESSL_VERSION_NUMBER)
-	r = SSL_use_certificate_chain_file(tc->ssl, file);
-#else
-	r = SSL_use_certificate_file(tc->ssl, file, SSL_FILETYPE_PEM);
-#endif
+	int r = SSL_use_certificate_chain_file(tc->ssl, file);
 	if (r <= 0) {
 		ERR_clear_error();
 		return ENOENT;
@@ -349,6 +342,9 @@ int tls_conn_change_cert(struct tls_conn *tc, const char *file)
 	}
 
 	return 0;
+#else
+	return ENOSYS;
+#endif
 }
 
 

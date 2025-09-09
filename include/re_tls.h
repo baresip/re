@@ -47,19 +47,14 @@ int tls_add_cafile_path(struct tls *tls, const char *cafile,
 	const char *capath);
 int tls_add_capem(const struct tls *tls, const char *capem);
 int tls_add_crlpem(const struct tls *tls, const char *pem);
-int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits);
 int tls_set_selfsigned_ec(struct tls *tls, const char *cn,
 	const char *curve_n);
 int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 			    const char *key, size_t len_key);
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key);
 int tls_set_certificate(struct tls *tls, const char *cert, size_t len);
 int tls_set_certificate_chain_pem(struct tls *tls, const char *chain,
 				  size_t len_chain);
 int tls_set_certificate_chain(struct tls *tls, const char *path);
-void tls_set_verify_client(struct tls *tls);
 void tls_set_verify_client_trust_all(struct tls *tls);
 int tls_set_verify_client_handler(struct tls_conn *tc, int depth,
 	int (*verifyh) (int ok, void *arg), void *arg);
@@ -131,8 +126,6 @@ int dtls_accept(struct tls_conn **ptc, struct tls *tls,
 		dtls_estab_h *estabh, dtls_recv_h *recvh,
 		dtls_close_h *closeh, void *arg);
 int dtls_send(struct tls_conn *tc, struct mbuf *mb);
-void dtls_set_handlers(struct tls_conn *tc, dtls_estab_h *estabh,
-		       dtls_recv_h *recvh, dtls_close_h *closeh, void *arg);
 const struct sa *dtls_peer(const struct tls_conn *tc);
 void dtls_set_peer(struct tls_conn *tc, const struct sa *peer);
 void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,

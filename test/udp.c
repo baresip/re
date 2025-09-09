@@ -103,6 +103,9 @@ static void udp_recv_server(const struct sa *src, struct mbuf *mb, void *arg)
 	err = udp_send(ut->uss, src, mb);
 	if (err)
 		ut->err = err;
+
+	/* Receive a UDP Datagram on this UDP socket */
+	udp_recv_packet(ut->usc, &ut->srv, mb);
 }
 
 
@@ -148,10 +151,11 @@ static bool udp_helper_recv(struct sa *src, struct mbuf *mb, void *arg)
 }
 
 
-int test_udp(void)
+static int test_udp_param(const char *addr, const char *mcast)
 {
 	struct udp_sock *uss2;
 	struct udp_test *ut;
+	struct sa group;
 	int layer = 0;
 	int err;
 
@@ -159,8 +163,8 @@ int test_udp(void)
 	if (!ut)
 		return ENOMEM;
 
-	err  = sa_set_str(&ut->cli, "127.0.0.1", 0);
-	err |= sa_set_str(&ut->srv, "127.0.0.1", 0);
+	err  = sa_set_str(&ut->cli, addr, 0);
+	err |= sa_set_str(&ut->srv, addr, 0);
 	if (err)
 		goto out;
 
@@ -168,6 +172,23 @@ int test_udp(void)
 	err |= udp_listen(&ut->uss, &ut->srv, udp_recv_server, ut);
 	if (err)
 		goto out;
+
+	if (mcast) {
+		sa_set_str(&group, mcast, 0);
+
+		err = udp_multicast_join(ut->usc, &group);
+		TEST_ERR(err);
+		err = udp_multicast_join(ut->uss, &group);
+		TEST_ERR(err);
+	}
+
+	udp_rxsz_set(ut->usc, 65536);
+	udp_rxsz_set(ut->uss, 65536);
+
+	err = udp_sockbuf_set(ut->usc, 65536);
+	TEST_ERR(err);
+	err = udp_sockbuf_set(ut->uss, 65536);
+	TEST_ERR(err);
 
 	udp_rxbuf_presz_set(ut->uss, 16);
 
@@ -208,9 +229,32 @@ int test_udp(void)
 	if (ut->err)
 		err = ut->err;
 
+	if (mcast) {
+		udp_multicast_leave(ut->usc, &group);
+		udp_multicast_leave(ut->uss, &group);
+	}
+
  out:
 	mem_deref(ut);
 
+	return err;
+}
+
+
+int test_udp(void)
+{
+	int err = test_udp_param("127.0.0.1", NULL);
+	TEST_ERR(err);
+
+	err = test_udp_param("127.0.0.1", "224.0.1.194");
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_udp_param("::1", NULL);
+		TEST_ERR(err);
+	}
+
+ out:
 	return err;
 }
 

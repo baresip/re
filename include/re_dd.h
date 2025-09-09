@@ -67,7 +67,6 @@ struct dd {
 	unsigned frame_dependency_template_id:6;
 	uint16_t frame_number;
 
-	// TODO: needed?
 	bool ext;
 
 	unsigned template_dependency_structure_present_flag:1;

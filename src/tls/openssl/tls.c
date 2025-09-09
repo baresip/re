@@ -149,19 +149,6 @@ static int password_cb(char *buf, int size, int rwflag, void *userdata)
 }
 
 
-static int keytype2int(enum tls_keytype type)
-{
-	switch (type) {
-	case TLS_KEYTYPE_EC:
-		return EVP_PKEY_EC;
-	case TLS_KEYTYPE_RSA:
-		return EVP_PKEY_RSA;
-	default:
-		return EVP_PKEY_NONE;
-	}
-}
-
-
 /**
  * OpenSSL verify handler for debugging purposes. Prints only warnings in the
  * default build
@@ -657,90 +644,6 @@ int tls_set_selfsigned_ec(struct tls *tls, const char *cn, const char *curve_n)
 }
 
 
-int tls_set_selfsigned_rsa(struct tls *tls, const char *cn, size_t bits)
-{
-	EVP_PKEY *key = NULL;
-	X509 *cert = NULL;
-#ifndef OPENSSL_VERSION_MAJOR
-	BIGNUM *bn = NULL;
-	RSA *rsa = NULL;
-#endif
-	int r, err = ENOMEM;
-
-	if (!tls || !cn)
-		return EINVAL;
-
-#if OPENSSL_VERSION_MAJOR >= 3
-	key = EVP_RSA_gen(bits);
-	if (!key)
-		goto out;
-#else
-	rsa = RSA_new();
-	if (!rsa)
-		goto out;
-
-	bn = BN_new();
-	if (!bn)
-		goto out;
-
-	BN_set_word(bn, RSA_F4);
-	if (!RSA_generate_key_ex(rsa, (int)bits, bn, NULL))
-		goto out;
-
-	key = EVP_PKEY_new();
-	if (!key)
-		goto out;
-
-	if (!EVP_PKEY_set1_RSA(key, rsa))
-		goto out;
-#endif
-
-	if (tls_generate_cert(&cert, cn))
-		goto out;
-
-	if (!X509_set_pubkey(cert, key))
-		goto out;
-
-	if (!X509_sign(cert, key, EVP_sha256()))
-		goto out;
-
-	r = SSL_CTX_use_certificate(tls->ctx, cert);
-	if (r != 1)
-		goto out;
-
-	r = SSL_CTX_use_PrivateKey(tls->ctx, key);
-	if (r != 1)
-		goto out;
-
-	if (tls->cert)
-		X509_free(tls->cert);
-
-	tls->cert = cert;
-	cert = NULL;
-
-	err = 0;
-
- out:
-	if (cert)
-		X509_free(cert);
-
-	if (key)
-		EVP_PKEY_free(key);
-
-#ifndef OPENSSL_VERSION_MAJOR
-	if (rsa)
-		RSA_free(rsa);
-
-	if (bn)
-		BN_free(bn);
-#endif
-
-	if (err)
-		ERR_clear_error();
-
-	return err;
-}
-
 /**
  * Set the certificate and private key on a TLS context
  *
@@ -865,79 +768,6 @@ int tls_set_certificate_pem(struct tls *tls, const char *cert, size_t len_cert,
 /**
  * Set the certificate and private key on a TLS context
  *
- * @param tls      TLS Context
- * @param keytype  Private key type
- * @param cert     Certificate in DER format
- * @param len_cert Length of certificate DER bytes
- * @param key      Private key in DER format, will be read from cert if NULL
- * @param len_key  Length of private key DER bytes
- *
- * @return 0 if success, otherwise errorcode
- */
-int tls_set_certificate_der(struct tls *tls, enum tls_keytype keytype,
-			    const uint8_t *cert, size_t len_cert,
-			    const uint8_t *key, size_t len_key)
-{
-	const uint8_t *buf_cert;
-	X509 *x509 = NULL;
-	EVP_PKEY *pkey = NULL;
-	int r, type, err = ENOMEM;
-
-	if (!tls || !cert || !len_cert || (key && !len_key))
-		return EINVAL;
-
-	type = keytype2int(keytype);
-	if (type == EVP_PKEY_NONE)
-		return EINVAL;
-
-	buf_cert = cert;
-
-	x509 = d2i_X509(NULL, &buf_cert, (long)len_cert);
-	if (!x509)
-		goto out;
-
-	if (!key) {
-		key = buf_cert;
-		len_key = len_cert - (buf_cert - cert);
-	}
-
-	pkey = d2i_PrivateKey(type, NULL, &key, (long)len_key);
-	if (!pkey)
-		goto out;
-
-	r = SSL_CTX_use_certificate(tls->ctx, x509);
-	if (r != 1)
-		goto out;
-
-	r = SSL_CTX_use_PrivateKey(tls->ctx, pkey);
-	if (r != 1) {
-		DEBUG_WARNING("set_certificate_der: use_PrivateKey failed\n");
-		goto out;
-	}
-
-	if (tls->cert)
-		X509_free(tls->cert);
-
-	tls->cert = x509;
-	x509 = NULL;
-
-	err = 0;
-
- out:
-	if (x509)
-		X509_free(x509);
-	if (pkey)
-		EVP_PKEY_free(pkey);
-	if (err)
-		ERR_clear_error();
-
-	return err;
-}
-
-
-/**
- * Set the certificate and private key on a TLS context
- *
  * @param tls TLS Context
  * @param pem Certificate and private key in PEM format
  * @param len Length of PEM string
@@ -973,22 +803,6 @@ void tls_set_verify_client_trust_all(struct tls *tls)
 	SSL_CTX_set_verify_depth(tls->ctx, 0);
 	SSL_CTX_set_verify(tls->ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
 			   verify_trust_all);
-}
-
-
-/**
- * Set TLS server context to request certificate from peer
- * and set trust all certificates of peer.
- *
- * @deprecated Use tls_set_verify_peer_trust_all instead
- * @param tls    TLS Context
- */
-void tls_set_verify_client(struct tls *tls)
-{
-	if (!tls)
-		return;
-
-	tls_set_verify_client_trust_all(tls);
 }
 
 
@@ -1729,7 +1543,6 @@ static int tls_session_update_cache(const struct tls_conn *tc,
 }
 
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 static int session_new_cb(struct ssl_st *ssl, SSL_SESSION *sess)
 {
 	BIO *wbio = NULL;
@@ -1787,7 +1600,6 @@ static void session_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 	/* iterate over all hash table entries and search for session */
 	(void) hash_apply(tls->reuse.ht_sessions, remove_handler, sess);
 }
-#endif
 
 
 /**
@@ -1813,14 +1625,10 @@ int tls_set_session_reuse(struct tls *tls, int enabled)
 	if (!tls->reuse.enabled)
 		return 0;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
 	SSL_CTX_sess_set_new_cb(tls->ctx, session_new_cb);
 	SSL_CTX_sess_set_remove_cb(tls->ctx, session_remove_cb);
 
 	return 0;
-#else
-	return EOPNOTSUPP;
-#endif
 }
 
 

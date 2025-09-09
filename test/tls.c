@@ -466,7 +466,7 @@ int test_tls_cli_conn_change_cert(void)
 	if (err)
 		goto out;
 
-	tls_set_verify_client(tt.tls);
+	tls_set_verify_client_trust_all(tt.tls);
 
 	err = tls_set_certificate(tt.tls, test_certificate_ecdsa,
 		strlen(test_certificate_ecdsa));
@@ -502,7 +502,12 @@ int test_tls_cli_conn_change_cert(void)
 		"%s/not_a_file.pem", test_datapath());
 
 	int ret = tls_conn_change_cert(tt.sc_cli, clientcert);
-	ASSERT_TRUE(ret==EINVAL || ret==ENOENT);
+	ASSERT_TRUE(ret==EINVAL || ret==ENOENT || ret==ENOSYS);
+
+	if (ret == ENOSYS) {
+		err = 0;
+		goto out;
+	}
 
 	memset(clientcert, 0, sizeof(clientcert));
 	(void)re_snprintf(clientcert, sizeof(clientcert),
