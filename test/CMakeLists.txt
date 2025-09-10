@@ -85,6 +85,7 @@ set(SRCS
   av1.c
   base64.c
   bfcp.c
+  btrace.c
   conf.c
   convert.c
   crc32.c
