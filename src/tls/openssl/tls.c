@@ -1908,7 +1908,7 @@ int tls_verify_client_post_handshake(struct tls_conn *tc)
  *
  * @return 0 if success, otherwise errorcode
  */
-int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode)
+int tls_set_resumption(struct tls *tls, enum tls_resume_mode mode)
 {
 	long ok = 1;
 
