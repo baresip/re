@@ -5,7 +5,36 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.1.0 - 2025-09-10
+
+### What's Changed
+* ci: temporary workaround for choco openssl failure by @alfredh in https://github.com/baresip/re/pull/1395
+* test: add support for IPv6 on UDP-test by @alfredh in https://github.com/baresip/re/pull/1390
+* ci: enable Windows testing when OpenSSL is disabled by @alfredh in https://github.com/baresip/re/pull/1392
+* websock: remove unused peer member by @alfredh in https://github.com/baresip/re/pull/1396
+* test: add testing of udp_rxsz_set() and udp_sockbuf_set() by @alfredh in https://github.com/baresip/re/pull/1397
+* ci/build: select xcode version 16.2 by @sreimers in https://github.com/baresip/re/pull/1400
+* udp: combine udp_recv_helper() and udp_recv_packet() by @alfredh in https://github.com/baresip/re/pull/1398
+* test: add support for UDP multicast test by @alfredh in https://github.com/baresip/re/pull/1402
+* ci: update actions/checkout@v5 by @sreimers in https://github.com/baresip/re/pull/1403
+* uri: remove uri_escape_user() by @alfredh in https://github.com/baresip/re/pull/1401
+* uri: remove some unused escape functions by @alfredh in https://github.com/baresip/re/pull/1404
+* test: add support for IPv6 and TURN by @alfredh in https://github.com/baresip/re/pull/1405
+* test: add support for testing more DTLS-SRTP suites by @alfredh in https://github.com/baresip/re/pull/1408
+* dtls: remove dtls_set_handlers() -- unused by @alfredh in https://github.com/baresip/re/pull/1407
+* tls: remove tls_set_certificate_der() -- unused by @alfredh in https://github.com/baresip/re/pull/1410
+* test: set low MTU in DTLS-test by @alfredh in https://github.com/baresip/re/pull/1411
+* test: add support for TURN mock-server authentication by @alfredh in https://github.com/baresip/re/pull/1409
+* tls: tls_set_resumption() -- change const enum to enum by @alfredh in https://github.com/baresip/re/pull/1412
+* ci/abi: bump old abi by @sreimers in https://github.com/baresip/re/pull/1417
+* ci/coverage: bump min coverage by @sreimers in https://github.com/baresip/re/pull/1416
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.0.0...v4.1.0
+
+
 ## v4.0.0 - 2025-08-06
+
 ### What's Changed
 
 This major release drops obsolete API functions, OpenSSL 1.1.1 support and support for old OS versions.
