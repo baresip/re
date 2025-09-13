@@ -385,6 +385,17 @@ int dtls_send(struct tls_conn *tc, struct mbuf *mb)
 }
 
 
+void dtls_set_handlers(struct tls_conn *tc, dtls_estab_h *estabh,
+		       dtls_recv_h *recvh, dtls_close_h *closeh, void *arg)
+{
+	(void)tc;
+	(void)estabh;
+	(void)recvh;
+	(void)closeh;
+	(void)arg;
+}
+
+
 const struct sa *dtls_peer(const struct tls_conn *tc)
 {
 	(void)tc;
