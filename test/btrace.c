@@ -25,6 +25,9 @@ static int devnull_handler(const char *p, size_t size, void *arg)
 
 int test_btrace(void)
 {
+	if (test_mode == TEST_THREAD)
+		return ESKIPPED;
+
 	static struct re_printf pf_devnull = {
 		.vph = devnull_handler
 	};
