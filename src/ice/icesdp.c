@@ -210,11 +210,7 @@ static int getaddr_rcand(void *arg)
 	struct rcand *rcand = arg;
 	struct addrinfo *res, *res0 = NULL;
 
-#if defined(OPENBSD) || defined(__NetBSD__)
 	struct addrinfo hints = {.ai_flags  = AI_ADDRCONFIG,
-#else
-	struct addrinfo hints = {.ai_flags  = AI_ADDRCONFIG | AI_V4MAPPED,
-#endif
 				 .ai_family = rcand->ai_family};
 	int err;
 
@@ -246,7 +242,8 @@ static void delayed_rcand(int err, void *arg)
 		goto out;
 
 	if (!rcand->icem->rcand_wait) {
-		DEBUG_WARNING("late mDNS candidate: %s\n", rcand->domain);
+		DEBUG_WARNING("late mDNS candidate: %s - %J\n", rcand->domain,
+			      rcand->caddr);
 		goto out;
 	}
 
