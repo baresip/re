@@ -542,3 +542,22 @@ void icem_printf(struct icem *icem, const char *fmt, ...)
 	(void)re_printf("{%11s. } %v", icem->name, fmt, &ap);
 	va_end(ap);
 }
+
+
+/**
+ * Check if remote ICE candidates are ready
+ *
+ * @param icem ICE Media object
+ *
+ * @return true if ready otherwise false
+ */
+bool icem_rcand_ready(struct icem *icem)
+{
+	if (!icem)
+		return false;
+
+	if (icem->rcand_wait)
+		return true;
+
+	return !list_isempty(&icem->rcandl);
+}
