@@ -115,7 +115,7 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 			break;
 
 		err = x509_match_alt_name(x509, sni, &match);
-		if (err || !match) {
+		if (err) {
 			tls_cert = NULL;
 			break;
 		}
