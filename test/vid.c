@@ -115,7 +115,7 @@ static int test_vidframe_alloc(void)
 
 
 /*
- * Create one RGB32 pixel in native endianess
+ * Create one RGB32 pixel in native endianness
  */
 #define RGB32(r, g, b)  (r)<<16 | (g)<<8 | (b)
 
