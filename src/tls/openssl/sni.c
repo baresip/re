@@ -88,7 +88,7 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 	struct le *le;
 	const struct list *certs = tls_certs(tls);
 
-	if (!certs)
+	if (!list_head(certs))
 		return NULL;
 
 	if (!str_isset(sni))
