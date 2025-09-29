@@ -714,7 +714,7 @@ static int candpair_add_1_local_and_1_remote_candidate_and_create_pair(void)
 
 	ADD_REMOTE_HOST_CANDIDATE(&addr);
 
-	/* the checklist is formated automatically */
+	/* the checklist is formatted automatically */
 
 	TEST_EQUALS(1, list_count(trice_lcandl(f->icem)));
 	TEST_EQUALS(1, list_count(trice_rcandl(f->icem)));

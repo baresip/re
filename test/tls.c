@@ -490,7 +490,7 @@ int test_tls_cli_conn_change_cert(void)
 	if (err)
 		goto out;
 
-	/* actuall test cases*/
+	/* actual test cases*/
 	err = tls_conn_change_cert(tt.sc_cli, NULL);
 	TEST_EQUALS(EINVAL, err);
 
