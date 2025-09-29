@@ -682,37 +682,38 @@ static void nv12_to_rgb565(unsigned xsoffs, unsigned xdoffs, unsigned width,
 	unsigned x, xd, xs, xs2;
 	unsigned id, is;
 
-	(void)dd1; // unused
-	(void)dd2; // unused
-	(void)ds2; // unused
+	(void)dd1;
+	(void)dd2;
+	(void)ds2;
 
 	for (x = 0; x < width; x += 2) {
 		int ruv, guv, buv;
 		uint8_t u, v;
 
-		// Output Position (RGB565, 2 bytes per pixel)
+		/* Output Position (RGB565, 2 bytes per pixel) */
 		xd = (x + xdoffs) * 2;
 
-		// Enter the location, consider the zoom
+		/* Enter the location, consider the zoom */
 		xs  = (unsigned)((x + xsoffs) * rw);
 		xs2 = (unsigned)((x + xsoffs + 1) * rw);
 
 		id = xd + yd * lsd;
 
-		// UV index (NV12: U,V interleaved)
+		/* UV index (NV12: U,V interleaved) */
 		is = (xs >> 1) + (ys >> 1) * lss / 2;
-		u = ds1[2 * is];      // U
-		v = ds1[2 * is + 1];  // V
+		u = ds1[2 * is];
+		v = ds1[2 * is + 1];
 
 		ruv = CRV[v];
 		guv = CGV[v] + CGU[u];
 		buv = CBU[u];
 
-		// Four pixels (2x2 block)
-		yuv2rgb565(&dd0[id],          ds0[xs  + ys*lss],  ruv, guv, buv);
-		yuv2rgb565(&dd0[id + 2],      ds0[xs2 + ys*lss],  ruv, guv, buv);
-		yuv2rgb565(&dd0[id + lsd],    ds0[xs  + ys2*lss], ruv, guv, buv);
-		yuv2rgb565(&dd0[id + 2 + lsd],ds0[xs2 + ys2*lss], ruv, guv, buv);
+		/* Four pixels (2x2 block) */
+		yuv2rgb565(&dd0[id], ds0[xs  + ys*lss], ruv, guv, buv);
+		yuv2rgb565(&dd0[id + 2], ds0[xs2 + ys*lss], ruv, guv, buv);
+		yuv2rgb565(&dd0[id + lsd], ds0[xs  + ys2*lss], ruv, guv, buv);
+		yuv2rgb565(&dd0[id + 2 + lsd],
+			ds0[xs2 + ys2*lss], ruv, guv, buv);
 	}
 }
 
