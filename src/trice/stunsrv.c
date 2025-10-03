@@ -255,7 +255,7 @@ int trice_stund_recv_role_set(struct trice *icem, struct ice_lcand *lcand,
 		goto badmsg;
 
 	trice_tracef(icem, 32,
-		     "[%u] STUNSRV: Tx success respons [%H ---> %J]\n",
+		     "[%u] STUNSRV: Tx success response [%H ---> %J]\n",
 		     lcand->attr.compid,
 		     trice_cand_print, lcand, src);
 

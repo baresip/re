@@ -580,7 +580,7 @@ void *trice_lcand_sock(struct trice *icem, const struct ice_lcand *lcand)
 					&lcand->base_addr);
 	}
 
-	/* note: original lcand has presedence, fallback to base-candidate */
+	/* note: original lcand has precedence, fallback to base-candidate */
 	switch (lcand->attr.type) {
 
 	case ICE_CAND_TYPE_HOST:

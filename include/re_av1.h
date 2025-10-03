@@ -69,7 +69,7 @@ enum {
 /** AV1 Aggregation Header */
 struct av1_aggr_hdr {
 	unsigned z:1;  /**< Continuation of OBU fragment from prev packet */
-	unsigned y:1;  /**< Last OBU element will continue in next packe  */
+	unsigned y:1;  /**< Last OBU element will continue in next packet */
 	unsigned w:2;  /**< Number of OBU elements in the packet          */
 	unsigned n:1;  /**< First packet of a coded video sequence        */
 };
