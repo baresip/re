@@ -556,7 +556,7 @@ static int tls_generate_cert(X509 **pcert, const char *cn)
 /**
  * Create a selfsigned X509 certificate using EC
  *
- * @param tls      TLS Contect
+ * @param tls      TLS Context
  * @param cn       Common Name
  * @param curve_n  Known EC curve name
  *

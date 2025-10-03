@@ -20,7 +20,7 @@ enum {
 /**
  * Convert a ascii hex string to binary format
  *
- * @param hex Destinatin binary buffer
+ * @param hex Destination binary buffer
  * @param len Length of binary buffer
  * @param str Source ascii string
  *
@@ -45,7 +45,7 @@ int str_hex(uint8_t *hex, size_t len, const char *str)
 /**
  * Copy a 0-terminated string with maximum length
  *
- * @param dst Destinatin string
+ * @param dst Destination string
  * @param src Source string
  * @param n   Maximum size of destination, including 0-terminator
  */
