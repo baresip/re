@@ -95,6 +95,7 @@ struct list *icem_lcandl(const struct icem *icem);
 struct list *icem_rcandl(const struct icem *icem);
 struct list *icem_checkl(const struct icem *icem);
 struct list *icem_validl(const struct icem *icem);
+bool icem_rcand_ready(struct icem *icem);
 const struct sa *icem_cand_default(struct icem *icem, unsigned compid);
 const struct sa *icem_selected_laddr(const struct icem *icem, unsigned compid);
 const struct ice_cand *icem_selected_lcand(const struct icem *icem,

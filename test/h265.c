@@ -228,8 +228,13 @@ static int packet_handler(bool marker, uint64_t rtp_ts,
 
 	++state->count;
 
-	err  = mbuf_write_mem(mb_pkt, hdr, hdr_len);
-	err |= mbuf_write_mem(mb_pkt, pld, pld_len);
+	if (hdr && hdr_len) {
+		err = mbuf_write_mem(mb_pkt, hdr, hdr_len);
+		if (err)
+			goto out;
+	}
+
+	err = mbuf_write_mem(mb_pkt, pld, pld_len);
 	if (err)
 		goto out;
 
@@ -249,10 +254,9 @@ static const char *bitstream =
 	"00000140010c01ffff01600000030090000003000003003cba024000000001";
 
 
-int test_h265_packet(void)
+static int test_h265_packet_param(size_t pktsize)
 {
 	struct state state;
-	const size_t pktsize = 8;
 	int err;
 
 	memset(&state, 0, sizeof(state));
@@ -278,5 +282,20 @@ int test_h265_packet(void)
  out:
 	mem_deref(state.mb);
 
+	return err;
+}
+
+
+int test_h265_packet(void)
+{
+	int err;
+
+	err = test_h265_packet_param(8);
+	TEST_ERR(err);
+
+	err = test_h265_packet_param(1500);
+	TEST_ERR(err);
+
+ out:
 	return err;
 }

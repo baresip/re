@@ -171,6 +171,7 @@ int test_bfcp(void);
 int test_bfcp_bin(void);
 int test_bfcp_udp(void);
 int test_bfcp_tcp(void);
+int test_btrace(void);
 int test_conf(void);
 int test_crc32(void);
 int test_dns_hdr(void);

@@ -80,7 +80,7 @@ int tls_get_issuer(struct tls *tls, struct mbuf *mb);
 int tls_get_subject(struct tls *tls, struct mbuf *mb);
 void tls_disable_verify_server(struct tls *tls);
 void tls_enable_verify_client(struct tls *tls, bool enable);
-int tls_set_resumption(struct tls *tls, const enum tls_resume_mode mode);
+int tls_set_resumption(struct tls *tls, enum tls_resume_mode mode);
 
 int tls_set_min_proto_version(struct tls *tls, int version);
 int tls_set_max_proto_version(struct tls *tls, int version);
@@ -126,6 +126,8 @@ int dtls_accept(struct tls_conn **ptc, struct tls *tls,
 		dtls_estab_h *estabh, dtls_recv_h *recvh,
 		dtls_close_h *closeh, void *arg);
 int dtls_send(struct tls_conn *tc, struct mbuf *mb);
+void dtls_set_handlers(struct tls_conn *tc, dtls_estab_h *estabh,
+		       dtls_recv_h *recvh, dtls_close_h *closeh, void *arg);
 const struct sa *dtls_peer(const struct tls_conn *tc);
 void dtls_set_peer(struct tls_conn *tc, const struct sa *peer);
 void dtls_recv_packet(struct dtls_sock *sock, const struct sa *src,

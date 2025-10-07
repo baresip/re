@@ -824,7 +824,7 @@ int test_sip_transp_add_client_cert(void)
 	err = sip_transp_add(stt->sip, SIP_TRANSP_TLS, &laddr, stt->tls);
 	TEST_ERR(err);
 
-	/* actuall test cases */
+	/* actual test cases */
 	err = sip_transp_add_ccert(NULL, &stt->uri, clientcert);
 	if (err == EINVAL) {
 		err = 0;

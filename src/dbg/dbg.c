@@ -76,14 +76,6 @@ void dbg_init(int level, enum dbg_flags flags)
 
 
 /**
- * Close debugging
- */
-void dbg_close(void)
-{
-}
-
-
-/**
  * Set optional debug print handler
  *
  * @param ph  Print handler

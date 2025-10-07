@@ -86,22 +86,16 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 {
 	struct tls_cert *tls_cert = NULL;
 	struct le *le;
-	size_t sz;
-	char *cn;
 	const struct list *certs = tls_certs(tls);
 
-	if (!certs)
+	if (!list_head(certs))
 		return NULL;
 
 	if (!str_isset(sni))
 		return list_head(certs)->data;
 
-	sz = str_len(sni) + 1;
-	if (sz > TLSEXT_MAXLEN_host_name)
-		return NULL;
-
-	cn = mem_zalloc(sz, NULL);
 	LIST_FOREACH(certs, le) {
+		char cn[TLSEXT_MAXLEN_host_name] = "";
 		X509 *x509;
 		X509_NAME *nm;
 		bool match = false;
@@ -115,8 +109,9 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 		}
 
 		nm = X509_get_subject_name(x509);
-		X509_NAME_get_text_by_NID(nm, NID_commonName, cn, (int) sz);
-		if (!str_cmp(sni, cn))
+		int n = X509_NAME_get_text_by_NID(nm, NID_commonName,
+						  cn, (int) sizeof(cn));
+		if (n > 0 && !str_cmp(sni, cn))
 			break;
 
 		err = x509_match_alt_name(x509, sni, &match);
@@ -129,7 +124,6 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 			break;
 	}
 
-	mem_deref(cn);
 	ERR_clear_error();
 	return tls_cert;
 }
