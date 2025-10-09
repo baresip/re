@@ -122,6 +122,28 @@ int test_aes(void)
 	err = test_aes_ctr_loop();
 	TEST_ERR(err);
 
+	static const uint8_t nullkey[AES_BLOCK_SIZE];
+	struct aes *aes = NULL;
+	int lerr;
+
+	lerr = aes_alloc(NULL, AES_MODE_CTR, nullkey, 128, NULL);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_alloc(&aes, AES_MODE_CTR, nullkey, 9999, NULL);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_alloc(&aes, AES_MODE_GCM, nullkey, 9999, NULL);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_alloc(&aes, (enum aes_mode)42, nullkey, 128, NULL);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_encr(NULL, NULL, NULL, 0);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_decr(NULL, NULL, NULL, 0);
+	ASSERT_TRUE(lerr != 0);
+
 out:
 	return err;
 }
