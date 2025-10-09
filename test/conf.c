@@ -12,6 +12,20 @@
 #include <re_dbg.h>
 
 
+static int conf_handler(const struct pl *val, void *arg)
+{
+	uint32_t *count = arg;
+	int err = 0;
+
+	++(*count);
+
+	ASSERT_EQ(*count, pl_u32(val));
+
+ out:
+	return err;
+}
+
+
 int test_conf(void)
 {
 	static const char *cfg =
@@ -23,6 +37,8 @@ int test_conf(void)
 		"bool_val_2    Yes\n"
 		"bool_val_3    1\n"
 		"bool_val_4    false\n"
+		"apply_val     1\n"
+		"apply_val     2\n"
 		;
 	char str[256];
 	struct conf *conf;
@@ -70,6 +86,12 @@ int test_conf(void)
 	err = conf_get_bool(conf, "bool_val_4", &val);
 	TEST_ERR(err);
 	ASSERT_TRUE(!val);
+
+	uint32_t count = 0;
+
+	err = conf_apply(conf, "apply_val", conf_handler, &count);
+	TEST_ERR(err);
+	ASSERT_EQ(2, count);
 
 	/* Non-existing parameters */
 	if (0 == conf_get(conf, "rattarei", &pl))
