@@ -144,6 +144,14 @@ int test_aes(void)
 	lerr = aes_decr(NULL, NULL, NULL, 0);
 	ASSERT_TRUE(lerr != 0);
 
+	aes_set_iv(NULL, NULL);
+
+	lerr = aes_get_authtag(NULL, NULL, 0);
+	ASSERT_TRUE(lerr != 0);
+
+	lerr = aes_authenticate(NULL, NULL, 0);
+	ASSERT_TRUE(lerr != 0);
+
 out:
 	return err;
 }
