@@ -459,3 +459,20 @@ out:
 
 	return err;
 }
+
+
+/* temporary work */
+int test_dns_tmp(void)
+{
+	struct sa srvv[8];
+	uint32_t srvc = RE_ARRAY_SIZE(srvv);
+
+	int err = dns_srv_get(NULL, 0, srvv, &srvc);
+	TEST_ERR(err);
+
+	for (uint32_t i=0; i<srvc; i++)
+		re_printf("dns:   nameserver:  %J\n", &srvv[i]);
+
+ out:
+	return err;
+}
