@@ -473,6 +473,8 @@ int test_dns_tmp(void)
 	for (uint32_t i=0; i<srvc; i++)
 		re_printf("dns:   nameserver:  %J\n", &srvv[i]);
 
+	ASSERT_TRUE(srvc >= 1);
+
  out:
 	return err;
 }
