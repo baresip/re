@@ -367,7 +367,7 @@ out:
 }
 
 
-int test_dns_integration(void)
+static int test_dns_integration_param(const char *laddr)
 {
 	struct dns_server *srv = NULL;
 	struct test_dns data = {0};
@@ -375,7 +375,7 @@ int test_dns_integration(void)
 	int err;
 
 	/* Setup Mocking DNS Server */
-	err = dns_server_alloc(&srv, false);
+	err = dns_server_alloc(&srv, laddr, false);
 	TEST_ERR(err);
 
 	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
@@ -457,6 +457,21 @@ out:
 	mem_deref(data.dnsc);
 	mem_deref(srv);
 
+	return err;
+}
+
+
+int test_dns_integration(void)
+{
+	int err;
+
+	err = test_dns_integration_param("127.0.0.1");
+	TEST_ERR(err);
+
+	err = test_dns_integration_param("::1");
+	TEST_ERR(err);
+
+ out:
 	return err;
 }
 

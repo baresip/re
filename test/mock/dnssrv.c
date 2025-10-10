@@ -143,7 +143,7 @@ void dns_server_flush(struct dns_server *srv)
 }
 
 
-int dns_server_alloc(struct dns_server **srvp, bool rotate)
+int dns_server_alloc(struct dns_server **srvp, const char *laddr, bool rotate)
 {
 	struct dns_server *srv;
 	int err;
@@ -155,7 +155,7 @@ int dns_server_alloc(struct dns_server **srvp, bool rotate)
 	if (!srv)
 		return ENOMEM;
 
-	err = sa_set_str(&srv->addr, "127.0.0.1", LOCAL_PORT);
+	err = sa_set_str(&srv->addr, laddr, LOCAL_PORT);
 	if (err)
 		goto out;
 
