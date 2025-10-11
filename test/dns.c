@@ -222,7 +222,7 @@ int test_dns_rr(void)
 		if (err)
 			break;
 
-		if (!dns_rr_cmp(rr, rr2, false)) {
+		if (!dns_rr_cmp(rr, rr2, true)) {
 			(void)re_fprintf(stderr,
 					 "dns_rr:\nrr:  %02w\n\nrr2: %02w\n",
 					 rr, sizeof(*rr), rr2, sizeof(*rr2));
@@ -367,7 +367,7 @@ out:
 }
 
 
-int test_dns_integration(void)
+static int test_dns_integration_param(const char *laddr)
 {
 	struct dns_server *srv = NULL;
 	struct test_dns data = {0};
@@ -375,7 +375,7 @@ int test_dns_integration(void)
 	int err;
 
 	/* Setup Mocking DNS Server */
-	err = dns_server_alloc(&srv, false);
+	err = dns_server_alloc(&srv, laddr, false);
 	TEST_ERR(err);
 
 	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
@@ -457,5 +457,39 @@ out:
 	mem_deref(data.dnsc);
 	mem_deref(srv);
 
+	return err;
+}
+
+
+int test_dns_integration(void)
+{
+	int err;
+
+	err = test_dns_integration_param("127.0.0.1");
+	TEST_ERR(err);
+
+	err = test_dns_integration_param("::1");
+	TEST_ERR(err);
+
+ out:
+	return err;
+}
+
+
+/* temporary work */
+int test_dns_tmp(void)
+{
+	struct sa srvv[8];
+	uint32_t srvc = RE_ARRAY_SIZE(srvv);
+
+	int err = dns_srv_get(NULL, 0, srvv, &srvc);
+	TEST_ERR(err);
+
+	for (uint32_t i=0; i<srvc; i++)
+		re_printf("dns:   nameserver:  %J\n", &srvv[i]);
+
+	ASSERT_TRUE(srvc >= 1);
+
+ out:
 	return err;
 }
