@@ -115,6 +115,8 @@ int aufile_open(struct aufile **afp, struct aufile_prm *prm,
 	int aufmt;
 	int err;
 
+	re_fprintf(stderr, "aufile_open: filename='%s'\n", filename);
+
 	if (!afp || !filename || (mode == AUFILE_WRITE && !prm))
 		return EINVAL;
 
@@ -243,6 +245,7 @@ size_t aufile_get_size(struct aufile *af)
 
 	return af->datasize;
 }
+
 
 /**
  * Get length of a WAV file in ms
