@@ -134,16 +134,13 @@ int wav_header_encode(FILE *f, uint16_t format, uint16_t channels,
 
 int wav_header_decode(struct wav_fmt *fmt, size_t *datasize, FILE *f)
 {
-	struct wav_chunk header = {0}, format, chunk;
+	struct wav_chunk header, format, chunk;
 	uint8_t rifftype[4];        /* "WAVE" */
 	int err = 0;
 
 	err = chunk_decode(&header, f);
 	if (err)
 		return err;
-
-	re_fprintf(stderr, "wav_header_decode: header:  id=0x%w  size=%u\n",
-		   header.id, sizeof(header.id), header.size);
 
 	if (memcmp(header.id, "RIFF", 4)) {
 		(void)re_fprintf(stderr, "aufile: expected RIFF (%b)"
