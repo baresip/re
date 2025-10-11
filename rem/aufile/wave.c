@@ -132,7 +132,8 @@ int wav_header_decode(struct wav_fmt *fmt, size_t *datasize, FILE *f)
 		   header.id, sizeof(header.id), header.size);
 
 	if (memcmp(header.id, "RIFF", 4)) {
-		(void)re_fprintf(stderr, "aufile: expected RIFF (%b) size=%u\n",
+		(void)re_fprintf(stderr, "aufile: expected RIFF (%b)"
+				 " size=%u\n",
 				 header.id, sizeof(header.id),
 				 header.size);
 		return EBADMSG;
