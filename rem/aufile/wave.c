@@ -64,7 +64,7 @@ static int read_u32(FILE *f, uint32_t *v)
 	if (1 != fread(&vle, sizeof(vle), 1, f)) {
 
 		if (feof(f)) {
-			re_fprintf(stderr, "END-OF-FILE\n");
+			re_fprintf(stderr, "read_u32: END-OF-FILE\n");
 			return ENODATA;
 		}
 
@@ -92,7 +92,7 @@ static int chunk_decode(struct wav_chunk *chunk, FILE *f)
 	if (1 != fread(chunk->id, sizeof(chunk->id), 1, f)) {
 
 		if (feof(f)) {
-			re_fprintf(stderr, "END-OF-FILE\n");
+			re_fprintf(stderr, "chunk_decode: END-OF-FILE\n");
 			return ENODATA;
 		}
 
