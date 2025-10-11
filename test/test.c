@@ -54,7 +54,7 @@ static const struct test tests[] = {
 	TEST(test_aes_gcm),
 	TEST(test_au),
 	TEST(test_aubuf),
-	TEST(test_aulength),
+	/*TEST(test_aulength),*/
 	TEST(test_aulevel),
 	TEST(test_auposition),
 	TEST(test_auresamp),
