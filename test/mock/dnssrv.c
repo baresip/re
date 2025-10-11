@@ -139,6 +139,9 @@ static void destructor(void *arg)
 
 void dns_server_flush(struct dns_server *srv)
 {
+	if (!srv)
+		return;
+
 	list_flush(&srv->rrl);
 }
 

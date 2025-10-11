@@ -222,7 +222,7 @@ int test_dns_rr(void)
 		if (err)
 			break;
 
-		if (!dns_rr_cmp(rr, rr2, false)) {
+		if (!dns_rr_cmp(rr, rr2, true)) {
 			(void)re_fprintf(stderr,
 					 "dns_rr:\nrr:  %02w\n\nrr2: %02w\n",
 					 rr, sizeof(*rr), rr2, sizeof(*rr2));
