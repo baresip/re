@@ -61,15 +61,8 @@ static int read_u32(FILE *f, uint32_t *v)
 {
 	uint32_t vle;
 
-	if (1 != fread(&vle, sizeof(vle), 1, f)) {
-
-		if (feof(f)) {
-			re_fprintf(stderr, "read_u32: END-OF-FILE\n");
-			return ENODATA;
-		}
-
+	if (1 != fread(&vle, sizeof(vle), 1, f))
 		return ferror(f);
-	}
 
 	*v = sys_ltohl(vle);
 
@@ -89,15 +82,8 @@ static int chunk_encode(FILE *f, const char *id, size_t sz)
 
 static int chunk_decode(struct wav_chunk *chunk, FILE *f)
 {
-	if (1 != fread(chunk->id, sizeof(chunk->id), 1, f)) {
-
-		if (feof(f)) {
-			re_fprintf(stderr, "chunk_decode: END-OF-FILE\n");
-			return ENODATA;
-		}
-
+	if (1 != fread(chunk->id, sizeof(chunk->id), 1, f))
 		return ferror(f);
-	}
 
 	return read_u32(f, &chunk->size);
 }
@@ -143,10 +129,8 @@ int wav_header_decode(struct wav_fmt *fmt, size_t *datasize, FILE *f)
 		return err;
 
 	if (memcmp(header.id, "RIFF", 4)) {
-		(void)re_fprintf(stderr, "aufile: expected RIFF (%b)"
-				 " size=%u\n",
-				 header.id, sizeof(header.id),
-				 header.size);
+		(void)re_fprintf(stderr, "aufile: expected RIFF (%b)\n",
+				 header.id, sizeof(header.id));
 		return EBADMSG;
 	}
 
