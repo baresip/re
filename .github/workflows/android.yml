@@ -81,7 +81,9 @@ jobs:
         script: |
           adb push test/retest /data/local/tmp/retest
           adb shell chmod 775 /data/local/tmp/retest
+          adb shell rm -rf /data/local/tmp/retest-data
           adb push test/data /data/local/tmp/retest-data
+          adb shell chmod 775 /data/local/tmp/retest-data
           adb shell ls -al /data/local/tmp/retest-data
           adb push $ANDROID_NDK_LATEST_HOME/$toolchain/sysroot/usr/lib/$abi-linux-android/libc++_shared.so /data/local/tmp/libc++_shared.so
-          adb shell HOME=/data/local/tmp LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/retest -r -v -d /data/local/tmp/retest-data/data
+          adb shell HOME=/data/local/tmp LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/retest -r -v -d /data/local/tmp/retest-data
