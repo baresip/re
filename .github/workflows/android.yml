@@ -11,7 +11,7 @@ on:
 env:
   openssl: 3.2.1
   toolchain: toolchains/llvm/prebuilt/linux-x86_64
-  api: 29
+  api: 26
   abi: x86_64
 
 jobs:
@@ -47,36 +47,12 @@ jobs:
         cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI="$abi" -DANDROID_PLATFORM=android-$api -DOPENSSL_ROOT_DIR=openssl -DOPENSSL_INCLUDE_DIR=openssl/include -DOPENSSL_CRYPTO_LIBRARY=openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY=openssl/libssl.a -DUSE_UNIXSOCK=OFF .
         cmake --build . -j 4 -t retest
 
-    - name: AVD cache
-      uses: actions/cache@v4
-      id: avd-cache
-      with:
-        path: |
-          ~/.android/avd/*
-          ~/.android/adb*
-        key: avd-${{ env.abi }}-${{ env.api }}
-
-    - name: create AVD and generate snapshot for caching
-      if: steps.avd-cache.outputs.cache-hit != 'true'
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: ${{ env.api }}
-        arch: ${{ env.abi }}
-        target: google_apis
-        force-avd-creation: false
-        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-metrics
-        disable-animations: false
-        script: echo "Generated AVD snapshot for caching."
-
     - name: run
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: ${{ env.api }}
         arch: ${{ env.abi }}
         target: google_apis
-        force-avd-creation: false
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-metrics
-        disable-animations: true
         # Use test data directory as a writeable directory for I/O tests as the emulator file system is not generally writeable
         script: |
           adb push test/retest /data/local/tmp/retest
