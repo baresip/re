@@ -11,7 +11,7 @@ on:
 env:
   openssl: 3.2.1
   toolchain: toolchains/llvm/prebuilt/linux-x86_64
-  api: 29
+  api: 26
   abi: x86_64
 
 jobs:
