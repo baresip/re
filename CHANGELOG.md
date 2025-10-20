@@ -5,6 +5,36 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.2.0 - 2025-10-15
+
+## What's Changed
+* test: add testcode for btrace module by @alfredh in https://github.com/baresip/re/pull/1414
+* types: add ETIME fallback by @sreimers in https://github.com/baresip/re/pull/1420
+* test: add testing of conf_get_bool() by @alfredh in https://github.com/baresip/re/pull/1419
+* test/btrace: skip thread test by @sreimers in https://github.com/baresip/re/pull/1422
+* Revert "dtls: remove dtls_set_handlers() -- unused" by @sreimers in https://github.com/baresip/re/pull/1421
+* ice/icem: add icem_rcand_ready helper by @sreimers in https://github.com/baresip/re/pull/1424
+* ice/sdp: remove mDNS AI_V4MAPPED and log late candidate by @sreimers in https://github.com/baresip/re/pull/1423
+* tls: minor improvements to SNI and Common-name comparison by @alfredh in https://github.com/baresip/re/pull/1425
+* tls: revert wrong match-checking in SNI function by @alfredh in https://github.com/baresip/re/pull/1427
+* ci-windows: bump choco openssl version to 3.5.3 by @alfredh in https://github.com/baresip/re/pull/1426
+* tls: sni - a null pointer check by @cspiel1 in https://github.com/baresip/re/pull/1430
+* test: fix some minor typos by @alfredh in https://github.com/baresip/re/pull/1429
+* dbg: remove dbg_close() -- unused by @alfredh in https://github.com/baresip/re/pull/1428
+* ci,windows: bump choco openssl to 3.5.4 by @alfredh in https://github.com/baresip/re/pull/1433
+* misc: fix some minor typos by @alfredh in https://github.com/baresip/re/pull/1432
+* test: test both fragmented and non-fragmented H.265 packets by @alfredh in https://github.com/baresip/re/pull/1434
+* test: add negative AES testcases by @alfredh in https://github.com/baresip/re/pull/1435
+* test: add test for conf_apply() by @alfredh in https://github.com/baresip/re/pull/1436
+* ci/android: Upgrade to API-level 29 (Android 10.0) by @alfredh in https://github.com/baresip/re/pull/1439
+* ci/android: remove AVD cache by @sreimers in https://github.com/baresip/re/pull/1442
+* ci/android: revert to android api level 26 by @sreimers in https://github.com/baresip/re/pull/1443
+* bump version number to 4.2.0 by @alfredh in https://github.com/baresip/re/pull/1440
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.1.0...v4.2.0
+
+
 ## v4.1.0 - 2025-09-10
 
 ### What's Changed
