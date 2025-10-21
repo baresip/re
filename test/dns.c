@@ -468,8 +468,10 @@ int test_dns_integration(void)
 	err = test_dns_integration_param("127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_dns_integration_param("::1");
-	TEST_ERR(err);
+	if (test_ipv6_supported()) {
+		err = test_dns_integration_param("::1");
+		TEST_ERR(err);
+	}
 
  out:
 	return err;
@@ -480,13 +482,16 @@ int test_dns_integration(void)
 int test_dns_tmp(void)
 {
 	struct sa srvv[8];
-	uint32_t srvc = RE_ARRAY_SIZE(srvv);
+	size_t srvc = RE_ARRAY_SIZE(srvv);
 
-	int err = dns_srv_get(NULL, 0, srvv, &srvc);
+	int err = dns_nameservers_get(srvv, &srvc);
 	TEST_ERR(err);
 
-	for (uint32_t i=0; i<srvc; i++)
+	for (uint32_t i=0; i<srvc; i++) {
 		re_printf("dns:   nameserver:  %J\n", &srvv[i]);
+
+		ASSERT_TRUE(sa_isset(&srvv[i], SA_ALL));
+	}
 
 	ASSERT_TRUE(srvc >= 1);
 

@@ -148,3 +148,28 @@ int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 
 	return err;
 }
+
+
+/**
+ * Get the DNS nameservers
+ *
+ * @param srvv   Returned nameservers
+ * @param srvc   Nameservers capacity, actual on return
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int dns_nameservers_get(struct sa *srvv, size_t *srvc)
+{
+	if (!srvv || !srvc)
+		return EINVAL;
+
+	uint32_t n = (uint32_t)*srvc;
+
+	int err = dns_srv_get(NULL, 0, srvv, &n);
+	if (err)
+		return err;
+
+	*srvc = n;
+
+	return 0;
+}
