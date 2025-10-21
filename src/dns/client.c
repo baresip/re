@@ -826,7 +826,9 @@ static int async_getaddrinfo(void *arg)
 			goto out;
 		}
 
-		str_dup(&rr->name, dq->name);
+		err = str_dup(&rr->name, dq->name);
+		if (err)
+			goto out;
 
 		rr->dnsclass = DNS_CLASS_IN;
 		rr->ttl	     = GETADDRINFO_TTL;
