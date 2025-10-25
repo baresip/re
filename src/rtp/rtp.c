@@ -14,6 +14,7 @@
 #include <re_net.h>
 #include <re_udp.h>
 #include <re_rtp.h>
+#include <re_tmr.h>
 #include <re_atomic.h>
 #include "rtcp.h"
 
@@ -208,6 +209,7 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 	if (rs->rtcp)
 		rtcp_sess_rx_rtp(rs->rtcp, &hdr, mbuf_get_left(mb), src);
 
+	rtp_hdr_fix_ts_arrive(&hdr, 0);
 	if (rs->recvh)
 		rs->recvh(src, &hdr, mb, rs->arg);
 }
@@ -574,6 +576,37 @@ int rtp_resend(struct rtp_sock *rs, uint16_t seq, const struct sa *dst,
 #endif
 
 	return udp_send(rs->sock_rtp, dst, mb);
+}
+
+
+int rtp_pt_srate(int pt)
+{
+	switch (pt) {
+
+	case 0:  return 8000;   /* PCMU */
+	case 8:  return 8000;   /* PCMA */
+	case 9:  return 16000;  /* G722 */
+
+	default: return 0;
+	}
+}
+
+
+void rtp_hdr_fix_ts_arrive(struct rtp_header *hdr, uint32_t srate)
+{
+	if (!hdr)
+		return;
+
+	if (hdr->ts_arrive)
+		return;
+
+	if (!srate)
+		srate = rtp_pt_srate(hdr->pt);
+
+	if (!srate)
+		return;
+
+	hdr->ts_arrive = tmr_jiffies() * srate / 1000;
 }
 
 

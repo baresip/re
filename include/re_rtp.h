@@ -268,6 +268,7 @@ int   rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 int   rtp_open(struct rtp_sock **rsp, int af);
 int   rtp_hdr_encode(struct mbuf *mb, const struct rtp_header *hdr);
 int   rtp_hdr_decode(struct rtp_header *hdr, struct mbuf *mb);
+void  rtp_hdr_fix_ts_arrive(struct rtp_header *hdr, uint32_t srate);
 int   rtp_encode(struct rtp_sock *rs, bool ext, bool marker, uint8_t pt,
 		 uint32_t ts, struct mbuf *mb);
 int   rtp_encode_seq(struct rtp_sock *rs, uint16_t seq, bool ext, bool marker,
@@ -360,6 +361,15 @@ static inline bool rtp_seq_less(uint16_t x, uint16_t y)
 {
 	return ((int16_t)(x - y)) < 0;
 }
+
+
+/**
+ * Get the sampling rate for a given payload type
+ *
+ * @param pt Payload type
+ * @return Sampling rate in Hz, or 0 if unknown
+ */
+int rtp_pt_srate(int pt);
 
 
 /** NTP Time */
