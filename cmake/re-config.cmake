@@ -214,7 +214,6 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   list(APPEND RE_DEFINITIONS DARWIN)
-  include_directories(/opt/local/include)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
   list(APPEND RE_DEFINITIONS DARWIN)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
