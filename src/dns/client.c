@@ -788,7 +788,7 @@ static bool getaddr_dup(struct le *le, void *arg)
 	}
 
 	if (r1->type == DNS_TYPE_AAAA && r2->type == DNS_TYPE_AAAA) {
-		if (r1->rdata.aaaa.addr == r2->rdata.aaaa.addr)
+		if (0 == memcmp(r1->rdata.aaaa.addr, r2->rdata.aaaa.addr, 16))
 			return true;
 	}
 
