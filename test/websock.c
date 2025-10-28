@@ -18,6 +18,7 @@ struct test {
 	struct websock *ws;
 	struct websock_conn *wc_cli;
 	struct websock_conn *wc_srv;
+	const char *proto;
 	uint32_t n_estab_cli;
 	uint32_t n_recv_cli;
 	uint32_t n_recv_srv;
@@ -34,7 +35,6 @@ static const char test_payload[]     =
 	"0123456789abcdef"
 	"0123456789abcdef";
 static const char custom_useragent[] = "Retest v0.1";
-static const char proto[] = "test";
 
 
 static void abort_test(struct test *t, int err)
@@ -92,13 +92,26 @@ static void http_req_handler(struct http_conn *conn,
 	TEST_ASSERT(http_msg_hdr_has_value(msg, HTTP_HDR_USER_AGENT,
 					   custom_useragent));
 
-	TEST_ASSERT(http_msg_xhdr_has_value(msg, "Sec-WebSocket-Protocol",
-					    proto));
+	if (test->proto) {
+		TEST_ASSERT(http_msg_xhdr_has_value(msg,
+						    "Sec-WebSocket-Protocol",
+						    test->proto));
+	}
 
 	unsigned kaint = 1;
-	err = websock_accept_proto(&test->wc_srv, proto, test->ws, conn, msg,
-			     kaint, srv_websock_recv_handler,
-			     srv_websock_close_handler, test);
+
+	if (test->proto) {
+		err = websock_accept_proto(&test->wc_srv, test->proto,
+					   test->ws, conn, msg, kaint,
+					   srv_websock_recv_handler,
+					   srv_websock_close_handler, test);
+	}
+	else {
+		err = websock_accept(&test->wc_srv, test->ws, conn, msg, kaint,
+				     srv_websock_recv_handler,
+				     srv_websock_close_handler, test);
+	}
+
  out:
 	if (err)
 		abort_test(test, err);
@@ -152,7 +165,7 @@ static void cli_websock_close_handler(int err, void *arg)
 }
 
 
-static int test_websock_loop(void)
+static int test_websock_loop(const char *proto)
 {
 	struct http_sock *httpsock = NULL;
 	struct http_cli *http_cli = NULL;
@@ -163,6 +176,8 @@ static int test_websock_loop(void)
 	int err = 0;
 
 	memset(&test, 0, sizeof(test));
+
+	test.proto = proto;
 
 	err |= sa_set_str(&srv, "127.0.0.1", 0);
 	err |= sa_set_str(&dns, "127.0.0.1", 53);    /* note: unused */
@@ -192,12 +207,25 @@ static int test_websock_loop(void)
 	(void)re_snprintf(uri, sizeof(uri),
 			  "http://127.0.0.1:%u/", sa_port(&srv));
 	unsigned kaint = 1;
-	err = websock_connect_proto(&test.wc_cli, proto, test.ws,
-			      http_cli, uri, kaint,
-			      cli_websock_estab_handler,
-			      cli_websock_recv_handler,
-			      cli_websock_close_handler, &test,
-			      "User-Agent: %s\r\n", custom_useragent);
+
+	if (proto) {
+		err = websock_connect_proto(&test.wc_cli, proto, test.ws,
+					    http_cli, uri, kaint,
+					    cli_websock_estab_handler,
+					    cli_websock_recv_handler,
+					    cli_websock_close_handler, &test,
+					    "User-Agent: %s\r\n",
+					    custom_useragent);
+	}
+	else {
+		err = websock_connect(&test.wc_cli, test.ws,
+				      http_cli, uri, kaint,
+				      cli_websock_estab_handler,
+				      cli_websock_recv_handler,
+				      cli_websock_close_handler, &test,
+				      "User-Agent: %s\r\n", custom_useragent);
+	}
+
 	if (err)
 		goto out;
 
@@ -231,7 +259,12 @@ int test_websock(void)
 {
 	int err = 0;
 
-	err |= test_websock_loop();
+	err = test_websock_loop(NULL);
+	TEST_ERR(err);
 
+	err = test_websock_loop("test");
+	TEST_ERR(err);
+
+ out:
 	return err;
 }
