@@ -473,7 +473,7 @@ static int oa_offeranswer(struct oa *oa, const char *offer, const char *answer)
 	if (!sdp_cmp(mba, answer)) {
 		DEBUG_WARNING("answer failed:\n%b", mba->buf, mba->end);
 		err = EBADMSG;
-		goto out;
+		TEST_ERR(err);
 	}
 
 	err = sdp_decode(oa->alice, mba, false);
@@ -985,6 +985,7 @@ int test_sdp_disabled_rejected(void)
 struct fixture {
 	struct sdp_session *sess;
 	struct sdp_media *audio;
+	struct sdp_media *video;
 };
 
 struct attr {
@@ -997,6 +998,7 @@ struct codec {
 	const char *name;
 	uint32_t srate;
 	uint8_t ch;
+	bool audio;
 };
 
 struct args {
@@ -1045,7 +1047,26 @@ static int fixture_init(struct fixture *fix,
 	for (size_t i=0; i<codecc; i++) {
 		const struct codec *codec = &codecv[i];
 
+		if (!codec->audio)
+			continue;
+
 		err = sdp_format_add(NULL, fix->audio, false, codec->id,
+				     codec->name, codec->srate, codec->ch,
+				     NULL, NULL, NULL, false, NULL);
+		TEST_ERR(err);
+	}
+
+	err = sdp_media_add(&fix->video, fix->sess, "video",
+			    10, "RTP/AVP");
+	TEST_ERR(err);
+
+	for (size_t i=0; i<codecc; i++) {
+		const struct codec *codec = &codecv[i];
+
+		if (codec->audio)
+			continue;
+
+		err = sdp_format_add(NULL, fix->video, false, codec->id,
 				     codec->name, codec->srate, codec->ch,
 				     NULL, NULL, NULL, false, NULL);
 		TEST_ERR(err);
@@ -1131,8 +1152,14 @@ static int test_sdp_param(const char *sdp,
 
 	TEST_STRCMP_LEN("UDP/TLS/RTP/SAVPF", sdp_media_proto(fix.audio));
 
-	const struct sdp_format *format = sdp_media_rformat(fix.audio, NULL);
-	TEST_STRCMP_LEN("opus", format->name);
+	const struct sdp_format *audio_fmt =
+		sdp_media_rformat(fix.audio, NULL);
+	TEST_STRCMP_LEN("opus", audio_fmt->name);
+
+	const struct sdp_format *video_fmt =
+		sdp_media_lformat(fix.video, 102);
+	TEST_ASSERT(video_fmt);
+	TEST_STRCMP_LEN("H264", video_fmt->name);
 
  out:
 	fixture_close(&fix);
@@ -1190,6 +1217,56 @@ int test_sdp_interop(void)
 	"a=ssrc:2161565476 cname:P6e47zI3iVPviKRL\r\n"
 	"a=ssrc:2161565476 msid:2a30d377-cd13-4454-974c-0144db0118a6"
 	  " c061a2b9-95bc-45fb-9e5d-6df08d8e1d0f\r\n"
+	"m=video 29942 RTP/AVP 102 104 106 108 127 112 116\r\n"
+	"b=AS:3072\r\n"
+	"a=rtpmap:102 H264/90000\r\n"
+	"a=fmtp:102 level-asymmetry-allowed=1;"
+	  "packetization-mode=1;profile-level-id=42001f\r\n"
+	"a=rtpmap:104 H264/90000\r\n"
+	"a=fmtp:104 level-asymmetry-allowed=1;"
+	  "packetization-mode=0;profile-level-id=42001f\r\n"
+	"a=rtpmap:106 H264/90000\r\n"
+	"a=fmtp:106 level-asymmetry-allowed=1;"
+	  "packetization-mode=1;profile-level-id=42e01f\r\n"
+	"a=rtpmap:108 H264/90000\r\n"
+	"a=fmtp:108 level-asymmetry-allowed=1;"
+	  "packetization-mode=0;profile-level-id=42e01f\r\n"
+	"a=rtpmap:127 H264/90000\r\n"
+	"a=fmtp:127 level-asymmetry-allowed=1;"
+	  "packetization-mode=1;profile-level-id=4d001f\r\n"
+	"a=rtpmap:112 H264/90000\r\n"
+	"a=fmtp:112 level-asymmetry-allowed=1;"
+	  "packetization-mode=1;profile-level-id=64001f\r\n"
+	"a=rtpmap:116 H265/90000\r\n"
+	"a=fmtp:116 level-id=93;profile-id=1;tier-flag=0;tx-mode=SRST\r\n"
+	"a=rtcp-fb:102 ccm fir\r\n"
+	"a=rtcp-fb:102 ccm tmmbr\r\n"
+	"a=rtcp-fb:102 nack\r\n"
+	"a=rtcp-fb:102 nack pli\r\n"
+	"a=rtcp-fb:104 ccm fir\r\n"
+	"a=rtcp-fb:104 ccm tmmbr\r\n"
+	"a=rtcp-fb:104 nack\r\n"
+	"a=rtcp-fb:104 nack pli\r\n"
+	"a=rtcp-fb:106 ccm fir\r\n"
+	"a=rtcp-fb:106 ccm tmmbr\r\n"
+	"a=rtcp-fb:106 nack\r\n"
+	"a=rtcp-fb:106 nack pli\r\n"
+	"a=rtcp-fb:108 ccm fir\r\n"
+	"a=rtcp-fb:108 ccm tmmbr\r\n"
+	"a=rtcp-fb:108 nack\r\n"
+	"a=rtcp-fb:108 nack pli\r\n"
+	"a=rtcp-fb:127 ccm fir\r\n"
+	"a=rtcp-fb:127 ccm tmmbr\r\n"
+	"a=rtcp-fb:127 nack\r\n"
+	"a=rtcp-fb:127 nack pli\r\n"
+	"a=rtcp-fb:112 ccm fir\r\n"
+	"a=rtcp-fb:112 ccm tmmbr\r\n"
+	"a=rtcp-fb:112 nack\r\n"
+	"a=rtcp-fb:112 nack pli\r\n"
+	"a=rtcp-fb:116 ccm fir\r\n"
+	"a=rtcp-fb:116 ccm tmmbr\r\n"
+	"a=rtcp-fb:116 nack\r\n"
+	"a=rtcp-fb:116 nack pli\r\n"
 	;
 
 	static const struct attr session_attrv[] = {
@@ -1227,14 +1304,15 @@ int test_sdp_interop(void)
 
 	static const struct codec codecv[] = {
 
-		{  NULL, "opus",            48000, 2},
-		{  "63", "red",             48000, 2},
-		{   "9", "G722",             8000, 1},
-		{   "0", "PCMU",             8000, 1},
-		{   "8", "PCMA",             8000, 1},
-		{  "13", "CN",               8000, 1},
-		{ "110", "telephone-event", 48000, 1},
-		{ "126", "telephone-event",  8000, 1},
+		{  NULL, "opus",            48000, 2, true},
+		{  "63", "red",             48000, 2, true},
+		{   "9", "G722",             8000, 1, true},
+		{   "0", "PCMU",             8000, 1, true},
+		{   "8", "PCMA",             8000, 1, true},
+		{  "13", "CN",               8000, 1, true},
+		{ "110", "telephone-event", 48000, 1, true},
+		{ "126", "telephone-event",  8000, 1, true},
+		{ "150", "H264",            90000, 1, false},
 	};
 
 	int err;

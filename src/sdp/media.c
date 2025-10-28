@@ -273,11 +273,11 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 		lfmt->sup = false;
 	}
 
-	rle = m->rfmtl.head;
+	rle = m->rfmtl.tail;
 
 	while (rle) {
 		rfmt = rle->data;
-		rle  = rle->next;
+		rle = rle->prev;
 
 		for (lle=m->lfmtl.head; lle; lle=lle->next) {
 
@@ -317,7 +317,7 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 			lfmt->pt = atoi(lfmt->id ? lfmt->id : "");
 
 			list_unlink(&lfmt->le);
-			list_append(&m->lfmtl, &lfmt->le, lfmt);
+			list_prepend(&m->lfmtl, &lfmt->le, lfmt);
 			if (lfmt->pt > pt_offer)
 				pt_offer = lfmt->pt;
 		}
@@ -325,7 +325,6 @@ void sdp_media_align_formats(struct sdp_media *m, bool offer)
 
 	/* Recalculate pt and reorder unsupported codecs */
 	if (offer) {
-
 		for (lle = m->lfmtl.tail; lle;) {
 
 			lfmt = lle->data;
