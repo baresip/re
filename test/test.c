@@ -316,8 +316,13 @@ static void hide_output(void)
 #endif
 
 	int fd_out = open("stdout.out", O_WRONLY | O_CREAT, mode);
-	int fd_err = open("stderr.out", O_WRONLY | O_CREAT, mode);
+	if (fd_out < 0)
+		return;
 	(void)dup2(fd_out, fileno(stdout));
+
+	int fd_err = open("stderr.out", O_WRONLY | O_CREAT, mode);
+	if (fd_err < 0)
+		return;
 	(void)dup2(fd_err, fileno(stderr));
 }
 
