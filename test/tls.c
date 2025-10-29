@@ -371,7 +371,7 @@ int test_tls_selfsigned(void)
 int test_tls_certificate(void)
 {
 	struct tls *tls = NULL;
-	static const uint8_t test_fingerprint[32] =
+	re_nonstring static const uint8_t test_fingerprint[32] =
 		"\x50\x5d\x95\x2b\xef\x5b\x6f\x7f"
 		"\x2b\x4a\xa8\x1b\xdd\xe1\x99\xfd"
 		"\x4e\xb5\xc1\x04\xe7\x67\xa7\x48"
