@@ -15,15 +15,19 @@ jobs:
     strategy:
       matrix:
         build_type: [Release, Debug]
-        compiler: [gcc, clang, gcc-14]
+        compiler: [gcc, clang, gcc-14, clang-21]
         os: [ubuntu-22.04, ubuntu-24.04, macos-latest]
         exclude:
           - os: macos-latest
             compiler: gcc
           - os: macos-latest
             compiler: gcc-14
+          - os: macos-latest
+            compiler: clang-21
           - os: ubuntu-22.04
             compiler: gcc-14
+          - os: ubuntu-22.04
+            compiler: clang-21
     env:
       CC: ${{ matrix.compiler }}
       CMAKE_GENERATOR: Ninja
@@ -49,6 +53,13 @@ jobs:
       if: ${{ runner.os == 'Linux' }}
       run: |
         sudo apt-get update && sudo apt-get install -y ninja-build
+
+    - name: Install clang
+      if: ${{ matrix.compiler == 'clang-21' }}
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"
+        sudo apt-get update && sudo apt-get install -y clang-21
 
     - name: make info
       run: |
