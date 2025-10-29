@@ -248,6 +248,17 @@ typedef SSIZE_T ssize_t;
 #define unlikely(x) x
 #endif
 
+/*
+ * https://clang.llvm.org/docs/AttributeReference.html#nonstring
+ */
+#define re_nonstring
+#ifdef __GNUC__
+#if __has_attribute(nonstring)
+#undef re_nonstring
+#define re_nonstring __attribute__((nonstring))
+#endif
+#endif
+
 #ifdef WIN32
 #define re_restrict __restrict
 #else

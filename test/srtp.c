@@ -525,12 +525,12 @@ static int test_srtp_libsrtp(void)
 {
 	uint8_t pkt[12+20+10];
 	struct srtp *srtp_enc = NULL;
-	static const uint8_t mast_key[16+14] =
+	re_nonstring static const uint8_t mast_key[16+14] =
 		"\x22\x22\x22\x22\x22\x22\x22\x22"
 		"\x22\x22\x22\x22\x22\x22\x22\x22"
 		"\x44\x44\x44\x44\x44\x44\x44"
 		"\x44\x44\x44\x44\x44\x44\x44";
-	static const uint8_t rtp_payload[20] =
+	re_nonstring static const uint8_t rtp_payload[20] =
 		"\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5"
 		"\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5\xa5";
 	struct mbuf *mb;
@@ -595,7 +595,7 @@ static int test_srtcp_libsrtp(void)
 {
 	uint8_t pkt[12+4+4];
 	struct srtp *srtp_enc = NULL;
-	static const uint8_t mast_key[16+14] =
+	re_nonstring static const uint8_t mast_key[16+14] =
 		"\x22\x22\x22\x22\x22\x22\x22\x22"
 		"\x22\x22\x22\x22\x22\x22\x22\x22"
 		"\x44\x44\x44\x44\x44\x44\x44"
