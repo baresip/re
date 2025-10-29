@@ -297,8 +297,8 @@ int fs_fread(struct mbuf **mbp, const char *path)
 	}
 
 out:
-	if (!err)
-		err = ferror(f);
+	if (!err && ferror(f))
+		err = EIO;
 
 	fclose(f);
 
