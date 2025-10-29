@@ -478,7 +478,6 @@ int test_dns_integration(void)
 }
 
 
-/* temporary work */
 int test_dns_nameservers(void)
 {
 	struct sa srvv[8];
@@ -487,13 +486,11 @@ int test_dns_nameservers(void)
 	int err = dns_nameservers_get(srvv, &srvc);
 	TEST_ERR(err);
 
-	for (size_t i=0; i<srvc; i++) {
-		re_printf("dns:   nameserver:  %J\n", &srvv[i]);
+	ASSERT_TRUE(srvc >= 1);
 
+	for (size_t i=0; i<srvc; i++) {
 		ASSERT_TRUE(sa_isset(&srvv[i], SA_ALL));
 	}
-
-	ASSERT_TRUE(srvc >= 1);
 
  out:
 	return err;
