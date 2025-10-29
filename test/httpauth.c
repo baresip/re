@@ -153,7 +153,7 @@ int test_httpauth_resp(void)
 		const char *hval;
 		struct httpauth_digest_resp resp;
 		struct pl method;
-		uint8_t ha1[MD5_SIZE];
+		re_nonstring uint8_t ha1[MD5_SIZE];
 		int err;
 	} testv[] = {
 		{
