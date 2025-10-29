@@ -293,6 +293,10 @@ int fs_fread(struct mbuf **mbp, const char *path)
 				path, err);
 			goto out;
 		}
+
+		/* EOF */
+		if (n < MINBUF_SIZE)
+			goto out;
 	}
 
 out:
