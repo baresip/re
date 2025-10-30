@@ -34,14 +34,12 @@ int h265_nal_encode_mbuf(struct mbuf *mb, const struct h265_nal *nal)
 int h265_nal_decode(struct h265_nal *nal, const uint8_t *p)
 {
 	bool forbidden_zero_bit;
-	unsigned nuh_layer_id;
 
 	if (!nal || !p)
 		return EINVAL;
 
 	forbidden_zero_bit         = p[0] >> 7;
 	nal->nal_unit_type         = (p[0] >> 1) & 0x3f;
-	nuh_layer_id               = (p[0]&1)<<5 | p[1] >> 3;
 	nal->nuh_temporal_id_plus1 = p[1] & 0x07;
 
 	if (forbidden_zero_bit) {
