@@ -1137,7 +1137,7 @@ int dnsc_query(struct dns_query **qp, struct dnsc *dnsc, const char *name,
 
 
 /**
- * Query a DNS name SRV record
+ * Query a DNS name using specific nameservers
  *
  * @param qp       Pointer to allocated DNS query
  * @param dnsc     DNS Client
