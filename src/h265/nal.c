@@ -48,10 +48,6 @@ int h265_nal_decode(struct h265_nal *nal, const uint8_t *p)
 		re_fprintf(stderr, "h265: nal_decode: FORBIDDEN bit set\n");
 		return EBADMSG;
 	}
-	if (nuh_layer_id != 0) {
-		re_fprintf(stderr, "h265: nal_decode: LayerId MUST be zero\n");
-		return EBADMSG;
-	}
 
 	return 0;
 }
