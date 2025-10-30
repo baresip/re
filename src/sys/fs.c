@@ -288,11 +288,8 @@ int fs_fread(struct mbuf **mbp, const char *path)
 			goto out;
 
 		err = mbuf_write_mem(mb, buf, n);
-		if (err) {
-			DEBUG_WARNING("Error reading file '%s' (%m)\n",
-				path, err);
+		if (err)
 			goto out;
-		}
 
 		/* EOF */
 		if (n < MINBUF_SIZE)
@@ -300,11 +297,16 @@ int fs_fread(struct mbuf **mbp, const char *path)
 	}
 
 out:
+	if (!err && ferror(f))
+		err = EIO;
+
 	fclose(f);
 
 	mem_deref(buf);
-	if (err)
+	if (err) {
+		DEBUG_WARNING("Error reading file '%s' (%m)\n", path, err);
 		mem_deref(mb);
+	}
 	else
 		*mbp = mb;
 
