@@ -229,4 +229,3 @@ bool dnsc_getaddrinfo_only(const struct dnsc *dnsc);
 
 /* DNS System functions */
 int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n);
-int dns_nameservers_get(struct sa *srvv, size_t *srvc);

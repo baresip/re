@@ -481,14 +481,14 @@ int test_dns_integration(void)
 int test_dns_nameservers(void)
 {
 	struct sa srvv[8];
-	size_t srvc = RE_ARRAY_SIZE(srvv);
+	uint32_t srvc = RE_ARRAY_SIZE(srvv);
 
-	int err = dns_nameservers_get(srvv, &srvc);
+	int err = dns_srv_get(NULL, 0, srvv, &srvc);
 	TEST_ERR(err);
 
 	ASSERT_TRUE(srvc >= 1);
 
-	for (size_t i=0; i<srvc; i++) {
+	for (uint32_t i=0; i<srvc; i++) {
 		ASSERT_TRUE(sa_isset(&srvv[i], SA_ALL));
 	}
 
