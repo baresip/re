@@ -115,8 +115,6 @@ static int get_android_dns(struct sa *nsv, uint32_t *n)
  * @param n      Nameservers capacity, actual on return
  *
  * @return 0 if success, otherwise errorcode
- *
- * @deprecated use dns_nameservers_get() instead
  */
 int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 {
