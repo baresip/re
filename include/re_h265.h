@@ -53,6 +53,7 @@ enum h265_naltype {
 
 struct h265_nal {
 	unsigned nal_unit_type:6;          /* NAL unit type (0-40)       */
+	unsigned nuh_layer_id:6;           /* layer identifier           */
 	unsigned nuh_temporal_id_plus1:3;  /* temporal identifier plus 1 */
 };
 
