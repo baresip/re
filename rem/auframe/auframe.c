@@ -125,3 +125,10 @@ uint64_t auframe_bytes_to_ms(const struct auframe *af, size_t n)
 
 	return ((uint64_t)n * 1000) / (af->srate * af->ch * sample_size);
 }
+
+
+size_t auframe_ms_to_bytes(const struct auframe *af, uint16_t ms)
+{
+	return aufmt_sample_size(af->fmt) *
+	       au_calc_nsamp(af->srate, af->ch, ms);
+}
