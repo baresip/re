@@ -71,7 +71,6 @@ static const struct test tests[] = {
 	TEST(test_dd),
 	TEST(test_dns_dname),
 	TEST(test_dns_hdr),
-	TEST(test_dns_nameservers),
 	TEST(test_dns_rr),
 	TEST(test_dsp),
 #ifdef USE_TLS
@@ -288,6 +287,7 @@ static const struct test tests_integration[] = {
 	TEST(test_turn_thread),
 	TEST(test_thread_cnd_timedwait),
 	TEST(test_cplusplus),
+	TEST(test_dns_nameservers),
 };
 
 
