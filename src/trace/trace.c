@@ -49,21 +49,6 @@
 
 #ifdef RE_TRACE_ENABLED
 
-struct trace_event {
-	const char *name;
-	const char *cat;
-	struct pl *id;
-	uint64_t ts;
-	int pid;
-	unsigned long tid;
-	char ph;
-	re_trace_arg_type arg_type;
-	const char *arg_name;
-	union {
-		const char *a_str;
-		int a_int;
-	} arg;
-};
 
 /** Trace configuration */
 static struct {
@@ -332,7 +317,7 @@ int re_trace_flush(void)
 
 		mbuf_set_pos(mb, 0);
 		if (trace.trace_h)
-			trace.trace_h(mb);
+			trace.trace_h(e, mb);
 		mbuf_set_pos(mb, 0);
 
 		(void)re_fprintf(trace.f, "%s%b", trace.new ? "" : ",\n",

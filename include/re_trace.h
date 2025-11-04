@@ -6,14 +6,30 @@
 struct pl;
 struct mbuf;
 
-typedef void(re_trace_line_h)(struct mbuf *mb);
-
 typedef enum {
 	RE_TRACE_ARG_NONE,
 	RE_TRACE_ARG_INT,
 	RE_TRACE_ARG_STRING_CONST,
 	RE_TRACE_ARG_STRING_COPY,
 } re_trace_arg_type;
+
+struct trace_event {
+	const char *name;
+	const char *cat;
+	struct pl *id;
+	uint64_t ts;
+	int pid;
+	unsigned long tid;
+	char ph;
+	re_trace_arg_type arg_type;
+	const char *arg_name;
+	union {
+		const char *a_str;
+		int a_int;
+	} arg;
+};
+
+typedef void(re_trace_line_h)(const struct trace_event *e, struct mbuf *json);
 
 
 int re_trace_init(const char *json_file);
