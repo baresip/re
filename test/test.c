@@ -273,6 +273,7 @@ static const struct test tests_integration[] = {
 	TEST(test_dns_cache_http_integration),
 	TEST(test_dns_http_integration),
 	TEST(test_dns_integration),
+	TEST(test_dns_nameservers),
 	TEST(test_net_dst_source_addr_get),
 	TEST(test_rtp_listen),
 	TEST(test_sip_drequestf_network),
@@ -287,7 +288,6 @@ static const struct test tests_integration[] = {
 	TEST(test_turn_thread),
 	TEST(test_thread_cnd_timedwait),
 	TEST(test_cplusplus),
-	TEST(test_dns_nameservers),
 };
 
 
