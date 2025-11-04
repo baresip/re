@@ -86,6 +86,8 @@ static int get_android_dns(struct sa *nsv, uint32_t *n)
 	uint32_t i, count = 0;
 	int err;
 
+	fprintf(stderr, ".... dns_srv_get -- get_android_dns\n");
+
 	for (i=0; i<*n; i++) {
 		re_snprintf(prop, sizeof(prop), "net.dns%u", 1+i);
 
@@ -96,8 +98,10 @@ static int get_android_dns(struct sa *nsv, uint32_t *n)
 				++count;
 		}
 	}
-	if (count == 0)
+	if (count == 0) {
+		fprintf(stderr, ".... dns_srv_get -- count=0\n");
 		return ENOENT;
+	}
 
 	*n = count;
 
@@ -123,6 +127,9 @@ int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 	/* Try them all in prioritized order */
 
 #ifdef HAVE_RESOLV
+
+	fprintf(stderr, ".... dns_srv_get -- HAVE_RESOLV\n");
+
 	err = get_resolv_dns(domain, dsize, srvv, n);
 	if (!err)
 		return 0;

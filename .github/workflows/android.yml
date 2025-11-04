@@ -53,6 +53,7 @@ jobs:
         api-level: ${{ env.api }}
         arch: ${{ env.abi }}
         target: google_apis
+        emulator-options: -dns-server 8.8.8.8,8.8.4.4
         # Use test data directory as a writeable directory for I/O tests as the emulator file system is not generally writeable
         script: |
           adb push test/retest /data/local/tmp/retest
