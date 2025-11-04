@@ -86,8 +86,6 @@ static int get_android_dns(struct sa *nsv, uint32_t *n)
 	uint32_t i, count = 0;
 	int err;
 
-	fprintf(stderr, ".... dns_srv_get -- get_android_dns\n");
-
 	for (i=0; i<*n; i++) {
 		re_snprintf(prop, sizeof(prop), "net.dns%u", 1+i);
 
@@ -98,10 +96,8 @@ static int get_android_dns(struct sa *nsv, uint32_t *n)
 				++count;
 		}
 	}
-	if (count == 0) {
-		fprintf(stderr, ".... dns_srv_get -- count=0\n");
+	if (count == 0)
 		return ENOENT;
-	}
 
 	*n = count;
 
