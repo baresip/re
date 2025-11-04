@@ -4,6 +4,9 @@
  */
 
 struct pl;
+struct mbuf;
+
+typedef void(re_trace_line_h)(struct mbuf *mb);
 
 typedef enum {
 	RE_TRACE_ARG_NONE,
@@ -19,6 +22,7 @@ int re_trace_flush(void);
 void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
 		    re_trace_arg_type arg_type, const char *arg_name,
 		    void *arg_value);
+void re_set_trace_line_h(re_trace_line_h *trace_h);
 
 #ifdef RE_TRACE_ENABLED
 

@@ -11,6 +11,7 @@
 #include <re_thread.h>
 #include <re_atomic.h>
 #include <re_sys.h>
+#include <re_mbuf.h>
 #include <re_main.h>
 
 #ifdef HAVE_PTHREAD
@@ -72,6 +73,7 @@ static struct {
 	int event_count;
 	struct trace_event *event_buffer;
 	struct trace_event *event_buffer_flush;
+	re_trace_line_h *trace_h;
 	mtx_t lock;
 	bool new;
 	uint64_t start_time;
@@ -203,6 +205,16 @@ out:
 }
 
 
+void re_set_trace_line_h(re_trace_line_h *trace_h)
+{
+#ifndef RE_TRACE_ENABLED
+	(void)trace_h;
+#else
+	trace.trace_h = trace_h;
+#endif
+}
+
+
 /**
  * Close and flush trace file
  *
@@ -245,42 +257,39 @@ int re_trace_close(void)
 int re_trace_flush(void)
 {
 #ifdef RE_TRACE_ENABLED
-	int flush_count;
-	struct trace_event *event_tmp;
-	struct trace_event *e;
-	char *json_arg;
+	char *json_arg	 = NULL;
 	char name[128]	 = {0};
 	char id_str[128] = {0};
+	int err		 = 0;
 
 	if (!re_atomic_rlx(&trace.init))
 		return 0;
 
 	mtx_lock(&trace.lock);
-	event_tmp = trace.event_buffer_flush;
+	struct trace_event *event_tmp = trace.event_buffer_flush;
 	trace.event_buffer_flush = trace.event_buffer;
 	trace.event_buffer = event_tmp;
 
-	flush_count = trace.event_count;
+	int flush_count = trace.event_count;
 	trace.event_count = 0;
 	mtx_unlock(&trace.lock);
+
+	struct mbuf *mb = mbuf_alloc(1024);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
 
 	size_t json_arg_sz = 4096;
 	json_arg = mem_zalloc(json_arg_sz, NULL);
 	if (!json_arg) {
-		for (int i = 0; i < flush_count; i++) {
-			e = &trace.event_buffer_flush[i];
-			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
-				mem_deref((void *)e->arg.a_str);
-
-			if (e->id)
-				mem_deref(e->id);
-		}
-		return ENOMEM;
+		err = ENOMEM;
+		goto out;
 	}
 
 	for (int i = 0; i < flush_count; i++)
 	{
-		e = &trace.event_buffer_flush[i];
+		struct trace_event *e = &trace.event_buffer_flush[i];
 
 		switch (e->arg_type) {
 		case RE_TRACE_ARG_NONE:
@@ -313,21 +322,42 @@ int re_trace_flush(void)
 			mem_deref(e->id);
 		}
 
-		(void)re_fprintf(trace.f,
-			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%Lu,"
+		mbuf_printf(
+			mb,
+			"{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%Lu,"
 			"\"ph\":\"%c\",%s%s%s}",
-			trace.new ? "" : ",\n",
 			e->cat, e->pid, e->tid, e->ts - trace.start_time,
-			e->ph, name,
-			e->id ? id_str : "",
+			e->ph, name, e->id ? id_str : "",
 			str_isset(json_arg) ? json_arg : "");
+
+		mbuf_set_pos(mb, 0);
+		if (trace.trace_h)
+			trace.trace_h(mb);
+		mbuf_set_pos(mb, 0);
+
+		(void)re_fprintf(trace.f, "%s%b", trace.new ? "" : ",\n",
+				 mbuf_buf(mb), mbuf_get_left(mb));
 		trace.new = false;
+
 	}
 
-	mem_deref(json_arg);
 
+out:
+	if (err) {
+		for (int i = 0; i < flush_count; i++) {
+			struct trace_event *e = &trace.event_buffer_flush[i];
+			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
+				mem_deref((void *)e->arg.a_str);
+
+			if (e->id)
+				mem_deref(e->id);
+		}
+	}
+	mem_deref(json_arg);
+	mem_deref(mb);
 	(void)fflush(trace.f);
-	return 0;
+
+	return err;
 #else
 	return 0;
 #endif
