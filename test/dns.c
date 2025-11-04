@@ -476,3 +476,22 @@ int test_dns_integration(void)
  out:
 	return err;
 }
+
+
+int test_dns_nameservers(void)
+{
+	struct sa srvv[8];
+	uint32_t srvc = RE_ARRAY_SIZE(srvv);
+
+	int err = dns_srv_get(NULL, 0, srvv, &srvc);
+	TEST_ERR(err);
+
+	ASSERT_TRUE(srvc >= 1);
+
+	for (uint32_t i=0; i<srvc; i++) {
+		ASSERT_TRUE(sa_isset(&srvv[i], SA_ALL));
+	}
+
+ out:
+	return err;
+}
