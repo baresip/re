@@ -214,40 +214,65 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 
 
 static int udp_range_listen(struct rtp_sock *rs, const struct sa *ip,
-			    uint16_t min_port, uint16_t max_port)
+			    uint16_t min_port, uint16_t max_port,
+			    bool enable_rtcp)
 {
 	struct sa rtcp;
 	int tries = 64;
-	int err = 0;
+	int n = min(tries / 2, max_port - min_port);
+	int err = EADDRNOTAVAIL;
+	uint16_t port = min_port;
+	bool first = true;
+	struct udp_sock *us_rtp  = NULL;
+	struct udp_sock *us_rtcp = NULL;
 
 	rs->local = rtcp = *ip;
 
-	/* try hard */
 	while (tries--) {
-		struct udp_sock *us_rtp, *us_rtcp;
-		uint16_t port;
+		if (n)
+			--n;
 
-		port = (min_port + (rand_u16() % (max_port - min_port)));
-		port &= 0xfffe;
+		if (n) {
+			port = (min_port + (rand_u16() %
+					    (max_port - min_port)));
+		}
+		else if (first) {
+			first = false;
+			port = min_port;
+		}
+		else {
+			port += (enable_rtcp ? 2 : 1);
+		}
+
+		/* finally give up */
+		if (port > max_port)
+			break;
+
+		if (enable_rtcp)
+			port &= 0xfffe;
 
 		sa_set_port(&rs->local, port);
 		err = udp_listen(&us_rtp, &rs->local, udp_recv_handler, rs);
 		if (err)
 			continue;
 
+		/* OK without RTCP */
+		if (!enable_rtcp)
+			break;
+
 		sa_set_port(&rtcp, port + 1);
 		err = udp_listen(&us_rtcp, &rtcp, rtcp_recv_handler, rs);
 		if (err) {
-			mem_deref(us_rtp);
+			us_rtp = mem_deref(us_rtp);
 			continue;
 		}
 
 		/* OK */
-		rs->sock_rtp = us_rtp;
-		rs->sock_rtcp = us_rtcp;
 		break;
 	}
 
+	rs->sock_rtp  = us_rtp;
+	rs->sock_rtcp = us_rtcp;
 	return err;
 }
 
@@ -324,7 +349,8 @@ int rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 	switch (proto) {
 
 	case IPPROTO_UDP:
-		err = udp_range_listen(rs, ip, min_port, max_port);
+		err = udp_range_listen(rs, ip, min_port, max_port,
+				       enable_rtcp);
 		break;
 
 	default:
