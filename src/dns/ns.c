@@ -11,9 +11,6 @@
 #include <re_sa.h>
 #include <re_dns.h>
 #include "dns.h"
-#ifdef __ANDROID__
-#include <sys/system_properties.h>
-#endif
 
 
 #define DEBUG_MODULE "ns"
@@ -79,33 +76,6 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 }
 
 
-#ifdef __ANDROID__
-static int get_android_dns(struct sa *nsv, uint32_t *n)
-{
-	char prop[PROP_NAME_MAX] = {0}, value[PROP_VALUE_MAX] = {0};
-	uint32_t i, count = 0;
-	int err;
-
-	for (i=0; i<*n; i++) {
-		re_snprintf(prop, sizeof(prop), "net.dns%u", 1+i);
-
-		if (__system_property_get(prop, value)) {
-
-			err = sa_set_str(&nsv[count], value, DNS_PORT);
-			if (!err)
-				++count;
-		}
-	}
-	if (count == 0)
-		return ENOENT;
-
-	*n = count;
-
-	return 0;
-}
-#endif
-
-
 /**
  * Get the DNS domain and nameservers
  *
@@ -140,10 +110,6 @@ int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 
 #ifdef WIN32
 	err = get_windns(domain, dsize, srvv, n);
-#endif
-
-#ifdef __ANDROID__
-	err = get_android_dns(srvv, n);
 #endif
 
 	return err;
