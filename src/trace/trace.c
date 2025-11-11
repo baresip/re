@@ -56,8 +56,8 @@ static struct {
 	int process_id;
 	FILE *f;
 	int event_count;
-	struct trace_event *event_buffer;
-	struct trace_event *event_buffer_flush;
+	struct re_trace_event_s *event_buffer;
+	struct re_trace_event_s *event_buffer_flush;
 	re_trace_line_h *trace_h;
 	mtx_t lock;
 	bool new;
@@ -144,12 +144,12 @@ int re_trace_init(const char *json_file)
 		return EALREADY;
 
 	trace.event_buffer = mem_zalloc(
-		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
+		TRACE_BUFFER_SIZE * sizeof(struct re_trace_event_s), NULL);
 	if (!trace.event_buffer)
 		return ENOMEM;
 
 	trace.event_buffer_flush = mem_zalloc(
-		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
+		TRACE_BUFFER_SIZE * sizeof(struct re_trace_event_s), NULL);
 	if (!trace.event_buffer_flush) {
 		trace.event_buffer = mem_deref(trace.event_buffer);
 		return ENOMEM;
@@ -251,7 +251,7 @@ int re_trace_flush(void)
 		return 0;
 
 	mtx_lock(&trace.lock);
-	struct trace_event *event_tmp = trace.event_buffer_flush;
+	struct re_trace_event_s *event_tmp = trace.event_buffer_flush;
 	trace.event_buffer_flush = trace.event_buffer;
 	trace.event_buffer = event_tmp;
 
@@ -274,7 +274,7 @@ int re_trace_flush(void)
 
 	for (int i = 0; i < flush_count; i++)
 	{
-		struct trace_event *e = &trace.event_buffer_flush[i];
+		struct re_trace_event_s *e = &trace.event_buffer_flush[i];
 
 		switch (e->arg_type) {
 		case RE_TRACE_ARG_NONE:
@@ -330,7 +330,8 @@ int re_trace_flush(void)
 out:
 	if (err) {
 		for (int i = 0; i < flush_count; i++) {
-			struct trace_event *e = &trace.event_buffer_flush[i];
+			struct re_trace_event_s *e =
+				&trace.event_buffer_flush[i];
 			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
 				mem_deref((void *)e->arg.a_str);
 
@@ -354,7 +355,7 @@ void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
 		    void *arg_value)
 {
 #ifdef RE_TRACE_ENABLED
-	struct trace_event *e;
+	struct re_trace_event_s *e;
 
 	if (!re_atomic_rlx(&trace.init))
 		return;

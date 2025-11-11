@@ -13,7 +13,7 @@ typedef enum {
 	RE_TRACE_ARG_STRING_COPY,
 } re_trace_arg_type;
 
-struct trace_event {
+struct re_trace_event_s {
 	const char *name;
 	const char *cat;
 	struct pl *id;
@@ -29,7 +29,8 @@ struct trace_event {
 	} arg;
 };
 
-typedef void(re_trace_line_h)(const struct trace_event *e, struct mbuf *json);
+typedef void(re_trace_line_h)(const struct re_trace_event_s *e,
+			      struct mbuf *json);
 
 
 int re_trace_init(const char *json_file);
