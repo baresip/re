@@ -24,7 +24,8 @@ jobs:
             build: "Debug",
             openssl: true,
             disable_openssl: "OFF",
-            testing: true
+            testing: true,
+            c11_threads: "ON"
           }
         - {
             name: "Windows Release",
@@ -34,7 +35,8 @@ jobs:
             build: "Release",
             openssl: true,
             disable_openssl: "OFF",
-            testing: true
+            testing: true,
+            c11_threads: "ON"
           }
         - {
             name: "Windows Debug 32-bit",
@@ -45,7 +47,8 @@ jobs:
             openssl: false,
             disable_openssl: "ON",
             choco: "--x86",
-            testing: true
+            testing: true,
+            c11_threads: "OFF" # missing vcruntime library
           }
         - {
             name: "Windows Debug ARM64",
@@ -55,7 +58,8 @@ jobs:
             build: "Debug",
             openssl: false,
             disable_openssl: "ON",
-            testing: false
+            testing: false,
+            c11_threads: "ON"
           }
 
     steps:
@@ -72,7 +76,7 @@ jobs:
           call "${{ matrix.config.environment_script }}"
           cmake --version
           ninja --version
-          cmake -S . -B build -G "${{ matrix.config.generators }}" -DCMAKE_C_FLAGS="/WX" -DCMAKE_BUILD_TYPE=${{ matrix.config.build }} -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=${{ matrix.config.disable_openssl }}
+          cmake -S . -B build -G "${{ matrix.config.generators }}" -DCMAKE_C_FLAGS="/WX" -DHAVE_THREADS="${{ matrix.c11_threads }}" -DCMAKE_BUILD_TYPE="${{ matrix.config.build }}" -DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL="${{ matrix.config.disable_openssl }}"
           cmake --build build --parallel -t retest
 
       - name: retest
