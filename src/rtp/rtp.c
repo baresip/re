@@ -224,6 +224,8 @@ static int udp_range_listen(struct rtp_sock *rs, const struct sa *ip,
 	int err = 0;
 
 	rs->local = rtcp = *ip;
+	if (!enable_rtcp)
+		++max_port;
 
 	/* try hard */
 	while (tries--) {
