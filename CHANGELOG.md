@@ -5,9 +5,35 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.3.0 - 2025-11-19
+
+### What's Changed
+* cmake: remove macOS include path by @mohd-akram in https://github.com/baresip/re/pull/1449
+* test: sort testcases in alphabetical order by @alfredh in https://github.com/baresip/re/pull/1447
+* test: increase coverage of websock test with protocol on/off by @alfredh in https://github.com/baresip/re/pull/1446
+* sdp/media: fix sdp_media_align_formats pt handling by @sreimers in https://github.com/baresip/re/pull/1450
+* dns: fix AAAA address comparison in getaddr_dup() by @alfredh in https://github.com/baresip/re/pull/1452
+* test: add support for IPv6 DNS testing by @alfredh in https://github.com/baresip/re/pull/1454
+* ci: add clang-21 by @sreimers in https://github.com/baresip/re/pull/1453
+* sys/fs: improve fs_fread error handling by @sreimers in https://github.com/baresip/re/pull/1455
+* test: compare DNS RR records data in order to increase test-coverage by @alfredh in https://github.com/baresip/re/pull/1458
+* dns: correct comment in dnsc_query_srv() by @alfredh in https://github.com/baresip/re/pull/1457
+* h265: Fix NAL Decode nuh_layer_id by @xiaokuang95 in https://github.com/baresip/re/pull/1456
+* auframe: avoid auframe_bytes_to_ms division by zero by @sreimers in https://github.com/baresip/re/pull/1459
+* aumix: add aumix_latency and new defaults by @sreimers in https://github.com/baresip/re/pull/1461
+* dns: remove get_android_dns() by @alfredh in https://github.com/baresip/re/pull/1464
+* test: add testing of DNS nameservers by @alfredh in https://github.com/baresip/re/pull/1462
+* cmake/re-config: fix HAVE_THREADS discovery by @sreimers in https://github.com/baresip/re/pull/1466
+
+### New Contributors
+* @mohd-akram made their first contribution in https://github.com/baresip/re/pull/1449
+* @xiaokuang95 made their first contribution in https://github.com/baresip/re/pull/1456
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.2.0...v4.3.0
+
 ## v4.2.0 - 2025-10-15
 
-## What's Changed
+### What's Changed
 * test: add testcode for btrace module by @alfredh in https://github.com/baresip/re/pull/1414
 * types: add ETIME fallback by @sreimers in https://github.com/baresip/re/pull/1420
 * test: add testing of conf_get_bool() by @alfredh in https://github.com/baresip/re/pull/1419
