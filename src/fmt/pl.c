@@ -64,6 +64,41 @@ struct pl *pl_alloc_str(const char *str)
 
 
 /**
+ * Duplicate a pointer-length object
+ *
+ * @param src Pointer-length object to duplicate
+ *
+ * @return Allocated Pointer-length object or NULL
+ */
+struct pl *pl_alloc_dup(const struct pl *src)
+{
+	struct pl *pl;
+
+	if (!src)
+		return NULL;
+
+	size_t sz = src->l;
+
+	pl = mem_zalloc(sizeof(struct pl), pl_alloc_destruct);
+	if (!pl)
+		return NULL;
+
+	if (!pl_isset(src))
+		return pl;
+
+	pl->p = mem_alloc(sz, NULL);
+	if (!pl->p) {
+		mem_deref(pl);
+		return NULL;
+	}
+
+	memcpy((void *)pl->p, src->p, sz);
+	pl->l = sz;
+	return pl;
+}
+
+
+/**
  * Initialise a pointer-length object from a NULL-terminated string
  *
  * @param pl  Pointer-length object to be initialised
