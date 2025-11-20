@@ -84,6 +84,7 @@ static const struct test tests[] = {
 	TEST(test_fmt_human_time),
 	TEST(test_fmt_param),
 	TEST(test_fmt_pl),
+	TEST(test_fmt_pl_alloc_dup),
 	TEST(test_fmt_pl_alloc_str),
 	TEST(test_fmt_pl_float),
 	TEST(test_fmt_pl_i32),
