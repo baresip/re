@@ -26,6 +26,7 @@
 #include <re_net.h>
 #include <re_main.h>
 #include <re_sa.h>
+#include <re_sys.h>
 #include <re_udp.h>
 #ifdef WIN32
 #ifndef HAVE_QOS_FLOWID
@@ -367,6 +368,49 @@ int udp_listen(struct udp_sock **usp, const struct sa *local,
 		mem_deref(us);
 	else
 		*usp = us;
+
+	return err;
+}
+
+
+/**
+ * Create and listen on a UDP Socket within a port range
+ *
+ * @param usp      Pointer to returned UDP Socket
+ * @param local    Local network address
+ * @param min_port Minimum port number
+ * @param max_port Maximum port number
+ * @param rh       Receive handler
+ * @param arg      Handler argument
+ * @return 0 if success, otherwise errorcode
+ */
+int udp_listen_range(struct udp_sock **usp, const struct sa *local,
+		     uint16_t min_port, uint16_t max_port,
+		     udp_recv_h *rh, void *arg)
+{
+	struct sa laddr;
+	int tries = 64;
+	int err = 0;
+
+	sa_cpy(&laddr, local);
+
+	/* try hard */
+	while (tries--) {
+		struct udp_sock *us;
+		uint16_t port;
+
+		port = (min_port + (rand_u16() % (max_port + 1 - min_port)));
+
+		sa_set_port(&laddr, port);
+		err = udp_listen(&us, &laddr, rh, arg);
+		if (err)
+			continue;
+
+		/* OK */
+		if (usp)
+			*usp = us;
+		break;
+	}
 
 	return err;
 }

@@ -24,6 +24,9 @@ typedef void (udp_error_h)(int err, void *arg);
 
 int  udp_listen(struct udp_sock **usp, const struct sa *local,
 		udp_recv_h *rh, void *arg);
+int  udp_listen_range(struct udp_sock **usp, const struct sa *ip,
+		      uint16_t min_port, uint16_t max_port,
+		      udp_recv_h *rh, void *arg);
 int  udp_alloc_sockless(struct udp_sock **usp,
 			udp_send_h *sendh, udp_recv_h *recvh, void *arg);
 int  udp_alloc_fd(struct udp_sock **usp, re_sock_t fd,
