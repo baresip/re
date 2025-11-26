@@ -187,6 +187,7 @@ int test_fmt_hexdump(void);
 int test_fmt_human_time(void);
 int test_fmt_param(void);
 int test_fmt_pl(void);
+int test_fmt_pl_alloc_dup(void);
 int test_fmt_pl_alloc_str(void);
 int test_fmt_pl_float(void);
 int test_fmt_pl_i32(void);
