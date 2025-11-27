@@ -3,6 +3,8 @@
 # Copyright (C) 2025 Alfred E. Heggestad
 #
 
+''' FIR filter design and generate C-table '''
+
 import scipy.signal
 
 TAPS = 31
@@ -15,21 +17,21 @@ cutoff = CUTOFF / SRATE
 coeffs = scipy.signal.firwin(TAPS, cutoff)
 
 
-print "/*"
-print " * FIR filter with cutoff %dHz, samplerate %dHz" % (CUTOFF, SRATE)
-print " */"
-print "static const int16_t fir_lowpass[%d] = {" % (TAPS)
+print("/*")
+print(" * FIR filter with cutoff %dHz, samplerate %dHz" % (CUTOFF, SRATE))
+print(" */")
+print("static const int16_t fir_lowpass[%d] = {" % (TAPS))
 
 i = 0
 
 for c in coeffs:
     v = int(c * 32768.0)
 
-    print " %5d," % (v),
+    print(" %5d," % (v), end="")
 
     i += 1
-    if not (i % 8):
-        print "\n" ,
+    if not i % 8:
+        print("")
 
-print ""
-print "};"
+print("")
+print("};")
