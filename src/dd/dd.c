@@ -328,74 +328,93 @@ int dd_decode(struct dd *dd, const uint8_t *buf, size_t sz)
 }
 
 
-void dd_print(const struct dd *dd)
+int dd_print(struct re_printf *pf, const struct dd *dd)
 {
 	if (!dd)
-		return;
+		return 0;
 
-	re_printf("~~~~ DD: ~~~~\n");
+	int err = re_hprintf(pf, "~~~~ DD: ~~~~\n");
 
-	re_printf(".... start=%d, end=%d,"
-		  " frame_dependency_template_id=%u, frame_number=%u\n",
-		  dd->start_of_frame,
-		  dd->end_of_frame,
-		  dd->frame_dependency_template_id,
-		  dd->frame_number);
-	re_printf(".... ext: %d\n", dd->ext);
+	err |= re_hprintf(pf, ".... start=%d, end=%d,"
+			  " frame_dependency_template_id=%u,"
+			  " frame_number=%u\n",
+			  dd->start_of_frame,
+			  dd->end_of_frame,
+			  dd->frame_dependency_template_id,
+			  dd->frame_number);
+	err |= re_hprintf(pf, ".... ext: %d\n", dd->ext);
+	if (err)
+		return err;
 
 	if (dd->ext) {
 
-		re_printf(".... template_dependency_structure_present:   %u\n",
-			  dd->template_dependency_structure_present_flag);
-		re_printf(".... active_decode_targets_present_flag:      %u\n",
+		err = re_hprintf(pf,
+			 ".... template_dependency_structure_present:   %u\n",
+			 dd->template_dependency_structure_present_flag);
+		err |= re_hprintf(pf,
+			  ".... active_decode_targets_present_flag:      %u\n",
 			  dd->active_decode_targets_present_flag);
-		re_printf(".... custom_dtis_flag:                        %u\n",
+		err |= re_hprintf(pf,
+			  ".... custom_dtis_flag:                        %u\n",
 			  dd->custom_dtis_flag);
-		re_printf(".... custom_fdiffs_flag:                      %u\n",
+		err |= re_hprintf(pf,
+			  ".... custom_fdiffs_flag:                      %u\n",
 			  dd->custom_fdiffs_flag);
-		re_printf(".... custom_chains_flag:                      %u\n",
+		err |= re_hprintf(pf,
+			  ".... custom_chains_flag:                      %u\n",
 			  dd->custom_chains_flag);
-		re_printf("\n");
+		err |= re_hprintf(pf, "\n");
 
-		re_printf(".... active_decode_targets_bitmask: 0x%x\n",
+		err |= re_hprintf(pf,
+			  ".... active_decode_targets_bitmask: 0x%x\n",
 			  dd->active_decode_targets_bitmask);
-		re_printf(".... template_id_offset:            %u\n",
+		err |= re_hprintf(pf,
+			  ".... template_id_offset:            %u\n",
 			  dd->template_id_offset);
-		re_printf(".... dt_cnt:                        %u\n",
-			  dd->dt_cnt);
-		re_printf(".... template_cnt:                  %u\n",
-			  dd->template_cnt);
-		re_printf(".... max_spatial_id:                %u\n",
-			  dd->max_spatial_id);
-		re_printf("\n");
+		err |= re_hprintf(pf,
+				  ".... dt_cnt:                        %u\n",
+				  dd->dt_cnt);
+		err |= re_hprintf(pf,
+				  ".... template_cnt:                  %u\n",
+				  dd->template_cnt);
+		err |= re_hprintf(pf,
+				  ".... max_spatial_id:                %u\n",
+				  dd->max_spatial_id);
+		err |= re_hprintf(pf, "\n");
+		if (err)
+			return err;
 
-		re_printf(".... template spatial/temporal ids:\n");
+		err = re_hprintf(pf, ".... template spatial/temporal ids:\n");
 		for (uint8_t i=0; i<dd->template_cnt; i++) {
 
-			re_printf(".... [%u] spatial=%u temporal=%u\n",
+			err |= re_hprintf(pf,
+				  ".... [%u] spatial=%u temporal=%u\n",
 				  i,
 				  dd->template_spatial_id[i],
 				  dd->template_temporal_id[i]);
 		}
-		re_printf("\n");
+		err |= re_hprintf(pf, "\n");
 
-		re_printf(".... resolutions_present_flag: %u\n",
+		err |= re_hprintf(pf, ".... resolutions_present_flag: %u\n",
 			  dd->resolutions_present_flag);
-		re_printf(".... render_count: %u\n", dd->render_count);
+		err |= re_hprintf(pf, ".... render_count: %u\n",
+				  dd->render_count);
 		for (uint8_t i = 0; i < dd->render_count; i++) {
 
-			re_printf(".... max_render %u:        %u x %u\n",
+			err |= re_hprintf(pf,
+				  ".... max_render %u:        %u x %u\n",
 				  i,
 				  dd->max_render_width_minus_1[i] + 1,
 				  dd->max_render_height_minus_1[i] + 1);
 		}
-		re_printf("\n");
+		err |= re_hprintf(pf, "\n");
 
 		for (uint8_t i = 0; i < dd->template_cnt; i++) {
 
 			uint8_t fdiffCnt = dd->template_fdiff_cnt[i];
 
-			re_printf(".... [%u] template_fdiff_cnt: %u",
+			err |= re_hprintf(pf,
+				  ".... [%u] template_fdiff_cnt: %u",
 				  i, fdiffCnt);
 
 			for (uint8_t j = 0; j < fdiffCnt; j++) {
@@ -404,29 +423,33 @@ void dd_print(const struct dd *dd)
 
 				fdiff = dd->template_fdiff[i][j];
 
-				re_printf("  <fdiff=%u>", fdiff);
+				err |= re_hprintf(pf, "  <fdiff=%u>", fdiff);
 			}
 
-			re_printf("\n");
+			err |= re_hprintf(pf, "\n");
 		}
-		re_printf("\n");
+		err |= re_hprintf(pf, "\n");
 
-		re_printf(".... chain_cnt:             %u\n", dd->chain_cnt);
-		re_printf("\n");
+		err |= re_hprintf(pf, ".... chain_cnt:             %u\n",
+				  dd->chain_cnt);
+		err |= re_hprintf(pf, "\n");
 
-		re_printf(".... template_dti: 2D\n");
+		err |= re_hprintf(pf, ".... template_dti: 2D\n");
 		for (uint8_t tix = 0; tix < dd->template_cnt; tix++) {
 
 			for (uint8_t dtix = 0; dtix < dd->dt_cnt; dtix++) {
 
 				uint8_t val = dd->template_dti[tix][dtix];
 
-				re_printf(".... DTI:  [%u][%u] %u %s\n",
+				err |= re_hprintf(pf,
+					  ".... DTI:  [%u][%u] %u %s\n",
 					  tix, dtix, val, dti_name(val));
 			}
 		}
 	}
 
-	re_printf("~~~~~~~~~~~~\n");
-	re_printf("\n");
+	err |= re_hprintf(pf, "~~~~~~~~~~~~\n");
+	err |= re_hprintf(pf, "\n");
+
+	return err;
 }
