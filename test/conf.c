@@ -97,6 +97,17 @@ int test_conf(void)
 	if (0 == conf_get(conf, "rattarei", &pl))
 		goto badmsg;
 
+	int error = conf_get(NULL, NULL, NULL);
+	ASSERT_EQ(EINVAL, error);
+	error = conf_get_str(NULL, NULL, NULL, 0);
+	ASSERT_EQ(EINVAL, error);
+	error = conf_get_u32(NULL, NULL, NULL);
+	ASSERT_EQ(EINVAL, error);
+	error = conf_get_i32(NULL, NULL, NULL);
+	ASSERT_EQ(EINVAL, error);
+	error = conf_get_float(NULL, NULL, NULL);
+	ASSERT_EQ(EINVAL, error);
+
  out:
 	mem_deref(conf);
 	return err;
