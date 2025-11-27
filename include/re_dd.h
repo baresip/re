@@ -105,4 +105,4 @@ struct dd {
 
 int  dd_encode(struct mbuf *mb, const struct dd *dd);
 int  dd_decode(struct dd *dd, const uint8_t *buf, size_t sz);
-void dd_print(const struct dd *dd);
+int  dd_print(struct re_printf *pf, const struct dd *dd);

@@ -251,6 +251,7 @@ static int test_dd_chrome(void)
 {
 	static const char *str = "80000180003a40813f80ef80";
 	struct mbuf *mb = mbuf_alloc(16);
+	char *debug = NULL;
 	uint8_t buf[12];
 	int err;
 
@@ -265,9 +266,9 @@ static int test_dd_chrome(void)
 	err = dd_decode(&dd, buf, sizeof(buf));
 	TEST_ERR(err);
 
-#if 0
-	dd_print(&dd);
-#endif
+	err = re_sdprintf(&debug, "%H", dd_print, &dd);
+	TEST_ERR(err);
+	ASSERT_TRUE(str_isset(debug));
 
 	ASSERT_EQ(1, dd.start_of_frame);
 	ASSERT_EQ(0, dd.end_of_frame);
@@ -308,6 +309,7 @@ static int test_dd_chrome(void)
 	TEST_MEMCMP(buf, sizeof(buf), mb->buf, mb->end);
 
  out:
+	mem_deref(debug);
 	mem_deref(mb);
 	return err;
 }
