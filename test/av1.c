@@ -261,6 +261,7 @@ static int copy_obu(struct mbuf *mb_bs, const uint8_t *buf, size_t size)
 		.pos = 0,
 		.end = size
 	};
+	char debug[512] = "";
 	bool has_size = true;
 
 	int err = av1_obu_decode(&hdr, &wrap);
@@ -269,6 +270,9 @@ static int copy_obu(struct mbuf *mb_bs, const uint8_t *buf, size_t size)
 			" [%zu bytes]: %m\n", size, err);
 		return err;
 	}
+
+	re_snprintf(debug, sizeof(debug), "%H\n", av1_obu_print, &hdr);
+	ASSERT_TRUE(str_isset(debug));
 
 	switch (hdr.type) {
 
@@ -303,7 +307,8 @@ static int copy_obu(struct mbuf *mb_bs, const uint8_t *buf, size_t size)
 		return EPROTO;
 	}
 
-	return 0;
+ out:
+	return err;
 }
 
 
