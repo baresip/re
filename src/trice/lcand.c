@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2010 Alfred E. Heggestad
  */
-#include <string.h>
 #include <re_types.h>
 #include <re_fmt.h>
 #include <re_mem.h>
@@ -194,37 +193,6 @@ static void dummy_udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 		     mbuf_get_left(mb), src,
 		     ice_cand_type2name(lcand->attr.type),
 		     &lcand->attr.addr);
-}
-
-static int udp_listen_range(struct udp_sock **usp, const struct sa *ip,
-			    uint16_t min_port, uint16_t max_port,
-			    udp_recv_h *rh, void *arg)
-{
-	struct sa laddr;
-	int tries = 64;
-	int err = 0;
-
-	sa_cpy(&laddr, ip);
-
-	/* try hard */
-	while (tries--) {
-		struct udp_sock *us;
-		uint16_t port;
-
-		port = (min_port + (rand_u16() % (max_port - min_port)));
-
-		sa_set_port(&laddr, port);
-		err = udp_listen(&us, &laddr, rh, arg);
-		if (err)
-			continue;
-
-		/* OK */
-		if (usp)
-			*usp = us;
-		break;
-	}
-
-	return err;
 }
 
 
