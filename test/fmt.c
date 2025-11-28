@@ -1230,6 +1230,9 @@ int test_text2pcap(void)
 
 	TEST_EQUALS(35, ret);
 
+	mbuf_set_pos(mb, 0);
+	re_text2pcap_trace("retest", "RETEST", true, mb);
+
 out:
 	mem_deref(mb);
 	return err;
