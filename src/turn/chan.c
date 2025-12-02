@@ -67,8 +67,10 @@ static void chan_destructor(void *data)
 
 	tmr_cancel(&chan->tmr);
 	mem_deref(chan->ct);
+	mtx_lock(chan->turnc->lock);
 	hash_unlink(&chan->he_numb);
 	hash_unlink(&chan->he_peer);
+	mtx_unlock(chan->turnc->lock);
 }
 
 
@@ -193,9 +195,11 @@ int turnc_add_chan(struct turnc *turnc, const struct sa *peer,
 	chan->nr = turnc->chans->nr++;
 	chan->peer = *peer;
 
+	mtx_lock(turnc->lock);
 	hash_append(turnc->chans->ht_numb, chan->nr, &chan->he_numb, chan);
 	hash_append(turnc->chans->ht_peer, sa_hash(peer, SA_ALL),
 		    &chan->he_peer, chan);
+	mtx_unlock(turnc->lock);
 
 	tmr_init(&chan->tmr);
 	chan->turnc = turnc;
@@ -258,9 +262,13 @@ struct chan *turnc_chan_find_peer(const struct turnc *turnc,
 	if (!turnc)
 		return NULL;
 
-	return list_ledata(hash_lookup(turnc->chans->ht_peer,
-				       sa_hash(peer, SA_ALL),
-				       peer_hash_cmp_handler, (void *)peer));
+	mtx_lock(turnc->lock);
+	struct chan *c = list_ledata(
+		hash_lookup(turnc->chans->ht_peer, sa_hash(peer, SA_ALL),
+			    peer_hash_cmp_handler, (void *)peer));
+	mtx_unlock(turnc->lock);
+
+	return c;
 }
 
 
