@@ -65,6 +65,7 @@ static void destructor(void *arg)
 	mem_deref(turnc->stun);
 	mem_deref(turnc->uh);
 	mem_deref(turnc->sock);
+	mem_deref(turnc->lock);
 }
 
 
@@ -406,6 +407,10 @@ int turnc_alloc(struct turnc **turncp, const struct stun_conf *conf, int proto,
 	turnc = mem_zalloc(sizeof(*turnc), destructor);
 	if (!turnc)
 		return ENOMEM;
+
+	err = mutex_alloc(&turnc->lock);
+	if (err)
+		goto out;
 
 	err = stun_alloc(&turnc->stun, conf, NULL, NULL);
 	if (err)

@@ -35,6 +35,7 @@ struct turnc {
 	struct hash *perms;            /**< Hash-table of permissions       */
 	struct channels *chans;        /**< TURN Channels                   */
 	bool allocated;                /**< Allocation was done flag        */
+	mtx_t *lock;                   /**< Lock turnc                      */
 };
 
 
