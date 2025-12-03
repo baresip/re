@@ -11,6 +11,7 @@
 #include <re_thread.h>
 #include <re_atomic.h>
 #include <re_sys.h>
+#include <re_mbuf.h>
 #include <re_main.h>
 
 #ifdef HAVE_PTHREAD
@@ -48,21 +49,6 @@
 
 #ifdef RE_TRACE_ENABLED
 
-struct trace_event {
-	const char *name;
-	const char *cat;
-	struct pl *id;
-	uint64_t ts;
-	int pid;
-	unsigned long tid;
-	char ph;
-	re_trace_arg_type arg_type;
-	const char *arg_name;
-	union {
-		const char *a_str;
-		int a_int;
-	} arg;
-};
 
 /** Trace configuration */
 static struct {
@@ -70,8 +56,9 @@ static struct {
 	int process_id;
 	FILE *f;
 	int event_count;
-	struct trace_event *event_buffer;
-	struct trace_event *event_buffer_flush;
+	struct re_trace_event_s *event_buffer;
+	struct re_trace_event_s *event_buffer_flush;
+	re_trace_line_h *trace_h;
 	mtx_t lock;
 	bool new;
 	uint64_t start_time;
@@ -157,12 +144,12 @@ int re_trace_init(const char *json_file)
 		return EALREADY;
 
 	trace.event_buffer = mem_zalloc(
-		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
+		TRACE_BUFFER_SIZE * sizeof(struct re_trace_event_s), NULL);
 	if (!trace.event_buffer)
 		return ENOMEM;
 
 	trace.event_buffer_flush = mem_zalloc(
-		TRACE_BUFFER_SIZE * sizeof(struct trace_event), NULL);
+		TRACE_BUFFER_SIZE * sizeof(struct re_trace_event_s), NULL);
 	if (!trace.event_buffer_flush) {
 		trace.event_buffer = mem_deref(trace.event_buffer);
 		return ENOMEM;
@@ -199,6 +186,16 @@ out:
 #else
 	(void)json_file;
 	return 0;
+#endif
+}
+
+
+void re_set_trace_line_h(re_trace_line_h *trace_h)
+{
+#ifndef RE_TRACE_ENABLED
+	(void)trace_h;
+#else
+	trace.trace_h = trace_h;
 #endif
 }
 
@@ -245,42 +242,39 @@ int re_trace_close(void)
 int re_trace_flush(void)
 {
 #ifdef RE_TRACE_ENABLED
-	int flush_count;
-	struct trace_event *event_tmp;
-	struct trace_event *e;
-	char *json_arg;
+	char *json_arg	 = NULL;
 	char name[128]	 = {0};
 	char id_str[128] = {0};
+	int err		 = 0;
 
 	if (!re_atomic_rlx(&trace.init))
 		return 0;
 
 	mtx_lock(&trace.lock);
-	event_tmp = trace.event_buffer_flush;
+	struct re_trace_event_s *event_tmp = trace.event_buffer_flush;
 	trace.event_buffer_flush = trace.event_buffer;
 	trace.event_buffer = event_tmp;
 
-	flush_count = trace.event_count;
+	int flush_count = trace.event_count;
 	trace.event_count = 0;
 	mtx_unlock(&trace.lock);
+
+	struct mbuf *mb = mbuf_alloc(1024);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
 
 	size_t json_arg_sz = 4096;
 	json_arg = mem_zalloc(json_arg_sz, NULL);
 	if (!json_arg) {
-		for (int i = 0; i < flush_count; i++) {
-			e = &trace.event_buffer_flush[i];
-			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
-				mem_deref((void *)e->arg.a_str);
-
-			if (e->id)
-				mem_deref(e->id);
-		}
-		return ENOMEM;
+		err = ENOMEM;
+		goto out;
 	}
 
 	for (int i = 0; i < flush_count; i++)
 	{
-		e = &trace.event_buffer_flush[i];
+		struct re_trace_event_s *e = &trace.event_buffer_flush[i];
 
 		switch (e->arg_type) {
 		case RE_TRACE_ARG_NONE:
@@ -313,21 +307,44 @@ int re_trace_flush(void)
 			mem_deref(e->id);
 		}
 
-		(void)re_fprintf(trace.f,
-			"%s{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%Lu,"
+		mbuf_printf(
+			mb,
+			"{\"cat\":\"%s\",\"pid\":%i,\"tid\":%lu,\"ts\":%Lu,"
 			"\"ph\":\"%c\",%s%s%s}",
-			trace.new ? "" : ",\n",
 			e->cat, e->pid, e->tid, e->ts - trace.start_time,
-			e->ph, name,
-			e->id ? id_str : "",
+			e->ph, name, e->id ? id_str : "",
 			str_isset(json_arg) ? json_arg : "");
+
+		mbuf_set_pos(mb, 0);
+		if (trace.trace_h)
+			trace.trace_h(e, mb);
+		mbuf_set_pos(mb, 0);
+
+		(void)re_fprintf(trace.f, "%s%b", trace.new ? "" : ",\n",
+				 mbuf_buf(mb), mbuf_get_left(mb));
 		trace.new = false;
+
+		mbuf_rewind(mb);
 	}
 
-	mem_deref(json_arg);
 
+out:
+	if (err) {
+		for (int i = 0; i < flush_count; i++) {
+			struct re_trace_event_s *e =
+				&trace.event_buffer_flush[i];
+			if (e->arg_type == RE_TRACE_ARG_STRING_COPY)
+				mem_deref((void *)e->arg.a_str);
+
+			if (e->id)
+				mem_deref(e->id);
+		}
+	}
+	mem_deref(json_arg);
+	mem_deref(mb);
 	(void)fflush(trace.f);
-	return 0;
+
+	return err;
 #else
 	return 0;
 #endif
@@ -339,7 +356,7 @@ void re_trace_event(const char *cat, const char *name, char ph, struct pl *id,
 		    void *arg_value)
 {
 #ifdef RE_TRACE_ENABLED
-	struct trace_event *e;
+	struct re_trace_event_s *e;
 
 	if (!re_atomic_rlx(&trace.init))
 		return;
