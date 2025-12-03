@@ -74,7 +74,7 @@ static void destructor(void *arg)
  *
  * @return 0 if success, otherwise errorcode
  *
- * @note `mb' will be referenced
+ * @note `mb` will be referenced
  */
 int stun_msg_decode(struct stun_msg **msgpp, struct mbuf *mb,
 		    struct stun_unknown_attr *ua)
