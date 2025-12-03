@@ -324,6 +324,7 @@ int re_trace_flush(void)
 				 mbuf_buf(mb), mbuf_get_left(mb));
 		trace.new = false;
 
+		mbuf_rewind(mb);
 	}
 
 
