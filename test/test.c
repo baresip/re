@@ -68,6 +68,7 @@ static const struct test tests[] = {
 	TEST(test_btrace),
 	TEST(test_conf),
 	TEST(test_crc32),
+	TEST(test_dbg),
 	TEST(test_dd),
 	TEST(test_dns_dname),
 	TEST(test_dns_hdr),

@@ -89,6 +89,7 @@ set(SRCS
   conf.c
   convert.c
   crc32.c
+  dbg.c
   dd.c
   dns.c
   dsp.c
