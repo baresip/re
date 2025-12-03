@@ -304,7 +304,6 @@ int re_trace_flush(void)
 		if (e->id) {
 			re_snprintf(id_str, sizeof(id_str), ", \"id\":\"%r\"",
 				    e->id);
-			mem_deref(e->id);
 		}
 
 		mbuf_printf(
@@ -324,6 +323,7 @@ int re_trace_flush(void)
 				 mbuf_buf(mb), mbuf_get_left(mb));
 		trace.new = false;
 
+		mem_deref(e->id);
 		mbuf_rewind(mb);
 	}
 
