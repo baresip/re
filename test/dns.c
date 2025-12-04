@@ -474,6 +474,11 @@ int test_dns_integration(void)
 	}
 
  out:
+	/* TODO: check why this is needed */
+	if (err) {
+		re_thread_async_close();
+	}
+
 	return err;
 }
 

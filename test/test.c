@@ -274,7 +274,7 @@ static const struct test tests[] = {
 static const struct test tests_integration[] = {
 	TEST(test_dns_cache_http_integration),
 	TEST(test_dns_http_integration),
-	/* TEST(test_dns_integration), TODO temp disabled */
+	TEST(test_dns_integration),
 	TEST(test_dns_nameservers),
 	TEST(test_net_dst_source_addr_get),
 	TEST(test_rtp_listen),
@@ -514,6 +514,10 @@ int test_oom(const char *name, bool verbose)
 
 	if (name) {
 		const struct test *test = find_test(name);
+
+		if (!test)
+			test = find_test_int(name);
+
 		if (!test) {
 			(void)re_fprintf(stderr, "no such test: %s\n", name);
 			err = ENOENT;
