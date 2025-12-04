@@ -174,6 +174,7 @@ int test_bfcp_tcp(void);
 int test_btrace(void);
 int test_conf(void);
 int test_crc32(void);
+int test_dbg(void);
 int test_dns_hdr(void);
 int test_dns_integration(void);
 int test_dns_rr(void);
