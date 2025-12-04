@@ -43,6 +43,7 @@ struct aumix {
 /** Defines an Audio mixer source */
 struct aumix_source {
 	struct le le;
+	struct pl *id;
 	struct auframe af;
 	int16_t *frame;
 	struct aubuf *aubuf;
@@ -98,6 +99,7 @@ static void source_destructor(void *arg)
 	mem_deref(src->aubuf);
 	mem_deref(src->frame);
 	mem_deref(src->mix);
+	mem_deref(src->id);
 }
 
 
@@ -485,6 +487,24 @@ int aumix_source_alloc(struct aumix_source **srcp, struct aumix *mix,
 		*srcp = src;
 
 	return err;
+}
+
+
+/**
+ * Set source id
+ *
+ * @param src  Audio mixer source
+ * @param id   Source identifier
+ */
+void aumix_source_set_id(struct aumix_source *src, struct pl *id)
+{
+	if (!src || !id)
+		return;
+
+	mtx_lock(src->mix->mutex);
+	src->id = mem_ref(id);
+	aubuf_set_id(src->aubuf, id);
+	mtx_unlock(src->mix->mutex);
 }
 
 
