@@ -525,7 +525,9 @@ static int turn_thread(void *arg)
 	struct turntest *tt = arg;
 	int err;
 
-	re_thread_init();
+	err = re_thread_init();
+	if (err)
+		return err;
 
 	tmr_init(&tt->tmr);
 	tmr_start(&tt->tmr, 0, tmr_handler, tt);
@@ -552,7 +554,9 @@ int test_turn_thread(void)
 
 	tt->rx_state = RX_DETACH;
 
-	thread_create_name(&tt->thr, "test_turn_thread", turn_thread, tt);
+	err = thread_create_name(&tt->thr, "test_turn_thread",
+				 turn_thread, tt);
+	TEST_ERR(err);
 
 	re_main_timeout(500);
 

@@ -48,6 +48,10 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 #ifdef DARWIN
 	int memsize = state.nscount * sizeof(union res_sockaddr_union);
 	union res_sockaddr_union *addr = mem_alloc(memsize, NULL);
+	if (!addr) {
+		err = ENOMEM;
+		goto out;
+	}
 	int servers = res_getservers(&state, addr,  state.nscount);
 
 	for (i = 0; i < min(*n, (uint32_t)servers) && !err; i++) {
