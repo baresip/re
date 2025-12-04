@@ -347,7 +347,7 @@ static int check_dns(struct test_dns *data, const char *name, uint32_t addr,
 	int err;
 
 	data->addr = addr;
-	data->err  = ENODATA;
+	data->err  = ENOMEM;
 
 	err = dnsc_query(&q, data->dnsc, name, DNS_TYPE_A, DNS_CLASS_IN, true,
 			 query_handler, data);
@@ -397,7 +397,7 @@ static int test_dns_integration_param(const char *laddr)
 
 	/* Test does not exist */
 	err = check_dns(&data, "test2.example.net", IP_127_0_0_1, true);
-	TEST_EQUALS(ENODATA, err);
+	TEST_EQUALS(ENOMEM, err);
 
 	dns_server_flush(srv);
 
