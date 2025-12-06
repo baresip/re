@@ -35,7 +35,7 @@ int test_h265(void)
 	ASSERT_TRUE(!h265_is_keyframe(H265_NAL_VPS_NUT));
 	ASSERT_TRUE( h265_is_keyframe(H265_NAL_IDR_W_RADL));
 
-	for (unsigned i=0; i<49; i++) {
+	for (unsigned i=0; i<=49; i++) {
 
 		char debug[256] = "";
 		struct h265_nal nal = {
