@@ -577,8 +577,11 @@ static int test_rtp_listen_priv(bool clear)
 	}
 
 	test.mb->pos = RTP_HEADER_SIZE;
-	if (!clear)
-		(void)re_main_timeout(100);
+	if (!clear) {
+		err = re_main_timeout(100);
+		if (err)
+			goto out;
+	}
 
 	TEST_EQUALS(clear ? 0 : 2, test.n);
 	TEST_EQUALS(0, test.f);

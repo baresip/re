@@ -483,6 +483,10 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 			err = 0;
 			break;
 		}
+		else if (err == ENODATA) {
+			err = 0;
+			break;
+		}
 		else {
 			DEBUG_WARNING("oom: %s: unexpected error code at"
 				      " %d blocks free (%m)\n",
@@ -514,6 +518,10 @@ int test_oom(const char *name, bool verbose)
 
 	if (name) {
 		const struct test *test = find_test(name);
+
+		if (!test)
+			test = find_test_int(name);
+
 		if (!test) {
 			(void)re_fprintf(stderr, "no such test: %s\n", name);
 			err = ENOENT;
@@ -526,6 +534,13 @@ int test_oom(const char *name, bool verbose)
 		/* All test cases */
 		for (i=0; i<RE_ARRAY_SIZE(tests); i++) {
 			err = testcase_oom(&tests[i], levels, verbose);
+			if (err)
+				break;
+		}
+
+		for (i=0; i<RE_ARRAY_SIZE(tests_integration); i++) {
+			err = testcase_oom(&tests_integration[i],
+					   levels, verbose);
 			if (err)
 				break;
 		}

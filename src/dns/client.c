@@ -885,6 +885,7 @@ static void getaddrinfo_h(int err, void *arg)
 
 	mem_deref(q->rrlv[0]);
 	q->rrlv[0] = dq->rrlv;
+	dq->rrlv = NULL;
 
 	const bool cache = q->dnsc->conf.cache_ttl_max > 0;
 
@@ -924,6 +925,9 @@ static void dq_deref(void *arg)
 
 	mem_deref(dq->dnsc);
 	mem_deref(dq->name);
+
+	list_flush(dq->rrlv);
+	mem_deref(dq->rrlv);
 }
 
 
