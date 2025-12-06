@@ -52,15 +52,15 @@ int h265_nal_decode(struct h265_nal *nal, const uint8_t *p)
 }
 
 
-void h265_nal_print(const struct h265_nal *nal)
+int h265_nal_print(struct re_printf *pf, const struct h265_nal *nal)
 {
 	if (!nal)
-		return;
+		return 0;
 
-	re_printf("type=%u(%s), TID=%u\n",
-		  nal->nal_unit_type,
-		  h265_nalunit_name(nal->nal_unit_type),
-		  nal->nuh_temporal_id_plus1);
+	return re_hprintf(pf, "type=%u(%s), TID=%u\n",
+			  nal->nal_unit_type,
+			  h265_nalunit_name(nal->nal_unit_type),
+			  nal->nuh_temporal_id_plus1);
 }
 
 
