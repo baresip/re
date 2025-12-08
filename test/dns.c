@@ -375,7 +375,7 @@ static int test_dns_integration_param(const char *laddr)
 	int err;
 
 	/* Setup Mocking DNS Server */
-	err = dns_server_alloc(&srv, laddr, false);
+	err = dns_server_alloc(&srv, laddr);
 	TEST_ERR(err);
 
 	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);

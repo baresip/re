@@ -534,10 +534,9 @@ struct dns_server {
 	struct udp_sock *us;
 	struct sa addr;
 	struct list rrl;
-	bool rotate;
 };
 
-int dns_server_alloc(struct dns_server **srvp, const char *laddr, bool rotate);
+int dns_server_alloc(struct dns_server **srvp, const char *laddr);
 int dns_server_add_a(struct dns_server *srv, const char *name, uint32_t addr,
 		     int64_t ttl);
 int dns_server_add_aaaa(struct dns_server *srv, const char *name,
