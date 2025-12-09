@@ -463,7 +463,7 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 
 	if (dns_srv_query) {
 		/* Setup Mocking DNS Server */
-		err = dns_server_alloc(&dns_srv, "127.0.0.1", false);
+		err = dns_server_alloc(&dns_srv, "127.0.0.1");
 		TEST_ERR(err);
 
 		err = dns_server_add_a(dns_srv, "test1.example.net",
