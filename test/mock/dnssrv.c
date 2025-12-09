@@ -35,13 +35,6 @@ static void dns_server_match(struct dns_server *srv, struct list *rrl,
 			list_append(rrl, &rr->le_priv, rr);
 		}
 	}
-
-	/* If rotation is enabled, then rotate multiple entries
-	   in a deterministic way (no randomness please) */
-	if (srv->rotate && rr0) {
-		list_unlink(&rr0->le);
-		list_append(&srv->rrl, &rr0->le, rr0);
-	}
 }
 
 
@@ -143,7 +136,7 @@ void dns_server_flush(struct dns_server *srv)
 }
 
 
-int dns_server_alloc(struct dns_server **srvp, const char *laddr, bool rotate)
+int dns_server_alloc(struct dns_server **srvp, const char *laddr)
 {
 	struct dns_server *srv;
 	int err;
@@ -166,8 +159,6 @@ int dns_server_alloc(struct dns_server **srvp, const char *laddr, bool rotate)
 	err = udp_local_get(srv->us, &srv->addr);
 	if (err)
 		goto out;
-
-	srv->rotate = rotate;
 
 out:
 	if (err)
