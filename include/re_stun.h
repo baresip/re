@@ -237,8 +237,6 @@ extern const char *stun_usage_binding;
 extern const char *stuns_usage_binding;
 extern const char *stun_usage_relay;
 extern const char *stuns_usage_relay;
-extern const char *stun_usage_behavior;
-extern const char *stuns_usage_behavior;
 
 
 /**
