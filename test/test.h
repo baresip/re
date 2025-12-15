@@ -445,7 +445,7 @@ struct stunserver {
 	int err;
 };
 
-int stunserver_alloc(struct stunserver **stunp);
+int stunserver_alloc(struct stunserver **stunp, const char *laddr);
 const struct sa *stunserver_addr(const struct stunserver *stun, int proto);
 
 

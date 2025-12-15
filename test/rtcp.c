@@ -378,11 +378,11 @@ static void rtcp_recv_handler(const struct sa *src, struct rtcp_msg *msg,
 }
 
 
-static int agent_init(struct agent *ag, bool mux)
+static int agent_init(struct agent *ag, bool mux, const char *laddr_str)
 {
 	struct sa laddr;
 
-	sa_set_str(&laddr, "127.0.0.1", 0);
+	sa_set_str(&laddr, laddr_str, 0);
 
 	int err = rtp_listen(&ag->rtp_sock, IPPROTO_UDP,
 			     &laddr, 1024, 65535, true,
@@ -399,15 +399,15 @@ static int agent_init(struct agent *ag, bool mux)
 }
 
 
-static int test_rtcp_loop_param(bool mux)
+static int test_rtcp_loop_param(bool mux, const char *laddr)
 {
 	struct agent a = {0}, b = {0};
 	struct mbuf *mb = NULL;
 	int err;
 
-	err = agent_init(&a, mux);
+	err = agent_init(&a, mux, laddr);
 	TEST_ERR(err);
-	err = agent_init(&b, mux);
+	err = agent_init(&b, mux, laddr);
 	TEST_ERR(err);
 
 	a.peer = &b;
@@ -471,11 +471,20 @@ int test_rtcp_loop(void)
 {
 	int err;
 
-	err = test_rtcp_loop_param(false);
+	err = test_rtcp_loop_param(false, "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_rtcp_loop_param(true);
+	err = test_rtcp_loop_param(true, "127.0.0.1");
 	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+
+		err = test_rtcp_loop_param(false, "::1");
+		TEST_ERR(err);
+
+		err = test_rtcp_loop_param(true, "::1");
+		TEST_ERR(err);
+	}
 
  out:
 	return err;

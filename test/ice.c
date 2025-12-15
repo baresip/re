@@ -477,7 +477,7 @@ static int agent_alloc(struct agent **agentp, struct ice_test *it,
 			goto out;
 	}
 	else {
-		err = stunserver_alloc(&agent->stun);
+		err = stunserver_alloc(&agent->stun, "127.0.0.1");
 		if (err)
 			goto out;
 	}
