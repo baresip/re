@@ -329,8 +329,8 @@ int test_dtls(void)
 			return err;
 
 		if (test_ipv6_supported()) {
-			err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false, NULL,
-						  "::1");
+			err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false,
+						  NULL, "::1");
 			TEST_ERR(err);
 		}
 	}
