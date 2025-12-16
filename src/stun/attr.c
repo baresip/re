@@ -41,7 +41,6 @@ static void destructor(void *arg)
 		break;
 
 	case STUN_ATTR_DATA:
-	case STUN_ATTR_PADDING:
 		mem_deref(attr->v.mb.buf);
 		break;
 	}
@@ -125,7 +124,6 @@ int stun_attr_encode(struct mbuf *mb, uint16_t type, const void *v,
 		break;
 
 	case STUN_ATTR_DATA:
-	case STUN_ATTR_PADDING:
 		if (mb == mbd) {
 			mb->pos = mb->end;
 			break;
@@ -279,7 +277,6 @@ int stun_attr_decode(struct stun_attr **attrp, struct mbuf *mb,
 		break;
 
 	case STUN_ATTR_DATA:
-	case STUN_ATTR_PADDING:
 		attr->v.mb.buf  = mem_ref(mb->buf);
 		attr->v.mb.size = mb->size;
 		attr->v.mb.pos  = mb->pos;
@@ -382,7 +379,6 @@ const char *stun_attr_name(uint16_t type)
 	case STUN_ATTR_RSV_TOKEN:         return "RESERVATION-TOKEN";
 	case STUN_ATTR_PRIORITY:          return "PRIORITY";
 	case STUN_ATTR_USE_CAND:          return "USE-CANDIDATE";
-	case STUN_ATTR_PADDING:           return "PADDING";
 	case STUN_ATTR_RESP_PORT:         return "RESPONSE-PORT";
 	case STUN_ATTR_SOFTWARE:          return "SOFTWARE";
 	case STUN_ATTR_ALT_SERVER:        return "ALTERNATE-SERVER";
@@ -455,7 +451,6 @@ void stun_attr_dump(const struct stun_attr *a)
 		break;
 
 	case STUN_ATTR_DATA:
-	case STUN_ATTR_PADDING:
 		len = min(mbuf_get_left(&a->v.mb), 16);
 		(void)re_printf("%w%s (%zu bytes)", mbuf_buf(&a->v.mb), len,
 				mbuf_get_left(&a->v.mb) > 16 ? "..." : "",
