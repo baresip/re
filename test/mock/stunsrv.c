@@ -198,7 +198,7 @@ static void stunserver_destructor(void *arg)
 
 
 /* Both UDP- and TCP-transport enabled by default */
-int stunserver_alloc(struct stunserver **stunp)
+int stunserver_alloc(struct stunserver **stunp, const char *laddr_str)
 {
 	struct stunserver *stun;
 	struct sa laddr;
@@ -211,7 +211,7 @@ int stunserver_alloc(struct stunserver **stunp)
 	if (!stun)
 		return ENOMEM;
 
-	sa_set_str(&laddr, "127.0.0.1", 0);
+	sa_set_str(&laddr, laddr_str, 0);
 
 	err = udp_listen(&stun->us, &laddr, stunserver_udp_recv, stun);
 	if (err)

@@ -194,7 +194,7 @@ static void conn_handler(const struct sa *src, void *arg)
 
 
 static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp,
-			       const char *srtp_suites)
+			       const char *srtp_suites, const char *laddr)
 {
 	struct dtls_test test;
 	struct udp_sock *us = NULL;
@@ -229,8 +229,8 @@ static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp,
 			      fp, sizeof(fp));
 	TEST_EQUALS(0, err);
 
-	(void)sa_set_str(&cli, "127.0.0.1", 0);
-	(void)sa_set_str(&srv, "127.0.0.1", 0);
+	(void)sa_set_str(&cli, laddr, 0);
+	(void)sa_set_str(&srv, laddr, 0);
 
 	err = udp_listen(&us, &srv, NULL, NULL);
 	TEST_ERR(err);
@@ -323,12 +323,20 @@ int test_dtls(void)
 		return ESKIPPED;
 	}
 	else {
-		err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false, NULL);
+		err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false, NULL,
+					  "127.0.0.1");
 		if (err)
 			return err;
+
+		if (test_ipv6_supported()) {
+			err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false,
+						  NULL, "::1");
+			TEST_ERR(err);
+		}
 	}
 
-	return 0;
+ out:
+	return err;
 }
 
 
@@ -342,19 +350,19 @@ int test_dtls_srtp(void)
 	}
 
 	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
-				  "SRTP_AES128_CM_SHA1_80");
+				  "SRTP_AES128_CM_SHA1_80", "127.0.0.1");
 	TEST_ERR(err);
 
 	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
-				  "SRTP_AES128_CM_SHA1_32");
+				  "SRTP_AES128_CM_SHA1_32", "127.0.0.1");
 	TEST_ERR(err);
 
 	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
-				  "SRTP_AEAD_AES_128_GCM");
+				  "SRTP_AEAD_AES_128_GCM", "127.0.0.1");
 	TEST_ERR(err);
 
 	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
-				  "SRTP_AEAD_AES_256_GCM");
+				  "SRTP_AEAD_AES_256_GCM", "127.0.0.1");
 	TEST_ERR(err);
 
  out:

@@ -417,7 +417,7 @@ static void udp_recv_handler(const struct sa *src, struct mbuf *mb, void *arg)
 }
 
 
-static int test_stun_request(int proto, bool natted)
+static int test_stun_request(int proto, bool natted, const char *laddr_str)
 {
 	struct stunserver *srv = NULL;
 	struct stun_ctrans *ct = NULL;
@@ -428,7 +428,7 @@ static int test_stun_request(int proto, bool natted)
 
 	memset(&test, 0, sizeof(test));
 
-	err = stunserver_alloc(&srv);
+	err = stunserver_alloc(&srv, laddr_str);
 	if (err)
 		goto out;
 
@@ -437,7 +437,7 @@ static int test_stun_request(int proto, bool natted)
 		goto out;
 
 	if (proto == IPPROTO_UDP) {
-		err = sa_set_str(&laddr, "127.0.0.1", 0);
+		err = sa_set_str(&laddr, laddr_str, 0);
 		TEST_ERR(err);
 
 		err = udp_listen(&test.us, &laddr, udp_recv_handler, &test);
@@ -574,17 +574,22 @@ int test_stun(void)
 {
 	int err;
 
-	err = test_stun_request(IPPROTO_UDP, false);
+	err = test_stun_request(IPPROTO_UDP, false, "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_stun_request(IPPROTO_UDP, NATTED);
+	err = test_stun_request(IPPROTO_UDP, NATTED, "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_stun_request(IPPROTO_TCP, false);
+	err = test_stun_request(IPPROTO_TCP, false, "127.0.0.1");
 	TEST_ERR(err);
 
 	err = test_stun_req_attributes();
 	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_stun_request(IPPROTO_UDP, false, "::1");
+		TEST_ERR(err);
+	}
 
 out:
 	return err;
