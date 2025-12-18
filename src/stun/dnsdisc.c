@@ -38,8 +38,6 @@ const char *stun_usage_binding   = "stun";  /**< Binding usage */
 const char *stuns_usage_binding  = "stuns"; /**< Binding usage TLS */
 const char *stun_usage_relay     = "turn";
 const char *stuns_usage_relay    = "turns";
-const char *stun_usage_behavior  = "stun-behavior";
-const char *stuns_usage_behavior = "stun-behaviors";
 
 
 static void resolved(const struct stun_dns *dns, int err)
