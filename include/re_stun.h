@@ -74,7 +74,6 @@ enum stun_attrib {
 	STUN_ATTR_RSV_TOKEN          = 0x0022,
 	STUN_ATTR_PRIORITY           = 0x0024,
 	STUN_ATTR_USE_CAND           = 0x0025,
-	STUN_ATTR_PADDING            = 0x0026,
 	STUN_ATTR_RESP_PORT          = 0x0027,
 
 	/* Comprehension-optional range (0x8000-0xFFFF) */
@@ -141,7 +140,6 @@ struct stun_attr {
 		struct sa xor_mapped_addr;
 		uint64_t rsv_token;
 		uint32_t priority;
-		struct mbuf padding;
 		uint16_t resp_port;
 		char *software;
 		struct sa alt_server;
