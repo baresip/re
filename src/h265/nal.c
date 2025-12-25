@@ -8,6 +8,7 @@
 #include <re_fmt.h>
 #include <re_mbuf.h>
 #include <re_h265.h>
+#include <re_h264.h>
 
 
 void h265_nal_encode(uint8_t buf[2], unsigned nal_unit_type,
@@ -132,42 +133,6 @@ bool h265_is_keyframe(enum h265_naltype type)
 }
 
 
-static const uint8_t *h265_find_startcode(const uint8_t *p, const uint8_t *end)
-{
-	const uint8_t *a = p + 4 - ((size_t)p & 3);
-
-	for (end -= 3; p < a && p < end; p++ ) {
-		if (p[0] == 0 && p[1] == 0 && p[2] == 1)
-			return p;
-	}
-
-	for (end -= 3; p < end; p += 4) {
-		uint32_t x = *(const uint32_t*)(void *)p;
-		if ( (x - 0x01010101) & (~x) & 0x80808080 ) {
-			if (p[1] == 0 ) {
-				if ( p[0] == 0 && p[2] == 1 )
-					return p;
-				if ( p[2] == 0 && p[3] == 1 )
-					return p+1;
-			}
-			if ( p[3] == 0 ) {
-				if ( p[2] == 0 && p[4] == 1 )
-					return p+2;
-				if ( p[4] == 0 && p[5] == 1 )
-					return p+3;
-			}
-		}
-	}
-
-	for (end += 3; p < end; p++) {
-		if (p[0] == 0 && p[1] == 0 && p[2] == 1)
-			return p;
-	}
-
-	return end + 3;
-}
-
-
 static inline int packetize(bool marker, const uint8_t *buf, size_t len,
 			    size_t maxlen, uint64_t rtp_ts,
 			    h265_packet_h *pkth, void *arg)
@@ -224,7 +189,7 @@ int h265_packetize(uint64_t rtp_ts, const uint8_t *buf, size_t len,
 	const uint8_t *r;
 	int err = 0;
 
-	r = h265_find_startcode(start, end);
+	r = h264_find_startcode(start, end);
 
 	while (r < end) {
 		const uint8_t *r1;
@@ -234,7 +199,7 @@ int h265_packetize(uint64_t rtp_ts, const uint8_t *buf, size_t len,
 		while (!*(r++))
 			;
 
-		r1 = h265_find_startcode(r, end);
+		r1 = h264_find_startcode(r, end);
 
 		marker = (r1 >= end);
 
