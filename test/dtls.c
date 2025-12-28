@@ -258,6 +258,9 @@ static int test_dtls_srtp_base(enum tls_method method, bool dtls_srtp,
 		TEST_ERR(err);
 	}
 
+	dtls_set_handlers(test.conn_cli, cli_estab_handler,
+			  cli_recv_handler, cli_close_handler, &test);
+
 	err = re_main_timeout(800);
 	TEST_ERR(err);
 
