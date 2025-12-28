@@ -64,7 +64,6 @@ typedef bool (net_ifaddr_h)(const char *ifname, const struct sa *sa,
 
 int net_if_getname(char *ifname, size_t sz, int af, const struct sa *ip);
 int net_if_getaddr(const char *ifname, int af, struct sa *ip);
-int net_if_getaddr4(const char *ifname, int af, struct sa *ip);
 int net_if_list(net_ifaddr_h *ifh, void *arg);
 int net_if_apply(net_ifaddr_h *ifh, void *arg);
 int net_if_debug(struct re_printf *pf, void *unused);
