@@ -113,7 +113,7 @@ int net_default_source_addr_get(int af, struct sa *ip)
 	if (0 == net_if_getaddr(NULL, af, ip))
 		return 0;
 
-	return net_if_getaddr4(ifname, af, ip);
+	return 0;
 #endif
 }
 

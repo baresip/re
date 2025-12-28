@@ -27,66 +27,6 @@
 
 
 /**
- * Get IP address for a given network interface
- *
- * @param ifname  Network interface name
- * @param af      Address Family
- * @param ip      Returned IP address
- *
- * @return 0 if success, otherwise errorcode
- *
- * @deprecated Works for IPv4 only
- */
-int net_if_getaddr4(const char *ifname, int af, struct sa *ip)
-{
-	struct addrinfo hints, *res, *r;
-	int error, err;
-
-	if (AF_INET != af)
-		return EAFNOSUPPORT;
-
-	memset(&hints, 0, sizeof(hints));
-	/* set-up hints structure */
-	hints.ai_family   = PF_UNSPEC;
-	hints.ai_flags    = AI_PASSIVE;
-	hints.ai_socktype = SOCK_DGRAM;
-	error = getaddrinfo(NULL, "0", &hints, &res);
-	if (error) {
-		DEBUG_WARNING("get_ifaddr: getaddrinfo(): %s\n",
-			      gai_strerror(error));
-		return EADDRNOTAVAIL;
-	}
-
-	err = ENOENT;
-	for (r = res; r; r = r->ai_next) {
-		struct ifreq ifrr;
-		int fd = -1;
-
-		fd = socket(r->ai_family, SOCK_DGRAM, 0);
-		if (fd < 0) {
-			continue;
-		}
-
-		ifrr.ifr_addr.sa_family = r->ai_family;
-		str_ncpy(ifrr.ifr_name, ifname, sizeof(ifrr.ifr_name));
-
-		if (ioctl(fd, SIOCGIFADDR, &ifrr) < 0) {
-			err = errno;
-			goto next;
-		}
-
-		err = sa_set_sa(ip, &ifrr.ifr_ifru.ifru_addr);
-
-	next:
-		(void)close(fd);
-	}
-
-	freeaddrinfo(res);
-	return err;
-}
-
-
-/**
  * Enumerate all network interfaces
  *
  * @param ifh Interface handler
