@@ -110,10 +110,7 @@ int net_default_source_addr_get(int af, struct sa *ip)
 		return 0;
 
 	/* Then try first real IP */
-	if (0 == net_if_getaddr(NULL, af, ip))
-		return 0;
-
-	return 0;
+	return net_if_getaddr(NULL, af, ip);
 #endif
 }
 
