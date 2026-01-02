@@ -342,6 +342,51 @@ int rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 }
 
 
+int   rtp_listen_single(struct rtp_sock **rsp, int proto, const struct sa *ip,
+			uint16_t port, rtp_recv_h *recvh, void *arg)
+{
+	struct rtp_sock *rs;
+	int err;
+
+	if (!ip || !recvh)
+		return EINVAL;
+
+	err = rtp_alloc(&rs);
+	if (err)
+		return err;
+
+	rs->recvh = recvh;
+	rs->arg   = arg;
+	rs->local = *ip;
+	sa_set_port(&rs->local, port);
+
+	switch (proto) {
+
+	case IPPROTO_UDP: {
+		struct udp_sock *us;
+		err = udp_listen(&us, &rs->local, udp_recv_handler, rs);
+		if (err)
+			goto out;
+
+		rs->sock_rtp = us;
+	}
+	break;
+
+	default:
+		err = EPROTONOSUPPORT;
+		break;
+	}
+
+ out:
+	if (err)
+		mem_deref(rs);
+	else
+		*rsp = rs;
+
+	return err;
+}
+
+
 /**
  * Open RTP Socket without bind.
  *
