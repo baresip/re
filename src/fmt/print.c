@@ -9,6 +9,7 @@
 #include <re_sa.h>
 #include <re_fmt.h>
 #include <re_mem.h>
+#include <re_btrace.h>
 #ifdef _MSC_VER
 #include <float.h>
 #ifndef isinf
@@ -157,6 +158,9 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 	bool uc = false;
 	double dbl;
 	int errnum;
+#ifndef RELEASE
+	struct btrace bt;
+#endif
 
 	if (!fmt || !vph)
 		return EINVAL;
@@ -491,13 +495,15 @@ static int vhprintf(const char *fmt, va_list ap, re_vprintf_h *vph, void *arg,
 out:
 #ifndef RELEASE
 	if (err == ENODATA) {
-		re_fprintf(stderr, "Format: \"%b<-- NO ARG\n",
-			   fmt, p - fmt + 1);
+		btrace(&bt);
+		re_fprintf(stderr, "Format: \"%b<-- NO ARG %H\n", fmt,
+			   p - fmt + 1, btrace_println, &bt);
 		re_assert(0 && "RE_VA_ARG: no more arguments");
 	}
-	if (err == EOVERFLOW) {
-		re_fprintf(stderr, "Format: \"%b<-- SIZE ERROR\n", fmt,
-			      p - fmt + 1);
+	else if (err == EOVERFLOW) {
+		btrace(&bt);
+		re_fprintf(stderr, "Format: \"%b<-- SIZE ERROR %H\n", fmt,
+			   p - fmt + 1, btrace_println, &bt);
 		re_assert(0 && "RE_VA_ARG: arg is not compatible");
 	}
 #endif
