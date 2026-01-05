@@ -496,13 +496,13 @@ out:
 #ifndef RELEASE
 	if (err == ENODATA) {
 		btrace(&bt);
-		re_fprintf(stderr, "Format: \"%b<-- NO ARG %H\n", fmt,
+		re_fprintf(stderr, "Format: \"%b<-- NO ARG\n%H\n", fmt,
 			   p - fmt + 1, btrace_println, &bt);
 		re_assert(0 && "RE_VA_ARG: no more arguments");
 	}
 	else if (err == EOVERFLOW) {
 		btrace(&bt);
-		re_fprintf(stderr, "Format: \"%b<-- SIZE ERROR %H\n", fmt,
+		re_fprintf(stderr, "Format: \"%b<-- SIZE ERROR\n%H\n", fmt,
 			   p - fmt + 1, btrace_println, &bt);
 		re_assert(0 && "RE_VA_ARG: arg is not compatible");
 	}
