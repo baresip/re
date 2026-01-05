@@ -74,15 +74,6 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	if (!pf || !bt)
 		return EINVAL;
 
-#ifdef LINUX
-	char exe[256] = {0};
-
-	if (readlink("/proc/self/exe", exe, sizeof(exe) - 1) < 0) {
-		DEBUG_WARNING("readlink /proc/self/exe error %m\n", errno);
-		return errno;
-	}
-#endif
-
 	if (!bt->len)
 		return 0;
 
@@ -106,16 +97,17 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 		for (size_t j = 0; j < bt->len; j++) {
 			re_hprintf(pf, "%s\n", symbols[j]);
 #ifdef LINUX
+			struct pl file	     = PL_INIT;
 			struct pl addr	     = PL_INIT;
 			char addr2l[512]     = {0};
 			char addr2l_out[256] = {0};
 			FILE *pipe;
 
-			re_regex(symbols[j], str_len(symbols[j]), "([^)]+",
-				 &addr);
+			re_regex(symbols[j], str_len(symbols[j]),
+				 "[^(]+([^)]+", &file, &addr);
 
 			(void)re_snprintf(addr2l, sizeof(addr2l),
-				    "addr2line -p -f -e %s %r", exe, &addr);
+				    "addr2line -p -f -e %r %r", &file, &addr);
 
 			pipe = popen(addr2l, "r");
 			if (!pipe)
