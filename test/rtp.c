@@ -543,7 +543,7 @@ static int test_rtp_listen_priv(bool clear, bool single)
 	sa_init(&sa, AF_INET);
 	memset(&test, 0, sizeof(test));
 	if (single) {
-		err = rtp_listen_single(&test.rtp, IPPROTO_UDP, &sa, 49152,
+		err = rtp_listen_single(&test.rtp, &sa, 49152,
 					rtp_recv_handler, &test);
 	}
 	else {

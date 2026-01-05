@@ -265,7 +265,7 @@ int   rtp_alloc(struct rtp_sock **rsp);
 int   rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 		 uint16_t min_port, uint16_t max_port, bool enable_rtcp,
 		 rtp_recv_h *recvh, rtcp_recv_h *rtcph, void *arg);
-int   rtp_listen_single(struct rtp_sock **rsp, int proto, const struct sa *ip,
+int   rtp_listen_single(struct rtp_sock **rsp, const struct sa *ip,
 			uint16_t port, rtp_recv_h *recvh, void *arg);
 int   rtp_open(struct rtp_sock **rsp, int af);
 int   rtp_hdr_encode(struct mbuf *mb, const struct rtp_header *hdr);
