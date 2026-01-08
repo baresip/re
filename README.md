@@ -5,7 +5,7 @@ libre README
 libre is a Generic library for real-time communications with async IO support.
 
 - Copyright (C) 2010 - 2020 Creytiv.com
-- Copyright (C) 2020 - 2025 Baresip Foundation (https://github.com/baresip)
+- Copyright (C) 2020 - 2026 Baresip Foundation (https://github.com/baresip)
 
 ![Build](https://github.com/baresip/re/workflows/Build/badge.svg)
 ![ccheck](https://github.com/baresip/re/workflows/ccheck/badge.svg)
