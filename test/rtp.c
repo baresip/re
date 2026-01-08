@@ -533,7 +533,7 @@ static void rtp_recv_handler(const struct sa *src,
 }
 
 
-static int test_rtp_listen_priv(bool clear)
+static int test_rtp_listen_priv(bool clear, bool single)
 {
 	struct rtp_test test;
 	struct sa sa;
@@ -542,8 +542,14 @@ static int test_rtp_listen_priv(bool clear)
 
 	sa_init(&sa, AF_INET);
 	memset(&test, 0, sizeof(test));
-	err = rtp_listen(&test.rtp, IPPROTO_UDP, &sa, 1024, 49152, false,
-			 rtp_recv_handler, NULL, &test);
+	if (single) {
+		err = rtp_listen_single(&test.rtp, &sa, 49152,
+					rtp_recv_handler, &test);
+	}
+	else {
+		err = rtp_listen(&test.rtp, IPPROTO_UDP, &sa, 1024, 49152,
+				 false, rtp_recv_handler, NULL, &test);
+	}
 	TEST_ERR(err);
 
 	test.mb = mbuf_alloc(2 * (RTP_HEADER_SIZE + 5));
@@ -596,10 +602,16 @@ int test_rtp_listen(void)
 {
 	int err;
 
-	err = test_rtp_listen_priv(false);
+	err = test_rtp_listen_priv(false, false);
 	TEST_ERR(err);
 
-	err = test_rtp_listen_priv(true);
+	err = test_rtp_listen_priv(true, false);
+	TEST_ERR(err);
+
+	err = test_rtp_listen_priv(false, true);
+	TEST_ERR(err);
+
+	err = test_rtp_listen_priv(true, true);
 	TEST_ERR(err);
 out:
 	return err;

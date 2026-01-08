@@ -343,6 +343,53 @@ int rtp_listen(struct rtp_sock **rsp, int proto, const struct sa *ip,
 
 
 /**
+ * Listen on a single port for RTP (no RTCP).
+ *
+ * Opens a UDP socket and tries to bind to the given IP and port.
+ *
+ * @param rsp   Pointer to returned RTP socket
+ * @param ip	Local IP address
+ * @param port  Local port
+ * @param recvh RTP Receive handler
+ * @param arg   Handler argument
+ * @return 0 for success, otherwise errorcode
+ */
+int   rtp_listen_single(struct rtp_sock **rsp, const struct sa *ip,
+			uint16_t port, rtp_recv_h *recvh, void *arg)
+{
+	struct rtp_sock *rs;
+	int err;
+
+	if (!ip || !recvh)
+		return EINVAL;
+
+	err = rtp_alloc(&rs);
+	if (err)
+		return err;
+
+	rs->recvh = recvh;
+	rs->arg   = arg;
+	rs->local = *ip;
+	sa_set_port(&rs->local, port);
+
+	struct udp_sock *us;
+	err = udp_listen(&us, &rs->local, udp_recv_handler, rs);
+	if (err)
+		goto out;
+
+	rs->sock_rtp = us;
+
+ out:
+	if (err)
+		mem_deref(rs);
+	else
+		*rsp = rs;
+
+	return err;
+}
+
+
+/**
  * Open RTP Socket without bind.
  *
  * @param rsp         Pointer to returned RTP socket
