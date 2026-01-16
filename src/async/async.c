@@ -152,11 +152,14 @@ static void queueh(int id, void *data, void *arg)
 	(void)id;
 
 	mtx_lock(work->mtx);
-	if (work->cb) {
-		work->cb(work->err, work->arg);
-		work->cb =NULL;
-	}
+	re_async_h *cb = work->cb;
+	void *cb_arg   = work->arg;
+	int err        = work->err;
+	work->cb = NULL;
 	mtx_unlock(work->mtx);
+
+	if (cb)
+		cb(err, cb_arg);
 
 	mtx_lock(&async->mtx);
 	list_move(&work->le, &async->freel);
