@@ -44,8 +44,13 @@ struct tmrl {
 static void tmrl_destructor(void *arg)
 {
 	struct tmrl *tmrl = arg;
+	struct le *le;
 
 	mtx_lock(tmrl->lock);
+	LIST_FOREACH(&tmrl->list, le) {
+		struct tmr *tmr = le->data;
+		re_atomic_rls_set(&tmr->llock, (uintptr_t)NULL);
+	}
 	list_clear(&tmrl->list);
 	mtx_unlock(tmrl->lock);
 
@@ -149,6 +154,7 @@ void tmr_poll(struct tmrl *tmrl)
 		tmr->th = NULL;
 
 		list_unlink(&tmr->le);
+		re_atomic_rls_set(&tmr->llock, (uintptr_t)NULL);
 		mtx_unlock(tmrl->lock);
 
 		if (!th)
@@ -388,21 +394,15 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 {
 	struct tmrl *tmrl = re_tmrl_get();
 	struct le *le;
-	mtx_t *lock;
 
 	if (!tmr || !tmrl)
 		return;
 
-	/* Prevent multiple cancel race conditions */
-	if (!re_atomic_acq(&tmr->active) && !th)
-		return;
-
-	re_atomic_rls_set(&tmr->active, false);
-
-	if (!tmr->llock || !tmr->le.list)
+	/* use old list lock for unlinking */
+	uintptr_t lock_t = (uintptr_t)re_atomic_acq(&tmr->llock);
+	mtx_t *lock = (mtx_t *)lock_t;
+	if (!lock)
 		lock = tmrl->lock; /* use current list lock */
-	else
-		lock = tmr->llock; /* use old list lock for unlinking */
 
 	mtx_lock(lock);
 
@@ -413,19 +413,19 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 
 	lock = tmrl->lock;
 
+	if (!th) {
+		re_atomic_rls_set(&tmr->llock, (uintptr_t)NULL);
+		return;
+	}
+
+	re_atomic_rls_set(&tmr->llock, (uintptr_t)tmrl->lock);
+
 	mtx_lock(lock);
 
 	tmr->th	  = th;
 	tmr->arg  = arg;
 	tmr->file = file;
 	tmr->line = line;
-	tmr->llock = tmrl->lock;
-
-	if (!th) {
-		tmr->llock = NULL;
-		mtx_unlock(lock);
-		return;
-	}
 
 	if (syncnow)
 		tmr->jfs = tmr_jiffies();
@@ -450,8 +450,6 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 			list_prepend(&tmrl->list, &tmr->le, tmr);
 		}
 	}
-
-	re_atomic_rls_set(&tmr->active, true);
 
 	mtx_unlock(lock);
 }
