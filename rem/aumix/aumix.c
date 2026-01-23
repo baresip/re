@@ -578,6 +578,8 @@ void aumix_source_enable(struct aumix_source *src, bool enable)
 /**
  * Write PCM samples for a given source to the audio mixer
  *
+ * @deprecated use aumix_source_readh or aumix_source_put_auframe
+ *
  * @param src   Audio mixer source
  * @param sampv PCM samples
  * @param sampc Number of samples
@@ -591,6 +593,23 @@ int aumix_source_put(struct aumix_source *src, const int16_t *sampv,
 		return EINVAL;
 
 	return aubuf_write_samp(src->aubuf, sampv, sampc);
+}
+
+
+/**
+ * Put a audio frame for a given source to the audio mixer
+ *
+ * @param src Audio mixer source
+ * @param af  Audio frame
+ *
+ * @return 0 for success, otherwise error code
+ */
+int aumix_source_put_auframe(struct aumix_source *src, struct auframe *af)
+{
+	if (!src)
+		return EINVAL;
+
+	return aubuf_write_auframe(src->aubuf, af);
 }
 
 
