@@ -647,7 +647,7 @@ void rtcp_sess_rx_rtp(struct rtcp_sess *sess, struct rtp_header *hdr,
 
 	if (sess->srate_rx) {
 		/* Convert from wall-clock time to timestamp units */
-		hdr->ts_arrive = tmr_jiffies() * sess->srate_rx / 1000;
+		hdr->ts_arrive = tmr_jiffies() * (sess->srate_rx / 1000);
 
 		/*
 		 * Calculate jitter only when the timestamp is different than
