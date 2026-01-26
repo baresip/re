@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v4.5.0 - 2026-01-28
+
+## What's Changed
+* net: remove net_if_getaddr4() -- deprecated by @alfredh in https://github.com/baresip/re/pull/1494
+* test: add testing of dtls_set_handlers() api by @alfredh in https://github.com/baresip/re/pull/1495
+* h265: use h264_find_startcode() -- duplicated code by @alfredh in https://github.com/baresip/re/pull/1493
+* fmt: str_bool: reuse similar logic in pl_bool() by @alfredh in https://github.com/baresip/re/pull/1496
+* net: cleanup fallback return by @sreimers in https://github.com/baresip/re/pull/1497
+* fmt/print: add backtrace for incompatible format arguments by @sreimers in https://github.com/baresip/re/pull/1499
+* btrace: fix for linux addr2line by @cspiel1 in https://github.com/baresip/re/pull/1500
+* rtp: add RTP listen on single port by @cspiel1 in https://github.com/baresip/re/pull/1498
+* copyright: update for new year by @Clusters in https://github.com/baresip/re/pull/1502
+* async: do not hold lock during cb call by @cspiel1 in https://github.com/baresip/re/pull/1503
+* docs: fix README.md document include by @sreimers in https://github.com/baresip/re/pull/1501
+* tmr: improve thread list lock handling by @sreimers in https://github.com/baresip/re/pull/1504
+* aumix: add aumix_source_put_auframe and deprecate aumix_source_put by @sreimers in https://github.com/baresip/re/pull/1505
+* rtp/sess: fix ts_arrive calculation by @sreimers in https://github.com/baresip/re/pull/1506
+
+## New Contributors
+* @Clusters made their first contribution in https://github.com/baresip/re/pull/1502
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.4.0...v4.5.0
+
+
 ## v4.4.0 - 2025-12-22
 
 ### What's Changed
