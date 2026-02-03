@@ -195,7 +195,7 @@ static void tcp_recv_handler(struct mbuf *mbrx, void *arg)
 
 	mb->pos = 0;
 
-	decode_dns_query(srv, &srv->paddr, mb, IPPROTO_TCP);
+	decode_dns_query(srv, NULL, mb, IPPROTO_TCP);
 
 	srv->flen = 0;
 	mb->pos = 0;
@@ -221,7 +221,6 @@ static void tcp_close_handler(int err, void *arg)
 
 	srv->tc = mem_deref(srv->tc);
 	srv->mb = mem_deref(srv->mb);
-	sa_init(&srv->paddr, AF_UNSPEC);
 	srv->flen = 0;
 }
 
@@ -230,6 +229,7 @@ static void tcp_conn_handler(const struct sa *peer, void *arg)
 {
 	struct dns_server *srv = arg;
 	int err = 0;
+	(void)peer;
 
 	/* max 1 TCP connection */
 	TEST_ASSERT(srv->tc == NULL);
@@ -244,8 +244,6 @@ static void tcp_conn_handler(const struct sa *peer, void *arg)
 			 tcp_close_handler, srv);
 	if (err)
 		goto out;
-
-	srv->paddr = *peer;
 
  out:
 	if (err) {

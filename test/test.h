@@ -541,7 +541,6 @@ struct dns_server {
 	/* per TCP-connection: */
 	struct tcp_conn *tc;
 	struct mbuf *mb;
-	struct sa paddr;
 	uint16_t flen;
 };
 
