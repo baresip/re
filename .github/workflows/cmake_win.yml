@@ -68,7 +68,7 @@ jobs:
       - name: Install OpenSSL
         if: ${{ matrix.config.openssl }}
         run: |
-          choco install --no-progress ${{ matrix.config.choco }} openssl --version 3.5.4
+          choco install --no-progress ${{ matrix.config.choco }} openssl --version 3.6.1
 
       - name: Build
         shell: cmd
