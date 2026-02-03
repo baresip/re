@@ -175,11 +175,12 @@ int test_btrace(void);
 int test_conf(void);
 int test_crc32(void);
 int test_dbg(void);
+int test_dns_dname(void);
 int test_dns_hdr(void);
 int test_dns_integration(void);
-int test_dns_rr(void);
-int test_dns_dname(void);
 int test_dns_nameservers(void);
+int test_dns_proto(void);
+int test_dns_rr(void);
 int test_dsp(void);
 int test_dtmf(void);
 int test_fir(void);
@@ -532,8 +533,16 @@ int sip_server_uri(struct sip_server *srv, char *uri, size_t sz,
 
 struct dns_server {
 	struct udp_sock *us;
+	struct tcp_sock *ts;
 	struct sa addr;
+	struct sa addr_tcp;
 	struct list rrl;
+
+	/* per TCP-connection: */
+	struct tcp_conn *tc;
+	struct mbuf *mb;
+	struct sa paddr;
+	uint16_t flen;
 };
 
 int dns_server_alloc(struct dns_server **srvp, const char *laddr);

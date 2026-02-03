@@ -39,7 +39,7 @@ static void dns_server_match(struct dns_server *srv, struct list *rrl,
 
 
 static void decode_dns_query(struct dns_server *srv, const struct sa *src,
-			     struct mbuf *mb)
+			     struct mbuf *mb, int proto)
 {
 	struct list rrl = LIST_INIT;
 	struct dnshdr hdr;
@@ -105,7 +105,28 @@ static void decode_dns_query(struct dns_server *srv, const struct sa *src,
 
 	mb->pos = start;
 
-	(void)udp_send(srv->us, src, mb);
+	switch (proto) {
+
+	case IPPROTO_UDP:
+		(void)udp_send(srv->us, src, mb);
+		break;
+
+	case IPPROTO_TCP: {
+		size_t length = mb->end - start;
+		struct mbuf *mb_tcp = mbuf_alloc(sizeof(uint16_t) + length);
+		if (!mb_tcp)
+			goto out;
+
+		mbuf_write_u16(mb_tcp, htons((uint16_t)length));
+		mbuf_write_mem(mb_tcp, mbuf_buf(mb), length);
+		mbuf_set_pos(mb_tcp, 0);
+
+		tcp_send(srv->tc, mb_tcp);
+
+		mem_deref(mb_tcp);
+	}
+		break;
+	}
 
 out:
 	list_clear(&rrl);
@@ -117,7 +138,7 @@ static void udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 {
 	struct dns_server *srv = arg;
 
-	decode_dns_query(srv, src, mb);
+	decode_dns_query(srv, src, mb, IPPROTO_UDP);
 }
 
 
@@ -127,6 +148,111 @@ static void destructor(void *arg)
 
 	list_flush(&srv->rrl);
 	mem_deref(srv->us);
+	mem_deref(srv->tc);
+	mem_deref(srv->ts);
+	mem_deref(srv->mb);
+}
+
+
+static void tcp_recv_handler(struct mbuf *mbrx, void *arg)
+{
+	struct dns_server *srv = arg;
+	struct mbuf *mb = srv->mb;
+	int err = 0;
+	size_t n;
+
+ next:
+	/* frame length */
+	if (!srv->flen) {
+
+		n = min(2 - mb->end, mbuf_get_left(mbrx));
+
+		err = mbuf_write_mem(mb, mbuf_buf(mbrx), n);
+		if (err)
+			goto error;
+
+		mbrx->pos += n;
+
+		if (mb->end < 2)
+			return;
+
+		mb->pos = 0;
+		srv->flen = ntohs(mbuf_read_u16(mb));
+		mb->pos = 0;
+		mb->end = 0;
+	}
+
+	n = min(srv->flen - mb->end, mbuf_get_left(mbrx));
+
+	err = mbuf_write_mem(mb, mbuf_buf(mbrx), n);
+	if (err)
+		goto error;
+
+	mbrx->pos += n;
+
+	if (mb->end < srv->flen)
+		return;
+
+	mb->pos = 0;
+
+	decode_dns_query(srv, &srv->paddr, mb, IPPROTO_TCP);
+
+	srv->flen = 0;
+	mb->pos = 0;
+	mb->end = 0;
+
+	if (mbuf_get_left(mbrx) > 0) {
+		DEBUG_INFO("%zu bytes of tcp data left\n",
+			   mbuf_get_left(mbrx));
+		goto next;
+	}
+
+	return;
+
+ error:
+	srv->tc = mem_deref(srv->tc);
+}
+
+
+static void tcp_close_handler(int err, void *arg)
+{
+	struct dns_server *srv = arg;
+	(void)err;
+
+	srv->tc = mem_deref(srv->tc);
+	srv->mb = mem_deref(srv->mb);
+	sa_init(&srv->paddr, AF_UNSPEC);
+	srv->flen = 0;
+}
+
+
+static void tcp_conn_handler(const struct sa *peer, void *arg)
+{
+	struct dns_server *srv = arg;
+	int err = 0;
+
+	/* max 1 TCP connection */
+	TEST_ASSERT(srv->tc == NULL);
+
+	srv->mb = mbuf_alloc(1500);
+	if (!srv->mb) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	err = tcp_accept(&srv->tc, srv->ts, NULL, tcp_recv_handler,
+			 tcp_close_handler, srv);
+	if (err)
+		goto out;
+
+	srv->paddr = *peer;
+
+ out:
+	if (err) {
+		tcp_reject(srv->ts);
+		srv->mb = mem_deref(srv->mb);
+		srv->flen = 0;
+	}
 }
 
 
@@ -139,10 +265,13 @@ void dns_server_flush(struct dns_server *srv)
 int dns_server_alloc(struct dns_server **srvp, const char *laddr)
 {
 	struct dns_server *srv;
+	struct sa laddr_tcp;
 	int err;
 
 	if (!srvp)
 		return EINVAL;
+
+	sa_set_str(&laddr_tcp, laddr, 0);
 
 	srv = mem_zalloc(sizeof(*srv), destructor);
 	if (!srv)
@@ -157,6 +286,14 @@ int dns_server_alloc(struct dns_server **srvp, const char *laddr)
 		goto out;
 
 	err = udp_local_get(srv->us, &srv->addr);
+	if (err)
+		goto out;
+
+	err = tcp_listen(&srv->ts, &laddr_tcp, tcp_conn_handler, srv);
+	if (err)
+		goto out;
+
+	err = tcp_local_get(srv->ts, &srv->addr_tcp);
 	if (err)
 		goto out;
 
