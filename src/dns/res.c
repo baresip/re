@@ -18,7 +18,7 @@
 #include "dns.h"
 
 
-int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
+int get_resolv_dns(struct sa *nsv, uint32_t *n)
 {
 	struct __res_state state;
 	uint32_t i;
@@ -33,11 +33,6 @@ int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 #endif
 	if (0 != ret)
 		return ENOENT;
-
-	if (state.dnsrch[0])
-		str_ncpy(domain, state.dnsrch[0], dsize);
-	else if (str_isset(state.defdname))
-		str_ncpy(domain, state.defdname, dsize);
 
 	if (!state.nscount) {
 		err = ENOENT;
