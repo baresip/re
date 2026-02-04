@@ -18,11 +18,9 @@
 #include <re_dbg.h>
 
 
-static int parse_resolv_conf(char *domain, size_t dsize,
-			     struct sa *srvv, uint32_t *n)
+static int parse_resolv_conf(struct sa *srvv, uint32_t *n)
 {
 	FILE *f;
-	struct pl dom = pl_null;
 	uint32_t i = 0;
 	int err = 0;
 
@@ -46,17 +44,6 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 
 		len = str_len(line);
 
-		/* Set domain if not already set */
-		if (!pl_isset(&dom)) {
-			if (0 == re_regex(line, len, "domain [^ ]+", &dom)) {
-				(void)pl_strcpy(&dom, domain, dsize);
-			}
-
-			if (0 == re_regex(line, len, "search [^ ]+", &dom)) {
-				(void)pl_strcpy(&dom, domain, dsize);
-			}
-		}
-
 		/* Use the first entry */
 		if (i < *n && 0 == re_regex(line, len,
 					    "nameserver [0-9a-f.:]+", &srv)) {
@@ -79,8 +66,8 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 /**
  * Get the DNS domain and nameservers
  *
- * @param domain Returned domain name
- * @param dsize  Size of domain name buffer
+ * @param domain Unused
+ * @param dsize  Unused
  * @param srvv   Returned nameservers
  * @param n      Nameservers capacity, actual on return
  *
@@ -89,27 +76,29 @@ static int parse_resolv_conf(char *domain, size_t dsize,
 int dns_srv_get(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 {
 	int err;
+	(void)domain;
+	(void)dsize;
 
 	/* Try them all in prioritized order */
 
 #ifdef HAVE_RESOLV
-	err = get_resolv_dns(domain, dsize, srvv, n);
+	err = get_resolv_dns(srvv, n);
 	if (!err)
 		return 0;
 #endif
 
 #ifdef DARWIN
-	err = get_darwin_dns(domain, dsize, srvv, n);
+	err = get_darwin_dns(srvv, n);
 	if (!err)
 		return 0;
 #endif
 
-	err = parse_resolv_conf(domain, dsize, srvv, n);
+	err = parse_resolv_conf(srvv, n);
 	if (!err)
 		return 0;
 
 #ifdef WIN32
-	err = get_windns(domain, dsize, srvv, n);
+	err = get_windns(srvv, n);
 #endif
 
 	return err;

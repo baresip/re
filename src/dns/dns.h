@@ -6,11 +6,11 @@
 
 
 #ifdef HAVE_RESOLV
-int get_resolv_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n);
+int get_resolv_dns(struct sa *nsv, uint32_t *n);
 #endif
 #ifdef WIN32
-int get_windns(char *domain, size_t dsize, struct sa *nav, uint32_t *n);
+int get_windns(struct sa *nav, uint32_t *n);
 #endif
 #ifdef DARWIN
-int get_darwin_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n);
+int get_darwin_dns(struct sa *nsv, uint32_t *n);
 #endif

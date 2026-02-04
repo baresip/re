@@ -14,19 +14,17 @@
 #include <SystemConfiguration/SystemConfiguration.h>
 
 
-int get_darwin_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
+int get_darwin_dns(struct sa *nsv, uint32_t *n)
 {
 #if TARGET_OS_IPHONE
-	(void)domain;
-	(void)dsize;
 	(void)nsv;
 	(void)n;
 	return ENOSYS;
 #else
 	SCDynamicStoreContext context = {0, NULL, NULL, NULL, NULL};
-	CFArrayRef addresses, domains;
+	CFArrayRef addresses;
 	SCDynamicStoreRef store;
-	CFStringRef key, dom;
+	CFStringRef key;
 	CFDictionaryRef dict;
 	uint32_t c, i;
 	int err = ENOENT;
@@ -62,16 +60,6 @@ int get_darwin_dns(char *domain, size_t dsize, struct sa *nsv, uint32_t *n)
 		if (err)
 			break;
 	}
-
-	domains = CFDictionaryGetValue(dict, kSCPropNetDNSSearchDomains);
-	if (!domains)
-		goto out;
-
-	if (CFArrayGetCount(domains) < 1)
-		goto out;
-
-	dom = CFArrayGetValueAtIndex(domains, 0);
-	CFStringGetCString(dom, domain, dsize, kCFStringEncodingUTF8);
 
  out:
 	CFRelease(dict);
