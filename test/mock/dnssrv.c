@@ -178,8 +178,7 @@ static void tcp_recv_handler(struct mbuf *mbrx, void *arg)
 
 		mb->pos = 0;
 		srv->flen = ntohs(mbuf_read_u16(mb));
-		mb->pos = 0;
-		mb->end = 0;
+		mbuf_rewind(mb);
 	}
 
 	n = min(srv->flen - mb->end, mbuf_get_left(mbrx));
@@ -198,8 +197,7 @@ static void tcp_recv_handler(struct mbuf *mbrx, void *arg)
 	decode_dns_query(srv, NULL, mb, IPPROTO_TCP);
 
 	srv->flen = 0;
-	mb->pos = 0;
-	mb->end = 0;
+	mbuf_rewind(mb);
 
 	if (mbuf_get_left(mbrx) > 0) {
 		DEBUG_INFO("%zu bytes of tcp data left\n",

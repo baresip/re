@@ -588,5 +588,4 @@ int test_dns_proto(void)
 
  out:
 	return err;
-
 }
