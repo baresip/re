@@ -740,11 +740,92 @@ static void hdl_tmr_cache(void *arg)
 }
 
 
+static int rr_clone(struct dnsrr **rrp, const struct dnsrr *src)
+{
+	struct mbuf *mb;
+	int err;
+
+	if (!rrp || !src)
+		return EINVAL;
+
+	mb = mbuf_alloc(128);
+	if (!mb)
+		return ENOMEM;
+
+	err = dns_rr_encode(mb, src, 0, NULL, 0);
+	if (err)
+		goto out;
+
+	mb->pos = 0;
+	err = dns_rr_decode(mb, rrp, 0);
+
+ out:
+	mem_deref(mb);
+
+	return err;
+}
+
+
+static void rrlist_deref(struct list **rrlv)
+{
+	if (!rrlv)
+		return;
+
+	for (int i = 0; i < RRLV_MAX; i++) {
+		if (!rrlv[i])
+			continue;
+
+		list_flush(rrlv[i]);
+		mem_deref(rrlv[i]);
+		rrlv[i] = NULL;
+	}
+}
+
+
+static int rrlist_clone(struct list **dst, const struct list *src)
+{
+	struct list *lst;
+	const struct le *le;
+	int err = 0;
+
+	if (!dst || !src)
+		return EINVAL;
+
+	lst = mem_alloc(sizeof(*lst), NULL);
+	if (!lst)
+		return ENOMEM;
+
+	list_init(lst);
+
+	for (le = list_head(src); le; le = le->next) {
+		const struct dnsrr *rr = le->data;
+		struct dnsrr *rrc = NULL;
+
+		err = rr_clone(&rrc, rr);
+		if (err)
+			goto out;
+
+		list_append(lst, &rrc->le_priv, rrc);
+	}
+
+ out:
+	if (err) {
+		list_flush(lst);
+		mem_deref(lst);
+	}
+	else {
+		*dst = lst;
+	}
+
+	return err;
+}
+
+
 static bool query_cache_handler(struct dns_query *q)
 {
 	struct dnsquery dq;
 	const struct dns_query *qc = NULL;
-	struct le *le;
+	int err = 0;
 
 	dq.hdr	    = q->hdr;
 	dq.type	    = q->type;
@@ -760,20 +841,23 @@ static bool query_cache_handler(struct dns_query *q)
 
 
 	for (int i = 0; i < RRLV_MAX; i++) {
-		LIST_FOREACH(qc->rrlv[i], le)
-		{
-			struct dnsrr *rr = le->data;
-			mem_ref(rr);
-		}
-		q->rrlv[i] = mem_ref(qc->rrlv[i]);
+		err = rrlist_clone(&q->rrlv[i], qc->rrlv[i]);
+		if (err)
+			goto out;
 	}
 
+	q->hdr = qc->hdr;
 	hash_unlink(&q->le);
 	list_append(&q->dnsc->hdl_cache, &q->le_hdl, q);
 
 	tmr_start(&q->dnsc->hdl_tmr, 0, hdl_tmr_cache, &q->dnsc->hdl_cache);
 
 	return true;
+
+ out:
+	rrlist_deref(q->rrlv);
+
+	return false;
 }
 
 
