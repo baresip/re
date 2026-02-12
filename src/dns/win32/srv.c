@@ -20,7 +20,7 @@
 #include <re_dbg.h>
 
 
-int get_windns(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
+int get_windns(struct sa *srvv, uint32_t *n)
 {
 	FIXED_INFO *     FixedInfo = NULL;
 	ULONG            ulOutBufLen;
@@ -61,8 +61,6 @@ int get_windns(char *domain, size_t dsize, struct sa *srvv, uint32_t *n)
 		err = ENOENT;
 		goto out;
 	}
-
-	str_ncpy(domain, FixedInfo->DomainName, dsize);
 
 #if 0
 	printf( "Host Name: %s\n", FixedInfo->HostName);
