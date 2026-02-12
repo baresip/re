@@ -134,7 +134,8 @@ static void worker_check(void *arg)
 	mtx_lock(&async->mtx);
 	if (!list_isempty(&async->workl)) {
 		if (async->workers == list_count(&async->curl))
-			DEBUG_WARNING("all async workers are busy\n");
+			DEBUG_WARNING("all async workers are busy (%u)\n",
+				      async->workers);
 		else
 			cnd_broadcast(&async->wait);
 	}
