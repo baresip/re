@@ -308,6 +308,13 @@ struct test_dns {
 	struct dnsc *dnsc;
 };
 
+struct test_dns_cache_parallel {
+	int err;
+	uint32_t addr;
+	size_t n;
+	const struct dnsrr *rrv[2];
+};
+
 
 static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 			  struct list *authl, struct list *addl, void *arg)
@@ -337,6 +344,40 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 out:
 	data->err = err;
 	re_cancel();
+}
+
+
+static void query_handler_cache_parallel(int err, const struct dnshdr *hdr,
+					 struct list *ansl, struct list *authl,
+					 struct list *addl, void *arg)
+{
+	struct test_dns_cache_parallel *data = arg;
+	struct dnsrr *rr = list_ledata(list_head(ansl));
+	(void)hdr;
+	(void)authl;
+	(void)addl;
+
+	if (!data)
+		return;
+
+	if (!data->err) {
+		if (err)
+			data->err = err;
+		else if (!rr)
+			data->err = ENODATA;
+		else if (rr->type != DNS_TYPE_A)
+			data->err = EBADMSG;
+		else if (rr->rdata.a.addr != data->addr)
+			data->err = EBADMSG;
+	}
+
+	if (data->n < RE_ARRAY_SIZE(data->rrv))
+		data->rrv[data->n] = rr;
+
+	++data->n;
+
+	if (data->n >= RE_ARRAY_SIZE(data->rrv))
+		re_cancel();
 }
 
 
@@ -371,7 +412,10 @@ static int test_dns_integration_param(const char *laddr)
 {
 	struct dns_server *srv = NULL;
 	struct test_dns data = {0};
-	struct dns_query *q;
+	struct dns_query *q = NULL;
+	struct dns_query *q1 = NULL;
+	struct dns_query *q2 = NULL;
+	struct test_dns_cache_parallel parallel = {0};
 	int err;
 
 	/* Setup Mocking DNS Server */
@@ -414,6 +458,25 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_1, true);
 	TEST_ERR(err);
 
+	/* cached lookup must return unique RR objects for parallel queries */
+	parallel.addr = IP_127_0_0_1;
+
+	err = dnsc_query(&q1, data.dnsc, "test1.example.net", DNS_TYPE_A,
+			 DNS_CLASS_IN, true, query_handler_cache_parallel,
+			 &parallel);
+	TEST_ERR(err);
+
+	err = dnsc_query(&q2, data.dnsc, "test1.example.net", DNS_TYPE_A,
+			 DNS_CLASS_IN, true, query_handler_cache_parallel,
+			 &parallel);
+	TEST_ERR(err);
+
+	err = re_main_timeout(100);
+	TEST_ERR(err);
+	TEST_EQUALS(RE_ARRAY_SIZE(parallel.rrv), parallel.n);
+	TEST_ERR(parallel.err);
+	ASSERT_TRUE(parallel.rrv[0] != parallel.rrv[1]);
+
 	err = check_dns(&data, "test2.example.net", IP_127_0_0_3, true);
 	TEST_ERR(err);
 
@@ -454,6 +517,9 @@ static int test_dns_integration_param(const char *laddr)
 	TEST_ERR(err);
 
 out:
+	mem_deref(q2);
+	mem_deref(q1);
+	mem_deref(q);
 	mem_deref(data.dnsc);
 	mem_deref(srv);
 
