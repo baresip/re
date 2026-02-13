@@ -238,6 +238,8 @@ static void tcp_conn_handler(const struct sa *peer, void *arg)
 		goto out;
 	}
 
+	srv->flen = 0;
+
 	err = tcp_accept(&srv->tc, srv->ts, NULL, tcp_recv_handler,
 			 tcp_close_handler, srv);
 	if (err)

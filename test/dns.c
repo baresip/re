@@ -512,15 +512,6 @@ static void dns_query_handler(int err, const struct dnshdr *hdr,
 		return;
 	}
 
-#if 0
-	for (struct le *le = list_head(ansl); le; le = le->next) {
-
-		const struct dnsrr *rr = le->data;
-
-		re_printf("%H\n", dns_rr_print, rr);
-	}
-#endif
-
 	*answers += list_count(ansl);
 	re_cancel();
 }
@@ -585,6 +576,15 @@ int test_dns_proto(void)
 
 	err = test_dns_param("127.0.0.1", IPPROTO_TCP);
 	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+
+		err = test_dns_param("::1", IPPROTO_UDP);
+		TEST_ERR(err);
+
+		err = test_dns_param("::1", IPPROTO_TCP);
+		TEST_ERR(err);
+	}
 
  out:
 	return err;
