@@ -540,8 +540,8 @@ int dns_server_alloc(struct dns_server **srvp, const char *laddr);
 int dns_server_add_a(struct dns_server *srv, const char *name, uint32_t addr,
 		     int64_t ttl);
 int dns_server_add_aaaa(struct dns_server *srv, const char *name,
-			const uint8_t *addr);
+			const uint8_t *addr, int64_t ttl);
 int dns_server_add_srv(struct dns_server *srv, const char *name,
 		       uint16_t pri, uint16_t weight, uint16_t port,
-		       const char *target);
+		       const char *target, int64_t ttl);
 void dns_server_flush(struct dns_server *srv);
