@@ -201,6 +201,7 @@ int test_dns_rr(void)
 	struct dnsrr *rr = NULL, *rr2 = NULL;
 	struct mbuf *mb;
 	size_t i;
+	char debug[256] = "";
 	int err = ENOMEM;
 
 	static const uint16_t typev[] = {
@@ -250,6 +251,9 @@ int test_dns_rr(void)
 			err = EBADMSG;
 			break;
 		}
+
+		re_snprintf(debug, sizeof(debug), "%H", dns_rr_print, rr);
+		TEST_ASSERT(str_isset(debug));
 
 		rr = mem_deref(rr);
 		rr2 = mem_deref(rr2);
