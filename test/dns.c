@@ -22,13 +22,26 @@ enum {
 	IP_127_0_0_5 = 0x7f000005,
 };
 
-
-static uint8_t ipv6_test[4][16] = {
-	{ 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,},
-	{ 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x01,},
-	{ 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x02,},
-	{ 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x03,},
+static const uint8_t IP6_1[16] = {
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 };
+
+static const uint8_t IP6_2[16] = {
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02
+};
+
+static const uint8_t IP6_3[16] = {
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03
+};
+
+static const uint8_t IP6_4[16] = {
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04
+};
+
 
 static int mkstr(char **strp)
 {
@@ -340,8 +353,14 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 	data->rr = mem_ref(rr);
 
-	sa_set_in(&sa, rr->rdata.a.addr, 0);
-	DEBUG_INFO("%s. IN A %j\n", rr->name, &sa);
+	if (rr->type == DNS_TYPE_A) {
+		sa_set_in(&sa, rr->rdata.a.addr, 0);
+		DEBUG_INFO("%s. IN A %j\n", rr->name, &sa);
+	}
+	else if (rr->type == DNS_TYPE_AAAA) {
+		sa_set_in6(&sa, rr->rdata.aaaa.addr, 0);
+		DEBUG_INFO("%s. IN AAAA %j\n", rr->name, &sa);
+	}
 
 out:
 	data->err = err;
@@ -369,7 +388,7 @@ out:
 
 static int check_dns6_async(struct dns_query **qp,
 			    struct test_dns *data, const char *name,
-			    uint8_t addr[16])
+			    const uint8_t addr[16])
 {
 	int err;
 
@@ -412,7 +431,7 @@ out:
 
 
 static int check_dns6(struct test_dns *data, const char *name,
-		      uint8_t addr[16])
+		      const uint8_t addr[16])
 {
 	struct dns_query *q = NULL;
 	int err;
@@ -451,7 +470,7 @@ static int test_dns_integration_param(const char *laddr)
 	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
 	TEST_ERR(err);
 
-	err = dns_server_add_aaaa(srv, "test1.example.net", ipv6_test[0], 1);
+	err = dns_server_add_aaaa(srv, "test1.example.net", IP6_1, 1);
 	TEST_ERR(err);
 
 	err = dnsc_alloc(&data.dnsc, NULL, &srv->addr, 1);
@@ -468,14 +487,14 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	err = check_dns6(&data, "test1.example.net", IP6_1);
 	TEST_ERR(err);
 
 	/* Test does not exist */
 	err = check_dns(&data, "test2.example.net", IP_127_0_0_1);
 	TEST_EQUALS(ENODATA, err);
 
-	err = check_dns6(&data, "test2.example.net", ipv6_test[0]);
+	err = check_dns6(&data, "test2.example.net", IP6_1);
 	TEST_EQUALS(ENODATA, err);
 
 	dns_server_flush(srv);
@@ -489,13 +508,13 @@ static int test_dns_integration_param(const char *laddr)
 	err = dns_server_add_a(srv, "test3.example.net", IP_127_0_0_4, 1);
 	TEST_ERR(err);
 
-	err = dns_server_add_aaaa(srv, "test1.example.net", ipv6_test[1], 1);
+	err = dns_server_add_aaaa(srv, "test1.example.net", IP6_2, 1);
 	TEST_ERR(err);
 
-	err = dns_server_add_aaaa(srv, "test2.example.net", ipv6_test[2], 1);
+	err = dns_server_add_aaaa(srv, "test2.example.net", IP6_3, 1);
 	TEST_ERR(err);
 
-	err = dns_server_add_aaaa(srv, "test3.example.net", ipv6_test[3], 1);
+	err = dns_server_add_aaaa(srv, "test3.example.net", IP6_4, 1);
 	TEST_ERR(err);
 
 
@@ -503,7 +522,7 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	err = check_dns6(&data, "test1.example.net", IP6_1);
 	TEST_ERR(err);
 
 	err = check_dns(&data, "test2.example.net", IP_127_0_0_3);
@@ -512,17 +531,17 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test2.example.net", IP_127_0_0_3);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test2.example.net", ipv6_test[2]);
+	err = check_dns6(&data, "test2.example.net", IP6_3);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test2.example.net", ipv6_test[2]);
+	err = check_dns6(&data, "test2.example.net", IP6_3);
 	TEST_ERR(err);
 
 	/* Check another resource record afterwards */
 	err = check_dns(&data, "test3.example.net", IP_127_0_0_4);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test3.example.net", ipv6_test[3]);
+	err = check_dns6(&data, "test3.example.net", IP6_4);
 	TEST_ERR(err);
 
 	sys_msleep(100);
@@ -532,7 +551,7 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_2);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test1.example.net", ipv6_test[1]);
+	err = check_dns6(&data, "test1.example.net", IP6_2);
 	TEST_ERR(err);
 
 	/* --- Test explicit DNS cache flush --- */
@@ -586,7 +605,7 @@ static int test_dns_reg_param(const char *laddr)
 	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
 	TEST_ERR(err);
 
-	err = dns_server_add_aaaa(srv, "test1.example.net", ipv6_test[0], 1);
+	err = dns_server_add_aaaa(srv, "test1.example.net", IP6_1, 1);
 	TEST_ERR(err);
 
 	err = dnsc_alloc(&data.dnsc, NULL, &srv->addr, 1);
@@ -595,7 +614,7 @@ static int test_dns_reg_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	err = check_dns6(&data, "test1.example.net", IP6_1);
 	TEST_ERR(err);
 
 	dns_server_flush(srv);
@@ -604,7 +623,7 @@ static int test_dns_reg_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
 
-	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	err = check_dns6(&data, "test1.example.net", IP6_1);
 	TEST_ERR(err);
 
 	dnsc_cache_flush(data.dnsc);
