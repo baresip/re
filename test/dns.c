@@ -685,3 +685,97 @@ int test_dns_nameservers(void)
  out:
 	return err;
 }
+
+
+static void dns_query_handler(int err, const struct dnshdr *hdr,
+			      struct list *ansl, struct list *authl,
+			      struct list *addl, void *arg)
+{
+	unsigned *answers = arg;
+	(void)hdr;
+	(void)authl;
+	(void)addl;
+
+	if (err) {
+		DEBUG_WARNING("dns query error: %m\n", err);
+		re_cancel();
+		return;
+	}
+
+	*answers += list_count(ansl);
+	re_cancel();
+}
+
+
+static int test_dns_param(const char *laddr, int proto)
+{
+	struct dns_server *srv = NULL;
+	struct dnsc *dnsc = NULL;
+	unsigned answers = 0;
+
+	int err = dnsc_alloc(&dnsc, NULL, NULL, 0);
+	TEST_ERR(err);
+
+	dnsc_cache_max(dnsc, 0);
+
+	err = dns_server_alloc(&srv, laddr);
+	TEST_ERR(err);
+
+	uint8_t ipv6_addr[16] = {0};
+	err = dns_server_add_aaaa(srv, "foo.example.com", ipv6_addr, 3600);
+	TEST_ERR(err);
+
+	const struct sa *srv_addr = NULL;
+	uint32_t srvc = 1;
+
+	switch (proto) {
+
+	case IPPROTO_UDP:
+		srv_addr = &srv->addr;
+		break;
+
+	case IPPROTO_TCP:
+		srv_addr = &srv->addr_tcp;
+		break;
+	}
+
+	err = dnsc_query_srv(NULL, dnsc, "foo.example.com", DNS_TYPE_AAAA,
+			     DNS_CLASS_IN, proto, srv_addr, &srvc, false,
+			     dns_query_handler, &answers);
+	TEST_ERR(err);
+
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+
+	ASSERT_TRUE(answers >= 1);
+
+ out:
+	mem_deref(dnsc);
+	mem_deref(srv);
+
+	return err;
+}
+
+
+int test_dns_proto(void)
+{
+	int err;
+
+	err = test_dns_param("127.0.0.1", IPPROTO_UDP);
+	TEST_ERR(err);
+
+	err = test_dns_param("127.0.0.1", IPPROTO_TCP);
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+
+		err = test_dns_param("::1", IPPROTO_UDP);
+		TEST_ERR(err);
+
+		err = test_dns_param("::1", IPPROTO_TCP);
+		TEST_ERR(err);
+	}
+
+ out:
+	return err;
+}
