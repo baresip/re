@@ -431,7 +431,6 @@ static int test_dns_integration_param(const char *laddr)
 {
 	struct dns_server *srv = NULL;
 	struct test_dns data = {0};
-	struct dns_query *q;
 	int err;
 
 	/* Setup Mocking DNS Server */
@@ -533,22 +532,8 @@ static int test_dns_integration_param(const char *laddr)
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_5);
 	TEST_ERR(err);
 
-	/* --- Test early query cancellation --- */
-	err = dnsc_query(&q, data.dnsc, "test1.example.net", DNS_TYPE_A,
-			 DNS_CLASS_IN, true, query_handler, &data);
-	TEST_ERR(err);
-	mem_deref(q);
-
+	/* --- Again DNS Cache --- */
 	err = check_dns(&data, "test1.example.net", IP_127_0_0_5);
-	TEST_ERR(err);
-
-	/* --- Leave query open for cleanup test --- */
-	err = dnsc_query(NULL, data.dnsc, "test1.example.net", DNS_TYPE_A,
-			 DNS_CLASS_IN, true, query_handler, &data);
-	TEST_ERR(err);
-
-	err = dnsc_query(NULL, data.dnsc, "test1.example.net", DNS_TYPE_AAAA,
-			 DNS_CLASS_IN, true, query_handler, &data);
 	TEST_ERR(err);
 
 out:
@@ -568,6 +553,83 @@ int test_dns_integration(void)
 
 	if (test_ipv6_supported()) {
 		err = test_dns_integration_param("::1");
+		TEST_ERR(err);
+	}
+
+ out:
+	return err;
+}
+
+
+static int test_dns_reg_param(const char *laddr)
+{
+	struct dns_server *srv = NULL;
+	struct test_dns data = {0};
+	struct dns_query *q;
+	int err;
+
+	/* Setup Mocking DNS Server */
+	err = dns_server_alloc(&srv, laddr);
+	TEST_ERR(err);
+
+	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
+	TEST_ERR(err);
+
+	err = dns_server_add_aaaa(srv, "test1.example.net", ipv6_test[0], 1);
+	TEST_ERR(err);
+
+	err = dnsc_alloc(&data.dnsc, NULL, &srv->addr, 1);
+	TEST_ERR(err);
+
+	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
+	TEST_ERR(err);
+
+	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	TEST_ERR(err);
+
+	dns_server_flush(srv);
+
+	/* --- Test DNS Cache --- */
+	err = check_dns(&data, "test1.example.net", IP_127_0_0_1);
+	TEST_ERR(err);
+
+	err = check_dns6(&data, "test1.example.net", ipv6_test[0]);
+	TEST_ERR(err);
+
+	dnsc_cache_flush(data.dnsc);
+
+	/* --- Test early query cancellation --- */
+	err = dnsc_query(&q, data.dnsc, "test1.example.net", DNS_TYPE_A,
+			 DNS_CLASS_IN, true, query_handler, &data);
+	TEST_ERR(err);
+	mem_deref(q);
+
+	/* --- Leave query open for cleanup test --- */
+	err = dnsc_query(NULL, data.dnsc, "test1.example.net", DNS_TYPE_A,
+			 DNS_CLASS_IN, true, query_handler, &data);
+	TEST_ERR(err);
+
+	err = dnsc_query(NULL, data.dnsc, "test1.example.net", DNS_TYPE_AAAA,
+			 DNS_CLASS_IN, true, query_handler, &data);
+	TEST_ERR(err);
+
+out:
+	mem_deref(data.dnsc);
+	mem_deref(srv);
+
+	return err;
+}
+
+
+int test_dns_reg(void)
+{
+	int err;
+
+	err = test_dns_reg_param("127.0.0.1");
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_dns_reg_param("::1");
 		TEST_ERR(err);
 	}
 

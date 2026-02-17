@@ -72,6 +72,7 @@ static const struct test tests[] = {
 	TEST(test_dd),
 	TEST(test_dns_dname),
 	TEST(test_dns_hdr),
+	TEST(test_dns_reg),
 	TEST(test_dns_rr),
 	TEST(test_dsp),
 #ifdef USE_TLS

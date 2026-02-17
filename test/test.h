@@ -177,6 +177,7 @@ int test_crc32(void);
 int test_dbg(void);
 int test_dns_hdr(void);
 int test_dns_integration(void);
+int test_dns_reg(void);
 int test_dns_rr(void);
 int test_dns_dname(void);
 int test_dns_nameservers(void);
