@@ -1,3 +1,6 @@
+#
+# re-config.cmake
+#
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
@@ -11,10 +14,10 @@ find_package(Backtrace)
 find_package(Threads REQUIRED)
 find_package(ZLIB)
 
-if (USE_MBEDTLS)
-find_package(MBEDTLS)
+if(USE_MBEDTLS)
+  find_package(MBEDTLS)
 else()
-find_package(OpenSSL "1.1.1")
+  find_package(OpenSSL "1.1.1")
 endif()
 
 option(USE_OPENSSL "Enable OpenSSL" ${OPENSSL_FOUND})
@@ -161,7 +164,7 @@ endif()
 
 if(WIN32)
   list(APPEND RE_DEFINITIONS
-    WIN32 
+    WIN32
     _WIN32_WINNT=0x0A00
   )
 
@@ -290,14 +293,14 @@ endif()
 enable_language(CXX)
 
 set(ATOMIC_TEST_CODE "
-     #include <atomic>
-     #include <cstdint>
-     std::atomic<uint8_t> n8 (0); // riscv64
-     std::atomic<uint64_t> n64 (0); // armel, mipsel, powerpc
-     int main() {
-       ++n8;
-       ++n64;
-       return 0;
+    #include <atomic>
+    #include <cstdint>
+    std::atomic<uint8_t> n8 (0); // riscv64
+    std::atomic<uint64_t> n64 (0); // armel, mipsel, powerpc
+    int main() {
+      ++n8;
+      ++n64;
+      return 0;
   }")
 
 check_cxx_source_compiles("${ATOMIC_TEST_CODE}" atomic_test)

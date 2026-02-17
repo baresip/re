@@ -42,8 +42,10 @@ typedef DWORD tss_t;
 
 #include <pthread.h>
 #include <time.h>
+#ifndef ONCE_FLAG_INIT
 #define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
 typedef pthread_once_t once_flag;
+#endif
 typedef pthread_t thrd_t;
 typedef pthread_cond_t cnd_t;
 typedef pthread_mutex_t mtx_t;
