@@ -616,6 +616,9 @@ static int test_stun_discover(int af)
 	err = dns_server_add_srv(srv, srv_name, 0, 0, STUN_PORT, target, 3600);
 	TEST_ERR(err);
 
+	err = dns_server_add_srv(srv, srv_name, 0, 0, STUN_PORT, target, 3600);
+	TEST_ERR(err);
+
 	err = dns_server_add_a(srv, target, 0x7f000001, 3600);
 	TEST_ERR(err);
 
