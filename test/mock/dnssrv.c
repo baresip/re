@@ -205,7 +205,7 @@ out:
 
 
 int dns_server_add_aaaa(struct dns_server *srv, const char *name,
-			const uint8_t *addr)
+			const uint8_t *addr, int64_t ttl)
 {
 	struct dnsrr *rr;
 	int err;
@@ -223,7 +223,7 @@ int dns_server_add_aaaa(struct dns_server *srv, const char *name,
 
 	rr->type     = DNS_TYPE_AAAA;
 	rr->dnsclass = DNS_CLASS_IN;
-	rr->ttl	     = 3600;
+	rr->ttl	     = ttl;
 	rr->rdlen    = 0;
 
 	memcpy(rr->rdata.aaaa.addr, addr, 16);
@@ -239,7 +239,8 @@ out:
 
 
 int dns_server_add_srv(struct dns_server *srv, const char *name, uint16_t pri,
-		       uint16_t weight, uint16_t port, const char *target)
+		       uint16_t weight, uint16_t port, const char *target,
+		       int64_t ttl)
 {
 	struct dnsrr *rr;
 	int err;
@@ -257,7 +258,7 @@ int dns_server_add_srv(struct dns_server *srv, const char *name, uint16_t pri,
 
 	rr->type     = DNS_TYPE_SRV;
 	rr->dnsclass = DNS_CLASS_IN;
-	rr->ttl	     = 3600;
+	rr->ttl	     = ttl;
 	rr->rdlen    = 0;
 
 	rr->rdata.srv.pri    = pri;
