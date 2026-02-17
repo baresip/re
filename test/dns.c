@@ -316,6 +316,7 @@ struct test_dns {
 		uint8_t ipv6[16];
 	} addr;
 	struct dnsc *dnsc;
+	struct dnsrr *rr;
 };
 
 
@@ -337,13 +338,9 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 	TEST_ERR(err);
 
-	TEST_ASSERT((DNS_TYPE_A == rr->type &&
-		    data->addr.ipv4==rr->rdata.a.addr) ||
-		    (DNS_TYPE_AAAA == rr->type &&
-		     memcmp(data->addr.ipv6, rr->rdata.aaaa.addr, 16) == 0));
+	data->rr = mem_ref(rr);
 
 	sa_set_in(&sa, rr->rdata.a.addr, 0);
-
 	DEBUG_INFO("%s. IN A %j\n", rr->name, &sa);
 
 out:
@@ -359,7 +356,8 @@ static int check_dns_async(struct dns_query **qp,
 	int err;
 
 	data->addr.ipv4 = addr;
-	data->err  = ENODATA;
+	data->err = ENODATA;
+	data->rr  = NULL;
 
 	err = dnsc_query(qp, data->dnsc, name, DNS_TYPE_A, DNS_CLASS_IN,
 			 true, query_handler, data);
@@ -376,7 +374,8 @@ static int check_dns6_async(struct dns_query **qp,
 	int err;
 
 	memcpy(data->addr.ipv6, addr, 16);
-	data->err  = ENODATA;
+	data->err = ENODATA;
+	data->rr  = NULL;
 
 	err = dnsc_query(qp, data->dnsc, name, DNS_TYPE_AAAA, DNS_CLASS_IN,
 			 true, query_handler, data);
@@ -399,9 +398,15 @@ static int check_dns(struct test_dns *data, const char *name, uint32_t addr)
 
 	/* check query handler result */
 	err = data->err;
+	if (err)
+		goto out;
 
+	TEST_ASSERT(data->rr);
+	TEST_EQUALS(DNS_TYPE_A, data->rr->type);
+	TEST_EQUALS(addr, data->rr->rdata.a.addr);
 out:
 	mem_deref(q);
+	mem_deref(data->rr);
 	return err;
 }
 
@@ -420,9 +425,15 @@ static int check_dns6(struct test_dns *data, const char *name,
 
 	/* check query handler result */
 	err = data->err;
+	if (err)
+		goto out;
 
+	TEST_ASSERT(data->rr);
+	TEST_EQUALS(data->rr->type, DNS_TYPE_AAAA);
+	TEST_EQUALS(0, memcmp(data->addr.ipv6, data->rr->rdata.aaaa.addr, 16));
 out:
 	mem_deref(q);
+	mem_deref(data->rr);
 	return err;
 }
 
