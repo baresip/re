@@ -759,9 +759,33 @@ static int test_dns_parallel_param(const char *laddr)
 
 	err = re_main_timeout(100);
 	TEST_ERR(err);
-
-	DEBUG_INFO("Number of addresses: %u\n", list_count(&data.addrl));
 	TEST_DNS_RESULTS((&data));
+
+	/* parallel use of RR */
+	list_flush(&data.addrl);
+	list_flush(&data.expected_addrl);
+
+	err = check_dns_async(&q, &data, "test1.example.net", IP_127_0_0_1);
+	TEST_ERR(err);
+
+	err = check_dns6_async(&q6, &data, "test1.example.net", IP6_1);
+	TEST_ERR(err);
+
+	err = re_main_timeout(100);
+	TEST_ERR(err);
+	TEST_DNS_RESULTS((&data));
+
+	struct test_dns data2 = {0};
+	data2.dnsc = data.dnsc;
+	err = check_dns_async(&q, &data2, "test1.example.net", IP_127_0_0_1);
+	TEST_ERR(err);
+
+	err = check_dns6_async(&q6, &data2, "test1.example.net", IP6_1);
+	TEST_ERR(err);
+
+	err = re_main_timeout(100);
+	TEST_ERR(err);
+	TEST_DNS_RESULTS((&data2));
 
 out:
 	mem_deref(data.dnsc);
@@ -769,6 +793,9 @@ out:
 
 	list_flush(&data.addrl);
 	list_flush(&data.expected_addrl);
+
+	list_flush(&data2.addrl);
+	list_flush(&data2.expected_addrl);
 
 	return err;
 }
