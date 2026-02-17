@@ -419,11 +419,13 @@ static int test_exec(const struct test *test)
 	mem_get_stat(&mstat_after);
 
 	if (mstat_after.blocks_cur > mstat_before.blocks_cur) {
+		libre_close();
 		mem_debug();
 		re_assert(false && "Test leaks memory blocks");
 	}
 
 	if (mstat_after.bytes_cur > mstat_before.bytes_cur) {
+		libre_close();
 		mem_debug();
 		re_assert(false && "Test leaks memory bytes");
 	}
