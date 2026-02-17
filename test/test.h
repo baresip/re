@@ -179,6 +179,7 @@ int test_dns_dname(void);
 int test_dns_hdr(void);
 int test_dns_integration(void);
 int test_dns_nameservers(void);
+int test_dns_parallel(void);
 int test_dns_proto(void);
 int test_dns_reg(void);
 int test_dns_rr(void);

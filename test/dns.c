@@ -9,7 +9,7 @@
 
 
 #define DEBUG_MODULE "dns"
-#define DEBUG_LEVEL 5
+#define DEBUG_LEVEL 7
 #include <re_dbg.h>
 
 
@@ -41,7 +41,6 @@ static const uint8_t IP6_4[16] = {
 	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04
 };
-
 
 static int mkstr(char **strp)
 {
@@ -322,15 +321,42 @@ int test_dns_dname(void)
 }
 
 
-struct test_dns {
-	int err;
+struct dns_addr {
+	struct le le;
+	uint16_t type;
 	union {
 		uint32_t ipv4;
 		uint8_t ipv6[16];
 	} addr;
-	struct dnsc *dnsc;
-	struct dnsrr *rr;
 };
+
+struct test_dns {
+	int err;
+	struct dnsc *dnsc;
+	struct list expected_addrl;
+
+	struct list addrl;
+};
+
+
+static bool rr_append_handler(struct dnsrr *rr, void *arg)
+{
+	struct list *lst = arg;
+
+	switch (rr->type) {
+
+	case DNS_TYPE_A:
+	case DNS_TYPE_AAAA:
+	case DNS_TYPE_SRV:
+		if (rr->le.list)
+			break;
+
+		list_append(lst, &rr->le, mem_ref(rr));
+		break;
+	}
+
+	return false;
+}
 
 
 static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
@@ -351,8 +377,6 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 	TEST_ERR(err);
 
-	data->rr = mem_ref(rr);
-
 	if (rr->type == DNS_TYPE_A) {
 		sa_set_in(&sa, rr->rdata.a.addr, 0);
 		DEBUG_INFO("%s. IN A %j\n", rr->name, &sa);
@@ -362,9 +386,13 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 		DEBUG_INFO("%s. IN AAAA %j\n", rr->name, &sa);
 	}
 
+	dns_rrlist_apply2(ansl, NULL, DNS_TYPE_A, DNS_TYPE_AAAA, DNS_CLASS_IN,
+			  false, rr_append_handler, &data->addrl);
 out:
 	data->err = err;
-	re_cancel();
+	if (err || list_count(&data->expected_addrl) ==
+		   list_count(&data->addrl))
+		re_cancel();
 }
 
 
@@ -374,9 +402,15 @@ static int check_dns_async(struct dns_query **qp,
 {
 	int err;
 
-	data->addr.ipv4 = addr;
+	struct dns_addr *da;
+	da = mem_zalloc(sizeof(*da), NULL);
+	if (!da)
+		return ENOMEM;
+
+	da->type = DNS_TYPE_A;
+	da->addr.ipv4 = addr;
+	list_append(&data->expected_addrl, &da->le, da);
 	data->err = ENODATA;
-	data->rr  = NULL;
 
 	err = dnsc_query(qp, data->dnsc, name, DNS_TYPE_A, DNS_CLASS_IN,
 			 true, query_handler, data);
@@ -392,9 +426,15 @@ static int check_dns6_async(struct dns_query **qp,
 {
 	int err;
 
-	memcpy(data->addr.ipv6, addr, 16);
+	struct dns_addr *da;
+	da = mem_zalloc(sizeof(*da), NULL);
+	if (!da)
+		return ENOMEM;
+
+	da->type = DNS_TYPE_AAAA;
+	memcpy(da->addr.ipv6, addr, 16);
+	list_append(&data->expected_addrl, &da->le, da);
 	data->err = ENODATA;
-	data->rr  = NULL;
 
 	err = dnsc_query(qp, data->dnsc, name, DNS_TYPE_AAAA, DNS_CLASS_IN,
 			 true, query_handler, data);
@@ -402,6 +442,47 @@ static int check_dns6_async(struct dns_query **qp,
 out:
 	return err;
 }
+
+
+static bool rr_find_handler(struct le *le, void *arg)
+{
+	struct dns_addr *addr = list_ledata(le);
+	struct list *lst = arg;
+
+	LIST_FOREACH(lst, le) {
+		struct dnsrr *rr = list_ledata(le);
+		if (addr->type != rr->type)
+			continue;
+
+		if (addr->type == DNS_TYPE_A &&
+		    addr->addr.ipv4 == rr->rdata.a.addr)
+			return true;
+
+		if (rr->type == DNS_TYPE_AAAA &&
+		    0 == memcmp(addr->addr.ipv6, rr->rdata.aaaa.addr, 16))
+			return true;
+	}
+
+	struct sa sa;
+	if (addr->type == DNS_TYPE_A) {
+		sa_set_in(&sa, addr->addr.ipv4, 0);
+		DEBUG_WARNING("RR not found: %j\n", &sa);
+	}
+	else if (addr->type == DNS_TYPE_AAAA) {
+		sa_set_in6(&sa, addr->addr.ipv6, 0);
+		DEBUG_WARNING("RR not found: %w\n", addr->addr.ipv6, 16);
+	}
+	return false;
+}
+
+
+#define TEST_DNS_RESULTS(data)						      \
+	{								      \
+	TEST_EQUALS(list_count(&data->expected_addrl),			      \
+		    list_count(&data->addrl));				      \
+	TEST_ASSERT(list_apply(&data->expected_addrl, true, rr_find_handler,  \
+			       &data->addrl));				      \
+	}
 
 
 static int check_dns(struct test_dns *data, const char *name, uint32_t addr)
@@ -420,12 +501,11 @@ static int check_dns(struct test_dns *data, const char *name, uint32_t addr)
 	if (err)
 		goto out;
 
-	TEST_ASSERT(data->rr);
-	TEST_EQUALS(DNS_TYPE_A, data->rr->type);
-	TEST_EQUALS(addr, data->rr->rdata.a.addr);
+	TEST_DNS_RESULTS(data);
 out:
 	mem_deref(q);
-	mem_deref(data->rr);
+	list_flush(&data->addrl);
+	list_flush(&data->expected_addrl);
 	return err;
 }
 
@@ -447,12 +527,11 @@ static int check_dns6(struct test_dns *data, const char *name,
 	if (err)
 		goto out;
 
-	TEST_ASSERT(data->rr);
-	TEST_EQUALS(data->rr->type, DNS_TYPE_AAAA);
-	TEST_EQUALS(0, memcmp(data->addr.ipv6, data->rr->rdata.aaaa.addr, 16));
+	TEST_DNS_RESULTS(data);
 out:
 	mem_deref(q);
-	mem_deref(data->rr);
+	list_flush(&data->addrl);
+	list_flush(&data->expected_addrl);
 	return err;
 }
 
@@ -651,6 +730,50 @@ out:
 }
 
 
+static int test_dns_parallel_param(const char *laddr)
+{
+	struct dns_server *srv = NULL;
+	struct test_dns data = {0};
+	struct dns_query *q;
+	struct dns_query *q6;
+	int err;
+
+	/* Setup Mocking DNS Server */
+	err = dns_server_alloc(&srv, laddr);
+	TEST_ERR(err);
+
+	err = dns_server_add_a(srv, "test1.example.net", IP_127_0_0_1, 1);
+	TEST_ERR(err);
+
+	err = dns_server_add_aaaa(srv, "test1.example.net", IP6_1, 1);
+	TEST_ERR(err);
+
+	err = dnsc_alloc(&data.dnsc, NULL, &srv->addr, 1);
+	TEST_ERR(err);
+
+	err = check_dns_async(&q, &data, "test1.example.net", IP_127_0_0_1);
+	TEST_ERR(err);
+
+	err = check_dns6_async(&q6, &data, "test1.example.net", IP6_1);
+	TEST_ERR(err);
+
+	err = re_main_timeout(100);
+	TEST_ERR(err);
+
+	DEBUG_INFO("Number of addresses: %u\n", list_count(&data.addrl));
+	TEST_DNS_RESULTS((&data));
+
+out:
+	mem_deref(data.dnsc);
+	mem_deref(srv);
+
+	list_flush(&data.addrl);
+	list_flush(&data.expected_addrl);
+
+	return err;
+}
+
+
 int test_dns_reg(void)
 {
 	int err;
@@ -660,6 +783,23 @@ int test_dns_reg(void)
 
 	if (test_ipv6_supported()) {
 		err = test_dns_reg_param("::1");
+		TEST_ERR(err);
+	}
+
+ out:
+	return err;
+}
+
+
+int test_dns_parallel(void)
+{
+	int err;
+
+	err = test_dns_parallel_param("127.0.0.1");
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_dns_parallel_param("::1");
 		TEST_ERR(err);
 	}
 
