@@ -80,6 +80,14 @@ static void destructor(void *arg)
 		return;
 	}
 
+	struct le *le;
+	struct le *le_next;
+	LIST_FOREACH_SAFE(&req->addrl, le, le_next) {
+		list_unlink(le);
+		mem_deref(le->data);
+		mem_deref(le);
+	}
+
 	list_flush(&req->cachel);
 	list_flush(&req->addrl);
 	list_flush(&req->srvl);
@@ -254,24 +262,27 @@ static int request(struct sip_request *req, enum sip_transp tp,
 
 static int request_next(struct sip_request *req)
 {
+	struct le *le;
 	struct dnsrr *rr;
 	struct sa dst;
 	int err;
 
  again:
-	rr = list_ledata(req->addrl.head);
-	if (!rr) {
-		rr = list_ledata(req->srvl.head);
-		if (!rr)
+	le = req->addrl.head;
+	if (!le) {
+		le = req->srvl.head;
+		if (!le)
 			return ENOENT;
 
+		rr = list_ledata(le);
 		req->port = rr->rdata.srv.port;
 
 		dns_rrlist_apply2(&req->cachel, rr->rdata.srv.target,
 				  DNS_TYPE_A, DNS_TYPE_AAAA, DNS_CLASS_IN,
 				  true, rr_append_handler, &req->addrl);
 
-		list_unlink(&rr->le);
+		list_unlink(le);
+		mem_deref(le);
 
 		if (req->addrl.head) {
 			dns_rrlist_sort_addr(&req->addrl, req->sortkey);
@@ -285,6 +296,7 @@ static int request_next(struct sip_request *req)
 		return err;
 	}
 
+	rr = list_ledata(le);
 	switch (rr->type) {
 
 	case DNS_TYPE_A:
@@ -299,8 +311,9 @@ static int request_next(struct sip_request *req)
 		return EINVAL;
 	}
 
-	list_unlink(&rr->le);
 	mem_deref(rr);
+	list_unlink(le);
+	mem_deref(le);
 
 	err = request(req, req->tp, &dst);
 	if (err) {
@@ -380,12 +393,14 @@ static bool rr_append_handler(struct dnsrr *rr, void *arg)
 
 	case DNS_TYPE_A:
 	case DNS_TYPE_AAAA:
-	case DNS_TYPE_SRV:
-		if (rr->le.list)
-			break;
+	case DNS_TYPE_SRV: {
+		struct le *le = mem_zalloc(sizeof(*le), NULL);
+		if (!le)
+			return true;
 
-		list_append(lst, &rr->le, mem_ref(rr));
+		list_append(lst, le, mem_ref(rr));
 		break;
+	}
 	}
 
 	return false;
