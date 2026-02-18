@@ -9,7 +9,7 @@
 
 
 #define DEBUG_MODULE "dns"
-#define DEBUG_LEVEL 7
+#define DEBUG_LEVEL 5
 #include <re_dbg.h>
 
 
