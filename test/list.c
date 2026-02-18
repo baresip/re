@@ -24,9 +24,11 @@ int test_list(void)
 {
 	struct node node1 = {.value = 1}, node2 = {.value = 2};
 	struct list list;
+	struct list list2;
 	int err = EINVAL;
 
 	list_init(&list);
+	list_init(&list2);
 
 	/* Test empty list */
 	TEST_EQUALS(0, list_count(&list));
@@ -75,10 +77,30 @@ int test_list(void)
 
 	/* Test empty list */
 	TEST_EQUALS(0, list_count(&list));
-
 	err = 0;
 
+	/* allocated list element */
+	int *dat;
+	for (i=0; i<10 && !err; i++) {
+		dat = mem_zalloc(sizeof(int), NULL);
+		if (!dat) {
+			err = ENOMEM;
+			break;
+		}
+
+		*dat = i;
+		err = list_append_ref(&list2, dat, NULL);
+		mem_deref(dat);
+	}
+
+	if (!err)
+		TEST_EQUALS(10, list_count(&list2));
+
+	list_flush_deref(&list2);
+	TEST_EQUALS(0, list_count(&list2));
+
  out:
+	list_flush_deref(&list2);
 	return err;
 }
 
