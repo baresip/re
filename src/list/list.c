@@ -311,7 +311,6 @@ void list_unlink(struct le *le)
 
 
 /**
- *
  * Allocate a new list element and append to linked list
  *
  * @param list  Linked list
