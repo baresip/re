@@ -418,8 +418,8 @@ static bool debug_handler(struct le *le, void *arg)
 	struct mem *m = le->data;
 	const uint8_t *p = get_mem_data(m);
 	size_t i;
+	uint32_t *last_np = arg;
 
-	(void)arg;
 
 	(void)re_fprintf(stderr, "  %p: nrefs=%-2u", p,
 		(uint32_t)re_atomic_rlx(&m->nrefs));
@@ -453,6 +453,9 @@ static bool debug_handler(struct le *le, void *arg)
 
 	re_fprintf(stderr, "%H\n", btrace_println, &m->btraces);
 
+	if (last_np && !--(*last_np))
+		return true;
+
 	return false;
 }
 #endif
@@ -473,11 +476,40 @@ void mem_debug(void)
 	if (!n)
 		return;
 
-	DEBUG_WARNING("Memory leaks (%u):\n", n);
+	DEBUG_WARNING("Possible memory leaks (%u):\n", n);
 
 	mem_lock();
 	(void)list_apply(&meml, true, debug_handler, NULL);
 	mem_unlock();
+#endif
+}
+
+
+/**
+ * Debug last n allocated memory objects/blocks
+ */
+void mem_debug_tail(uint32_t last_n)
+{
+#if MEM_DEBUG
+	uint32_t n;
+
+	if (!last_n)
+		return;
+
+	mem_lock();
+	n = list_count(&meml);
+	mem_unlock();
+
+	if (!n)
+		return;
+
+	DEBUG_WARNING("Possible Memory leaks (%u/%u) :\n", last_n, n);
+
+	mem_lock();
+	(void)list_apply(&meml, false, debug_handler, &last_n);
+	mem_unlock();
+#else
+	(void)last_n;
 #endif
 }
 

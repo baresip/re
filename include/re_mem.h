@@ -30,6 +30,7 @@ void    *mem_deref(void *data);
 uint32_t mem_nrefs(const void *data);
 
 void     mem_debug(void);
+void     mem_debug_tail(uint32_t last_n);
 void     mem_threshold_set(ssize_t n);
 struct re_printf;
 int      mem_status(struct re_printf *pf, void *unused);
