@@ -11,8 +11,6 @@ struct le {
 	struct le *next;    /**< Next element                        */
 	struct list *list;  /**< Parent list (NULL if not linked-in) */
 	void *data;         /**< User-data                           */
-	bool ref;           /**< Reference flag                      */
-	uint8_t padding[7];
 };
 
 /** List Element Initializer */
@@ -54,6 +52,7 @@ typedef bool (list_sort_h)(struct le *le1, struct le *le2, void *arg);
 
 void list_init(struct list *list);
 void list_flush(struct list *list);
+void list_flush_deref(struct list *list);
 void list_clear(struct list *list);
 void list_append(struct list *list, struct le *le, void *data);
 void list_prepend(struct list *list, struct le *le, void *data);

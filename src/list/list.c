@@ -48,8 +48,33 @@ void list_flush(struct list *list)
 
 		list_unlink(le);
 		le->data = NULL;
-		if (le->ref)
-			mem_deref(le);
+		le = next;
+		mem_deref(data);
+	}
+
+	list_init(list);
+}
+
+
+/**
+ * Flush a linked list, free all data elements and deref the list elements
+ *
+ * @param list Linked list
+ */
+void list_flush_deref(struct list *list)
+{
+	struct le *le;
+
+	if (!list)
+		return;
+
+	le = list->head;
+	while (le) {
+		struct le *next = le->next;
+		void *data = le->data;
+
+		list_unlink(le);
+		mem_deref(le);
 		le = next;
 		mem_deref(data);
 	}
@@ -301,7 +326,6 @@ int  list_append_ref(struct list *list, void *data, struct le **lep)
 	if (!le)
 		return ENOMEM;
 
-	le->ref = true;
 	list_append(list, le, mem_ref(data));
 	if (lep)
 		*lep = le;
