@@ -347,12 +347,14 @@ static bool rr_append_handler(struct dnsrr *rr, void *arg)
 
 	case DNS_TYPE_A:
 	case DNS_TYPE_AAAA:
-	case DNS_TYPE_SRV:
-		if (rr->le.list)
-			break;
+	case DNS_TYPE_SRV: {
+		struct le *le = mem_zalloc(sizeof(*le), NULL);
+		if (!le)
+			return true;
 
-		list_append(lst, &rr->le, mem_ref(rr));
+		list_append(lst, le, mem_ref(rr));
 		break;
+	}
 	}
 
 	return false;
@@ -485,6 +487,21 @@ static bool rr_find_handler(struct le *le, void *arg)
 	}
 
 
+static void test_dns_flush(struct test_dns *data)
+{
+	struct le *le;
+	struct le *le_next;
+	LIST_FOREACH_SAFE(&data->addrl, le, le_next) {
+		list_unlink(le);
+		mem_deref(le->data);
+		mem_deref(le);
+	}
+
+	list_flush(&data->addrl);
+	list_flush(&data->expected_addrl);
+}
+
+
 static int check_dns(struct test_dns *data, const char *name, uint32_t addr)
 {
 	struct dns_query *q = NULL;
@@ -504,8 +521,7 @@ static int check_dns(struct test_dns *data, const char *name, uint32_t addr)
 	TEST_DNS_RESULTS(data);
 out:
 	mem_deref(q);
-	list_flush(&data->addrl);
-	list_flush(&data->expected_addrl);
+	test_dns_flush(data);
 	return err;
 }
 
@@ -530,8 +546,7 @@ static int check_dns6(struct test_dns *data, const char *name,
 	TEST_DNS_RESULTS(data);
 out:
 	mem_deref(q);
-	list_flush(&data->addrl);
-	list_flush(&data->expected_addrl);
+	test_dns_flush(data);
 	return err;
 }
 
@@ -762,8 +777,7 @@ static int test_dns_parallel_param(const char *laddr)
 	TEST_DNS_RESULTS((&data));
 
 	/* parallel use of RR */
-	list_flush(&data.addrl);
-	list_flush(&data.expected_addrl);
+	test_dns_flush(&data);
 
 	err = check_dns_async(&q, &data, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
@@ -791,12 +805,8 @@ out:
 	mem_deref(data.dnsc);
 	mem_deref(srv);
 
-	list_flush(&data.addrl);
-	list_flush(&data.expected_addrl);
-
-	list_flush(&data2.addrl);
-	list_flush(&data2.expected_addrl);
-
+	test_dns_flush(&data);
+	test_dns_flush(&data2);
 	return err;
 }
 
