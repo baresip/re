@@ -419,7 +419,8 @@ static int test_exec(const struct test *test)
 	mem_get_stat(&mstat_after);
 
 	if (mstat_after.blocks_cur > mstat_before.blocks_cur) {
-		mem_debug();
+		mem_debug_tail((uint32_t)(mstat_after.blocks_cur -
+					  mstat_before.blocks_cur));
 		re_assert(false && "Test leaks memory blocks");
 	}
 
