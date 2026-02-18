@@ -543,8 +543,12 @@ static int test_rtp_listen_priv(bool clear, bool single)
 	sa_init(&sa, AF_INET);
 	memset(&test, 0, sizeof(test));
 	if (single) {
-		err = rtp_listen_single(&test.rtp, &sa, 49152,
-					rtp_recv_handler, &test);
+		for (int i=0; i<10; i++) {
+			err = rtp_listen_single(&test.rtp, &sa, 49152 + i,
+						rtp_recv_handler, &test);
+			if (!err || err == ENOMEM)
+				break;
+		}
 	}
 	else {
 		err = rtp_listen(&test.rtp, IPPROTO_UDP, &sa, 1024, 49152,
