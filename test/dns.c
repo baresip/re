@@ -42,6 +42,7 @@ static const uint8_t IP6_4[16] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04
 };
 
+
 static int mkstr(char **strp)
 {
 	size_t sz = 8;
