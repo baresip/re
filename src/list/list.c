@@ -48,6 +48,8 @@ void list_flush(struct list *list)
 
 		list_unlink(le);
 		le->data = NULL;
+		if (le->ref)
+			mem_deref(le);
 		le = next;
 		mem_deref(data);
 	}
@@ -280,6 +282,31 @@ void list_unlink(struct le *le)
 
 	if (list->cnt)
 		--list->cnt;
+}
+
+
+/**
+ *
+ * Allocate a new list element and append to linked list
+ *
+ * @param list  Linked list
+ * @param data  Element data
+ * @param lep   Pointer for returning new list element
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int  list_append_ref(struct list *list, void *data, struct le **lep)
+{
+	struct le *le = mem_zalloc(sizeof(*le), NULL);
+	if (!le)
+		return ENOMEM;
+
+	le->ref = true;
+	list_append(list, le, mem_ref(data));
+	if (lep)
+		*lep = le;
+
+	return 0;
 }
 
 

@@ -11,6 +11,8 @@ struct le {
 	struct le *next;    /**< Next element                        */
 	struct list *list;  /**< Parent list (NULL if not linked-in) */
 	void *data;         /**< User-data                           */
+	bool ref;           /**< Reference flag                      */
+	uint8_t padding[7];
 };
 
 /** List Element Initializer */
@@ -62,6 +64,7 @@ void list_insert_after(struct list *list, struct le *le, struct le *ile,
 void list_insert_sorted(struct list *list, list_sort_h *sh, void *arg,
 			struct le *ile, void *data);
 void list_unlink(struct le *le);
+int  list_append_ref(struct list *list, void *data, struct le **lep);
 void list_sort(struct list *list, list_sort_h *sh, void *arg);
 struct le *list_apply(const struct list *list, bool fwd, list_apply_h *ah,
 		      void *arg);
