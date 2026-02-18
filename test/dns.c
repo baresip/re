@@ -749,6 +749,7 @@ static int test_dns_parallel_param(const char *laddr)
 {
 	struct dns_server *srv = NULL;
 	struct test_dns data = {0};
+	struct test_dns data2 = {0};
 	struct dns_query *q;
 	struct dns_query *q6;
 	int err;
@@ -789,7 +790,6 @@ static int test_dns_parallel_param(const char *laddr)
 	TEST_ERR(err);
 	TEST_DNS_RESULTS((&data));
 
-	struct test_dns data2 = {0};
 	data2.dnsc = data.dnsc;
 	err = check_dns_async(&q, &data2, "test1.example.net", IP_127_0_0_1);
 	TEST_ERR(err);
