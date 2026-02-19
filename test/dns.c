@@ -691,11 +691,23 @@ int test_dns_nameservers(void)
 }
 
 
+struct fixture {
+	struct dnsc *dnsc;
+	const struct sa *srv_addr;
+	uint32_t srvc;
+	unsigned answers;
+	int proto;
+};
+
+
+enum { EXPECTED_ANSWERS = 2 };
+
+
 static void dns_query_handler(int err, const struct dnshdr *hdr,
 			      struct list *ansl, struct list *authl,
 			      struct list *addl, void *arg)
 {
-	unsigned *answers = arg;
+	struct fixture *fix = arg;
 	(void)hdr;
 	(void)authl;
 	(void)addl;
@@ -706,21 +718,37 @@ static void dns_query_handler(int err, const struct dnshdr *hdr,
 		return;
 	}
 
-	*answers += list_count(ansl);
-	re_cancel();
+	fix->answers += list_count(ansl);
+
+	if (fix->answers < EXPECTED_ANSWERS) {
+
+		err = dnsc_query_srv(NULL, fix->dnsc, "foo.example.com",
+				     DNS_TYPE_AAAA, DNS_CLASS_IN,
+				     fix->proto, fix->srv_addr,
+				     &fix->srvc, false,
+				     dns_query_handler, fix);
+		TEST_ERR(err);
+	}
+
+ out:
+	if (fix->answers >= EXPECTED_ANSWERS || err) {
+		re_cancel();
+	}
 }
 
 
 static int test_dns_param(const char *laddr, int proto)
 {
 	struct dns_server *srv = NULL;
-	struct dnsc *dnsc = NULL;
-	unsigned answers = 0;
+	struct fixture fix = {
+		.srvc = 1,
+		.proto = proto
+	};
 
-	int err = dnsc_alloc(&dnsc, NULL, NULL, 0);
+	int err = dnsc_alloc(&fix.dnsc, NULL, NULL, 0);
 	TEST_ERR(err);
 
-	dnsc_cache_max(dnsc, 0);
+	dnsc_cache_max(fix.dnsc, 0);
 
 	err = dns_server_alloc(&srv, laddr);
 	TEST_ERR(err);
@@ -729,32 +757,30 @@ static int test_dns_param(const char *laddr, int proto)
 	err = dns_server_add_aaaa(srv, "foo.example.com", ipv6_addr, 3600);
 	TEST_ERR(err);
 
-	const struct sa *srv_addr = NULL;
-	uint32_t srvc = 1;
-
 	switch (proto) {
 
 	case IPPROTO_UDP:
-		srv_addr = &srv->addr;
+		fix.srv_addr = &srv->addr;
 		break;
 
 	case IPPROTO_TCP:
-		srv_addr = &srv->addr_tcp;
+		fix.srv_addr = &srv->addr_tcp;
 		break;
 	}
 
-	err = dnsc_query_srv(NULL, dnsc, "foo.example.com", DNS_TYPE_AAAA,
-			     DNS_CLASS_IN, proto, srv_addr, &srvc, false,
-			     dns_query_handler, &answers);
+	err = dnsc_query_srv(NULL, fix.dnsc, "foo.example.com",
+			     DNS_TYPE_AAAA, DNS_CLASS_IN, proto,
+			     fix.srv_addr, &fix.srvc, false,
+			     dns_query_handler, &fix);
 	TEST_ERR(err);
 
 	err = re_main_timeout(5000);
 	TEST_ERR(err);
 
-	ASSERT_TRUE(answers >= 1);
+	ASSERT_TRUE(fix.answers >= EXPECTED_ANSWERS);
 
  out:
-	mem_deref(dnsc);
+	mem_deref(fix.dnsc);
 	mem_deref(srv);
 
 	return err;
