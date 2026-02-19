@@ -311,6 +311,7 @@ int test_sip_msg(void);
 int test_sip_param(void);
 int test_sip_parse(void);
 int test_sip_via(void);
+int test_sip_dns(void);
 #ifdef USE_TLS
 int test_sip_transp_add_client_cert(void);
 #endif
@@ -521,6 +522,7 @@ struct sip_server {
 	bool terminate;
 
 	unsigned n_register_req;
+	unsigned n_options_req;
 	struct sip_msg *sip_msgs[16];
 };
 

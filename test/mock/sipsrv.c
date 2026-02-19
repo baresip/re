@@ -32,6 +32,9 @@ static bool sip_msg_handler(const struct sip_msg *msg, void *arg)
 		}
 		++srv->n_register_req;
 	}
+	else if (0 == pl_strcmp(&msg->met, "OPTIONS")) {
+		++srv->n_options_req;
+	}
 	else {
 		DEBUG_NOTICE("method not handled (%r)\n", &msg->met);
 		return false;
