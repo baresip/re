@@ -374,6 +374,7 @@ static bool transp_first(struct sip *sip, enum sip_transp *tp)
 
 static bool rr_append_handler(struct dnsrr *rr, void *arg)
 {
+	struct dnsrr *rrdup;
 	struct list *lst = arg;
 
 	switch (rr->type) {
@@ -381,11 +382,8 @@ static bool rr_append_handler(struct dnsrr *rr, void *arg)
 	case DNS_TYPE_A:
 	case DNS_TYPE_AAAA:
 	case DNS_TYPE_SRV:
-		if (rr->le.list)
-			break;
-
-		list_append(lst, &rr->le, mem_ref(rr));
-		break;
+		if (0 == dns_rr_dup(&rrdup, rr))
+			list_append(lst, &rrdup->le, rrdup);
 	}
 
 	return false;
