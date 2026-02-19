@@ -73,6 +73,146 @@ struct dnsrr *dns_rr_alloc(void)
 
 
 /**
+ * Duplicate a DNS Resource Record (RR)
+ *
+ * @param rrp Pointer to new Resource Record
+ * @param rr  Resource Record to duplicate
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int dns_rr_dup(struct dnsrr **rrp, const struct dnsrr *rr)
+{
+	struct dnsrr *new_rr;
+	int err = 0;
+
+	if (!rrp || !rr)
+		return EINVAL;
+
+	new_rr = dns_rr_alloc();
+	if (!new_rr)
+		return ENOMEM;
+
+	new_rr->type     = rr->type;
+	new_rr->dnsclass = rr->dnsclass;
+	new_rr->ttl      = rr->ttl;
+	new_rr->rdlen    = rr->rdlen;
+
+	err = str_dup(&new_rr->name, rr->name);
+	if (err)
+		goto error;
+
+	switch (rr->type) {
+
+	case DNS_TYPE_A:
+		new_rr->rdata.a.addr = rr->rdata.a.addr;
+		break;
+
+	case DNS_TYPE_NS:
+		err = str_dup(&new_rr->rdata.ns.nsdname, rr->rdata.ns.nsdname);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_CNAME:
+		err = str_dup(&new_rr->rdata.cname.cname,
+			      rr->rdata.cname.cname);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_SOA:
+		err = str_dup(&new_rr->rdata.soa.mname, rr->rdata.soa.mname);
+		if (err)
+			goto error;
+
+		err = str_dup(&new_rr->rdata.soa.rname, rr->rdata.soa.rname);
+		if (err)
+			goto error;
+
+		new_rr->rdata.soa.serial  = rr->rdata.soa.serial;
+		new_rr->rdata.soa.refresh = rr->rdata.soa.refresh;
+		new_rr->rdata.soa.retry   = rr->rdata.soa.retry;
+		new_rr->rdata.soa.expire  = rr->rdata.soa.expire;
+		new_rr->rdata.soa.ttlmin  = rr->rdata.soa.ttlmin;
+		break;
+
+	case DNS_TYPE_PTR:
+		err = str_dup(&new_rr->rdata.ptr.ptrdname,
+			      rr->rdata.ptr.ptrdname);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_MX:
+		new_rr->rdata.mx.pref = rr->rdata.mx.pref;
+
+		err = str_dup(&new_rr->rdata.mx.exchange,
+			      rr->rdata.mx.exchange);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_TXT:
+		err = str_dup(&new_rr->rdata.txt.data, rr->rdata.txt.data);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_AAAA:
+		memcpy(new_rr->rdata.aaaa.addr, rr->rdata.aaaa.addr, 16);
+		break;
+
+	case DNS_TYPE_SRV:
+		new_rr->rdata.srv.pri    = rr->rdata.srv.pri;
+		new_rr->rdata.srv.weight = rr->rdata.srv.weight;
+		new_rr->rdata.srv.port   = rr->rdata.srv.port;
+
+		err = str_dup(&new_rr->rdata.srv.target,
+			      rr->rdata.srv.target);
+		if (err)
+			goto error;
+		break;
+
+	case DNS_TYPE_NAPTR:
+		new_rr->rdata.naptr.order = rr->rdata.naptr.order;
+		new_rr->rdata.naptr.pref  = rr->rdata.naptr.pref;
+
+		err = str_dup(&new_rr->rdata.naptr.flags,
+			      rr->rdata.naptr.flags);
+		if (err)
+			goto error;
+
+		err = str_dup(&new_rr->rdata.naptr.services,
+			      rr->rdata.naptr.services);
+		if (err)
+			goto error;
+
+		err = str_dup(&new_rr->rdata.naptr.regexp,
+			      rr->rdata.naptr.regexp);
+		if (err)
+			goto error;
+
+		err = str_dup(&new_rr->rdata.naptr.replace,
+			      rr->rdata.naptr.replace);
+		if (err)
+			goto error;
+		break;
+
+	default:
+		err = ENOSYS;
+		goto error;
+	}
+
+	*rrp = new_rr;
+	return 0;
+
+ error:
+	mem_deref(new_rr);
+	return err;
+}
+
+
+/**
  * Encode a DNS Resource Record
  *
  * @param mb       Memory buffer to encode into
