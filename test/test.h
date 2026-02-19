@@ -182,6 +182,7 @@ int test_dns_nameservers(void);
 int test_dns_proto(void);
 int test_dns_reg(void);
 int test_dns_rr(void);
+int test_dns_rr_dup(void);
 int test_dsp(void);
 int test_dtmf(void);
 int test_fir(void);

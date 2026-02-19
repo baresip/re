@@ -270,6 +270,101 @@ int test_dns_rr(void)
 }
 
 
+int test_dns_rr_dup(void)
+{
+	struct dnsrr *rr = NULL, *dup = NULL;
+	size_t i;
+	int err = ENOMEM;
+
+	static const uint16_t typev[] = {
+		DNS_TYPE_A,    DNS_TYPE_NS,  DNS_TYPE_CNAME,
+		DNS_TYPE_SOA,  DNS_TYPE_PTR, DNS_TYPE_MX,
+		DNS_TYPE_AAAA, DNS_TYPE_SRV, DNS_TYPE_NAPTR,
+		DNS_TYPE_TXT
+	};
+
+	for (i=0; i<RE_ARRAY_SIZE(typev); i++) {
+
+		rr = dns_rr_alloc();
+		if (!rr) {
+			err = ENOMEM;
+			break;
+		}
+
+		err = mkrr(rr, typev[i]);
+		if (err)
+			break;
+
+		err = dns_rr_dup(&dup, rr);
+		if (err)
+			break;
+
+		if (!dns_rr_cmp(rr, dup, true)) {
+			(void)re_fprintf(stderr,
+					 "dns_rr_dup mismatch for type %s:\n",
+					 dns_rr_typename(typev[i]));
+			err = EBADMSG;
+			break;
+		}
+
+		ASSERT_TRUE(rr != dup);
+		ASSERT_TRUE(rr->name != dup->name);
+
+		switch (typev[i]) {
+		case DNS_TYPE_NS:
+			ASSERT_TRUE(rr->rdata.ns.nsdname !=
+				    dup->rdata.ns.nsdname);
+			break;
+		case DNS_TYPE_CNAME:
+			ASSERT_TRUE(rr->rdata.cname.cname !=
+				    dup->rdata.cname.cname);
+			break;
+		case DNS_TYPE_SOA:
+			ASSERT_TRUE(rr->rdata.soa.mname !=
+				    dup->rdata.soa.mname);
+			ASSERT_TRUE(rr->rdata.soa.rname !=
+				    dup->rdata.soa.rname);
+			break;
+		case DNS_TYPE_PTR:
+			ASSERT_TRUE(rr->rdata.ptr.ptrdname !=
+				    dup->rdata.ptr.ptrdname);
+			break;
+		case DNS_TYPE_MX:
+			ASSERT_TRUE(rr->rdata.mx.exchange !=
+				    dup->rdata.mx.exchange);
+			break;
+		case DNS_TYPE_TXT:
+			ASSERT_TRUE(rr->rdata.txt.data !=
+				    dup->rdata.txt.data);
+			break;
+		case DNS_TYPE_SRV:
+			ASSERT_TRUE(rr->rdata.srv.target !=
+				    dup->rdata.srv.target);
+			break;
+		case DNS_TYPE_NAPTR:
+			ASSERT_TRUE(rr->rdata.naptr.flags !=
+				    dup->rdata.naptr.flags);
+			ASSERT_TRUE(rr->rdata.naptr.services !=
+				    dup->rdata.naptr.services);
+			ASSERT_TRUE(rr->rdata.naptr.regexp !=
+				    dup->rdata.naptr.regexp);
+			ASSERT_TRUE(rr->rdata.naptr.replace !=
+				    dup->rdata.naptr.replace);
+			break;
+		}
+
+		rr = mem_deref(rr);
+		dup = mem_deref(dup);
+	}
+
+ out:
+	mem_deref(dup);
+	mem_deref(rr);
+
+	return err;
+}
+
+
 /* Testcase to reproduce dname_decode looping error */
 int test_dns_dname(void)
 {

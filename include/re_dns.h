@@ -164,6 +164,7 @@ int  dns_hdr_decode(struct mbuf *mb, struct dnshdr *hdr);
 const char *dns_hdr_opcodename(uint8_t opcode);
 const char *dns_hdr_rcodename(uint8_t rcode);
 struct dnsrr *dns_rr_alloc(void);
+int  dns_rr_dup(struct dnsrr **rrp, const struct dnsrr *rr);
 int  dns_rr_encode(struct mbuf *mb, const struct dnsrr *rr, int64_t ttl_offs,
 		   struct hash *ht_dname, size_t start);
 int  dns_rr_decode(struct mbuf *mb, struct dnsrr **rr, size_t start);
