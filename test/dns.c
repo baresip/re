@@ -189,6 +189,17 @@ int test_dns_hdr(void)
 		u16 *= 17;
 	}
 
+	for (uint8_t j=0; j<10; j++) {
+
+		char debug[256] = "";
+
+		re_snprintf(debug, sizeof(debug), "%s%s",
+			  dns_hdr_opcodename(j), dns_hdr_rcodename(j));
+
+		ASSERT_TRUE(str_isset(debug));
+	}
+
+ out:
 	mem_deref(mb);
 
 	return err;
