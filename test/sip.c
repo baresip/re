@@ -857,3 +857,181 @@ int test_sip_transp_add_client_cert(void)
 	return err;
 }
 #endif
+
+
+struct sip_dns {
+	int req1_err;
+	int req2_err;
+	int req3_err;
+	bool req1_done;
+	bool req2_done;
+	bool req3_done;
+};
+
+
+static void req1_handler(int err, const struct sip_msg *msg, void *arg)
+{
+	struct sip_dns *sipdns = arg;
+	(void)msg;
+
+	DEBUG_INFO("req1_handler: err=%m\n", err);
+	sipdns->req1_err = err;
+	sipdns->req1_done = true;
+	re_cancel();
+}
+
+
+static void req2_handler(int err, const struct sip_msg *msg, void *arg)
+{
+	struct sip_dns *sipdns = arg;
+	(void)msg;
+
+	DEBUG_INFO("req2_handler: err=%m\n", err);
+	sipdns->req2_err = err;
+	sipdns->req2_done = true;
+	if (sipdns->req3_done)
+		re_cancel();
+}
+
+
+static void req3_handler(int err, const struct sip_msg *msg, void *arg)
+{
+	struct sip_dns *sipdns = arg;
+	(void)msg;
+
+	DEBUG_INFO("req3_handler: err=%m\n", err);
+	sipdns->req3_err = err;
+	sipdns->req3_done = true;
+	if (sipdns->req2_done)
+		re_cancel();
+}
+
+
+/* Send a SIP request to example.com with mock DNS server and mock SIP server.
+ * After response has been received, send two SIP reqeusts to example.com
+ * simultanesously. Both requests must work. Tests DNS and DNS caching.
+ */
+int test_sip_dns(void)
+{
+	char from_uri[256];
+	char to_uri[256];
+	struct sip_server *sipsrv = NULL;
+	struct dns_server *dnssrv = NULL;
+	struct dnsc *dnsc = NULL;
+	struct sip *sip = NULL;
+	struct sip_auth *auth = NULL;
+	struct sip_dialog *dlg = NULL;
+	struct sip_request *req1 = NULL;
+	struct sip_request *req2 = NULL;
+	struct sip_request *req3 = NULL;
+	struct sa laddr, sipsrv_addr;
+	int err = 0;
+	struct sip_dns sipdns;
+
+	memset(&sipdns, 0, sizeof(sipdns));
+
+	/* Set up mock SIP server */
+	err = sip_server_alloc(&sipsrv);
+	TEST_ERR(err);
+
+	/* Get SIP server address */
+	err = sip_transp_laddr(sipsrv->sip, &sipsrv_addr, SIP_TRANSP_UDP,
+			       NULL);
+	TEST_ERR(err);
+
+	DEBUG_INFO("SIP server listening on %J\n", &sipsrv_addr);
+
+	/* Set up mock DNS server */
+	err = dns_server_alloc(&dnssrv, "127.0.0.1");
+	TEST_ERR(err);
+
+	/* Add A record pointing to SIP server  */
+	err = dns_server_add_a(dnssrv, "example.com",
+	                       sa_in(&sipsrv_addr), 1);
+	TEST_ERR(err);
+
+	DEBUG_INFO("DNS resolves example.com to %J\n", &sipsrv_addr);
+
+	/* Create DNS client */
+	err = dnsc_alloc(&dnsc, NULL, &dnssrv->addr, 1);
+	TEST_ERR(err);
+
+	/* Set up SIP stack with both IPv4 and IPv6 support */
+	err = sip_alloc(&sip, dnsc, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+
+	/* Create SIP auth object */
+	err = sip_auth_alloc(&auth, NULL, NULL, false);
+	TEST_ERR(err);
+
+	/* Add IPv4 transport */
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	/* Add IPv6 transport */
+	err = sa_set_str(&laddr, "::1", 0);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	/* Build From and To URIs */
+	re_snprintf(from_uri, sizeof(from_uri), "sip:test@127.0.0.1");
+	re_snprintf(to_uri, sizeof(to_uri), "sip:user@example.com:%u",
+	            sa_port(&sipsrv_addr));
+
+	err = sip_dialog_alloc(&dlg, to_uri, to_uri, NULL, from_uri, NULL, 0);
+	TEST_ERR(err);
+
+	err = sip_drequestf(&req1, sip, true, "OPTIONS", dlg, 0, auth, NULL,
+			    req1_handler, &sipdns,
+	                    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	err = re_main_timeout(500);
+	TEST_ERR(err);
+
+	ASSERT_TRUE(sipdns.req1_done);
+
+	err = sip_drequestf(&req2, sip, true, "OPTIONS", dlg, 0, auth, NULL,
+			    req2_handler, &sipdns,
+	                    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	/* Send third request immediately */
+	err = sip_drequestf(&req3, sip, true, "OPTIONS", dlg, 0, auth, NULL,
+	                    req3_handler, &sipdns,
+	                    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	err = re_main_timeout(500);
+	TEST_ERR(err);
+
+	/* Verify handlers were called */
+	ASSERT_TRUE(sipdns.req2_done);
+	ASSERT_TRUE(sipdns.req3_done);
+
+	/* Verify requests reached the transport layer */
+	ASSERT_EQ(0, sipdns.req2_err);
+	ASSERT_EQ(0, sipdns.req3_err);
+
+	/* Verify all three OPTIONS were received */
+	ASSERT_EQ(3, sipsrv->n_options_req);
+
+out:
+	mem_deref(req3);
+	mem_deref(req2);
+	mem_deref(req1);
+	mem_deref(dlg);
+	mem_deref(auth);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+	mem_deref(dnsc);
+	mem_deref(dnssrv);
+	mem_deref(sipsrv);
+
+	return err;
+}
