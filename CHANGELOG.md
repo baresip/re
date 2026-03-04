@@ -6,9 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## v4.6.0 - 2026-03-04
+
+### What's Changed
+* ci: bump OpenSSL version for Windows job by @alfredh in https://github.com/baresip/re/pull/1509
+* async: print number of workers by @alfredh in https://github.com/baresip/re/pull/1511
+* dns: remove usage of domain parameter from dns_srv_get() by @alfredh in https://github.com/baresip/re/pull/1510
+* thread: with c23 once_flag is mandatory by @sreimers in https://github.com/baresip/re/pull/1516
+* cmake: fix some cmakelint warnings by @alfredh in https://github.com/baresip/re/pull/1517
+* test/dns: add AAAA tests by @cspiel1 in https://github.com/baresip/re/pull/1515
+* test: add testcase for DNS over TCP by @alfredh in https://github.com/baresip/re/pull/1508
+* mem: add mem_debug_tail by @sreimers in https://github.com/baresip/re/pull/1524
+* rtp: rtp_listen_single() - try multiple ports by @cspiel1 in https://github.com/baresip/re/pull/1526
+* test: add testcode for stun_server_discover() by @alfredh in https://github.com/baresip/re/pull/1522
+* test: add testing of dns_rr_print() by @alfredh in https://github.com/baresip/re/pull/1518
+* test: add testing of DNS query from handler by @alfredh in https://github.com/baresip/re/pull/1528
+* dns: add dns_rr_dup and test_dns_rr_dup by @maximilianfridrich in https://github.com/baresip/re/pull/1512
+* sip/request: duplicate RR entries from DNS by @maximilianfridrich in https://github.com/baresip/re/pull/1529
+* test: add testing of DNS header code names by @alfredh in https://github.com/baresip/re/pull/1530
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.5.0...v4.6.0
+
+
 ## v4.5.0 - 2026-01-28
 
-## What's Changed
+### What's Changed
 * net: remove net_if_getaddr4() -- deprecated by @alfredh in https://github.com/baresip/re/pull/1494
 * test: add testing of dtls_set_handlers() api by @alfredh in https://github.com/baresip/re/pull/1495
 * h265: use h264_find_startcode() -- duplicated code by @alfredh in https://github.com/baresip/re/pull/1493
