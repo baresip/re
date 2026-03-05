@@ -16,25 +16,13 @@
 #define LOCAL_PORT 0
 
 
-static void dns_server_match(struct dns_server *srv, struct list *rrl,
-			     const char *name, uint16_t type)
+static bool rrlist_handler(struct dnsrr *rr, void *arg)
 {
-	struct dnsrr *rr0 = NULL;
-	struct le *le;
+	struct list *rrl = arg;
 
-	le = srv->rrl.head;
-	while (le) {
+	list_append(rrl, &rr->le_priv, rr);
 
-		struct dnsrr *rr = le->data;
-		le		 = le->next;
-
-		if (type == rr->type && 0 == str_casecmp(name, rr->name)) {
-
-			if (!rr0)
-				rr0 = rr;
-			list_append(rrl, &rr->le_priv, rr);
-		}
-	}
+	return false;
 }
 
 
@@ -75,7 +63,8 @@ static void decode_dns_query(struct dns_server *srv, const struct sa *src,
 		   qname);
 
 	if (dnsclass == DNS_CLASS_IN) {
-		dns_server_match(srv, &rrl, qname, type);
+		dns_rrlist_apply(&srv->rrl, qname, type, DNS_CLASS_IN,
+				 hdr.rd, rrlist_handler, &rrl);
 	}
 
 	hdr.qr	  = true;
