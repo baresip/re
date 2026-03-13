@@ -222,7 +222,6 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 		realm->nonce	 = mem_deref(realm->nonce);
 		realm->qop	 = mem_deref(realm->qop);
 		realm->opaque	 = mem_deref(realm->opaque);
-		realm->algorithm = mem_deref(realm->algorithm);
 	}
 
 	realm->hdr = hdr->id;
