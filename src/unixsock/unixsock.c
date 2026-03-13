@@ -35,6 +35,7 @@
  */
 int unixsock_listen_fd(re_sock_t *fdp, const struct sa *sock)
 {
+#if HAVE_UNIXSOCK
 	int err = 0;
 	re_sock_t fd;
 
@@ -80,4 +81,9 @@ err:
 	}
 
 	return err;
+#else
+	(void)fdp;
+	(void)sock;
+	return ENOTSUP;
+#endif
 }

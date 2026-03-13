@@ -61,6 +61,11 @@ out:
 		(void)unlink(&socket[5]);
 	return err;
 #else
-	return ESKIPPED;
+	int err = unixsock_listen_fd(NULL, NULL);
+	TEST_EQUALS(ENOTSUP, err);
+
+	return 0;
+out:
+	return err;
 #endif
 }
