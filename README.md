@@ -111,13 +111,18 @@ Patches can sent via Github
 |----------|----------|------------------------------------------------|
 | aes      | stable   | AES (Advanced Encryption Standard)             |
 | async    | testing  | Async module                                   |
+| av1      | testing  | AV1 Packetizer                                 |
 | base64   | stable   | Base-64 encoding/decoding functions            |
 | bfcp     | stable   | The Binary Floor Control Protocol (BFCP)       |
+| btrace   | testing  | Backtrace module                               |
 | conf     | stable   | Configuration file parser                      |
 | crc32    | stable   | 32-bit CRC defined in ITU V.42                 |
 | dbg      | stable   | Debug printing                                 |
+| dd       | testing  | Dependency Descriptor                          |
 | dns      | stable   | DNS resolving (NAPTR, SRV, A)                  |
 | fmt      | stable   | Formatted printing and regular expression      |
+| h264     | testing  | H.264 packetizer                               |
+| h265     | testing  | H.265 packetizer                               |
 | hash     | stable   | Hashmap table                                  |
 | hmac     | stable   | HMAC: Keyed-Hashing for Message Authentication |
 | http     | stable   | HTTP parser (RFC 2616)                         |
@@ -134,8 +139,10 @@ Patches can sent via Github
 | msg      | stable   | Generic message component library              |
 | net      | stable   | Networking routines                            |
 | odict    | stable   | Ordered Dictionary                             |
+| pcp      | testing  | Port Control Protocol                          |
 | rtmp     | stable   | Real Time Messaging Protocol                   |
 | rtp      | stable   | Real-time Transport Protocol                   |
+| rtpext   | testing  | RTP extensions                                 |
 | sa       | stable   | Socket Address functions                       |
 | sdp      | stable   | Session Description Protocol                   |
 | sha      | stable   | Secure Hash Standard, NIST, FIPS PUB 180-1     |
@@ -153,6 +160,7 @@ Patches can sent via Github
 | tmr      | stable   | Timer handling                                 |
 | turn     | stable   | Obtaining Relay Addresses from STUN (TURN)     |
 | trace    | testing  | Trace Helpers JSON traces (chrome://tracing)   |
+| trice    | testing  | Trickle ICE                                    |
 | udp      | stable   | UDP transport                                  |
 | unixsock | testing  | Unix domain sockets                            |
 | uri      | stable   | Generic URI library                            |
