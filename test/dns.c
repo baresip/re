@@ -803,6 +803,7 @@ struct fixture {
 	uint32_t srvc;
 	unsigned answers;
 	int proto;
+	int err;
 };
 
 
@@ -820,6 +821,7 @@ static void dns_query_handler(int err, const struct dnshdr *hdr,
 
 	if (err) {
 		DEBUG_WARNING("dns query error: %m\n", err);
+		fix->err = err;
 		re_cancel();
 		return;
 	}
@@ -838,6 +840,7 @@ static void dns_query_handler(int err, const struct dnshdr *hdr,
 
  out:
 	if (fix->answers >= EXPECTED_ANSWERS || err) {
+		fix->err = err;
 		re_cancel();
 	}
 }
@@ -881,6 +884,9 @@ static int test_dns_param(const char *laddr, int proto)
 	TEST_ERR(err);
 
 	err = re_main_timeout(5000);
+	TEST_ERR(err);
+
+	err = fix.err;
 	TEST_ERR(err);
 
 	ASSERT_TRUE(fix.answers >= EXPECTED_ANSWERS);
