@@ -125,13 +125,14 @@ static void verify_msg_destructor(void *arg)
 static void verify_cert_done(void *arg)
 {
 	struct http_verify_msg_d *d = arg;
+	struct http_conn *conn = d->conn;
 
 	if (d->err)
-		http_ereply(d->conn, d->scode, d->reason);
+		http_ereply(conn, d->scode, d->reason);
 	else
-		d->conn->sock->reqh(d->conn, d->msg, d->conn->sock->arg);
+		conn->sock->reqh(conn, d->msg, conn->sock->arg);
 
-	d->conn->verify_msg_d = mem_deref(d);
+	conn->verify_msg_d = mem_deref(d);
 }
 
 
@@ -180,6 +181,7 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 		d->reason = "Request Timeout";
 		d->msg = msg;
 
+		mem_deref(conn->verify_msg_d);
 		conn->verify_msg_d = d;
 		tmr_start(&d->tmr, TIMEOUT_IDLE, verify_cert_done, d);
 
