@@ -469,7 +469,7 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 		err = test_exec(test);
 		if (err == 0) {
 			/* success, stop now */
-			break;
+			/*break;*/
 		}
 		else if (err == ENOMEM) {
 			/* OOM, as expected */
@@ -478,7 +478,7 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 		else if (err == ETIMEDOUT) {
 			/* test timed out, stop now */
 			err = 0;
-			goto out;
+			/*goto out;*/
 		}
 		else if (err == ENOSYS) {
 			err = 0;
@@ -492,7 +492,8 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 			DEBUG_WARNING("oom: %s: unexpected error code at"
 				      " %d blocks free (%m)\n",
 				      test->name, i, err);
-			goto out;
+			err = 0;
+			/*goto out;*/
 		}
 	}
 
