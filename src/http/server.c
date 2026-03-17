@@ -43,7 +43,7 @@ struct http_conn {
 	struct tcp_conn *tc;
 	struct tls_conn *sc;
 	struct mbuf *mb;
-	struct tmr verify_cert_tmr;
+	struct http_verify_msg_d *verify_msg_d;
 };
 
 
@@ -76,7 +76,7 @@ static void conn_destructor(void *arg)
 
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
-	tmr_cancel(&conn->verify_cert_tmr);
+	mem_deref(conn->verify_msg_d);
 	mem_deref(conn->sc);
 	mem_deref(conn->tc);
 	mem_deref(conn->mb);
@@ -87,7 +87,7 @@ static void conn_close(struct http_conn *conn)
 {
 	list_unlink(&conn->le);
 	tmr_cancel(&conn->tmr);
-	tmr_cancel(&conn->verify_cert_tmr);
+	conn->verify_msg_d = mem_deref(conn->verify_msg_d);
 	conn->sc = mem_deref(conn->sc);
 	conn->tc = mem_deref(conn->tc);
 	conn->sock = NULL;
@@ -110,12 +110,14 @@ struct http_verify_msg_d {
 	int err;
 	int scode;
 	const char *reason;
+	struct tmr tmr;
 };
 
 
 static void verify_msg_destructor(void *arg)
 {
 	struct http_verify_msg_d *d = arg;
+	tmr_cancel(&d->tmr);
 	mem_deref(d->msg);
 }
 
@@ -129,7 +131,7 @@ static void verify_cert_done(void *arg)
 	else
 		d->conn->sock->reqh(d->conn, d->msg, d->conn->sock->arg);
 
-	mem_deref(arg);
+	d->conn->verify_msg_d = mem_deref(d);
 }
 
 
@@ -146,8 +148,7 @@ static int http_verify_handler(int ok, void *arg)
 		d->reason = "Forbidden";
 	}
 
-	tmr_start(&d->conn->verify_cert_tmr, 1, verify_cert_done, d);
-
+	tmr_start(&d->tmr, 1, verify_cert_done, d);
 	return ok;
 }
 
@@ -179,8 +180,8 @@ static enum re_https_verify_msg verify_msg(struct http_conn *conn,
 		d->reason = "Request Timeout";
 		d->msg = msg;
 
-		tmr_start(&conn->verify_cert_tmr, TIMEOUT_IDLE,
-			verify_cert_done, d);
+		conn->verify_msg_d = d;
+		tmr_start(&d->tmr, TIMEOUT_IDLE, verify_cert_done, d);
 
 		int err = tls_set_verify_client_handler(http_conn_tls(conn),
 			-1, http_verify_handler, d);
