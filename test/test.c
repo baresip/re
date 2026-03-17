@@ -497,7 +497,6 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 		}
 	}
 
- out:
 	if (verbose)
 		(void)re_fprintf(stderr, "oom max %d\n", i);
 
