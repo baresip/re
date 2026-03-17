@@ -51,7 +51,7 @@ static void reinvite_resp_handler(int err, const struct sip_msg *msg,
 				sess->neg_state = SDP_NEG_DONE;
 				err = sess->answerh(msg, sess->arg);
 			}
-			else if (sess->neg_state == SDP_NEG_NONE) {
+			else if (sess->neg_state == SDP_NEG_DONE) {
 				sess->neg_state = SDP_NEG_REMOTE_OFFER;
 				err = sess->offerh(&desc, msg, sess->arg);
 			}
