@@ -41,6 +41,7 @@ struct turntest {
 	int err;
 
 	size_t n_alloc_resp;
+	size_t n_perm_resp;
 	size_t n_chan_resp;
 	size_t n_peer_recv;
 };
@@ -114,6 +115,14 @@ static int send_payload(struct turntest *tt, size_t offset,
 }
 
 
+static void turnc_perm_handler(void *arg)
+{
+	struct turntest *tt = arg;
+
+	++tt->n_perm_resp;
+}
+
+
 static void turnc_chan_handler(void *arg)
 {
 	struct turntest *tt = arg;
@@ -158,7 +167,11 @@ static void turnc_handler(int err, uint16_t scode, const char *reason,
 	TEST_SACMP(&tt->cli, mapped_addr, SA_ALL);
 
 	/* Permission is needed for sending data */
-	err = turnc_add_perm(tt->turnc, &tt->peer, NULL, NULL);
+	err = turnc_add_perm(tt->turnc, &tt->peer, turnc_perm_handler, tt);
+	if (err)
+		goto out;
+
+	err = turnc_add_perm(tt->turnc, &tt->peer, turnc_perm_handler, tt);
 	if (err)
 		goto out;
 
@@ -439,6 +452,7 @@ static int test_turn_param(const char *addr)
 	/* verify results after test is complete */
 
 	TEST_EQUALS(1, tt->n_alloc_resp);
+	TEST_EQUALS(1, tt->n_perm_resp);
 	TEST_EQUALS(1, tt->n_chan_resp);
 	TEST_EQUALS(2, tt->n_peer_recv);
 
