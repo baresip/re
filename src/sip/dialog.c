@@ -490,8 +490,10 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 		return err;
 
 	mb = mbuf_alloc(512);
-	if (!mb)
-		return ENOMEM;
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
 
 	err = mbuf_write_mem(mb, mbuf_buf(dlg->mb), dlg->rpos);
 	err |= mbuf_printf(mb, "To: %r\r\n",
@@ -506,10 +508,10 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 	dlg->cpos = cpos;
 	mb->pos = 0;
 
-	mem_deref(dlg->rtag);
+	dlg->rtag = mem_deref(dlg->rtag);
 	err = pl_strdup(&dlg->rtag, msg->req ? &msg->from.tag : &msg->to.tag);
 	if (err)
-		return err;
+		goto out;
 
 	mem_deref(dlg->mb);
 	dlg->mb = mem_ref(mb);
