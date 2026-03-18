@@ -650,13 +650,15 @@ int test_sipsess(void)
 	ASSERT_TRUE(test.sdp_state == ANSWER_RECEIVED);
 
  out:
+	tmr_cancel(&test.ans_tmr);
+	tmr_cancel(&test.ack_tmr);
 	test.a = mem_deref(test.a);
 	test.b = mem_deref(test.b);
 
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
