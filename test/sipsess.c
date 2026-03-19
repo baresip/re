@@ -729,7 +729,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
@@ -820,7 +820,7 @@ int test_sipsess_blind_transfer(void)
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
@@ -902,7 +902,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	mem_deref(test.desc);
@@ -989,7 +989,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	mem_deref(test.desc);
@@ -1072,7 +1072,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
@@ -1146,7 +1146,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
@@ -1219,7 +1219,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	return err;
@@ -1303,7 +1303,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	mem_deref(desc_a);
@@ -1390,7 +1390,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	mem_deref(desc_a);
@@ -1473,7 +1473,7 @@ out:
 	sipsess_close_all(test.sock);
 	test.sock = mem_deref(test.sock);
 
-	sip_close(test.sip, false);
+	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
 
 	mem_deref(desc_a);
