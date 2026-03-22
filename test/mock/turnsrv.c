@@ -294,6 +294,7 @@ static void process_msg(struct turnserver *turn, int proto, void *sock,
 	struct stun_msg *msg = NULL;
 	struct sa laddr;
 	int err = 0;
+	const uint32_t alloc_lifetime = TURN_DEFAULT_LIFETIME;
 
 	if (stun_msg_decode(&msg, mb, NULL)) {
 
@@ -367,9 +368,10 @@ static void process_msg(struct turnserver *turn, int proto, void *sock,
 
 		err = stun_reply(proto, sock, src, 0,
 				 msg, ctx.key, ctx.keylen, false,
-				 2,
+				 3,
 				 STUN_ATTR_XOR_MAPPED_ADDR, src,
-				 STUN_ATTR_XOR_RELAY_ADDR, &turn->relay);
+				 STUN_ATTR_XOR_RELAY_ADDR, &turn->relay,
+				 STUN_ATTR_LIFETIME, &alloc_lifetime);
 		break;
 
 	case STUN_METHOD_CREATEPERM: {
