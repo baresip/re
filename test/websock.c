@@ -123,9 +123,13 @@ static void cli_websock_estab_handler(void *arg)
 	struct test *test = arg;
 	int err;
 
+	ASSERT_TRUE(NULL != websock_tcp(test->wc_cli));
+
 	test->n_estab_cli++;
 
 	err = websock_send(test->wc_cli, WEBSOCK_TEXT, test_payload);
+
+ out:
 	if (err)
 		abort_test(test, err);
 }
