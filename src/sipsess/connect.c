@@ -342,6 +342,8 @@ int sipsess_connect(struct sipsess **sessp, struct sipsess_sock *sock,
 	if (err)
 		return err;
 
+	sess->client = true;
+
 	/* Custom SIP headers */
 	if (fmt) {
 		va_list ap;

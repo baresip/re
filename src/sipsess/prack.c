@@ -170,6 +170,8 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 	struct sipsess_prack *prack;
 	int err;
 
+	re_fprintf(stderr, ".... %s: line %u\n", __func__, __LINE__);
+
 	if (!sess || sess->terminated)
 		return EINVAL;
 

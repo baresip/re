@@ -50,6 +50,8 @@ static void update_resp_handler(int err, const struct sip_msg *msg, void *arg)
 			(void)req->sess->answerh(msg, req->sess->arg);
 			req->sess->neg_state = SDP_NEG_DONE;
 		}
+
+		re_printf(".... %s: line %u\n", __func__, __LINE__);
 	}
 	else {
 		if (req->sess->terminated)
