@@ -56,6 +56,15 @@ int test_unixsock(void)
 	err = unlink(&socket[5]);
 	TEST_ERR(err);
 
+	int error = unixsock_listen_fd(NULL, NULL);
+	ASSERT_EQ(EINVAL, error);
+
+	re_sock_t fd_dummy = RE_BAD_SOCK;
+	struct sa sa_dummy;
+	sa_set_str(&sa_dummy, "1.2.3.4", 1234);
+	error = unixsock_listen_fd(&fd_dummy, &sa_dummy);
+	ASSERT_EQ(EINVAL, error);
+
 out:
 	if (err)
 		(void)unlink(&socket[5]);
