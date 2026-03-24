@@ -27,6 +27,7 @@ static void destructor(void *arg)
 	mem_deref(req->ctype);
 	mem_deref(req->body);
 	mem_deref(req->req);
+	mem_deref(req->priv);
 
 	/* wait for pending requests */
 	if (req->sess->terminated && !req->sess->requestl.head)
@@ -57,6 +58,7 @@ int sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 	if (!req)
 		return ENOMEM;
 
+	req->sess  = sess;
 	list_append(&sess->requestl, &req->le, req);
 
 	if (ctype) {
@@ -65,7 +67,6 @@ int sipsess_request_alloc(struct sipsess_request **reqp, struct sipsess *sess,
 			goto out;
 	}
 
-	req->sess  = sess;
 	req->body  = mem_ref(body);
 	req->resph = resph ? resph : internal_resp_handler;
 	req->arg   = arg;

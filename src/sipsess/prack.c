@@ -34,7 +34,6 @@ static void destructor(void *arg)
 	struct sipsess_prack *prack = arg;
 
 	mem_deref(prack->met);
-	mem_deref(prack->req);
 }
 
 
@@ -48,7 +47,7 @@ static void tmr_handler(void *arg)
 
 	err = prack_request(prack);
 	if (err)
-		mem_deref(prack);
+		mem_deref(prack->req);
 }
 
 
@@ -98,7 +97,7 @@ static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		case 408:
 		case 491:
 			tmr_start(&req->tmr, req->sess->owner ? 3000 : 1000,
-				  tmr_handler, req);
+				  tmr_handler, prack);
 			return;
 		case 500:
 			hdr = sip_msg_hdr(msg, SIP_HDR_RETRY_AFTER);
@@ -106,7 +105,7 @@ static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 				break;
 
 			tmr_start(&req->tmr, pl_u32(&hdr->val) * 1000,
-				  tmr_handler, req);
+				  tmr_handler, prack);
 			return;
 		}
 	}
@@ -117,7 +116,7 @@ out:
 			sipsess_terminate(req->sess, err, NULL);
 	}
 
-	mem_deref(prack);
+	mem_deref(req);
 }
 
 
@@ -182,6 +181,8 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 	if (err)
 		goto out;
 
+	prack->req->priv = prack;
+
 	prack->cseq = cseq;
 	prack->rseq = rseq;
 	err = pl_strdup(&prack->met, met);
@@ -191,8 +192,12 @@ int sipsess_prack(struct sipsess *sess, uint32_t cseq, uint32_t rseq,
 	err = prack_request(prack);
 
 out:
-	if (err)
-		mem_deref(prack);
+	if (err) {
+		if (prack->req)
+			mem_deref(prack->req);
+		else
+			mem_deref(prack);
+	}
 
 	return err;
 }

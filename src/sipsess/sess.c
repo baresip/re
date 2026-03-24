@@ -94,10 +94,7 @@ static bool termwait(struct sipsess *sess)
 		}
 	}
 
-	if (sess->replyl.head) {
-		mem_ref(sess);
-		wait = true;
-	}
+	list_flush(&sess->replyl);
 
 	if (sess->requestl.head) {
 		mem_ref(sess);
@@ -144,6 +141,10 @@ static void destructor(void *arg)
 	hash_unlink(&sess->he);
 	tmr_cancel(&sess->tmr);
 	list_flush(&sess->replyl);
+
+	/* Prevent request destructors from calling mem_deref(sess)
+	 * during flush -- we are already inside the session destructor */
+	sess->terminated = 0;
 	list_flush(&sess->requestl);
 	mem_deref((void *)sess->msg);
 	mem_deref(sess->req);

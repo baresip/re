@@ -67,6 +67,7 @@ struct sipsess_request {
 	sip_resp_h *resph;
 	struct tmr tmr;
 	void *arg;
+	void *priv;
 };
 
 
