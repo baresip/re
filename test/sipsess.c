@@ -125,8 +125,6 @@ static void stop_test(void)
 
 static void abort_test(struct test *test, int err)
 {
-	re_fprintf(stderr, ".... abort_test (%m)\n", err);
-
 	test->err = err;
 	re_cancel();
 }
@@ -171,8 +169,6 @@ static void send_answer_b(void *arg)
 {
 	struct test *test = arg;
 	int err;
-
-	re_fprintf(stderr, ".... send_answer_b\n");
 
 	err = sipsess_answer(test->b, 200, "Answering", NULL, NULL);
 	if (err) {
@@ -269,8 +265,6 @@ static int desc_handler_a(struct mbuf **descp, const struct sa *src,
 	(void)dst;
 	(void)arg;
 
-	re_fprintf(stderr, ".... %s\n", __func__);
-
 	err = make_sdp(&desc, sdp_a);
 	TEST_ERR(err);
 
@@ -287,8 +281,6 @@ static int offer_handler_a(struct mbuf **descp, const struct sip_msg *msg,
 	struct test *test = arg;
 	(void)descp;
 	(void)msg;
-
-	re_fprintf(stderr, ".... %s\n", __func__);
 
 	if (test->sdp_state == INITIAL || test->sdp_state == EARLY_CONFIRMED)
 		test->sdp_state = OFFER_RECEIVED;
@@ -308,8 +300,6 @@ static int offer_handler_b(struct mbuf **descp, const struct sip_msg *msg,
 	struct test *test = arg;
 	(void)msg;
 	int err = 0;
-
-	re_fprintf(stderr, ".... %s\n", __func__);
 
 	if (test->sdp_state == INITIAL || test->sdp_state == EARLY_CONFIRMED)
 		test->sdp_state = OFFER_RECEIVED;
@@ -333,8 +323,6 @@ static int answer_handler_a(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
 
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
-
 	test->answr_a = true;
 	if (mbuf_get_left(msg->mb))
 		test->sdp_state = ANSWER_RECEIVED;
@@ -357,8 +345,6 @@ static int answer_handler_a(const struct sip_msg *msg, void *arg)
 	if (test->answ_action == ANSW_CANCEL)
 		wait_for_ack(test);
 
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
-
 	return 0;
 }
 
@@ -366,8 +352,6 @@ static int answer_handler_a(const struct sip_msg *msg, void *arg)
 static int answer_handler_b(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
-
-	re_fprintf(stderr, ".... %s\n", __func__);
 
 	test->answr_b = true;
 	if (mbuf_get_left(msg->mb))
@@ -397,8 +381,6 @@ static void progr_handler_a(const struct sip_msg *msg, void *arg)
 	struct test *test = arg;
 	(void)msg;
 
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
-
 	test->progr_a = true;
 }
 
@@ -407,8 +389,6 @@ static void prack_handler(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
 	(void)msg;
-
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
 
 	if (test->sdp_state == ANSWER_RECEIVED)
 		test->sdp_state = EARLY_CONFIRMED;
@@ -423,8 +403,6 @@ static void estab_handler_a(const struct sip_msg *msg, void *arg)
 	struct test *test = arg;
 	(void)msg;
 
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
-
 	test->estab_a = true;
 	if (test->estab_b)
 		stop_test();
@@ -436,8 +414,6 @@ static void estab_handler_b(const struct sip_msg *msg, void *arg)
 	struct test *test = arg;
 	(void)msg;
 
-	re_fprintf(stderr, ".... %s\n", __func__);
-
 	test->estab_b = true;
 	if (test->estab_a)
 		stop_test();
@@ -448,8 +424,6 @@ static void close_handler(int err, const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
 	(void)msg;
-
-	re_fprintf(stderr, ".... %s: line %d\n", __func__, __LINE__);
 
 	if (!err && test->conn_action == CONN_BUSY)
 		err = EBUSY;
@@ -465,8 +439,6 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	int err;
 	char *hdrs = test->rel100_b == REL100_REQUIRED ?
 		     "Require: 100rel\r\n" : "";
-
-	re_fprintf(stderr, ".... conn handler\n");
 
 	if (mbuf_get_left(msg->mb)) {
 		test->sdp_state = OFFER_RECEIVED;
@@ -484,12 +456,9 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 
 	test->desc = desc;
 
-	re_fprintf(stderr, ".... conn handler: line %u\n", __LINE__);
-
 	if (test->conn_action & CONN_PROGRESS
 	    || test->conn_action & CONN_PROGR_ANS
 	    || test->conn_action & CONN_PROGR_UPD) {
-
 
 		err = sipsess_accept(&test->b, test->sock, msg, 183,
 				"Progress", test->rel100_b, "b",
@@ -509,8 +478,6 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 		if (err)
 			abort_test(test, err);
 	}
-
-	re_fprintf(stderr, ".... conn handler: line %u\n", __LINE__);
 
 	if (test->conn_action & CONN_PROGR_ANS) {
 		err = sipsess_answer(test->b, 200, "Answering", NULL, NULL);
@@ -556,8 +523,6 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 			goto out;
 		}
 
-		re_fprintf(stderr, ".... %s: reply 486 busy\n", __func__);
-
 		err |= sipsess_reject(test->b, 486, "Busy Here", NULL);
 		if (err != test->answ_ret_code) {
 			test->answ_ret_code = err;
@@ -568,13 +533,9 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	if (test->conn_action & (CONN_ANSWER | CONN_PROGR_ANS | CONN_BUSY))
 		mem_deref(desc);
 
-	re_fprintf(stderr, ".... conn handler: line %u -- ok\n", __LINE__);
-
 	return;
 
 out:
-	re_fprintf(stderr, ".... conn handler: line %u\n", __LINE__);
-
 	mem_deref(desc);
 	abort_test(test, err);
 }

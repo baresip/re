@@ -81,9 +81,6 @@ static bool termwait(struct sipsess *sess)
 	tmr_cancel(&sess->tmr);
 
 	if (sess->st) {
-
-		re_fprintf(stderr, ".... %s: reply 486 busy\n", __func__);
-
 		(void)sip_treply(&sess->st, sess->sip, sess->msg,
 				 486, "Busy Here");
 	}
@@ -101,19 +98,14 @@ static bool termwait(struct sipsess *sess)
 	}
 
 	if (sess->replyl.head) {
-		re_fprintf(stderr, ".... termwait: pending replies ..\n");
 		mem_ref(sess);
 		wait = true;
 	}
 
 	if (sess->requestl.head) {
-		re_fprintf(stderr, ".... termwait: pending requests ..\n");
 		mem_ref(sess);
 		wait = true;
 	}
-
-	re_fprintf(stderr, ".... %s: mem_ref %u\n",
-		   __func__, mem_nrefs(sess));
 
 	return wait;
 }
@@ -131,9 +123,6 @@ static bool terminate(struct sipsess *sess)
 
 	mem_ref(sess);
 
-	re_fprintf(stderr, ".... %s: mem_ref %u\n",
-		   __func__, mem_nrefs(sess));
-
 	return true;
 }
 
@@ -141,10 +130,6 @@ static bool terminate(struct sipsess *sess)
 static void destructor(void *arg)
 {
 	struct sipsess *sess = arg;
-
-	re_fprintf(stderr, ".... %s:  role is %s\n",
-		   __func__,
-		   sess->client ? "CLIENT" : "SERVER");
 
 	switch (sess->terminated) {
 
@@ -172,24 +157,6 @@ static void destructor(void *arg)
 	hash_unlink(&sess->he);
 	tmr_cancel(&sess->tmr);
 	list_flush(&sess->replyl);
-
-
-	/* Break circular dependency: Clear sess pointer in all pending
-	 * requests to prevent use-after-free. Requests must not access sess
-	 * when sess is being destroyed (refcount is 0). This handles the
-	 * case where sipsess_abort() sets terminated=2.
-	 */
-	for (struct le *le = sess->requestl.head; le; le = le->next) {
-		struct sipsess_request *req = le->data;
-
-		re_fprintf(stderr, ".... %s %s: circular dependency"
-			   " for request %p (ctype=%s)\n",
-			   __FILE__, __func__,
-			   req, req->ctype);
-	}
-
-	re_fprintf(stderr, ".... sipsess: flushing requests (%u)\n",
-		   list_count(&sess->requestl));
 	list_flush(&sess->requestl);
 	mem_deref((void *)sess->msg);
 	mem_deref(sess->req);
