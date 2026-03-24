@@ -29,15 +29,6 @@ static void destructor(void *arg)
 	mem_deref(req->req);
 	mem_deref(req->priv);
 
-	/* If sess is NULL, it means sess destructor cleared it to break
-	 * circular dependency. In that case, sess is being destroyed and
-	 * we must not access or deref it (use-after-free).
-	 */
-	if (!req->sess) {
-		re_fprintf(stderr, ".... %s %s: circular dependency\n",
-			   __FILE__, __func__);
-	}
-
 	/* wait for pending requests */
 	if (req->sess->terminated && !req->sess->requestl.head)
 		mem_deref(req->sess);
