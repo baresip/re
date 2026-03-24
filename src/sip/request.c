@@ -98,6 +98,9 @@ static void destructor(void *arg)
 static void terminate(struct sip_request *req, int err,
 		      const struct sip_msg *msg)
 {
+	re_fprintf(stderr, ".... terminate (%s) (%m)\n",
+		   req->met, err);
+
 	if (req->reqp) {
 		*req->reqp = NULL;
 		req->reqp = NULL;
@@ -117,6 +120,8 @@ static bool close_handler(struct le *le, void *arg)
 {
 	struct sip_request *req = le->data;
 	(void)arg;
+
+	re_fprintf(stderr, ".... close_handler (%s)\n", req->met);
 
 	req->dnsq  = mem_deref(req->dnsq);
 	req->dnsq2 = mem_deref(req->dnsq2);

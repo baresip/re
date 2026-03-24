@@ -113,11 +113,16 @@ static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 out:
 	if (!req->sess->terminated) {
+
+		re_fprintf(stderr, ".... %s: line %u\n", __func__, __LINE__);
+
 		if (err == ETIMEDOUT)
 			sipsess_terminate(req->sess, err, NULL);
 	}
 
+	re_fprintf(stderr, ".... %s: line %u\n", __func__, __LINE__);
 	mem_deref(prack);
+	re_fprintf(stderr, ".... %s: line %u\n", __func__, __LINE__);
 }
 
 

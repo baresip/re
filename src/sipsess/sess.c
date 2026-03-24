@@ -94,17 +94,20 @@ static bool termwait(struct sipsess *sess)
 			sess->req = mem_deref(sess->req);
 		}
 		else {
+			/* todo: check this */
 			mem_ref(sess);
 			wait = true;
 		}
 	}
 
 	if (sess->replyl.head) {
+		re_fprintf(stderr, ".... termwait: pending replies ..\n");
 		mem_ref(sess);
 		wait = true;
 	}
 
 	if (sess->requestl.head) {
+		re_fprintf(stderr, ".... termwait: pending requests ..\n");
 		mem_ref(sess);
 		wait = true;
 	}
@@ -157,6 +160,15 @@ static void destructor(void *arg)
 		break;
 	}
 
+#if 1
+	if (sess->destructed) {
+		re_fprintf(stderr,
+			   "WARNING: sipsess already destructed! ***\n");
+	}
+
+	sess->destructed = true;
+#endif
+
 	hash_unlink(&sess->he);
 	tmr_cancel(&sess->tmr);
 	list_flush(&sess->replyl);
@@ -176,6 +188,8 @@ static void destructor(void *arg)
 			   req, req->ctype);
 	}
 
+	re_fprintf(stderr, ".... sipsess: flushing requests (%u)\n",
+		   list_count(&sess->requestl));
 	list_flush(&sess->requestl);
 	mem_deref((void *)sess->msg);
 	mem_deref(sess->req);

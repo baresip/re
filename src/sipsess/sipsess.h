@@ -44,6 +44,7 @@ struct sipsess {
 	int terminated;
 	enum sdp_neg_state neg_state;
 	bool client;
+	bool destructed;
 };
 
 

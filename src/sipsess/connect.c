@@ -85,6 +85,8 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	struct sip_addr addr;
 	char *uri;
 
+	re_fprintf(stderr, ".... %s (err=%m)\n", __func__, err);
+
 	if (!sess)
 		return;
 
@@ -264,6 +266,9 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 	}
 
  out:
+	re_fprintf(stderr, ".... %s (terminated=%d)\n",
+		   __func__, sess->terminated);
+
 	if (!sess->terminated)
 		sipsess_terminate(sess, err, msg);
 	else
