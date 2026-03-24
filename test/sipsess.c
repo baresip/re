@@ -85,6 +85,7 @@ struct test {
 	bool upd_b;
 	struct mbuf *desc;
 	bool blind_transfer;
+	bool conn_b;
 	uint16_t altaddr_port;
 	int err;
 };
@@ -438,6 +439,8 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	char *hdrs = test->rel100_b == REL100_REQUIRED ?
 		     "Require: 100rel\r\n" : "";
 
+	test->conn_b = true;
+
 	if (mbuf_get_left(msg->mb)) {
 		test->sdp_state = OFFER_RECEIVED;
 		test->offer_b = true;
@@ -468,8 +471,10 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 			goto out;
 		}
 
-		if (err)
+		if (err) {
+			test->desc = NULL;
 			mem_deref(desc);
+		}
 
 		err = sipsess_set_prack_handler(test->b, prack_handler);
 		if (err)
@@ -484,6 +489,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 		}
 	}
 	else if (test->conn_action & CONN_PROGR_UPD) {
+		test->desc = NULL;
 		mem_deref(desc);
 		desc = mbuf_alloc(0);
 		if (!desc) {
@@ -532,6 +538,7 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	return;
 
 out:
+	test->desc = NULL;
 	mem_deref(desc);
 	abort_test(test, err);
 }
@@ -1134,7 +1141,7 @@ int test_sipsess_100rel_420(void)
 	ASSERT_TRUE(!test.b);
 	ASSERT_TRUE(!test.estab_a);
 	ASSERT_TRUE(!test.estab_b);
-	ASSERT_TRUE(test.desc);
+	ASSERT_TRUE(test.conn_b);
 
 out:
 	tmr_cancel(&test.ans_tmr);
@@ -1207,7 +1214,7 @@ int test_sipsess_100rel_421(void)
 	ASSERT_TRUE(!test.b);
 	ASSERT_TRUE(!test.estab_a);
 	ASSERT_TRUE(!test.estab_b);
-	ASSERT_TRUE(test.desc);
+	ASSERT_TRUE(test.conn_b);
 
 out:
 	tmr_cancel(&test.ans_tmr);
