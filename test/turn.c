@@ -39,6 +39,7 @@ struct turntest {
 	mtx_t *mtx;
 	int proto;
 	int err;
+	bool use_chan;
 
 	size_t n_alloc_resp;
 	size_t n_perm_resp;
@@ -68,7 +69,8 @@ static void destructor(void *arg)
 
 static bool is_complete(struct turntest *tt)
 {
-	return tt->n_chan_resp >= 1 && tt->n_peer_recv >= 2;
+	return (tt->use_chan ? tt->n_chan_resp >= 1 : tt->n_perm_resp >= 1)
+		&& tt->n_peer_recv >= 2;
 }
 
 
@@ -120,20 +122,27 @@ static void turnc_perm_handler(void *arg)
 	struct turntest *tt = arg;
 
 	++tt->n_perm_resp;
+
+	/* Headroom for IPv4/IPv6 STUN headers */
+	const size_t offset = 48;
+
+	int err = send_payload(tt, offset, &tt->peer, test_payload);
+	if (err) {
+		DEBUG_WARNING("failed to send payload (%m)\n", err);
+		complete_test(tt, err);
+	}
 }
 
 
 static void turnc_chan_handler(void *arg)
 {
 	struct turntest *tt = arg;
-	int err = 0;
 
 	++tt->n_chan_resp;
 
-	err |= send_payload(tt, 4, &tt->peer, test_payload);
+	int err = send_payload(tt, 4, &tt->peer, test_payload);
 	if (err) {
 		DEBUG_WARNING("failed to send payload (%m)\n", err);
-		complete_test(tt, err);
 	}
 
 	if (err)
@@ -166,28 +175,30 @@ static void turnc_handler(int err, uint16_t scode, const char *reason,
 	TEST_SACMP(&tt->turnsrv->relay, relay_addr, SA_ALL);
 	TEST_SACMP(&tt->cli, mapped_addr, SA_ALL);
 
-	/* Permission is needed for sending data */
-	err = turnc_add_perm(tt->turnc, &tt->peer, turnc_perm_handler, tt);
-	if (err)
-		goto out;
+	if (tt->use_chan) {
 
-	err = turnc_add_perm(tt->turnc, &tt->peer, turnc_perm_handler, tt);
-	if (err)
-		goto out;
+		err = turnc_add_chan(tt->turnc, &tt->peer,
+				     turnc_chan_handler, tt);
+		if (err)
+			goto out;
 
-	/* Headroom for IPv4/IPv6 STUN headers */
-	const size_t offset = 48;
-
-	err |= send_payload(tt, offset, &tt->peer, test_payload);
-	if (err) {
-		DEBUG_WARNING("failed to send payload (%m)\n", err);
-		complete_test(tt, err);
+		err = turnc_add_chan(tt->turnc, &tt->peer,
+				     turnc_chan_handler, tt);
+		if (err)
+			goto out;
 	}
+	else {
+		/* Permission is needed for sending data */
+		err = turnc_add_perm(tt->turnc, &tt->peer,
+				     turnc_perm_handler, tt);
+		if (err)
+			goto out;
 
-	err = turnc_add_chan(tt->turnc, &tt->peer,
-			     turnc_chan_handler, tt);
-	if (err)
-		goto out;
+		err = turnc_add_perm(tt->turnc, &tt->peer,
+				     turnc_perm_handler, tt);
+		if (err)
+			goto out;
+	}
 
  out:
 	if (err)
@@ -238,10 +249,10 @@ static void cli_udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 }
 
 
-static void data_handler(struct turntest *tt, struct mbuf *mb)
+static void data_handler(struct turntest *tt, struct sa *src, struct mbuf *mb)
 {
-	(void)tt;
-	(void)mb;
+	/* echo data */
+	turnc_send(tt->turnc, src, mb);
 }
 
 
@@ -325,7 +336,7 @@ static void tcp_recv_handler(struct mbuf *mb, void *arg)
 			goto out;
 
 		if (mbuf_get_left(tl->mb))
-			data_handler(tl, tl->mb);
+			data_handler(tl, &src, tl->mb);
 
 		/* 4 byte alignment */
 		while (len & 0x03)
@@ -434,7 +445,7 @@ static int turntest_alloc(struct turntest **ttp, int proto, uint32_t lifetime,
 }
 
 
-static int test_turn_param(const char *addr)
+static int test_turn_param(const char *addr, bool use_chan)
 {
 	struct turntest *tt;
 	int err;
@@ -442,6 +453,8 @@ static int test_turn_param(const char *addr)
 	err = turntest_alloc(&tt, IPPROTO_UDP, 600, addr);
 	if (err)
 		return err;
+
+	tt->use_chan = use_chan;
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
@@ -452,14 +465,29 @@ static int test_turn_param(const char *addr)
 	/* verify results after test is complete */
 
 	TEST_EQUALS(1, tt->n_alloc_resp);
-	TEST_EQUALS(1, tt->n_perm_resp);
-	TEST_EQUALS(1, tt->n_chan_resp);
-	TEST_EQUALS(2, tt->n_peer_recv);
+
+	if (use_chan) {
+		TEST_EQUALS(0, tt->n_perm_resp);
+		TEST_EQUALS(1, tt->n_chan_resp);
+	}
+	else {
+		TEST_EQUALS(1, tt->n_perm_resp);
+		TEST_EQUALS(0, tt->n_chan_resp);
+	}
 
 	TEST_ASSERT(tt->turnsrv->n_allocate >= 1);
-	TEST_ASSERT(tt->turnsrv->n_chanbind >= 1);
-	TEST_ASSERT(tt->turnsrv->n_raw >= 1);
-	TEST_EQUALS(1, tt->turnsrv->n_send);
+	TEST_EQUALS(2, tt->n_peer_recv);
+
+	if (use_chan) {
+		TEST_ASSERT(tt->turnsrv->n_chanbind >= 1);
+		TEST_ASSERT(tt->turnsrv->n_raw >= 1);
+		TEST_EQUALS(0, tt->turnsrv->n_send);
+	}
+	else {
+		TEST_EQUALS(0, tt->turnsrv->n_chanbind);
+		TEST_EQUALS(0, tt->turnsrv->n_raw);
+		TEST_EQUALS(2, tt->turnsrv->n_send);
+	}
 
  out:
 	mem_deref(tt);
@@ -470,11 +498,17 @@ static int test_turn_param(const char *addr)
 
 int test_turn(void)
 {
-	int err = test_turn_param("127.0.0.1");
+	int err = test_turn_param("127.0.0.1", false);
+	TEST_ERR(err);
+
+	err = test_turn_param("127.0.0.1", true);
 	TEST_ERR(err);
 
 	if (test_ipv6_supported()) {
-		err = test_turn_param("::1");
+		err = test_turn_param("::1", false);
+		TEST_ERR(err);
+
+		err = test_turn_param("::1", true);
 		TEST_ERR(err);
 	}
 
@@ -501,13 +535,13 @@ int test_turn_tcp(void)
 	/* verify results after test is complete */
 
 	TEST_EQUALS(1, tt->n_alloc_resp);
-	TEST_EQUALS(1, tt->n_chan_resp);
+	TEST_EQUALS(0, tt->n_chan_resp);
 	TEST_EQUALS(2, tt->n_peer_recv);
 
 	TEST_ASSERT(tt->turnsrv->n_allocate >= 1);
-	TEST_ASSERT(tt->turnsrv->n_chanbind >= 1);
-	TEST_ASSERT(tt->turnsrv->n_raw >= 1);
-	TEST_EQUALS(1, tt->turnsrv->n_send);
+	TEST_EQUALS(0, tt->turnsrv->n_chanbind);
+	TEST_EQUALS(0, tt->turnsrv->n_raw);
+	TEST_EQUALS(2, tt->turnsrv->n_send);
 
  out:
 	mem_deref(tt);

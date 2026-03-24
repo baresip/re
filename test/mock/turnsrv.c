@@ -121,10 +121,16 @@ static void relay_udp_recv(const struct sa *src, struct mbuf *mb, void *arg)
 
 		mb->pos = start;
 
-		err = udp_send(turn->us, &turn->cli, mb);
+		if (turn->tc)
+			err = tcp_send(turn->tc, mb);
+		else
+			err = udp_send(turn->us, &turn->cli, mb);
 	}
 	else {
-		err = stun_indication(IPPROTO_UDP, turn->us,
+		int proto = turn->tc ? IPPROTO_TCP : IPPROTO_UDP;
+		void *sock = turn->tc ? (void *)turn->tc : (void *)turn->us;
+
+		err = stun_indication(proto, sock,
 				      &turn->cli, 0, STUN_METHOD_DATA,
 				      NULL, 0, false, 2,
 				      STUN_ATTR_XOR_PEER_ADDR, src,
