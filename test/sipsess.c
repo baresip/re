@@ -1147,6 +1147,12 @@ int test_sipsess_100rel_420(void)
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
+
+	if (test.err == ENOMEM) {
+		err = test.err;
+		goto out;
+	}
+
 	ASSERT_EQ(EPROTO, test.err);
 
 	/* okay here -- verify */
@@ -1220,6 +1226,12 @@ int test_sipsess_100rel_421(void)
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
+
+	if (test.err == ENOMEM) {
+		err = test.err;
+		goto out;
+	}
+
 	ASSERT_TRUE(test.err == EPROTO);
 
 	/* okay here -- verify */
