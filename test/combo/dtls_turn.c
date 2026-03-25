@@ -429,10 +429,12 @@ int test_dtls_turn(void)
 		goto out;
 
 	if (a) {
-		TEST_EQUALS(0, a->err);
+		err = a->err;
+		TEST_ERR(err);
 	}
 	if (b) {
-		TEST_EQUALS(0, b->err);
+		err = b->err;
+		TEST_ERR(err);
 	}
 
 	/* verify results after test is complete */
