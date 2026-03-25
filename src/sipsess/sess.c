@@ -75,8 +75,6 @@ static bool termwait(struct sipsess *sess)
 	sess->infoh   = NULL;
 	sess->referh  = NULL;
 	sess->closeh  = internal_close_handler;
-	sess->redirecth = NULL;
-	sess->prackh = NULL;
 	sess->arg     = sess;
 
 	tmr_cancel(&sess->tmr);
@@ -92,7 +90,6 @@ static bool termwait(struct sipsess *sess)
 			sess->req = mem_deref(sess->req);
 		}
 		else {
-			/* todo: check this */
 			mem_ref(sess);
 			wait = true;
 		}
@@ -142,15 +139,6 @@ static void destructor(void *arg)
 			return;
 		break;
 	}
-
-#if 1
-	if (sess->destructed) {
-		re_fprintf(stderr,
-			   "WARNING: sipsess already destructed! ***\n");
-	}
-
-	sess->destructed = true;
-#endif
 
 	hash_unlink(&sess->he);
 	tmr_cancel(&sess->tmr);

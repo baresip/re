@@ -43,8 +43,6 @@ struct sipsess {
 	int prack_waiting_cnt;
 	int terminated;
 	enum sdp_neg_state neg_state;
-	bool client;
-	bool destructed;
 };
 
 

@@ -726,7 +726,7 @@ int test_sipsess_reject(void)
 	TEST_ERR(err);
 
 	/* okay here -- verify */
-	ASSERT_TRUE(test.err == EBUSY);
+	ASSERT_EQ(EBUSY, test.err);
 	ASSERT_TRUE(!test.estab_a);
 	ASSERT_TRUE(!test.estab_b);
 	ASSERT_TRUE(test.desc);
@@ -1147,7 +1147,7 @@ int test_sipsess_100rel_420(void)
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
-	ASSERT_TRUE(test.err == EPROTO);
+	ASSERT_EQ(EPROTO, test.err);
 
 	/* okay here -- verify */
 	ASSERT_TRUE(!test.b);

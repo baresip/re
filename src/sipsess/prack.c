@@ -112,7 +112,6 @@ static void prack_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 out:
 	if (!req->sess->terminated) {
-
 		if (err == ETIMEDOUT)
 			sipsess_terminate(req->sess, err, NULL);
 	}

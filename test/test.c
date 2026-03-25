@@ -488,15 +488,21 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 			err = 0;
 			break;
 		}
+		else if (err == ECONNREFUSED) {
+			err = 0;
+		}
+		else if (err == ENODATA) {
+			err = 0;
+		}
 		else {
 			DEBUG_WARNING("oom: %s: unexpected error code at"
 				      " %d blocks free (%m)\n",
 				      test->name, i, err);
-			err = 0;
-			/*goto out;*/
+			goto out;
 		}
 	}
 
+ out:
 	if (verbose)
 		(void)re_fprintf(stderr, "oom max %d\n", i);
 
