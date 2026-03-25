@@ -242,6 +242,9 @@ static void ice_failed_handler(int err, uint16_t scode,
 	++f->n_failh;
 
 	if (trice_checklist_iscompleted(f->icem)) {
+
+		f->err = err;
+
 		re_cancel();
 	}
 }
