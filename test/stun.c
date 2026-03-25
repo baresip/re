@@ -637,7 +637,7 @@ static int test_stun_discover(int af)
 				   stun_dns_handler, &test);
 	TEST_ERR(err);
 
-	err = re_main_timeout(10000);
+	err = re_main_timeout(500);
 	TEST_ERR(err);
 
 	err = test.err;

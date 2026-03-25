@@ -883,7 +883,7 @@ static int test_dns_param(const char *laddr, int proto)
 			     dns_query_handler, &fix);
 	TEST_ERR(err);
 
-	err = re_main_timeout(5000);
+	err = re_main_timeout(500);
 	TEST_ERR(err);
 
 	err = fix.err;

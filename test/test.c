@@ -469,7 +469,8 @@ static int testcase_oom(const struct test *test, int levels, bool verbose)
 		err = test_exec(test);
 		if (err == 0) {
 			/* success, stop now */
-			/*break;*/
+			re_fprintf(stderr, "Success -- stop\n");
+			break;
 		}
 		else if (err == ENOMEM) {
 			/* OOM, as expected */
@@ -518,6 +519,8 @@ int test_oom(const char *name, bool verbose)
 
 	test_mode = TEST_MEMORY;
 
+	timeout_override = 50;
+
 	if (!verbose)
 		hide_output();
 
@@ -545,6 +548,8 @@ int test_oom(const char *name, bool verbose)
 	mem_threshold_set(-1);
 
 out:
+	timeout_override = 0;
+
 	if (!verbose)
 		restore_output(err);
 
