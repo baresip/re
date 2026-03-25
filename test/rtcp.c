@@ -445,8 +445,10 @@ static int test_rtcp_loop_param(bool mux, const char *laddr)
 	err = re_main_timeout(1000);
 	TEST_ERR(err);
 
-	ASSERT_EQ(0, a.err);
-	ASSERT_EQ(0, b.err);
+	err = a.err;
+	TEST_ERR(err);
+	err = b.err;
+	TEST_ERR(err);
 
 	ASSERT_TRUE(a.rtp_count >= 1);
 	ASSERT_EQ(2, a.psfb_count);
