@@ -725,6 +725,11 @@ int test_sipsess_reject(void)
 	err = re_main_timeout(200);
 	TEST_ERR(err);
 
+	if (test.err == ENOMEM) {
+		err = test.err;
+		goto out;
+	}
+
 	/* okay here -- verify */
 	ASSERT_EQ(EBUSY, test.err);
 	ASSERT_TRUE(!test.estab_a);
