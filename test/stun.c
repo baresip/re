@@ -568,17 +568,19 @@ static int test_stun_req_attributes(void)
 
 static void stun_dns_handler(int err, const struct sa *srv, void *arg)
 {
-	struct sa *stun_addr = arg;
+	struct test *test = arg;
 
 	if (err) {
 		DEBUG_WARNING("stun_dns_handler error: %m\n", err);
+		test->err = err;
 		re_cancel();
 		return;
 	}
 
 	DEBUG_INFO("stun dns:  server = %J\n", srv);
 
-	*stun_addr = *srv;
+	test->mapped_addr = *srv;
+
 	re_cancel();
 }
 
@@ -599,10 +601,11 @@ static int test_stun_discover(int af)
 	struct dns_server *srv = NULL;
 	struct dnsc *dnsc = NULL;
 	struct stun_dns *stun_dns = NULL;
-	struct sa stun_addr, exp_addr;
+	struct sa exp_addr;
 	const char *tld = "example.com";
 	const char *target = "stun.example.com";
 	const char *laddr = get_loopback(af);
+	struct test test = { .err = 0 };
 	int err;
 
 	sa_set_str(&exp_addr, laddr, STUN_PORT);
@@ -631,13 +634,16 @@ static int test_stun_discover(int af)
 
 	err = stun_server_discover(&stun_dns, dnsc, stun_usage_binding,
 				   stun_proto_udp, af, tld, 0,
-				   stun_dns_handler, &stun_addr);
+				   stun_dns_handler, &test);
 	TEST_ERR(err);
 
 	err = re_main_timeout(10000);
 	TEST_ERR(err);
 
-	TEST_SACMP(&exp_addr, &stun_addr, SA_ALL);
+	err = test.err;
+	TEST_ERR(err);
+
+	TEST_SACMP(&exp_addr, &test.mapped_addr, SA_ALL);
 
  out:
 	mem_deref(stun_dns);
