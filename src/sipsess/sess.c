@@ -66,7 +66,6 @@ static bool termwait(struct sipsess *sess)
 	bool wait = false;
 
 	sess->terminated = 1;
-
 	sess->desch   = NULL;
 	sess->offerh  = internal_offer_handler;
 	sess->answerh = internal_answer_handler;
@@ -117,7 +116,6 @@ static bool terminate(struct sipsess *sess)
 		return false;
 
 	mem_ref(sess);
-
 	return true;
 }
 

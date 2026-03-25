@@ -323,7 +323,6 @@ out:
 static int answer_handler_a(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
-
 	test->answr_a = true;
 	if (mbuf_get_left(msg->mb))
 		test->sdp_state = ANSWER_RECEIVED;
@@ -353,7 +352,6 @@ static int answer_handler_a(const struct sip_msg *msg, void *arg)
 static int answer_handler_b(const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
-
 	test->answr_b = true;
 	if (mbuf_get_left(msg->mb))
 		test->sdp_state = ANSWER_RECEIVED;
@@ -462,7 +460,6 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 	if (test->conn_action & CONN_PROGRESS
 	    || test->conn_action & CONN_PROGR_ANS
 	    || test->conn_action & CONN_PROGR_UPD) {
-
 		err = sipsess_accept(&test->b, test->sock, msg, 183,
 				"Progress", test->rel100_b, "b",
 				"application/sdp", desc, NULL, NULL, false,
@@ -528,7 +525,6 @@ static void conn_handler(const struct sip_msg *msg, void *arg)
 			test->answ_ret_code = err;
 			goto out;
 		}
-
 		err |= sipsess_reject(test->b, 486, "Busy Here", NULL);
 		if (err != test->answ_ret_code) {
 			test->answ_ret_code = err;
@@ -1023,9 +1019,6 @@ int test_sipsess_100rel_answer_not_allowed(void)
 	uint16_t port;
 	char *callid;
 
-	re_fprintf(stderr, ".... test_sipsess_100rel_answer_not_allowed\n");
-
-
 	memset(&test, 0, sizeof(test));
 
 	test.rel100_a = REL100_ENABLED;
@@ -1066,7 +1059,7 @@ int test_sipsess_100rel_answer_not_allowed(void)
 	mem_deref(callid);
 	TEST_ERR(err);
 
-	err = re_main_timeout(400);
+	err = re_main_timeout(200);
 	TEST_ERR(err);
 	if (test.err) {
 		err = test.err;
@@ -1093,9 +1086,6 @@ out:
 
 	sip_close(test.sip, true);
 	test.sip = mem_deref(test.sip);
-
-	re_fprintf(stderr, ".... DONE\n");
-	re_fprintf(stderr, "\n");
 
 	return err;
 }
