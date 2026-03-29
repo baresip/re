@@ -467,6 +467,7 @@ struct turnserver {
 	char addr[64];
 	const char *auth_realm;
 	uint64_t auth_secret;
+	uint16_t error_scode;
 
 	struct channel {
 		uint16_t nr;
@@ -486,6 +487,7 @@ struct turnserver {
 };
 
 int turnserver_alloc(struct turnserver **turnp, const char *addr);
+void turnserver_force_error(struct turnserver *turn, uint16_t scode);
 
 
 enum natbox_type {
