@@ -63,6 +63,7 @@ static struct {
 	bool new;
 	uint64_t start_time;
 	struct tmr flush_tmr;
+	bool flush_active;
 } trace = {
 	.init = false
 };
@@ -101,13 +102,6 @@ static int flush_worker(void *arg)
 {
 	(void)arg;
 
-	mtx_lock(&trace.lock);
-	if (trace.event_count < TRACE_FLUSH_THRESHOLD) {
-		mtx_unlock(&trace.lock);
-		return 0;
-	}
-	mtx_unlock(&trace.lock);
-
 	re_trace_flush();
 
 	return 0;
@@ -118,7 +112,12 @@ static void flush_tmr(void *arg)
 {
 	(void)arg;
 
-	re_thread_async(flush_worker, NULL, NULL);
+	mtx_lock(&trace.lock);
+	if (!trace.flush_active &&
+	    trace.event_count >= TRACE_FLUSH_THRESHOLD) {
+		re_thread_async(flush_worker, NULL, NULL);
+	}
+	mtx_unlock(&trace.lock);
 
 	tmr_start(&trace.flush_tmr, TRACE_FLUSH_TMR, flush_tmr, NULL);
 }
@@ -251,6 +250,13 @@ int re_trace_flush(void)
 		return 0;
 
 	mtx_lock(&trace.lock);
+	if (trace.flush_active) {
+		mtx_unlock(&trace.lock);
+		return EALREADY;
+	}
+
+	trace.flush_active = true;
+
 	struct re_trace_event_s *event_tmp = trace.event_buffer_flush;
 	trace.event_buffer_flush = trace.event_buffer;
 	trace.event_buffer = event_tmp;
@@ -343,6 +349,10 @@ out:
 	mem_deref(json_arg);
 	mem_deref(mb);
 	(void)fflush(trace.f);
+
+	mtx_lock(&trace.lock);
+	trace.flush_active = false;
+	mtx_unlock(&trace.lock);
 
 	return err;
 #else
