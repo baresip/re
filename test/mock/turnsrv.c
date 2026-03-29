@@ -239,6 +239,20 @@ static bool auth_request(struct turnserver *turn,
 		goto unauth;
 	}
 
+	if (turn->error_scode) {
+
+		err = stun_ereply(proto, sock, src, 0, msg,
+				  turn->error_scode, "Error",
+				  NULL, 0, false, 2,
+				  STUN_ATTR_REALM, turn->auth_realm,
+				  STUN_ATTR_NONCE,
+				    mknonce(turn, nstr, now, src));
+
+		turn->error_scode = 0;
+
+		goto unauth;
+	}
+
 	if (!user || !realm || !nonce) {
 		err = stun_ereply(proto, sock, src, 0, msg,
 				  400, "Bad Request",
@@ -662,4 +676,13 @@ int turnserver_alloc(struct turnserver **turnp, const char *addr)
 		*turnp = turn;
 
 	return err;
+}
+
+
+void turnserver_force_error(struct turnserver *turn, uint16_t scode)
+{
+	if (!turn)
+		return;
+
+	turn->error_scode = scode;
 }

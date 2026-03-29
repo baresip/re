@@ -102,7 +102,7 @@ static int send_payload(struct turntest *tt, size_t offset,
 	switch (tt->proto) {
 
 	case IPPROTO_UDP:
-		err = udp_send(tt->us_cli, dst, mb);
+		err = turnc_send(tt->turnc, dst, mb);
 		break;
 
 	case IPPROTO_TCP:
@@ -188,6 +188,8 @@ static void turnc_handler(int err, uint16_t scode, const char *reason,
 			goto out;
 	}
 	else {
+		turnserver_force_error(tt->turnsrv, 401);
+
 		/* Permission is needed for sending data */
 		err = turnc_add_perm(tt->turnc, &tt->peer,
 				     turnc_perm_handler, tt);
@@ -517,14 +519,16 @@ int test_turn(void)
 }
 
 
-int test_turn_tcp(void)
+static int test_turn_param_tcp(const char *addr, bool use_chan)
 {
 	struct turntest *tt;
 	int err;
 
-	err = turntest_alloc(&tt, IPPROTO_TCP, 600, "127.0.0.1");
+	err = turntest_alloc(&tt, IPPROTO_TCP, 600, addr);
 	if (err)
 		return err;
+
+	tt->use_chan = use_chan;
 
 	err = re_main_timeout(200);
 	TEST_ERR(err);
@@ -535,17 +539,56 @@ int test_turn_tcp(void)
 	/* verify results after test is complete */
 
 	TEST_EQUALS(1, tt->n_alloc_resp);
-	TEST_EQUALS(0, tt->n_chan_resp);
-	TEST_EQUALS(2, tt->n_peer_recv);
+
+	if (use_chan) {
+		TEST_EQUALS(0, tt->n_perm_resp);
+		TEST_EQUALS(1, tt->n_chan_resp);
+	}
+	else {
+		TEST_EQUALS(1, tt->n_perm_resp);
+		TEST_EQUALS(0, tt->n_chan_resp);
+	}
 
 	TEST_ASSERT(tt->turnsrv->n_allocate >= 1);
-	TEST_EQUALS(0, tt->turnsrv->n_chanbind);
-	TEST_EQUALS(0, tt->turnsrv->n_raw);
-	TEST_EQUALS(2, tt->turnsrv->n_send);
+	TEST_EQUALS(2, tt->n_peer_recv);
+
+	if (use_chan) {
+		TEST_ASSERT(tt->turnsrv->n_chanbind >= 1);
+		TEST_ASSERT(tt->turnsrv->n_raw >= 1);
+		TEST_EQUALS(0, tt->turnsrv->n_send);
+	}
+	else {
+		TEST_EQUALS(0, tt->turnsrv->n_chanbind);
+		TEST_EQUALS(0, tt->turnsrv->n_raw);
+		TEST_EQUALS(2, tt->turnsrv->n_send);
+	}
 
  out:
 	mem_deref(tt);
 
+	return err;
+}
+
+
+int test_turn_tcp(void)
+{
+	int err;
+
+	err = test_turn_param_tcp("127.0.0.1", false);
+	TEST_ERR(err);
+
+	err = test_turn_param_tcp("127.0.0.1", true);
+	TEST_ERR(err);
+
+	if (test_ipv6_supported()) {
+		err = test_turn_param_tcp("::1", false);
+		TEST_ERR(err);
+
+		err = test_turn_param_tcp("::1", true);
+		TEST_ERR(err);
+	}
+
+ out:
 	return err;
 }
 
