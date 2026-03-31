@@ -95,16 +95,20 @@ int test_odict(void)
 		},
 	};
 	struct odict *dict = NULL;
+	char *debug_str = NULL;
 	size_t i;
 	int err;
 
 	TEST_ASSERT(odict_type_iscontainer(ODICT_OBJECT));
 	TEST_ASSERT(odict_type_iscontainer(ODICT_ARRAY));
+	TEST_ASSERT(!odict_type_iscontainer(ODICT_INT));
+
 	TEST_ASSERT(odict_type_isreal(ODICT_INT));
 	TEST_ASSERT(odict_type_isreal(ODICT_DOUBLE));
 	TEST_ASSERT(odict_type_isreal(ODICT_STRING));
 	TEST_ASSERT(odict_type_isreal(ODICT_BOOL));
 	TEST_ASSERT(odict_type_isreal(ODICT_NULL));
+	TEST_ASSERT(!odict_type_isreal(ODICT_OBJECT));
 
 	err = odict_alloc(&dict, 64);
 	if (err)
@@ -162,17 +166,18 @@ int test_odict(void)
 	/* compare dictionary with itself */
 	TEST_ASSERT(odict_compare(dict, dict, false));
 
+	err = re_sdprintf(&debug_str, "%H", odict_debug, dict);
+	TEST_ERR(err);
+	ASSERT_TRUE(str_isset(debug_str));
+
 	/* remove all entries */
 	for (i=0; i<RE_ARRAY_SIZE(testv); i++) {
 
 		const struct dtest *test = &testv[i];
 		struct odict_entry *e;
 
-		e = (struct odict_entry *)odict_lookup(dict, test->key);
-		TEST_ASSERT(e != NULL);
-
 		/* delete entry from dictionary */
-		mem_deref(e);
+		odict_entry_del(dict, test->key);
 
 		/* entry should not exist anymore */
 		e = (struct odict_entry *)odict_lookup(dict, test->key);
@@ -183,6 +188,7 @@ int test_odict(void)
 	TEST_EQUALS(0, odict_count(dict, false));
 
  out:
+	mem_deref(debug_str);
 	mem_deref(dict);
 	return err;
 }
@@ -262,6 +268,14 @@ int test_odict_array(void)
 	TEST_ASSERT(e != NULL);
 	TEST_EQUALS(ODICT_INT, odict_entry_type(e));
 	TEST_EQUALS(3LL, odict_entry_int(e));
+
+	uint64_t num = 0;
+	bool ret = odict_get_number(arr, &num, "1");
+	ASSERT_TRUE(ret);
+	ASSERT_EQ(1, num);
+
+	ret = odict_get_number(arr, &num, "hei");
+	ASSERT_TRUE(!ret);
 
 #if 0
 	re_printf("%H\n", odict_debug, arr);
