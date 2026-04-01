@@ -88,18 +88,32 @@ int tmrl_alloc(struct tmrl **tmrl)
 
 static bool inspos_handler(struct le *le, void *arg)
 {
-	struct tmr *tmr = le->data;
+	struct tmr *tmr;
 	const uint64_t now = *(uint64_t *)arg;
 
+	if (!le || !le->data) {
+		if (le)
+			list_unlink(le);
+		return false;
+	}
+
+	tmr = le->data;
 	return tmr->jfs <= now;
 }
 
 
 static bool inspos_handler_0(struct le *le, void *arg)
 {
-	struct tmr *tmr = le->data;
+	struct tmr *tmr;
 	const uint64_t now = *(uint64_t *)arg;
 
+	if (!le || !le->data) {
+		if (le)
+			list_unlink(le);
+		return false;
+	}
+
+	tmr = le->data;
 	return tmr->jfs > now;
 }
 
