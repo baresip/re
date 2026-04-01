@@ -127,10 +127,17 @@ static bool helper_recv_handler(struct sa *src,
 static void udp_destructor(void *data)
 {
 	struct udp_sock *us = data;
+	mtx_t *lock = us->lock;
+
+	if (!lock)
+		return;
+
+	/* Avoid double-destroy in case of repeated deref */
+	us->lock = NULL;
 
 	list_flush(&us->helpers);
 
-	mem_deref(us->lock);
+	mem_deref(lock);
 
 #ifdef WIN32
 	if (us->qos && us->qos_id)
