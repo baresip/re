@@ -67,10 +67,12 @@ static void chan_destructor(void *data)
 
 	tmr_cancel(&chan->tmr);
 	mem_deref(chan->ct);
-	mtx_lock(chan->turnc->lock);
-	hash_unlink(&chan->he_numb);
-	hash_unlink(&chan->he_peer);
-	mtx_unlock(chan->turnc->lock);
+	if (chan->turnc && chan->turnc->lock) {
+		mtx_lock(chan->turnc->lock);
+		hash_unlink(&chan->he_numb);
+		hash_unlink(&chan->he_peer);
+		mtx_unlock(chan->turnc->lock);
+	}
 }
 
 
