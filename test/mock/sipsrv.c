@@ -42,8 +42,24 @@ static bool sip_msg_handler(const struct sip_msg *msg, void *arg)
 
 	if (srv->terminate)
 		err = sip_reply(srv->sip, msg, 503, "Server Error");
-	else
-		err = sip_reply(srv->sip, msg, 200, "OK");
+	else {
+
+		if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED,
+					  "outbound")) {
+
+			err = sip_replyf(srv->sip, msg, 200, "OK",
+					 "Contact: <%r>\r\n"
+					 "Content-Length: 0\r\n"
+					 "Require: outbound\r\n"
+					 "Flow-Timer: 1\r\n"
+					 "\r\n"
+					 ,
+					 &msg->to.auri);
+		}
+		else {
+			err = sip_reply(srv->sip, msg, 200, "OK");
+		}
+	}
 
 	if (err) {
 		DEBUG_WARNING("could not reply: %m\n", err);

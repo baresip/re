@@ -204,6 +204,11 @@ static const struct test tests[] = {
 #endif
 	TEST(test_fmt_trim),
 	TEST(test_sipevent),
+	TEST(test_sipreg_tcp),
+#ifdef USE_TLS
+	TEST(test_sipreg_tls),
+#endif
+	TEST(test_sipreg_udp),
 	TEST(test_sipsess),
 	TEST(test_sipsess_100rel_420),
 	TEST(test_sipsess_100rel_421),
