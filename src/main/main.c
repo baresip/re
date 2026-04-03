@@ -72,6 +72,7 @@ struct re_fhs {
 	int flags;           /**< Polling flags (Read, Write, etc.) */
 	fd_h* fh;            /**< Event handler                     */
 	void* arg;           /**< Handler argument                  */
+	uint32_t closed_gen; /**< poll generation when closed       */
 	struct re_fhs* next; /**< Next element in the delete list   */
 };
 
@@ -84,6 +85,7 @@ struct re {
 	int sig;                     /**< Last caught signal                */
 	struct tmrl *tmrl;           /**< List of timers                    */
 	struct re_fhs *fhsld;        /**< fhs single-linked delete list     */
+	uint32_t fhs_gen;            /**< poll generation counter           */
 #ifdef HAVE_SELECT
 	struct re_fhs **fhsl;        /**< Select fhs pointer list           */
 #endif
@@ -110,16 +112,25 @@ static once_flag flag = ONCE_FLAG_INIT;
 static void poll_close(struct re *re);
 
 
-static void fhsld_flush(struct re *re)
+static void fhsld_flush(struct re *re, bool force)
 {
 	struct re_fhs *fhs = re->fhsld;
+	struct re_fhs *keep = NULL;
 	re->fhsld = NULL;
 
 	while (fhs) {
 		struct re_fhs *next = fhs->next;
-		mem_deref(fhs);
+		if (force || (uint32_t)(re->fhs_gen - fhs->closed_gen) > 1) {
+			mem_deref(fhs);
+		}
+		else {
+			fhs->next = keep;
+			keep = fhs;
+		}
 		fhs = next;
 	}
+
+	re->fhsld = keep;
 }
 
 
@@ -128,7 +139,7 @@ static void re_destructor(void *arg)
 	struct re *re = arg;
 
 	poll_close(re);
-	fhsld_flush(re);
+	fhsld_flush(re, true);
 	mem_deref(re->mutex);
 	mem_deref(re->async);
 	mem_deref(re->tmrl);
@@ -252,6 +263,9 @@ static void fd_handler(struct re_fhs *fhs, int flags)
 {
 	const uint64_t tick = tmr_jiffies();
 	uint32_t diff;
+
+	if (!fhs || !fhs->fh)
+		return;
 
 	DEBUG_INFO("event on fd=%d (flags=0x%02x)...\n", fhs->fd, flags);
 
@@ -608,6 +622,7 @@ int fd_listen(struct re_fhs **fhsp, re_sock_t fd, int flags, fd_h *fh,
 
 		fhs->fd	   = fd;
 		fhs->index = -1;
+		fhs->closed_gen = re->fhs_gen;
 
 		DEBUG_INFO("fd_listen/new: fd=%d flags=0x%02x\n", fd, flags);
 
@@ -688,6 +703,7 @@ struct re_fhs *fd_close(struct re_fhs *fhs)
 	fhs->flags = 0;
 	fhs->fh	   = NULL;
 	fhs->arg   = NULL;
+	fhs->closed_gen = re->fhs_gen;
 
 	switch (re->method) {
 #ifdef HAVE_SELECT
@@ -933,7 +949,8 @@ static int fd_poll(struct re *re)
 
  out:
 	/* Delayed fhs deref to avoid dangling fhs pointers */
-	fhsld_flush(re);
+	++re->fhs_gen;
+	fhsld_flush(re, false);
 
 	return err;
 }
@@ -1673,5 +1690,5 @@ void re_fhs_flush(void)
 		return;
 	}
 
-	fhsld_flush(re);
+	fhsld_flush(re, true);
 }
