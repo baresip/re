@@ -46,9 +46,14 @@ static void tmrl_destructor(void *arg)
 	struct tmrl *tmrl = arg;
 	struct le *le;
 
+	if (!tmrl->lock)
+		return;
+
 	mtx_lock(tmrl->lock);
 	LIST_FOREACH(&tmrl->list, le) {
 		struct tmr *tmr = le->data;
+		if (!tmr)
+			continue;
 		re_atomic_rls_set(&tmr->llock, (uintptr_t)NULL);
 	}
 	list_clear(&tmrl->list);
@@ -88,18 +93,32 @@ int tmrl_alloc(struct tmrl **tmrl)
 
 static bool inspos_handler(struct le *le, void *arg)
 {
-	struct tmr *tmr = le->data;
+	struct tmr *tmr;
 	const uint64_t now = *(uint64_t *)arg;
 
+	if (!le || !le->data) {
+		if (le)
+			list_unlink(le);
+		return false;
+	}
+
+	tmr = le->data;
 	return tmr->jfs <= now;
 }
 
 
 static bool inspos_handler_0(struct le *le, void *arg)
 {
-	struct tmr *tmr = le->data;
+	struct tmr *tmr;
 	const uint64_t now = *(uint64_t *)arg;
 
+	if (!le || !le->data) {
+		if (le)
+			list_unlink(le);
+		return false;
+	}
+
+	tmr = le->data;
 	return tmr->jfs > now;
 }
 
@@ -132,7 +151,7 @@ void tmr_poll(struct tmrl *tmrl)
 {
 	const uint64_t jfs = tmr_jiffies();
 
-	if (!tmrl)
+	if (!tmrl || !tmrl->lock)
 		return;
 
 	for (;;) {
