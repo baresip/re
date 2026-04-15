@@ -18,6 +18,7 @@
 
 
 struct test {
+	struct tmr tmr;
 	enum sip_transp tp;
 	unsigned n_resp;
 	uint16_t srcport;
@@ -28,6 +29,15 @@ struct test {
 static void exit_handler(void *arg)
 {
 	(void)arg;
+	re_cancel();
+}
+
+
+static void tmr_handler(void *arg)
+{
+	struct test *test = arg;
+	(void)test;
+
 	re_cancel();
 }
 
@@ -106,7 +116,12 @@ static void sip_resp_handler(int err, const struct sip_msg *msg, void *arg)
  out:
 	if (err)
 		test->err = err;
-	re_cancel();
+
+	/* done */
+	if (test->tp == SIP_TRANSP_UDP)
+		tmr_start(&test->tmr, 50, tmr_handler, test);
+	else
+		re_cancel();
 }
 
 #define CPARAMS "some-param=test;other-param=123;"
@@ -135,11 +150,13 @@ static int reg_test(enum sip_transp tp, uint16_t srcport)
 	err = sip_server_uri(srv, reg_uri, sizeof(reg_uri), tp);
 	TEST_ERR(err);
 
+	const int regid = 1;
+
 	err = sipreg_alloc(&reg, sip, reg_uri,
 		      "sip:x@test", NULL,
 		      "sip:x@test",
-		      3600, "x", NULL, 0, 0, NULL, NULL, false,
-		      sip_resp_handler, &test, NULL, NULL);
+		      3600, "x", NULL, 0, regid, NULL, NULL, false,
+		      sip_resp_handler, &test, NULL, "X-Custom: 1234\r\n");
 	TEST_ERR(err);
 
 	err = sipreg_set_contact_params(reg, CPARAMS);
@@ -169,8 +186,13 @@ static int reg_test(enum sip_transp tp, uint16_t srcport)
 		";" CPARAMS ">;expires=", NULL);
 	TEST_ERR(err);
 
+	ASSERT_TRUE(sipreg_registered(reg));
+	ASSERT_TRUE(!sipreg_failed(reg));
 
  out:
+	tmr_cancel(&test.tmr);
+
+	sipreg_unregister(reg);
 	mem_deref(reg);
 
 	sip_close(sip, true);
