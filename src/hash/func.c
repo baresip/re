@@ -52,6 +52,8 @@ uint32_t hash_joaat_ci(const char *str, size_t len)
 {
 	uint32_t hash = 0;
 	size_t i;
+	if (!str)
+		return 0;
 
 	for (i = 0; i < len; i++) {
 		hash += tolower(str[i]);
