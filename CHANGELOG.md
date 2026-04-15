@@ -5,6 +5,30 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.7.0 - 2026-04-07
+
+### What's Changed
+* test: use dns_rrlist_apply() in mock DNS-server by @alfredh in https://github.com/baresip/re/pull/1532
+* sip: fix missing auth algorithm for known realm by @cspiel1 in https://github.com/baresip/re/pull/1535
+* cmake,unixsock: always add unixsock header and functions by @sreimers in https://github.com/baresip/re/pull/1536
+* test/dns: save error code from async work in DNS-test by @alfredh in https://github.com/baresip/re/pull/1538
+* docs: update list of modules in README.md by @alfredh in https://github.com/baresip/re/pull/1537
+* sipsess/modify: fix calling of offer handler by @maximilianfridrich in https://github.com/baresip/re/pull/1539
+* http/server: cleanup  of http_verify_msg_d by @cspiel1 in https://github.com/baresip/re/pull/1542
+* test: add permission handler to TURN test by @alfredh in https://github.com/baresip/re/pull/1541
+* sip/dialog: fix OOM scenarios is sip_dialog_update by @maximilianfridrich in https://github.com/baresip/re/pull/1543
+* test/turnsrv: add LIFETIME attribute to allocation response by @alfredh in https://github.com/baresip/re/pull/1545
+* test: add testing of websock_tcp() in websock testcases by @alfredh in https://github.com/baresip/re/pull/1544
+* test: split turn-test into permissions/channels by @alfredh in https://github.com/baresip/re/pull/1547
+* test: add negative testcases in unixsock by @alfredh in https://github.com/baresip/re/pull/1546
+* trace: flush operations must not run concurrently by @sreimers in https://github.com/baresip/re/pull/1550
+* test,turn: add forced error code and test more combinations by @alfredh in https://github.com/baresip/re/pull/1551
+* test: use TEST_ERR() to check async errors in RTCP-test by @alfredh in https://github.com/baresip/re/pull/1549
+* test,odict: add testing of more api functions by @alfredh in https://github.com/baresip/re/pull/1552
+* ci/abi: bump old version by @sreimers in https://github.com/baresip/re/pull/1560
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.6.0...v4.7.0
+
 
 ## v4.6.0 - 2026-03-04
 
