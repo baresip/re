@@ -1028,8 +1028,19 @@ int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 	if (!cert)
 		return ENOENT;
 
-	n = X509_NAME_get_text_by_NID(X509_get_subject_name(cert),
-				      NID_commonName, cn, (int)size);
+	const X509_NAME *name = X509_get_subject_name(cert);
+
+	int ix = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+	if (ix != -1) {
+		X509_NAME_ENTRY *entry = X509_NAME_get_entry(name, ix);
+		ASN1_STRING *astr = X509_NAME_ENTRY_get_data(entry);
+
+		str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr), size);
+		n = ASN1_STRING_length(astr);
+	}
+	else {
+		n = -1;
+	}
 
 	X509_free(cert);
 
