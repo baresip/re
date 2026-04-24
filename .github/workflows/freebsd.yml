@@ -23,6 +23,7 @@ jobs:
       id: test
       uses: vmactions/freebsd-vm@v1
       with:
+        release: "14.4"
         usesh: true
         prepare: |
 
