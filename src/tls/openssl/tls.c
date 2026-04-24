@@ -1015,7 +1015,7 @@ int tls_peer_fingerprint(const struct tls_conn *tc, enum tls_fingerprint type,
 int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 {
 	X509 *cert;
-	int n;
+	int n = -1;
 
 	if (!tc || !cn || !size)
 		return EINVAL;
@@ -1035,11 +1035,11 @@ int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 		const X509_NAME_ENTRY *entry = X509_NAME_get_entry(name, ix);
 		const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(entry);
 
-		str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr), size);
-		n = ASN1_STRING_length(astr);
-	}
-	else {
-		n = -1;
+		if (astr) {
+			str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr),
+				 size);
+			n = ASN1_STRING_length(astr);
+		}
 	}
 
 	X509_free(cert);
