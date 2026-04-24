@@ -25,9 +25,9 @@ jobs:
       with:
         usesh: true
         prepare: |
-          pkg update && pkg install -y ninja cmake
 
         run: |
+          pkg update && pkg install -y ninja cmake
           freebsd-version
           cmake -B build && cmake --build build -t retest
           ./build/test/retest -r -v
