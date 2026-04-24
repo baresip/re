@@ -25,7 +25,7 @@ jobs:
       with:
         usesh: true
         prepare: |
-          pkg install -y ninja cmake
+          pkg update && pkg install -y ninja cmake
 
         run: |
           freebsd-version
