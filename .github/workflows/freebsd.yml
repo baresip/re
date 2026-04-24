@@ -23,11 +23,12 @@ jobs:
       id: test
       uses: vmactions/freebsd-vm@v1
       with:
+        release: "14.4"
         usesh: true
         prepare: |
-          pkg install -y ninja cmake
 
         run: |
+          pkg update && pkg install -y ninja cmake
           freebsd-version
           cmake -B build && cmake --build build -t retest
           ./build/test/retest -r -v
