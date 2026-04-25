@@ -97,7 +97,11 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 	LIST_FOREACH(certs, le) {
 		char cn[TLSEXT_MAXLEN_host_name] = "";
 		X509 *x509;
+#if OPENSSL_VERSION_MAJOR >= 4
 		const X509_NAME *nm;
+#else
+		X509_NAME *nm;
+#endif
 		bool match = false;
 		int err;
 
