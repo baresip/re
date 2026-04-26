@@ -26,42 +26,65 @@
 struct tls_conn;
 
 
-static int x509_match_alt_name(X509 *x509, const char *sni, bool *match)
+static bool x509_match_common_name(X509 *x509, const char *sni)
+{
+	char cn[TLSEXT_MAXLEN_host_name] = "";
+	const X509_NAME *nm = X509_get_subject_name(x509);
+
+	int lastpos = -1;
+	for (;;) {
+		lastpos = X509_NAME_get_index_by_NID(
+				nm, NID_commonName, lastpos);
+		if (lastpos == -1)
+			break;
+		const X509_NAME_ENTRY *e =
+			X509_NAME_get_entry(nm, lastpos);
+		const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(e);
+		if (!astr)
+			continue;
+
+		str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr),
+				sizeof(cn));
+
+		if (!str_cmp(sni, cn))
+			return true;
+	}
+
+	return false;
+}
+
+
+static bool x509_match_alt_name(X509 *x509, const char *sni)
 {
 	GENERAL_NAMES *gs = NULL;
 	ASN1_STRING *astr = NULL;
 	ASN1_OCTET_STRING *octet = NULL;
-	int err = 0;
+	bool match = false;
 
-	*match = false;
 	gs = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
 	if (!gs)
-		return 0;
+		return false;
 
 	for (int i = 0; i < sk_GENERAL_NAME_num(gs); i++) {
 		GENERAL_NAME *g = sk_GENERAL_NAME_value(gs, i);
 
 		if (g->type == GEN_DNS) {
 			astr = ASN1_IA5STRING_new();
-			if (!astr) {
-				err = ENOMEM;
+			if (!astr)
 				goto out;
-			}
 
-			if (!ASN1_STRING_set(astr, sni, -1)) {
-				err = ENOMEM;
+			if (!ASN1_STRING_set(astr, sni, -1))
 				goto out;
-			}
 
 			if (!ASN1_STRING_cmp(astr, g->d.dNSName)) {
-				*match = true;
+				match = true;
 				break;
 			}
 		}
 		else if (g->type == GEN_IPADD) {
 			octet = a2i_IPADDRESS(sni);
 			if (!ASN1_OCTET_STRING_cmp(octet, g->d.iPAddress)) {
-				*match = true;
+				match = true;
 				break;
 			}
 		}
@@ -70,7 +93,7 @@ static int x509_match_alt_name(X509 *x509, const char *sni, bool *match)
 out:
 	ASN1_IA5STRING_free(astr);
 	ASN1_OCTET_STRING_free(octet);
-	return err;
+	return match;
 }
 
 
@@ -95,11 +118,7 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 		return list_head(certs)->data;
 
 	LIST_FOREACH(certs, le) {
-		char cn[TLSEXT_MAXLEN_host_name] = "";
 		X509 *x509;
-		X509_NAME *nm;
-		bool match = false;
-		int err;
 
 		tls_cert = le->data;
 		x509 = tls_cert_x509(tls_cert);
@@ -108,20 +127,13 @@ struct tls_cert *tls_cert_for_sni(const struct tls *tls, const char *sni)
 			continue;
 		}
 
-		nm = X509_get_subject_name(x509);
-		int n = X509_NAME_get_text_by_NID(nm, NID_commonName,
-						  cn, (int) sizeof(cn));
-		if (n > 0 && !str_cmp(sni, cn))
+		if (x509_match_common_name(x509, sni))
 			break;
 
-		err = x509_match_alt_name(x509, sni, &match);
-		if (err) {
-			tls_cert = NULL;
+		if (x509_match_alt_name(x509, sni))
 			break;
-		}
 
-		if (match)
-			break;
+		tls_cert = NULL;
 	}
 
 	ERR_clear_error();
