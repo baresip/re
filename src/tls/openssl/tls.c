@@ -1246,11 +1246,19 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 		SSL_set_hostflags(tc->ssl,
 				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
 
+#if OPENSSL_VERSION_MAJOR >= 4
+		if (!SSL_set1_dnsname(tc->ssl, host)) {
+			DEBUG_WARNING("SSL_set1_dnsname error\n");
+			ERR_clear_error();
+			return EPROTO;
+		}
+#else
 		if (!SSL_set1_host(tc->ssl, host)) {
 			DEBUG_WARNING("SSL_set1_host error\n");
 			ERR_clear_error();
 			return EPROTO;
 		}
+#endif
 
 		if (!SSL_set_tlsext_host_name(tc->ssl, host)) {
 			DEBUG_WARNING("SSL_set_tlsext_host_name error\n");
