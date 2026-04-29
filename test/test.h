@@ -228,6 +228,10 @@ int test_http_conn(void);
 int test_http_conn_large_body(void);
 int test_dns_http_integration(void);
 int test_dns_cache_http_integration(void);
+int test_http_request_addr(void);
+#ifdef USE_TLS
+int test_https_request_addr(void);
+#endif
 #ifdef USE_TLS
 int test_https_loop(void);
 int test_http_client_set_tls(void);
