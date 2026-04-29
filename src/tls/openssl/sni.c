@@ -28,25 +28,24 @@ struct tls_conn;
 
 static bool x509_match_common_name(X509 *x509, const char *sni)
 {
-	char cn[TLSEXT_MAXLEN_host_name] = "";
 	const X509_NAME *nm = X509_get_subject_name(x509);
 
 	int lastpos = -1;
 	for (;;) {
-		lastpos = X509_NAME_get_index_by_NID(
-				nm, NID_commonName, lastpos);
+		lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName,
+						     lastpos);
 		if (lastpos == -1)
 			break;
-		const X509_NAME_ENTRY *e =
-			X509_NAME_get_entry(nm, lastpos);
-		const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(e);
+
+		const X509_NAME_ENTRY *e = X509_NAME_get_entry(nm, lastpos);
+		const ASN1_STRING *astr	 = X509_NAME_ENTRY_get_data(e);
 		if (!astr)
 			continue;
 
-		str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr),
-				sizeof(cn));
+		struct pl cn = {(char *)ASN1_STRING_get0_data(astr),
+				ASN1_STRING_length(astr)};
 
-		if (!str_cmp(sni, cn))
+		if (!pl_strcasecmp(&cn, sni))
 			return true;
 	}
 
@@ -83,14 +82,18 @@ static bool x509_match_alt_name(X509 *x509, const char *sni)
 		}
 		else if (g->type == GEN_IPADD) {
 			octet = a2i_IPADDRESS(sni);
+			if (!octet)
+				break;
 			if (!ASN1_OCTET_STRING_cmp(octet, g->d.iPAddress)) {
 				match = true;
 				break;
 			}
+			ASN1_OCTET_STRING_free(octet);
 		}
 	}
 
 out:
+	GENERAL_NAMES_free(gs);
 	ASN1_IA5STRING_free(astr);
 	ASN1_OCTET_STRING_free(octet);
 	return match;
