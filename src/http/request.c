@@ -350,21 +350,25 @@ static int send_req(struct http_reqconn *conn, const struct pl *auth)
 	if (conn->custhdr)
 		pl_set_mbuf(&custh, conn->custhdr);
 
-	err = http_request(&conn->req, conn->client,
-			conn->met, conn->uri,
-			resp_handler, conn->datah ? data_handler : NULL,
-			(conn->bodyh || conn->body) ? req_body_handler : NULL,
-			conn,
-			"%r%s"
-			"User-Agent: re " RE_VERSION "\r\n"
-			"%r"
-			"%r"
-			"%r"
-			"\r\n",
-			auth, auth ? "\r\n" : "",
-			&ct,
-			&custh,
-			&cl);
+	err = http_request_addr(&conn->req, conn->client,
+				conn->met, conn->uri,
+				sa_isset(&conn->peer, SA_ADDR) ?
+					 &conn->peer : NULL,
+				resp_handler,
+				conn->datah ? data_handler : NULL,
+				(conn->bodyh || conn->body) ?
+					req_body_handler : NULL,
+				conn,
+				"%r%s"
+				"User-Agent: re " RE_VERSION "\r\n"
+				"%r"
+				"%r"
+				"%r"
+				"\r\n",
+				auth, auth ? "\r\n" : "",
+				&ct,
+				&custh,
+				&cl);
 
 	mem_deref(clbuf);
 	mem_deref(ctbuf);
@@ -590,6 +594,33 @@ int http_reqconn_set_tls_hostname(struct http_reqconn *conn,
 	return pl_strdup(&conn->tlshn, hostname);
 }
 #endif
+
+
+/**
+ * Set explicit peer address for next request (bypasses DNS)
+ *
+ * If set, the TCP connection goes to this address while
+ * the URI's hostname is still used for the Host header and
+ * TLS SNI. Useful for routing through a local proxy.
+ *
+ * @param conn HTTP request connection
+ * @param peer Peer address (NULL to clear)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_reqconn_set_peer(struct http_reqconn *conn,
+			  const struct sa *peer)
+{
+	if (!conn)
+		return EINVAL;
+
+	if (peer)
+		conn->peer = *peer;
+	else
+		memset(&conn->peer, 0, sizeof(conn->peer));
+
+	return 0;
+}
 
 
 int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri)

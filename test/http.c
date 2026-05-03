@@ -820,3 +820,143 @@ int test_https_conn_post_handshake(void)
 	return test_http_loop_base(true, "GET", true, false, false, true);
 }
 #endif
+
+
+static void http_req_addr_handler(struct http_conn *conn,
+				   const struct http_msg *msg, void *arg)
+{
+	struct test *t = arg;
+	(void)msg;
+
+	++t->n_request;
+	http_reply(conn, 200, "OK", "Content-Length: 0\r\n\r\n");
+}
+
+
+static void http_resp_addr_handler(int err, const struct http_msg *msg,
+				   void *arg)
+{
+	struct test *t = arg;
+
+	if (err)
+		goto out;
+
+	++t->n_response;
+	TEST_EQUALS(200, msg->scode);
+	re_cancel();
+
+ out:
+	if (err)
+		abort_test(t, err);
+}
+
+
+static int test_http_request_addr_base(bool secure)
+{
+	struct http_sock *sock = NULL;
+	struct http_cli *cli = NULL;
+	struct http_req *req = NULL;
+	struct dnsc *dnsc = NULL;
+	struct dns_server *dns_srv = NULL;
+	struct sa srv;
+	struct test t;
+	char url[256];
+	int err = 0;
+#ifdef USE_TLS
+	char path[256];
+#endif
+	memset(&t, 0, sizeof(t));
+	t.secure = secure;
+
+	err = sa_set_str(&srv, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	/* Mock DNS server with no records */
+	err = dns_server_alloc(&dns_srv, "127.0.0.1");
+	TEST_ERR(err);
+
+#ifdef USE_TLS
+	if (secure) {
+		re_snprintf(path, sizeof(path), "%s/server-ecdsa.pem",
+			    test_datapath());
+		err = https_listen(&sock, &srv, path, http_req_addr_handler,
+				   &t);
+	}
+	else
+#endif
+	{
+		err = http_listen(&sock, &srv, http_req_addr_handler, &t);
+	}
+	if (err)
+		goto out;
+
+	err = tcp_sock_local_get(http_sock_tcp(sock), &srv);
+	if (err)
+		goto out;
+
+	err = dnsc_alloc(&dnsc, NULL, &dns_srv->addr, 1);
+	if (err)
+		goto out;
+
+	err = http_client_alloc(&cli, dnsc);
+	if (err)
+		goto out;
+
+#ifdef USE_TLS
+	if (secure) {
+		re_snprintf(path, sizeof(path), "%s/server-ecdsa.pem",
+			    test_datapath());
+		err = http_client_add_ca(cli, path);
+		if (err)
+			goto out;
+	}
+#endif
+
+	/* Port 1 in URL — without explicit addr the connect goes to port 1
+	 * (nothing listens), proving http_request_addr bypasses ip and port
+	 * in the URL and uses the given ip and port */
+	re_snprintf(url, sizeof(url), "http%s://127.0.0.1:1/index.html",
+		    secure ? "s" : "");
+
+	err = http_request_addr(&req, cli, "GET", url, &srv,
+				http_resp_addr_handler, NULL, NULL, &t,
+				"\r\n");
+	if (err)
+		goto out;
+
+	err = re_main_timeout(secure ? 1800 : 900);
+	if (err)
+		goto out;
+
+	if (t.err) {
+		err = t.err;
+		goto out;
+	}
+
+	TEST_EQUALS(1, t.n_request);
+	TEST_EQUALS(1, t.n_response);
+
+ out:
+	mem_deref(t.mb_body);
+	mem_deref(req);
+	mem_deref(cli);
+	mem_deref(dnsc);
+	mem_deref(sock);
+	mem_deref(dns_srv);
+
+	return err;
+}
+
+
+int test_http_request_addr(void)
+{
+	return test_http_request_addr_base(false);
+}
+
+
+#ifdef USE_TLS
+int test_https_request_addr(void)
+{
+	return test_http_request_addr_base(true);
+}
+#endif

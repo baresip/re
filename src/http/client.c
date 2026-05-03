@@ -753,24 +753,12 @@ out:
 }
 
 
-/**
- * Send an HTTP request
- *
- * @param reqp      Pointer to allocated HTTP request object
- * @param cli       HTTP Client
- * @param met       Request method
- * @param uri       Request URI
- * @param resph     Response handler
- * @param datah     Content handler (optional)
- * @param bodyh     Body handler (optional)
- * @param arg       Handler argument
- * @param fmt       Formatted HTTP headers and body (optional)
- *
- * @return 0 if success, otherwise errorcode
- */
-int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
-		 const char *uri, http_resp_h *resph, http_data_h *datah,
-		 http_bodyh *bodyh, void *arg, const char *fmt, ...)
+static int http_request_addr_v(struct http_req **reqp, struct http_cli *cli,
+			       const char *met, const char *uri,
+			       const struct sa *addr,
+			       http_resp_h *resph, http_data_h *datah,
+			       http_bodyh *bodyh, void *arg,
+			       const char *fmt, va_list ap)
 {
 	struct http_uri http_uri;
 	struct pl pl;
@@ -779,7 +767,6 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 	struct sa sa;
 	bool ipv6;
 	bool secure;
-	va_list ap;
 	int err;
 
 	if (!cli || !met || !uri)
@@ -812,8 +799,9 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 
 	req->cli    = cli;
 	req->secure = secure;
-	req->port   = pl_isset(&http_uri.port) ? pl_u32(&http_uri.port) :
-			defport;
+	req->port   = (addr && sa_port(addr)) ? sa_port(addr) :
+			(pl_isset(&http_uri.port) ? pl_u32(&http_uri.port) :
+			  defport);
 	req->resph  = resph;
 	req->datah  = datah;
 	req->bodyh  = bodyh;
@@ -836,14 +824,10 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 			  met, &http_uri.path,
 			  ipv6 ? "[" : "", &http_uri.host, ipv6 ? "]" : "");
 
-	if (fmt) {
-		va_start(ap, fmt);
+	if (fmt)
 		err |= mbuf_vprintf(req->mbreq, fmt, ap);
-		va_end(ap);
-	}
-	else {
+	else
 		err |= mbuf_write_str(req->mbreq, "\r\n");
-	}
 
 	if (err)
 		goto out;
@@ -868,8 +852,14 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		goto out;
 #endif
 
-	if (!sa_set_str(&req->srvv[0], req->host, req->port)) {
-
+	if (addr) {
+		/* Use explicit addr instead of DNS resolution */
+		req->srvv[0] = *addr;
+		sa_set_port(&req->srvv[0], req->port);
+		req->srvc = 1;
+		err = req_connect(req);
+	}
+	else if (!sa_set_str(&req->srvv[0], req->host, req->port)) {
 		req->srvc = 1;
 
 		err = req_connect(req);
@@ -901,6 +891,74 @@ int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		req->reqp = reqp;
 		*reqp = req;
 	}
+
+	return err;
+}
+
+
+/**
+ * Send an HTTP request
+ *
+ * @param reqp   Pointer to allocated HTTP request object
+ * @param cli    HTTP Client
+ * @param met    Request method
+ * @param uri    Request URI
+ * @param resph  Response handler
+ * @param datah  Content handler (optional)
+ * @param bodyh  Body handler (optional)
+ * @param arg    Handler argument
+ * @param fmt    Formatted HTTP headers and body (optional)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
+		 const char *uri, http_resp_h *resph, http_data_h *datah,
+		 http_bodyh *bodyh, void *arg, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = http_request_addr_v(reqp, cli, met, uri, NULL,
+				  resph, datah, bodyh, arg, fmt, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
+ * Send an HTTP request with explicit server address (bypasses DNS)
+ *
+ * Like http_request but connects to addr instead of resolving the URI
+ * host via DNS. The Host header still uses the hostname from uri.
+ * If addr is NULL, falls back to DNS resolution like http_request().
+ *
+ * @param reqp   Pointer to allocated HTTP request object
+ * @param cli    HTTP Client
+ * @param met    Request method
+ * @param uri    Request URI (host used for Host header only)
+ * @param addr   Explicit server address for TCP connect, or NULL
+ * @param resph  Response handler
+ * @param datah  Content handler (optional)
+ * @param bodyh  Body handler (optional)
+ * @param arg    Handler argument
+ * @param fmt    Formatted HTTP headers and body (optional)
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int http_request_addr(struct http_req **reqp, struct http_cli *cli,
+		      const char *met, const char *uri, const struct sa *addr,
+		      http_resp_h *resph, http_data_h *datah,
+		      http_bodyh *bodyh, void *arg, const char *fmt, ...)
+{
+	va_list ap;
+	int err;
+
+	va_start(ap, fmt);
+	err = http_request_addr_v(reqp, cli, met, uri, addr,
+				  resph, datah, bodyh, arg, fmt, ap);
+	va_end(ap);
 
 	return err;
 }

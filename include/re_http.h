@@ -151,6 +151,10 @@ int http_client_set_config(struct http_cli *cli, struct http_conf *conf);
 int http_request(struct http_req **reqp, struct http_cli *cli, const char *met,
 		 const char *uri, http_resp_h *resph, http_data_h *datah,
 		 http_bodyh *bodyh, void *arg, const char *fmt, ...);
+int http_request_addr(struct http_req **reqp, struct http_cli *cli,
+		      const char *met, const char *uri, const struct sa *addr,
+		      http_resp_h *resph, http_data_h *datah,
+		      http_bodyh *bodyh, void *arg, const char *fmt, ...);
 void http_req_set_conn_handler(struct http_req *req, http_conn_h *connh);
 void http_client_set_laddr(struct http_cli *cli, const struct sa *addr);
 void http_client_set_laddr6(struct http_cli *cli, const struct sa *addr);
@@ -254,6 +258,8 @@ int http_reqconn_add_header(struct http_reqconn *conn,
 		const struct pl *header);
 int http_reqconn_clr_header(struct http_reqconn *conn);
 int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri);
+int http_reqconn_set_peer(struct http_reqconn *conn,
+			  const struct sa *peer);
 #ifdef USE_TLS
 int http_reqconn_set_tls_hostname(struct http_reqconn *conn,
 		const struct pl *hostname);
