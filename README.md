@@ -283,8 +283,8 @@ macOS clang-1600.0.26.3 (Xcode 16.0) and clang-1600.0.26.4 (Xcode 16.1) have a o
 
 ### Supported versions of OpenSSL
 
-* OpenSSL version 3.x.x
-* LibreSSL version 3.x
+* OpenSSL version 3.x.x and 4.x.x
+* LibreSSL version 4.x
 
 
 ## Coding guidelines
