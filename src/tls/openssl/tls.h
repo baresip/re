@@ -20,7 +20,11 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 #define SSL_ST_OK TLS_ST_OK
 #endif
 
+#if OPENSSL_VERSION_MAJOR >= 4
+typedef const X509_NAME*(tls_get_certfield_h)(const X509 *);
+#else
 typedef X509_NAME*(tls_get_certfield_h)(const X509 *);
+#endif
 
 struct tls;
 struct tls_cert;

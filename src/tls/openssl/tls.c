@@ -1319,7 +1319,7 @@ void tls_flush_error(void)
  *
  * @return 0 if success, otherwise errorcode
  */
-static int convert_X509_NAME_to_mbuf(X509_NAME *field, struct mbuf *mb,
+static int convert_X509_NAME_to_mbuf(const X509_NAME *field, struct mbuf *mb,
 	unsigned long flags)
 {
 	BIO *outbio;
@@ -1369,7 +1369,7 @@ static int tls_get_ca_chain_field(struct tls *tls, struct mbuf *mb,
 	tls_get_certfield_h *field_getter, unsigned long flags)
 {
 	X509 *crt = NULL;
-	X509_NAME *field;
+	const X509_NAME *field;
 
 	crt = SSL_CTX_get0_certificate(tls->ctx);
 	if (!crt)
