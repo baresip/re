@@ -143,6 +143,14 @@ int test_fmt_pl(void)
 	if (NULL != pl_strstr(&pl1, str0))
 		goto out;
 
+	/* pl_strip_html */
+	struct pl pl_html = PL_INIT;
+	char str_html[]	  = "abc <script>alert(1)</script> <= test <><a";
+	pl_set_str(&pl_html, str_html);
+	pl_strip_html(&pl_html);
+	TEST_EQUALS(23, pl_html.l);
+	TEST_EQUALS(0, pl_strcmp(&pl_html, "abc alert(1) <= test <>"));
+
 	return 0;
  out:
 	return EINVAL;

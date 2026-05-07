@@ -58,6 +58,7 @@ const char *pl_strstr(const struct pl *pl, const char *str);
 int      pl_trim(struct pl *pl);
 int      pl_ltrim(struct pl *pl);
 int      pl_rtrim(struct pl *pl);
+void     pl_strip_html(struct pl *pl);
 
 /** Advance pl position/length by +/- N bytes */
 static inline void pl_advance(struct pl *pl, ssize_t n)

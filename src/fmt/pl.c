@@ -902,3 +902,51 @@ int pl_trim(struct pl *pl)
 
 	return err;
 }
+
+
+/**
+ * Strip HTML tags from a pointer-length string in-place
+ *
+ * @param pl Pointer-length string
+ */
+void pl_strip_html(struct pl *pl)
+{
+	if (!pl)
+		return;
+
+	const char *r = pl->p;
+	bool in_tag   = false;
+
+	/* lookup first possible html tag */
+	r = memchr(r, '<', pl->l);
+	if (!r)
+		return;
+
+	char *w = (char *)r;
+
+	/* Reference: https://html.spec.whatwg.org/multipage/parsing.html */
+	for (size_t len = pl->l - (size_t)(r - pl->p); len--; r++) {
+		if (in_tag) {
+			if (*r == '>')
+				in_tag = false;
+			continue;
+		}
+
+		/* 13.2.5.1 Data state */
+		if (*r == '<' && len >= 1) {
+			/* 13.2.5.6 Tag open state */
+			unsigned char n = *(r + 1);
+			if (isalpha(n) || n == '/' || n == '!' || n == '?') {
+				in_tag = true;
+				continue;
+			}
+		}
+
+		unsigned char c = (unsigned char)*r;
+		if (c >= 0x20 || c == '\n' || c == '\r' || c == '\t') {
+			*w++ = *r;
+		}
+	}
+
+	pl->l = (size_t)(w - pl->p);
+}
