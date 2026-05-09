@@ -487,6 +487,8 @@ void mem_debug(void)
 
 /**
  * Debug last n allocated memory objects/blocks
+ *
+ * @param last_n Last number of blocks
  */
 void mem_debug_tail(uint32_t last_n)
 {
