@@ -821,13 +821,13 @@ const char *pl_strstr(const struct pl *pl, const char *str)
 	if (!len)
 		return pl->p;
 
-	for (size_t i = 0; i < pl->l; ++i) {
-		/*case rest of pl is not long enough*/
-		if (pl->l - i < len)
-			return NULL;
+	const char *p = pl->p;
+	const char *end = pl->p + pl->l - len;
 
-		if (!memcmp(pl->p + i, str, len))
-			return pl->p + i;
+	while ((p = memchr(p, *str, (size_t)(end - p) + 1)) != NULL) {
+		if (!memcmp(p, str, len))
+			return p;
+		++p;
 	}
 
 	return NULL;
