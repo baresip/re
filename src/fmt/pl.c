@@ -761,18 +761,10 @@ int pl_casecmp(const struct pl *pl1, const struct pl *pl2)
  */
 const char *pl_strchr(const struct pl *pl, char c)
 {
-	const char *p, *end;
-
-	if (!pl)
+	if (!pl_isset(pl))
 		return NULL;
 
-	end = pl->p + pl->l;
-	for (p = pl->p; p < end; p++) {
-		if (*p == c)
-			return p;
-	}
-
-	return NULL;
+	return memchr(pl->p, c, pl->l);
 }
 
 
@@ -786,6 +778,11 @@ const char *pl_strchr(const struct pl *pl, char c)
  */
 const char *pl_strrchr(const struct pl *pl, char c)
 {
+	if (!pl_isset(pl))
+		return NULL;
+#if HAVE_MEMRCHR
+	return memrchr(pl->p, c, pl->l);
+#else
 	const char *p, *end;
 
 	if (!pl_isset(pl))
@@ -798,6 +795,7 @@ const char *pl_strrchr(const struct pl *pl, char c)
 	}
 
 	return NULL;
+#endif
 }
 
 
