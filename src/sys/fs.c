@@ -115,9 +115,14 @@ int fs_gethome(char *path, size_t sz)
 
 	loginname = sys_username();
 	if (!loginname)
+#ifdef HAVE_UNISTD_H
+		pw = getpwuid(getuid());
+#else
 		return ENOENT;
+#endif
+	else
+		pw = getpwnam(loginname);
 
-	pw = getpwnam(loginname);
 	if (!pw)
 		return errno;
 

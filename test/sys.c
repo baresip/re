@@ -228,3 +228,14 @@ int test_sys_getenv(void)
 out:
 	return err;
 }
+
+
+int test_sys_fs_gethome(void)
+{
+	char path[256];
+	int err = fs_gethome(path, sizeof(path));
+	TEST_ERR(err);
+	TEST_EQUALS(true, str_isset(path));
+out:
+	return err;
+}
