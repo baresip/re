@@ -92,12 +92,15 @@ struct http_msg {
 
 struct http_uri {
 	struct pl scheme;
-	struct pl host;
+	struct pl user;      /**< Optional username            */
+	struct pl host;      /**< Hostname or IP-address       */
+	int af;              /**< Address family of host IP-address */
 	struct pl port;
 	struct pl path;
 };
 
 int http_uri_decode(struct http_uri *hu, const struct pl *uri);
+int http_uri_encode(struct re_printf *pf, const struct http_uri *hu);
 
 
 /** Http Client configuration */

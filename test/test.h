@@ -229,6 +229,8 @@ int test_http_conn_large_body(void);
 int test_dns_http_integration(void);
 int test_dns_cache_http_integration(void);
 int test_http_request_addr(void);
+int test_http_uri_decode(void);
+int test_http_uri_encode(void);
 #ifdef USE_TLS
 int test_https_request_addr(void);
 #endif

@@ -960,3 +960,175 @@ int test_https_request_addr(void)
 	return test_http_request_addr_base(true);
 }
 #endif
+
+
+int test_http_uri_decode(void)
+{
+	static const struct {
+		const char *uri;
+		const char *scheme;
+		const char *user;
+		const char *host;
+		const char *port;
+		const char *path;
+	} testv[] = {
+		{
+			"http://host.domain.org",
+			"http", "", "host.domain.org", "", ""
+		},
+		{
+			"http://host.domain.org/",
+			"http", "", "host.domain.org", "", "/"
+		},
+		{
+			"http://host/path",
+			"http", "", "host", "", "/path"
+		},
+		{
+			"https://host:8080/path",
+			"https", "", "host", "8080", "/path"
+		},
+		{
+			"http://user@host/path",
+			"http", "user", "host", "", "/path"
+		},
+		{
+			"http://user@host:8080/path",
+			"http", "user", "host", "8080", "/path"
+		},
+		{
+			"http://[::1]/path",
+			"http", "", "::1", "", "/path"
+		},
+		{
+			"http://[::1]:8080/path",
+			"http", "", "::1", "8080", "/path"
+		},
+		{
+			"http://user@[::1]:8080/path",
+			"http", "user", "::1", "8080", "/path"
+		},
+	};
+
+	struct mbuf mb;
+	int err = 0;
+	size_t i;
+
+	mbuf_init(&mb);
+
+	for (i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+		struct http_uri hu;
+		struct pl pl0, pl;
+
+		/* Decode */
+		pl_set_str(&pl0, testv[i].uri);
+		err = http_uri_decode(&hu, &pl0);
+		TEST_ERR(err);
+
+		TEST_STRCMP(testv[i].scheme, strlen(testv[i].scheme),
+			    hu.scheme.p, hu.scheme.l);
+
+		if (testv[i].user) {
+			TEST_STRCMP(testv[i].user, strlen(testv[i].user),
+				    hu.user.p, hu.user.l);
+		}
+		else {
+			TEST_ASSERT(!pl_isset(&hu.user));
+		}
+
+		TEST_STRCMP(testv[i].host, strlen(testv[i].host),
+			    hu.host.p, hu.host.l);
+
+		if (testv[i].port) {
+			TEST_STRCMP(testv[i].port, strlen(testv[i].port),
+				    hu.port.p, hu.port.l);
+		}
+		else {
+			TEST_ASSERT(!pl_isset(&hu.port));
+		}
+
+		TEST_STRCMP(testv[i].path, strlen(testv[i].path),
+			    hu.path.p, hu.path.l);
+
+		/* Encode and compare with original */
+		mbuf_reset(&mb);
+		err = mbuf_printf(&mb, "%H", http_uri_encode, &hu);
+		if (err)
+			goto out;
+
+		pl.p = (const char *)mb.buf;
+		pl.l = mb.end;
+		err = pl_cmp(&pl, &pl0);
+		if (err) {
+			DEBUG_WARNING("http uri roundtrip: ref=(%s),"
+				      " gen=(%r)\n", testv[i].uri, &pl);
+			goto out;
+		}
+	}
+
+out:
+	mbuf_reset(&mb);
+	if (err && i < RE_ARRAY_SIZE(testv))
+		DEBUG_WARNING("i=%zu uri=%s\n", i, testv[i].uri);
+
+	return err;
+}
+
+
+int test_http_uri_encode(void)
+{
+	static const struct {
+		struct http_uri hu;
+		const char *enc;
+	} testv[] = {
+		{
+			{PL("http"), PL_INIT,
+			 PL("host"), AF_UNSPEC, PL("8080"), PL("/path")},
+			"http://host:8080/path"
+		},
+		{
+			{PL("http"), PL("user"),
+			 PL("host"), AF_UNSPEC, PL("8080"), PL("/path")},
+			"http://user@host:8080/path"
+		},
+		{
+			{PL("http"), PL_INIT,
+			 PL("::1"), AF_INET6, PL("8080"), PL("/path")},
+			"http://[::1]:8080/path"
+		},
+		{
+			{PL("http"), PL("user"),
+			 PL("::1"), AF_INET6, PL("8080"), PL("/path")},
+			"http://user@[::1]:8080/path"
+		},
+	};
+
+	struct mbuf mb;
+	int err = 0;
+	size_t i;
+
+	mbuf_init(&mb);
+
+	for (i = 0; i < RE_ARRAY_SIZE(testv); i++) {
+		struct pl pl;
+
+		mb.pos = 0;
+		mb.end = 0;
+		err = mbuf_printf(&mb, "%H", http_uri_encode, &testv[i].hu);
+		if (err)
+			goto out;
+
+		pl.p = (const char *)mb.buf;
+		pl.l = mb.end;
+		err = pl_strcmp(&pl, testv[i].enc);
+		if (err) {
+			DEBUG_WARNING("http uri encode: ref=(%s),"
+				      " gen=(%r)\n", testv[i].enc, &pl);
+			goto out;
+		}
+	}
+
+out:
+	mbuf_reset(&mb);
+	return err;
+}
