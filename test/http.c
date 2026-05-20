@@ -974,23 +974,23 @@ int test_http_uri_decode(void)
 	} testv[] = {
 		{
 			"http://host.domain.org",
-			"http", "", "host.domain.org", "", ""
+			"http", NULL, "host.domain.org", NULL, NULL
 		},
 		{
 			"http://host.domain.org/",
-			"http", "", "host.domain.org", "", "/"
+			"http", NULL, "host.domain.org", NULL, "/"
 		},
 		{
 			"http://host/path",
-			"http", "", "host", "", "/path"
+			"http", NULL, "host", NULL, "/path"
 		},
 		{
 			"https://host:8080/path",
-			"https", "", "host", "8080", "/path"
+			"https", NULL, "host", "8080", "/path"
 		},
 		{
 			"http://user@host/path",
-			"http", "user", "host", "", "/path"
+			"http", "user", "host", NULL, "/path"
 		},
 		{
 			"http://user@host:8080/path",
@@ -998,11 +998,11 @@ int test_http_uri_decode(void)
 		},
 		{
 			"http://[::1]/path",
-			"http", "", "::1", "", "/path"
+			"http", NULL, "::1", NULL, "/path"
 		},
 		{
 			"http://[::1]:8080/path",
-			"http", "", "::1", "8080", "/path"
+			"http", NULL, "::1", "8080", "/path"
 		},
 		{
 			"http://user@[::1]:8080/path",
@@ -1025,30 +1025,30 @@ int test_http_uri_decode(void)
 		err = http_uri_decode(&hu, &pl0);
 		TEST_ERR(err);
 
-		TEST_STRCMP(testv[i].scheme, strlen(testv[i].scheme),
-			    hu.scheme.p, hu.scheme.l);
+		TEST_ASSERT(!pl_strcmp(&hu.scheme, testv[i].scheme));
 
 		if (testv[i].user) {
-			TEST_STRCMP(testv[i].user, strlen(testv[i].user),
-				    hu.user.p, hu.user.l);
+			TEST_ASSERT(!pl_strcmp(&hu.user, testv[i].user));
 		}
 		else {
 			TEST_ASSERT(!pl_isset(&hu.user));
 		}
 
-		TEST_STRCMP(testv[i].host, strlen(testv[i].host),
-			    hu.host.p, hu.host.l);
+		TEST_ASSERT(!pl_strcmp(&hu.host, testv[i].host));
 
 		if (testv[i].port) {
-			TEST_STRCMP(testv[i].port, strlen(testv[i].port),
-				    hu.port.p, hu.port.l);
+			TEST_ASSERT(!pl_strcmp(&hu.port, testv[i].port));
 		}
 		else {
 			TEST_ASSERT(!pl_isset(&hu.port));
 		}
 
-		TEST_STRCMP(testv[i].path, strlen(testv[i].path),
-			    hu.path.p, hu.path.l);
+		if (testv[i].path) {
+			TEST_ASSERT(!pl_strcmp(&hu.path, testv[i].path));
+		}
+		else {
+			TEST_ASSERT(!pl_isset(&hu.path));
+		}
 
 		/* Encode and compare with original */
 		mbuf_reset(&mb);
