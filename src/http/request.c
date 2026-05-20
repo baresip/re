@@ -637,7 +637,7 @@ int http_reqconn_send(struct http_reqconn *conn, const struct pl *uri)
 
 	err = http_uri_decode(&hu, uri);
 	if (err)
-		return EINVAL;
+		return err;
 
 	conn->uri = mem_deref(conn->uri);
 	conn->path = mem_deref(conn->path);
