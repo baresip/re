@@ -27,6 +27,21 @@
 enum {COMPID_MIN = 1, COMPID_MAX = 255};
 
 
+static struct ice_candpair *candpair_find_remote(const struct list *lst,
+						 const struct sa *raddr)
+{
+	for (struct le *le = list_head(lst); le; le = le->next) {
+
+		struct ice_candpair *cp = le->data;
+
+		if (sa_cmp(&cp->rcand->addr, raddr, SA_ALL))
+			return cp;
+	}
+
+	return NULL;
+}
+
+
 static bool helper_recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 {
 	struct icem_comp *comp = arg;
@@ -40,8 +55,20 @@ static bool helper_recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 		  comp->id, mbuf_get_left(mb), src);
 #endif
 
-	if (stun_msg_decode(&msg, mb, &ua))
+	if (stun_msg_decode(&msg, mb, &ua)) {
+
+		struct ice_candpair *pair = candpair_find_remote(&icem->validl,
+								 src);
+		if (!pair) {
+			icecomp_printf(comp,
+			       "dropping unauth application packet from %J\n",
+			       src);
+
+			return true;
+		}
+
 		return false;
+	}
 
 	if (STUN_METHOD_BINDING == stun_msg_method(msg)) {
 
