@@ -204,7 +204,8 @@ static int websock_decode(struct websock_hdr *hdr, struct mbuf *mb)
 
 	if (hdr->mask) {
 
-		if (mbuf_get_left(mb) < (4 + hdr->len))
+		if (hdr->len > SIZE_MAX - 4 ||
+		    mbuf_get_left(mb) < (4 + hdr->len))
 			return ENODATA;
 
 		hdr->mkey[0] = mbuf_read_u8(mb);
