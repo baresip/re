@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.18...4.0)
 
 project(re
-  VERSION 4.8.0
+  VERSION 4.8.1
   LANGUAGES C
   HOMEPAGE_URL https://github.com/baresip/re
   DESCRIPTION "Generic library for real-time communications"
