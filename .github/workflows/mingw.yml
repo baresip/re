@@ -56,7 +56,7 @@ jobs:
       run: |
         cd baresip-win32 && make retest
     
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: retest-exe
         path: baresip-win32/re/build/test/retest.exe
