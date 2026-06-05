@@ -321,18 +321,18 @@ int test_dtls(void)
 	/* NOTE: DTLS v1.0 should be available on all
 	 *       supported platforms.
 	 */
-	if (!have_dtls_support(TLS_METHOD_DTLSV1)) {
+	if (!have_dtls_support(TLS_METHOD_DTLS)) {
 		(void)re_printf("skip DTLS 1.0 tests\n");
 		return ESKIPPED;
 	}
 	else {
-		err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false, NULL,
+		err = test_dtls_srtp_base(TLS_METHOD_DTLS, false, NULL,
 					  "127.0.0.1");
 		if (err)
 			return err;
 
 		if (test_ipv6_supported()) {
-			err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, false,
+			err = test_dtls_srtp_base(TLS_METHOD_DTLS, false,
 						  NULL, "::1");
 			TEST_ERR(err);
 		}
@@ -347,24 +347,24 @@ int test_dtls_srtp(void)
 {
 	int err = 0;
 
-	if (!have_dtls_support(TLS_METHOD_DTLSV1)) {
+	if (!have_dtls_support(TLS_METHOD_DTLS)) {
 		(void)re_printf("skip DTLS tests\n");
 		return ESKIPPED;
 	}
 
-	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+	err = test_dtls_srtp_base(TLS_METHOD_DTLS, true,
 				  "SRTP_AES128_CM_SHA1_80", "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+	err = test_dtls_srtp_base(TLS_METHOD_DTLS, true,
 				  "SRTP_AES128_CM_SHA1_32", "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+	err = test_dtls_srtp_base(TLS_METHOD_DTLS, true,
 				  "SRTP_AEAD_AES_128_GCM", "127.0.0.1");
 	TEST_ERR(err);
 
-	err = test_dtls_srtp_base(TLS_METHOD_DTLSV1, true,
+	err = test_dtls_srtp_base(TLS_METHOD_DTLS, true,
 				  "SRTP_AEAD_AES_256_GCM", "127.0.0.1");
 	TEST_ERR(err);
 

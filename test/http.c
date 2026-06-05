@@ -728,7 +728,7 @@ int test_http_client_set_tls(void)
 	TEST_EQUALS(2, mem_nrefs(tls_cli));
 
 	/* Allocate new TLS Context */
-	err = tls_alloc(&tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
 	TEST_ERR(err);
 	TEST_NOT_EQUALS(tls, tls_cli);
 

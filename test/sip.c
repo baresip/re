@@ -809,7 +809,7 @@ int test_sip_transp_add_client_cert(void)
 	err = sa_set_str(&laddr, "127.0.0.1", 0);
 	TEST_ERR(err);
 
-	err = tls_alloc(&stt->tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&stt->tls, TLS_METHOD_TLS, NULL, NULL);
 	TEST_ERR(err);
 
 	(void)re_snprintf(cafile, sizeof(cafile), "%s/server-ecdsa.pem",
