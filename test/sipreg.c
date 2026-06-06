@@ -66,7 +66,7 @@ static int sipstack_fixture(struct sip **sipp)
 
 #ifdef USE_TLS
 	/* TLS-context for client -- no certificate needed */
-	err = tls_alloc(&tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
