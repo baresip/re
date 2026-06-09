@@ -216,14 +216,11 @@ static int tls_ctx_alloc(SSL_CTX **ctxp, enum tls_method method,
 	switch (method) {
 
 	case TLS_METHOD_TLS:
-	case TLS_METHOD_SSLV23:
 		ctx	  = SSL_CTX_new(TLS_method());
 		min_proto = TLS1_2_VERSION;
 		break;
 
 	case TLS_METHOD_DTLS:
-	case TLS_METHOD_DTLSV1:
-	case TLS_METHOD_DTLSV1_2:
 		ctx = SSL_CTX_new(DTLS_method());
 		break;
 

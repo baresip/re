@@ -196,7 +196,7 @@ static int test_tls_base(enum tls_keytype keytype, bool add_ca, int exp_verr,
 	if (err)
 		goto out;
 
-	err = tls_alloc(&tt.tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tt.tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -348,7 +348,7 @@ int test_tls_selfsigned(void)
 	uint8_t fp[32];
 	int err;
 
-	err = tls_alloc(&tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -380,7 +380,7 @@ int test_tls_certificate(void)
 	struct mbuf *mb = NULL;
 	int err;
 
-	err = tls_alloc(&tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -421,7 +421,7 @@ int test_tls_false_cafile_path(void)
 	const char *cafile_wrong = "/some/path/to/wrong/file.crt";
 	const char *capath_wrong = "/some/path/to/nothing";
 
-	err = tls_alloc(&tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -462,7 +462,7 @@ int test_tls_cli_conn_change_cert(void)
 	if (err)
 		goto out;
 
-	err = tls_alloc(&tt.tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&tt.tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
@@ -585,12 +585,12 @@ int test_tls_sni(void)
 
 	/* UAC global not matching cert (test checks that it is not used) */
 	re_snprintf(path, sizeof(path), "%s/client.pem", dp);
-	err = tls_alloc(&tt.tls, TLS_METHOD_SSLV23, path, NULL);
+	err = tls_alloc(&tt.tls, TLS_METHOD_TLS, path, NULL);
 	TEST_ERR(err);
 
 	/* UAS cert + intermediate CA */
 	re_snprintf(path, sizeof(path), "%s/sni/server-interm.pem", dp);
-	err = tls_alloc(&tt.tls2, TLS_METHOD_SSLV23, path, NULL);
+	err = tls_alloc(&tt.tls2, TLS_METHOD_TLS, path, NULL);
 	TEST_ERR(err);
 
 	/* set root CA at UAC and UAS */

@@ -1016,7 +1016,7 @@ int http_client_alloc(struct http_cli **clip, struct dnsc *dnsc)
 		goto out;
 
 #ifdef USE_TLS
-	err = tls_alloc(&cli->tls, TLS_METHOD_SSLV23, NULL, NULL);
+	err = tls_alloc(&cli->tls, TLS_METHOD_TLS, NULL, NULL);
 	if (err)
 		goto out;
 
