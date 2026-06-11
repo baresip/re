@@ -107,10 +107,11 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 {
 	int h, m, s;
 	uint64_t ms;
-
 #ifdef WIN32
 	SYSTEMTIME st;
+
 	GetLocalTime(&st);
+
 	h  = st.wHour;
 	m  = st.wMinute;
 	s  = st.wSecond;
