@@ -729,6 +729,7 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 int http_uri_decode(struct http_uri *hu, const struct pl *uri)
 {
 	struct pl hostport = PL_INIT;
+	struct pl port = PL_INIT;
 	int err;
 
 	if (!hu || !uri)
@@ -741,8 +742,6 @@ int http_uri_decode(struct http_uri *hu, const struct pl *uri)
 		       "[a-z]+://[^:@/]+[:]*[^@/]*@[^/]+[^]*",
 		       &hu->scheme, &hu->user, NULL, NULL,
 		       &hostport, &hu->path);
-	err |= (hu->scheme.p == uri->p ? 0 : EINVAL);
-	err |= uri_decode_hostport(&hostport, &hu->host, &hu->port);
 	if (!err)
 		goto out;
 
@@ -750,23 +749,24 @@ int http_uri_decode(struct http_uri *hu, const struct pl *uri)
 	memset(hu, 0, sizeof(*hu));
 	err = re_regex(uri->p, uri->l, "[a-z]+://[^/]+[^]*",
 		       &hu->scheme, &hostport, &hu->path);
-	err |= (hu->scheme.p == uri->p ? 0 : EINVAL);
-	err |= uri_decode_hostport(&hostport, &hu->host, &hu->port);
 
 out:
-	if (err)
-		return err;
+	err |= (hu->scheme.p == uri->p ? 0 : EINVAL);
+	err |= uri_decode_hostport(&hostport, &hu->host, &port);
+	if (!err) {
+		if (!pl_isset(&hu->path))
+			pl_set_str(&hu->path, "/");
 
-	if (!pl_isset(&hu->path))
-		pl_set_str(&hu->path, "/");
+		struct sa addr;
+		if (0 == sa_set(&addr, &hu->host, 0))
+			hu->af = sa_af(&addr);
+		else
+			hu->af = AF_UNSPEC;
 
-	struct sa addr;
-	if (0 == sa_set(&addr, &hu->host, 0))
-		hu->af = sa_af(&addr);
-	else
-		hu->af = AF_UNSPEC;
+		hu->port = (uint16_t)pl_u32(&port);
+	}
 
-	return 0;
+	return err;
 }
 
 
@@ -799,10 +799,11 @@ int http_uri_encode(struct re_printf *pf, const struct http_uri *hu)
 	if (err)
 		return err;
 
-	if (pl_isset(&hu->port))
-		err = re_hprintf(pf, ":%r", &hu->port);
+	if (hu->port)
+		err = re_hprintf(pf, ":%u", hu->port);
 
-	err |= re_hprintf(pf, "%r", &hu->path);
+	if (pl_isset(&hu->path))
+		err |= re_hprintf(pf, "%r", &hu->path);
 
 	return err;
 }
@@ -855,8 +856,7 @@ static int http_request_addr_v(struct http_req **reqp, struct http_cli *cli,
 	req->cli    = cli;
 	req->secure = secure;
 	req->port   = (addr && sa_port(addr)) ? sa_port(addr) :
-			(pl_isset(&http_uri.port) ? pl_u32(&http_uri.port) :
-			  defport);
+			(http_uri.port ? http_uri.port : defport);
 	req->resph  = resph;
 	req->datah  = datah;
 	req->bodyh  = bodyh;

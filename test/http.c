@@ -969,45 +969,45 @@ int test_http_uri_decode(void)
 		const char *scheme;
 		const char *user;
 		const char *host;
-		const char *port;
+		uint16_t port;
 		const char *path;
 		int af;
 	} testv[] = {
 		{
 			"http://host/path",
-			"http", NULL, "host", NULL, "/path", AF_UNSPEC
+			"http", NULL, "host", 0, "/path", AF_UNSPEC
 		},
 		{
 			"https://host:8080/path",
-			"https", NULL, "host", "8080", "/path", AF_UNSPEC
+			"https", NULL, "host", 8080, "/path", AF_UNSPEC
 		},
 		{
 			"http://user@host/path",
-			"http", "user", "host", NULL, "/path", AF_UNSPEC
+			"http", "user", "host", 0, "/path", AF_UNSPEC
 		},
 		{
 			"http://user@host:8080/path",
-			"http", "user", "host", "8080", "/path", AF_UNSPEC
+			"http", "user", "host", 8080, "/path", AF_UNSPEC
 		},
 		{
 			"http://[::1]/path",
-			"http", NULL, "::1", NULL, "/path", AF_INET6
+			"http", NULL, "::1", 0, "/path", AF_INET6
 		},
 		{
 			"http://[::1]:8080/path",
-			"http", NULL, "::1", "8080", "/path", AF_INET6
+			"http", NULL, "::1", 8080, "/path", AF_INET6
 		},
 		{
 			"http://user@[::1]:8080/path",
-			"http", "user", "::1", "8080", "/path", AF_INET6
+			"http", "user", "::1", 8080, "/path", AF_INET6
 		},
 		{
 			"http://host",
-			"http", NULL, "host", NULL, "/", AF_UNSPEC
+			"http", NULL, "host", 0, "/", AF_UNSPEC
 		},
 		{
 			"http://127.0.0.1:38073/index.html",
-			"http", NULL, "127.0.0.1", "38073", "/index.html",
+			"http", NULL, "127.0.0.1", 38073, "/index.html",
 			AF_INET
 		},
 
@@ -1042,13 +1042,7 @@ int test_http_uri_decode(void)
 		TEST_STRCMP(testv[i].host, strlen(testv[i].host),
 			    hu.host.p, hu.host.l);
 
-		if (testv[i].port) {
-			TEST_STRCMP(testv[i].port, strlen(testv[i].port),
-				    hu.port.p, hu.port.l);
-		}
-		else {
-			TEST_ASSERT(!pl_isset(&hu.port));
-		}
+		TEST_EQUALS(testv[i].port, hu.port);
 
 		TEST_STRCMP(testv[i].path, strlen(testv[i].path),
 			    hu.path.p, hu.path.l);
@@ -1070,22 +1064,22 @@ int test_http_uri_encode(void)
 	} testv[] = {
 		{
 			{PL("http"), PL_INIT,
-			 PL("host"), AF_UNSPEC, PL("8080"), PL("/path")},
+			 PL("host"), AF_UNSPEC, 8080, PL("/path")},
 			"http://host:8080/path"
 		},
 		{
 			{PL("https"), PL("user"),
-			 PL("host"), AF_UNSPEC, PL("8080"), PL("/path")},
+			 PL("host"), AF_UNSPEC, 8080, PL("/path")},
 			"https://user@host:8080/path"
 		},
 		{
 			{PL("http"), PL_INIT,
-			 PL("::1"), AF_INET6, PL("8080"), PL("/path")},
+			 PL("::1"), AF_INET6, 8080, PL("/path")},
 			"http://[::1]:8080/path"
 		},
 		{
 			{PL("http"), PL("user"),
-			 PL("::1"), AF_INET6, PL("8080"), PL("/path")},
+			 PL("::1"), AF_INET6, 8080, PL("/path")},
 			"http://user@[::1]:8080/path"
 		},
 	};

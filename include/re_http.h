@@ -95,7 +95,7 @@ struct http_uri {
 	struct pl user;      /**< Optional username            */
 	struct pl host;      /**< Hostname or IP-address       */
 	int af;              /**< Address family of host IP-address */
-	struct pl port;
+	uint16_t port;
 	struct pl path;
 };
 
