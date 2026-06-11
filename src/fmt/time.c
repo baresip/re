@@ -105,16 +105,16 @@ int fmt_human_time(struct re_printf *pf, const uint32_t *seconds)
  */
 int fmt_timestamp(struct re_printf *pf, void *arg)
 {
-	int hour, min, sec;
+	int h, m, s;
 	uint64_t ms;
 
 #ifdef WIN32
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	hour = st.wHour;
-	min  = st.wMinute;
-	sec  = st.wSecond;
-	ms   = st.wMilliseconds;
+	h  = st.wHour;
+	m  = st.wMinute;
+	s  = st.wSecond;
+	ms = st.wMilliseconds;
 #else
 	struct timespec tspec;
 	struct tm tm;
@@ -123,14 +123,14 @@ int fmt_timestamp(struct re_printf *pf, void *arg)
 	if (!localtime_r(&tspec.tv_sec, &tm))
 		return EINVAL;
 
-	hour = tm.tm_hour;
-	min  = tm.tm_min;
-	sec  = tm.tm_sec;
-	ms   = tspec.tv_nsec / 1000000;
+	h  = tm.tm_hour;
+	m  = tm.tm_min;
+	s  = tm.tm_sec;
+	ms = tspec.tv_nsec / 1000000;
 #endif
 	(void)arg;
 
-	return re_hprintf(pf, "%02u:%02u:%02u.%03llu", hour, min, sec, ms);
+	return re_hprintf(pf, "%02u:%02u:%02u.%03llu", h, m, s, ms);
 }
 
 
