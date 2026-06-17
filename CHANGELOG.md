@@ -5,17 +5,31 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.9.0 - 2026-06-17
+
+### What's Changed
+* ci: bump actions/upload-artifact to fix node warning by @alfredh in https://github.com/baresip/re/pull/1586
+* ci: bump actions/cache to version 5 by @alfredh in https://github.com/baresip/re/pull/1587
+* ci/codeql: bump codeql-action to version 4 to avoid Node.js warning by @alfredh in https://github.com/baresip/re/pull/1590
+* tls: remove deprecated TLS_METHOD_xxx by @alfredh in https://github.com/baresip/re/pull/1589
+* ci: update windows job by @alfredh in https://github.com/baresip/re/pull/1592
+* fmt/time: win32 use LocalTime for fmt_timestamp by @wcqedison in https://github.com/baresip/re/pull/1593
+
+### New Contributors
+* @wcqedison made their first contribution in https://github.com/baresip/re/pull/1593
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.8.1...v4.9.0
 
 ## v4.8.1 - 2026-05-28 Security and Bugfix Release
 
-## What's Changed
+### What's Changed
 * fmt/pl: add pl_strip_html() by @sreimers in https://github.com/baresip/re/pull/1575
 * sys/fs: add getpwuid fallback for fs_gethome by @sreimers in https://github.com/baresip/re/pull/1580
 * tls: remove unused include rsa.h by @alfredh in https://github.com/baresip/re/pull/1581
 * ice: check source address of incoming application packets by @alfredh in https://github.com/baresip/re/pull/1583
 * websock: Fix integer overflow in websock_decode() masked frame check by @TristanInSec in https://github.com/baresip/re/pull/1584
 
-## New Contributors
+### New Contributors
 * @TristanInSec made their first contribution in https://github.com/baresip/re/pull/1584
 
 **Full Changelog**: https://github.com/baresip/re/compare/v4.8.0...v4.8.1
@@ -23,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v4.8.0 - 2026-05-13
 
-## What's Changed
+### What's Changed
 * ci/cmake_win: fix choco openssl by @sreimers in https://github.com/baresip/re/pull/1563
 * test,sipreg: enable outbound testing by @alfredh in https://github.com/baresip/re/pull/1553
 * ci/windows: roll back choco openssl version 3.6.2 by @alfredh in https://github.com/baresip/re/pull/1566
