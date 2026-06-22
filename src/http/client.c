@@ -19,6 +19,7 @@
 #include <re_tls.h>
 #include <re_dns.h>
 #include <re_msg.h>
+#include <re_uri.h>
 #include <re_http.h>
 #include <re_sys.h>
 #include "http.h"
@@ -727,27 +728,82 @@ static void query_handler(int err, const struct dnshdr *hdr, struct list *ansl,
 
 int http_uri_decode(struct http_uri *hu, const struct pl *uri)
 {
-	int err = 0;
-	if (!hu)
+	struct pl hostport = PL_INIT;
+	struct pl port = PL_INIT;
+	int err;
+
+	if (!hu || !uri)
 		return EINVAL;
 
 	memset(hu, 0, sizeof(*hu));
 
-	/* Try IPv6 first */
-	err = re_regex(uri->p, uri->l, "[a-z]+://\\[[^\\]]+\\][:]*[0-9]*[^]+",
-		       &hu->scheme, &hu->host, NULL, &hu->port, &hu->path) ||
-	      hu->scheme.p != uri->p;
+	/* Try with auth (user[:password]@hostport) */
+	err = re_regex(uri->p, uri->l,
+		       "[a-z]+://[^:@/]+[:]*[^@/]*@[^/]+[^]*",
+		       &hu->scheme, &hu->user, NULL, NULL,
+		       &hostport, &hu->path);
 	if (!err)
 		goto out;
 
-	/* Then non-IPv6 host */
-	err = re_regex(uri->p, uri->l, "[a-z]+://[^:/]+[:]*[0-9]*[^]+",
-		       &hu->scheme, &hu->host, NULL, &hu->port, &hu->path) ||
-	      hu->scheme.p != uri->p;
+	/* Without auth */
+	memset(hu, 0, sizeof(*hu));
+	err = re_regex(uri->p, uri->l, "[a-z]+://[^/]+[^]*",
+		       &hu->scheme, &hostport, &hu->path);
 
 out:
-	if (!err && !pl_isset(&hu->path))
-		pl_set_str(&hu->path, "/");
+	err |= (hu->scheme.p == uri->p ? 0 : EINVAL);
+	err |= uri_decode_hostport(&hostport, &hu->host, &port);
+	if (!err) {
+		if (!pl_isset(&hu->path))
+			pl_set_str(&hu->path, "/");
+
+		struct sa addr;
+		if (0 == sa_set(&addr, &hu->host, 0))
+			hu->af = sa_af(&addr);
+		else
+			hu->af = AF_UNSPEC;
+
+		hu->port = (uint16_t)pl_u32(&port);
+	}
+
+	return err;
+}
+
+
+int http_uri_encode(struct re_printf *pf, const struct http_uri *hu)
+{
+	int err;
+
+	if (!pf || !hu)
+		return EINVAL;
+
+	if (!pl_isset(&hu->scheme) || !pl_isset(&hu->host))
+		return EINVAL;
+
+	err = re_hprintf(pf, "%r://", &hu->scheme);
+	if (err)
+		return err;
+
+	if (pl_isset(&hu->user)) {
+		err = re_hprintf(pf, "%r@", &hu->user);
+		if (err)
+			return err;
+	}
+
+	/* IPv6 address is delimited by '[' and ']' */
+	if (hu->af == AF_INET6)
+		err = re_hprintf(pf, "[%r]", &hu->host);
+	else
+		err = re_hprintf(pf, "%r", &hu->host);
+
+	if (err)
+		return err;
+
+	if (hu->port)
+		err = re_hprintf(pf, ":%u", hu->port);
+
+	if (pl_isset(&hu->path))
+		err |= re_hprintf(pf, "%r", &hu->path);
 
 	return err;
 }
@@ -800,8 +856,7 @@ static int http_request_addr_v(struct http_req **reqp, struct http_cli *cli,
 	req->cli    = cli;
 	req->secure = secure;
 	req->port   = (addr && sa_port(addr)) ? sa_port(addr) :
-			(pl_isset(&http_uri.port) ? pl_u32(&http_uri.port) :
-			  defport);
+			(http_uri.port ? http_uri.port : defport);
 	req->resph  = resph;
 	req->datah  = datah;
 	req->bodyh  = bodyh;

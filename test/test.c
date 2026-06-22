@@ -123,6 +123,8 @@ static const struct test tests[] = {
 	TEST(test_http_large_body),
 	TEST(test_http_loop),
 	TEST(test_http_request_addr),
+	TEST(test_http_uri_decode),
+	TEST(test_http_uri_encode),
 #ifdef USE_TLS
 	TEST(test_https_request_addr),
 #endif
