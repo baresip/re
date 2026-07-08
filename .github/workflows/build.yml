@@ -33,7 +33,7 @@ jobs:
       CMAKE_GENERATOR: Ninja
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
 
     - name: Set Xcode version
       if: ${{ runner.os == 'macOS' }}
