@@ -13,7 +13,6 @@
 #include <rem_aulevel.h>
 #include <rem_auframe.h>
 #include <rem_aubuf.h>
-#include "ajb.h"
 
 
 #define AUBUF_DEBUG 0
@@ -40,9 +39,6 @@ struct aubuf {
 		size_t ur;
 	} stats;
 
-	enum aubuf_mode mode;
-	struct ajb *ajb;         /**< Adaptive jitter buffer statistics      */
-	double silence;          /**< Silence volume in negative [dB]        */
 	bool live;               /**< Live stream switch                     */
 };
 
@@ -68,7 +64,6 @@ static void aubuf_destructor(void *arg)
 	struct aubuf *ab = arg;
 
 	mem_deref(ab->lock);
-	mem_deref(ab->ajb);
 	mem_deref(ab->id);
 	mem_deref(ab->pool);
 }
@@ -199,30 +194,6 @@ void aubuf_set_live(struct aubuf *ab, bool live)
 }
 
 
-void aubuf_set_mode(struct aubuf *ab, enum aubuf_mode mode)
-{
-	if (!ab)
-		return;
-
-	ab->mode = mode;
-}
-
-
-/**
- * Sets the volume level for silence
- *
- * @param ab       Audio buffer
- * @param silence  Volume level in negative [dB]
- */
-void aubuf_set_silence(struct aubuf *ab, double silence)
-{
-	if (!ab)
-		return;
-
-	ab->silence = silence;
-}
-
-
 /**
  * Resize audio buffer (flushes aubuf)
  *
@@ -331,7 +302,6 @@ int aubuf_write_auframe(struct aubuf *ab, const struct auframe *af)
 	struct mbuf *mb;
 	size_t sz;
 	size_t sample_size;
-	bool ajb;
 	int err;
 
 	if (!ab || !af)
@@ -354,11 +324,7 @@ int aubuf_write_auframe(struct aubuf *ab, const struct auframe *af)
 
 	mtx_lock(ab->lock);
 	mem_deref(mb);
-	ajb = !ab->fill_sz && ab->ajb;
 	mtx_unlock(ab->lock);
-
-	if (ajb)
-		ajb_calc(ab->ajb, af, ab->cur_sz);
 
 	return err;
 }
@@ -375,7 +341,6 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 {
 	size_t sz;
 	bool filling;
-	enum ajb_state as;
 	bool drop;
 
 	if (!ab || !af)
@@ -385,18 +350,6 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 
 	mtx_lock(ab->lock);
 
-	if (!ab->ajb && ab->mode == AUBUF_ADAPTIVE)
-		ab->ajb = ajb_alloc(ab->silence, ab->wish_sz);
-
-	as = ajb_get(ab->ajb, af);
-	if (as == AJB_LOW) {
-#if AUBUF_DEBUG
-		(void)re_printf("aubuf: inc buffer due to high jitter\n");
-		ajb_debug(ab->ajb);
-#endif
-		goto out;
-	}
-
 	RE_TRACE_ID_INSTANT_I("aubuf", "cur_sz_ms",
 			      auframe_bytes_to_ms(af, ab->cur_sz), ab->id);
 
@@ -405,9 +358,6 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 			++ab->stats.ur;
 			RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
 		}
-
-		if (!ab->fill_sz)
-			ajb_set_ts0(ab->ajb, 0);
 
 		filling = ab->fill_sz > 0;
 		memset(af->sampv, 0, sz);
@@ -431,13 +381,6 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 
 	ab->started = true;
 	read_auframe(ab, af);
-	if (as == AJB_HIGH) {
-#if AUBUF_DEBUG
-		(void)re_printf("aubuf: drop a frame to reduce latency\n");
-		ajb_debug(ab->ajb);
-#endif
-		read_auframe(ab, af);
-	}
 
  out:
 
@@ -517,7 +460,6 @@ void aubuf_flush(struct aubuf *ab)
 	ab->ts      = 0;
 
 	mtx_unlock(ab->lock);
-	ajb_reset(ab->ajb);
 }
 
 
@@ -626,21 +568,4 @@ void aubuf_sort_auframe(struct aubuf *ab)
 		return;
 
 	list_sort(&ab->afl, frame_less_equal, NULL);
-}
-
-
-/**
- * This function is for reporting that the given audio frame was dropped. Its
- * timestamp is used to reset the ajb structure to avoid a jump of the computed
- * jitter value
- *
- * @param ab Audio buffer
- * @param af Audio frame
- */
-void aubuf_drop_auframe(struct aubuf *ab, const struct auframe *af)
-{
-	if (!ab)
-		return;
-
-	ajb_set_ts0(ab->ajb, af->timestamp);
 }

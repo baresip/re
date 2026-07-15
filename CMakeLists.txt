@@ -416,7 +416,6 @@ set(REM_SRCS
   rem/au/fmt.c
   rem/au/util.c
   rem/aubuf/aubuf.c
-  rem/aubuf/ajb.c
   rem/auconv/auconv.c
   rem/aufile/aufile.c
   rem/aufile/wave.c

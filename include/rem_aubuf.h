@@ -5,16 +5,9 @@
  */
 struct aubuf;
 
-enum aubuf_mode {
-	AUBUF_FIXED,
-	AUBUF_ADAPTIVE
-};
-
 int  aubuf_alloc(struct aubuf **abp, size_t min_sz, size_t max_sz);
 void aubuf_set_id(struct aubuf *ab, struct pl *id);
 void aubuf_set_live(struct aubuf *ab, bool live);
-void aubuf_set_mode(struct aubuf *ab, enum aubuf_mode mode);
-void aubuf_set_silence(struct aubuf *ab, double silence);
 int  aubuf_resize(struct aubuf *ab, size_t min_sz, size_t max_sz);
 int  aubuf_write_auframe(struct aubuf *ab, const struct auframe *af);
 int  aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
@@ -27,7 +20,6 @@ int  aubuf_debug(struct re_printf *pf, const struct aubuf *ab);
 size_t aubuf_cur_size(const struct aubuf *ab);
 size_t aubuf_maxsz(const struct aubuf *ab);
 bool aubuf_started(const struct aubuf *ab);
-void aubuf_drop_auframe(struct aubuf *ab, const struct auframe *af);
 
 
 static inline int aubuf_append(struct aubuf *ab, struct mbuf *mb)
