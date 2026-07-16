@@ -124,15 +124,21 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 					  "addr2line -p -f -e %r %r",
 					  &files[j], &addrs[j]);
 #endif
+			if (off < 0)
+				break;
 
 			/* group addresses */
 			for (size_t next = j + 1; next < bt->len; next++) {
 				if (pl_cmp(&files[j], &files[next]) != 0)
 					break;
 
-				off += re_snprintf(addr2l + off,
-						   sizeof(addr2l) - off, " %r",
-						   &addrs[next]);
+				int n = re_snprintf(addr2l + off,
+						    sizeof(addr2l) - off,
+						    " %r", &addrs[next]);
+				if (n < 0)
+					break;
+
+				off += n;
 				files[next] = pl_null;
 			}
 
