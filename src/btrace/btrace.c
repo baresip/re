@@ -93,7 +93,7 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 				   ((j + 1) < bt->len) ? ", " : "");
 		}
 		break;
-	case BTRACE_NEWLINE:
+	case BTRACE_NEWLINE: {
 		struct pl files[BTRACE_SZ];
 		struct pl addrs[BTRACE_SZ];
 		char addr2l[512]     = {0};
@@ -149,6 +149,7 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 #endif
 		}
 		break;
+	}
 	case BTRACE_JSON:
 		re_hprintf(pf, "[");
 		for (size_t j = 0; j < bt->len; j++) {
