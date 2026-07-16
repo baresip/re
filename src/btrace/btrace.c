@@ -108,7 +108,6 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 
 		for (size_t j = 0; j < bt->len; j++) {
 			re_hprintf(pf, "%s\n", symbols[j]);
-#ifdef LINUX
 			FILE *pipe;
 			int off = 0;
 
@@ -146,7 +145,6 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 			}
 
 			pclose(pipe);
-#endif
 		}
 		break;
 	}
