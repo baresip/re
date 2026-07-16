@@ -94,20 +94,48 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 		}
 		break;
 	case BTRACE_NEWLINE:
+		struct pl files[BTRACE_SZ];
+		struct pl addrs[BTRACE_SZ];
+		char addr2l[512]     = {0};
+		char addr2l_out[256] = {0};
+
+		for (size_t j = 0; j < bt->len; j++) {
+			files[j] = pl_null;
+			addrs[j] = pl_null;
+			re_regex(symbols[j], str_len(symbols[j]),
+				 "[^(]+([^)]+", &files[j], &addrs[j]);
+		}
+
 		for (size_t j = 0; j < bt->len; j++) {
 			re_hprintf(pf, "%s\n", symbols[j]);
 #ifdef LINUX
-			struct pl file	     = PL_INIT;
-			struct pl addr	     = PL_INIT;
-			char addr2l[512]     = {0};
-			char addr2l_out[256] = {0};
 			FILE *pipe;
+			int off = 0;
 
-			re_regex(symbols[j], str_len(symbols[j]),
-				 "[^(]+([^)]+", &file, &addr);
+			/* check already handled as part of a group */
+			if (!files[j].l)
+				continue;
 
-			(void)re_snprintf(addr2l, sizeof(addr2l),
-				    "addr2line -p -f -e %r %r", &file, &addr);
+#ifdef __clang__
+			off = re_snprintf(addr2l, sizeof(addr2l),
+					  "llvm-addr2line -p -f -e %r %r",
+					  &files[j], &addrs[j]);
+#else
+			off = re_snprintf(addr2l, sizeof(addr2l),
+					  "addr2line -p -f -e %r %r",
+					  &files[j], &addrs[j]);
+#endif
+
+			/* group addresses */
+			for (size_t next = j + 1; next < bt->len; next++) {
+				if (pl_cmp(&files[j], &files[next]) != 0)
+					break;
+
+				off += re_snprintf(addr2l + off,
+						   sizeof(addr2l) - off, " %r",
+						   &addrs[next]);
+				files[next] = pl_null;
+			}
 
 			pipe = popen(addr2l, "r");
 			if (!pipe)
