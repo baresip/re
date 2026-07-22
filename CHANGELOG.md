@@ -5,6 +5,15 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.10.0 - 2026-07-22
+
+### What's Changed
+* http: uri decode and encode by @cspiel1 in https://github.com/baresip/re/pull/1582
+* ci: bump actions/checkout v7 by @sreimers in https://github.com/baresip/re/pull/1596
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.9.0...v4.10.0
+
+
 ## v4.9.0 - 2026-06-17
 
 ### What's Changed
@@ -19,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @wcqedison made their first contribution in https://github.com/baresip/re/pull/1593
 
 **Full Changelog**: https://github.com/baresip/re/compare/v4.8.1...v4.9.0
+
 
 ## v4.8.1 - 2026-05-28 Security and Bugfix Release
 
