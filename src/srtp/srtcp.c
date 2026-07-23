@@ -215,7 +215,7 @@ int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb)
 		if (err)
 			return err;
 	}
-	else if (rtcp->aes && ep && rtcp->mode == AES_MODE_GCM) {
+	else if (rtcp->aes && rtcp->mode == AES_MODE_GCM) {
 
 		union vect128 iv;
 		size_t tag_start;
@@ -226,9 +226,8 @@ int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb)
 		aes_set_iv(rtcp->aes, iv.u8);
 
 		/* The RTP Header is Associated Data */
-		err  = aes_decr(rtcp->aes, NULL, &mb->buf[start],
+		err = aes_decr(rtcp->aes, NULL, &mb->buf[start],
 				pld_start - start);
-		err |= aes_decr(rtcp->aes, NULL, &mb->buf[eix_start], 4);
 		if (err)
 			return err;
 
@@ -240,9 +239,29 @@ int srtcp_decrypt(struct srtp *srtp, struct mbuf *mb)
 
 		tag_start = mb->end - GCM_TAGLEN;
 
-		err = aes_decr(rtcp->aes, p, p, tag_start - pld_start);
-		if (err)
-			return err;
+		/*
+		 * RFC 7714 section 9: "All SRTCP compound packets MUST be
+		 * authenticated, but unlike SRTP, SRTCP packet encryption
+		 * is optional."
+		 */
+		if (ep) {
+			/* RFC 7714 9.2 (encrypted) */
+			err = aes_decr(rtcp->aes, NULL, &mb->buf[eix_start],
+				       4);
+			err |= aes_decr(rtcp->aes, p, p,
+					tag_start - pld_start);
+			if (err)
+				return err;
+		}
+		else {
+			/* RFC 7714 9.3 (unencrypted) */
+			err = aes_decr(rtcp->aes, NULL, p,
+				       tag_start - pld_start);
+			err |= aes_decr(rtcp->aes, NULL, &mb->buf[eix_start],
+					4);
+			if (err)
+				return err;
+		}
 
 		err = aes_authenticate(rtcp->aes, &mb->buf[tag_start],
 				       GCM_TAGLEN);
