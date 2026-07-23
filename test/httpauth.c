@@ -256,85 +256,66 @@ int test_httpauth_basic_request(void) {
 			PL("Basic d3Jvbmc6Y3JlZGVudGlhbHM=="), "/my/home",
 			NULL, "retest", "retestpasswd", 0, EACCES
 		},
+		{
+			"Basic realm=\"/my/home\"",
+			PL("Basic "),
+			"/my/home", NULL, "retest", "retestpasswd", 0, EBADMSG
+		},
+		{
+			"Basic realm=\"/my/home\"",
+			PL("Basic ~"),
+			"/my/home", NULL, "retest", "retestpasswd", 0, EACCES
+		}
 	};
 	unsigned int i;
 	int err = 0;
 
+	struct httpauth_basic_req *req = NULL;
+	struct mbuf *mb = NULL;
 	for (i = 0; i < RE_ARRAY_SIZE(testv); ++i) {
-		struct httpauth_basic_req *req = NULL;
-		struct mbuf *mb = NULL;
-		int terr = 0;
 		int tauth_err = 0;
 
-		terr = httpauth_basic_request(&req,
+		err = httpauth_basic_request(&req,
 			testv[i].realm, testv[i].charset);
-		if (terr == ENOMEM) {
-			err = ENOMEM;
-			break;
-		}
-		else if (terr != testv[i].err) {
-			DEBUG_WARNING("basic req: expected error %d, got %m\n",
-				testv[i].err, terr);
-			err = terr;
-			break;
-		}
-
-		if (str_casecmp(req->realm, testv[i].realm) != 0) {
-			DEBUG_WARNING("basic req: expected realm %s, got %s\n",
-				testv[i].realm, req->realm);
-			err = EBADMSG;
-			mem_deref(req);
-			break;
-		}
+		TEST_ERR(err);
+		TEST_EQUALS(err, testv[i].err);
+		TEST_STRCMP(req->realm, str_len(req->realm), testv[i].realm,
+			    str_len(testv[i].realm));
 
 		if (testv[i].charset) {
-			if (str_casecmp(req->charset, testv[i].charset) != 0) {
-				DEBUG_WARNING("basic req: expected charset"
-					"%s, got %s\n", testv[i].charset,
-					req->charset);
-				err = EBADMSG;
-				mem_deref(req);
-				break;
-			}
+			TEST_STRCMP(req->charset, str_len(req->charset),
+				    testv[i].charset,
+				    str_len(testv[i].charset));
 		}
 
 		mb = mbuf_alloc(512);
 		if (!mb) {
 			err = ENOMEM;
-			mem_deref(req);
-			break;
+			TEST_ERR(err);
 		}
 
 		err = mbuf_printf(mb, "%H", httpauth_basic_request_print, req);
-		if (err) {
-			mem_deref(mb);
-			mem_deref(req);
-			break;
-		}
+		TEST_ERR(err);
 
-		if (memcmp(testv[i].hval, mb->buf,
-			str_len(testv[i].hval)) != 0) {
-			DEBUG_WARNING("basic req: expected hval %s, got %s\n",
-				testv[i].hval, mb->buf);
-			err = EBADMSG;
-			mem_deref(mb);
-			mem_deref(req);
-			break;
-		}
+		TEST_MEMCMP(testv[i].hval, str_len(testv[i].hval), mb->buf,
+			str_len(testv[i].hval));
 
-		mem_deref(mb);
+		mb = mem_deref(mb);
+
 		tauth_err = httpauth_basic_verify(&testv[i].hval_response,
 			testv[i].user, testv[i].passwd);
-		if (tauth_err != testv[i].auth_err) {
-			DEBUG_WARNING("basic req:"
-				"authentication expected %d, got %d\n",
-				testv[i].auth_err, tauth_err);
-			mem_deref(req);
-			break;
+		if (tauth_err == ENOMEM) {
+			err = ENOMEM;
+			goto out;
 		}
+		TEST_EQUALS(testv[i].auth_err, tauth_err);
 
-		mem_deref(req);
+		req = mem_deref(req);
 	}
+
+out:
+	mem_deref(req);
+	mem_deref(mb);
 
 	return err;
 }
