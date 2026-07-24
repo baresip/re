@@ -45,6 +45,7 @@ struct srtp {
 		struct hmac *hmac;  /**< HMAC Context                      */
 		union vect128 k_s;  /**< Derived salting key (14 bytes)    */
 		size_t tag_len;     /**< CTR Auth. tag length [bytes]      */
+		bool encrypted;     /**< Enable/Disable Encryption (RTCP)  */
 	} rtp, rtcp;
 
 	struct list streaml;        /**< SRTP-streams (struct srtp_stream) */
