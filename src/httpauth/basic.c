@@ -197,7 +197,7 @@ int httpauth_basic_verify(const struct pl *hval, const char *user,
 	if (err)
 		goto out;
 
-	if (mem_seccmp(mb->buf, (uint8_t *)c, clen) != 0)
+	if (clen != mb->end || mem_seccmp(mb->buf, (uint8_t *)c, clen) != 0)
 		err = EACCES;
 
 out:
