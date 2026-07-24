@@ -410,7 +410,7 @@ static int test_srtp_loop(size_t offset, enum srtp_suite suite, uint16_t seq)
 
 
 static int test_srtcp_loop(size_t offset, enum srtp_suite suite,
-			   enum rtcp_type type)
+			   enum rtcp_type type, enum srtp_flags flags)
 {
 	struct srtp *ctx_tx = NULL, *ctx_rx = NULL;
 	struct mbuf *mb1 = NULL, *mb2 = NULL;
@@ -436,10 +436,10 @@ static int test_srtcp_loop(size_t offset, enum srtp_suite suite,
 		goto out;
 	}
 
-	err  = srtp_alloc(&ctx_tx, suite, master_key, key_len + salt_len, 0);
+	err = srtp_alloc(&ctx_tx, suite, master_key, key_len + salt_len,
+			 flags);
 	err |= srtp_alloc(&ctx_rx, suite, master_key, key_len + salt_len, 0);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	for (i=0; i<10; i++) {
 
@@ -461,9 +461,7 @@ static int test_srtcp_loop(size_t offset, enum srtp_suite suite,
 			err = EINVAL;
 			break;
 		}
-
-		if (err)
-			break;
+		TEST_ERR(err);
 
 		end = mb1->end;
 
@@ -474,8 +472,7 @@ static int test_srtcp_loop(size_t offset, enum srtp_suite suite,
 		/* tx */
 		mb1->pos = offset;
 		err = srtcp_encrypt(ctx_tx, mb1);
-		if (err)
-			break;
+		TEST_ERR(err);
 
 		TEST_EQUALS(offset, mb1->pos);
 		TEST_ASSERT(mb1->end != end);
@@ -485,8 +482,7 @@ static int test_srtcp_loop(size_t offset, enum srtp_suite suite,
 		/* rx */
 		mb1->pos = offset;
 		err = srtcp_decrypt(ctx_rx, mb1);
-		if (err)
-			break;
+		TEST_ERR(err);
 
 		TEST_EQUALS(offset, mb1->pos);
 		TEST_EQUALS(end, mb1->end);
@@ -1142,25 +1138,25 @@ int test_srtcp(void)
 		return ESKIPPED;
 	}
 
-	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_32, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_256_CM_HMAC_SHA1_80, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE);
+	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE);
+	err = test_srtcp_loop(4, SRTP_AES_CM_128_HMAC_SHA1_80, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_RR);
+	err = test_srtcp_loop(0, SRTP_AES_CM_128_HMAC_SHA1_32, RTCP_RR, 0);
 	TEST_ERR(err);
 
 	err = test_srtcp_libsrtp();
@@ -1218,16 +1214,20 @@ int test_srtcp_gcm(void)
 		return ESKIPPED;
 	}
 
-	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_256_GCM, RTCP_BYE);
+	err = test_srtcp_loop(0, SRTP_AES_256_GCM, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(4, SRTP_AES_128_GCM, RTCP_BYE);
+	err = test_srtcp_loop(4, SRTP_AES_128_GCM, RTCP_BYE, 0);
 	TEST_ERR(err);
 
-	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_RR);
+	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_RR, 0);
+	TEST_ERR(err);
+
+	err = test_srtcp_loop(0, SRTP_AES_128_GCM, RTCP_RR,
+			      SRTP_UNENCRYPTED_SRTCP);
 	TEST_ERR(err);
 
 	err = test_srtcp_random(SRTP_AES_128_GCM);

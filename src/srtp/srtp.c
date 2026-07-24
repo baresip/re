@@ -47,6 +47,7 @@ static int comp_init(struct comp *c, unsigned offs,
 
 	c->tag_len = tag_len;
 	c->mode = mode;
+	c->encrypted = encrypted;
 
 	err |= srtp_derive(k_e, key_b,       0x00+offs, key, key_b, s, s_b);
 	err |= srtp_derive(k_a, sizeof(k_a), 0x01+offs, key, key_b, s, s_b);
@@ -54,7 +55,8 @@ static int comp_init(struct comp *c, unsigned offs,
 	if (err)
 		return err;
 
-	if (encrypted) {
+	/* AES-GCM always needs aes_alloc for Associated Data authentication */
+	if (encrypted || mode == AES_MODE_GCM) {
 		err = aes_alloc(&c->aes, mode, k_e, key_b*8, NULL);
 		if (err)
 			return err;

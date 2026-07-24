@@ -71,7 +71,8 @@ int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb)
 		union vect128 iv;
 		uint8_t *p = mbuf_buf(mb);
 		uint8_t tag[GCM_TAGLEN];
-		const uint32_t ix_be = htonl(1L<<31 | strm->rtcp_index);
+		ep = rtcp->encrypted;
+		const uint32_t ix_be = htonl(ep << 31 | strm->rtcp_index);
 
 		srtp_iv_calc_gcm(&iv, &rtcp->k_s, ssrc, strm->rtcp_index);
 
@@ -80,15 +81,25 @@ int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb)
 		/* The RTCP Header and Index is Associated Data */
 		err  = aes_encr(rtcp->aes, NULL, &mb->buf[start],
 				mb->pos - start);
-		err |= aes_encr(rtcp->aes, NULL,
-				(void *)&ix_be, sizeof(ix_be));
 		if (err)
 			return err;
 
-		err = aes_encr(rtcp->aes, p, p, mbuf_get_left(mb));
-		if (err)
-			return err;
-
+		if (rtcp->encrypted) {
+			/* RFC 7714 9.2 (encrypted) */
+			err = aes_encr(rtcp->aes, NULL, (void *)&ix_be,
+					sizeof(ix_be));
+			err |= aes_encr(rtcp->aes, p, p, mbuf_get_left(mb));
+			if (err)
+				return err;
+		}
+		else {
+			/* RFC 7714 9.3 (unencrypted) */
+			err = aes_encr(rtcp->aes, NULL, p, mbuf_get_left(mb));
+			err |= aes_encr(rtcp->aes, NULL, (void *)&ix_be,
+					sizeof(ix_be));
+			if (err)
+				return err;
+		}
 		err = aes_get_authtag(rtcp->aes, tag, sizeof(tag));
 		if (err)
 			return err;
@@ -98,7 +109,6 @@ int srtcp_encrypt(struct srtp *srtp, struct mbuf *mb)
 		if (err)
 			return err;
 
-		ep = 1;
 	}
 
 	/* append E-bit and SRTCP-index */
