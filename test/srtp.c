@@ -925,7 +925,7 @@ static int test_srtcp_random(enum srtp_suite suite)
 }
 
 
-static int test_srtp_unauth(enum srtp_suite suite)
+static int test_srtp_unauth(enum srtp_suite suite, enum srtp_flags flags)
 {
 	struct srtp *srtp_tx, *srtp_rx;
 	struct mbuf *mb = NULL;
@@ -946,7 +946,8 @@ static int test_srtp_unauth(enum srtp_suite suite)
 	if (!mb)
 		return ENOMEM;
 
-	err  = srtp_alloc(&srtp_tx, suite, master_key, key_len+salt_len, 0);
+	err = srtp_alloc(&srtp_tx, suite, master_key, key_len + salt_len,
+			 flags);
 	err |= srtp_alloc(&srtp_rx, suite, master_key, key_len+salt_len, 0);
 	if (err)
 		goto out;
@@ -1118,7 +1119,11 @@ int test_srtp(void)
 	err = test_srtp_reordering_and_wrap();
 	TEST_ERR(err);
 
-	err = test_srtp_unauth(SRTP_AES_CM_128_HMAC_SHA1_32);
+	err = test_srtp_unauth(SRTP_AES_CM_128_HMAC_SHA1_32, 0);
+	TEST_ERR(err);
+
+	err = test_srtp_unauth(SRTP_AES_CM_128_HMAC_SHA1_32,
+			       SRTP_UNENCRYPTED_SRTCP);
 	TEST_ERR(err);
 
 	err = test_srtp_random(SRTP_AES_CM_128_HMAC_SHA1_32);
@@ -1191,7 +1196,10 @@ int test_srtp_gcm(void)
 	err = test_srtp_loop(0, SRTP_AES_256_GCM, 65530);
 	TEST_ERR(err);
 
-	err = test_srtp_unauth(SRTP_AES_256_GCM);
+	err = test_srtp_unauth(SRTP_AES_256_GCM, 0);
+	TEST_ERR(err);
+
+	err = test_srtp_unauth(SRTP_AES_256_GCM, SRTP_UNENCRYPTED_SRTCP);
 	TEST_ERR(err);
 
 	err = test_srtp_replay(SRTP_AES_128_GCM);
