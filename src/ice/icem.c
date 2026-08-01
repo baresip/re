@@ -16,6 +16,27 @@
 #include "ice.h"
 
 
+void icem_shared_socket_candidate(struct icem *icem, bool enabled)
+{
+	if (icem)
+		icem->shared_socket_candidate = enabled;
+}
+
+
+void icem_shared_socket_route(struct icem *icem, bool enabled)
+{
+	if (icem)
+		icem->shared_socket_route = enabled;
+}
+
+
+void icem_shared_socket_retired(struct icem *icem, bool enabled)
+{
+	if (icem)
+		icem->shared_socket_retired = enabled;
+}
+
+
 #define DEBUG_MODULE "icem"
 #define DEBUG_LEVEL 5
 #include <re_dbg.h>

@@ -60,6 +60,8 @@ static bool helper_recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 		struct ice_candpair *pair = candpair_find_remote(&icem->validl,
 								 src);
 		if (!pair) {
+			if (icem->shared_socket_candidate)
+				return false;
 			icecomp_printf(comp,
 			       "dropping unauth application packet from %J\n",
 			       src);
@@ -75,11 +77,52 @@ static bool helper_recv_handler(struct sa *src, struct mbuf *mb, void *arg)
 		switch (stun_msg_class(msg)) {
 
 		case STUN_CLASS_REQUEST:
+		{
+			struct stun_attr *username = stun_msg_attr(
+				msg, STUN_ATTR_USERNAME);
+			struct pl local, remote;
+
+			if (icem->shared_socket_retired) {
+				mem_deref(msg);
+				mb->pos = start;
+				return false;
+			}
+
+			/* Multiple ICE generations may intentionally share one UDP
+			 * socket during a restart.  Let only the helper whose local and
+			 * remote ufrags match consume the request; another generation
+			 * must not turn it into a spurious 401.
+			 * A normal single-generation helper remains strict and sends
+			 * the RFC 8445 authentication error itself. */
+			if (!username || re_regex(
+					username->v.username,
+					strlen(username->v.username),
+					"[^:]+:[^]+", &local, &remote) ||
+			    pl_strcmp(&local, icem->lufrag) ||
+			    (str_isset(icem->rufrag) &&
+			     pl_strcmp(&remote, icem->rufrag))) {
+				if (icem->shared_socket_route) {
+					mem_deref(msg);
+					mb->pos = start;
+					return false;
+				}
+			}
 			(void)icem_stund_recv(comp, src, msg, start);
 			break;
+		}
 
 		default:
-			(void)stun_ctrans_recv(icem->stun, msg, &ua);
+			if (icem->shared_socket_retired) {
+				mem_deref(msg);
+				mb->pos = start;
+				return false;
+			}
+			if (stun_ctrans_recv(icem->stun, msg, &ua) &&
+			    icem->shared_socket_route) {
+				mem_deref(msg);
+				mb->pos = start;
+				return false;
+			}
 			break;
 		}
 	}

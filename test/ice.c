@@ -4,7 +4,13 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <string.h>
+/* Legacy ICE and Trickle ICE use the same candidate-pair struct tag.  Rename
+ * the unused Trickle ICE tag in this white-box test before including the
+ * classic ICE internals below. */
+#define ice_candpair trice_ice_candpair
 #include <re.h>
+#undef ice_candpair
+#include "../src/ice/ice.h"
 #include "test.h"
 
 
@@ -73,6 +79,259 @@ struct ice_test {
 	struct tmr tmr;
 	int err;
 };
+
+
+struct shared_socket_test {
+	struct udp_sock *us;
+	struct udp_helper *capture;
+	struct icem *old;
+	struct icem *candidate;
+	struct stun_ctrans *candidate_ct;
+	struct sa local;
+	struct sa old_peer;
+	struct sa new_peer;
+	struct sa third_peer;
+	struct mbuf *sent;
+	unsigned sends;
+	unsigned receives;
+	unsigned candidate_responses;
+	int response_err;
+};
+
+
+static int shared_socket_send_capture(struct shared_socket_test *test,
+				      const struct mbuf *mb)
+{
+	struct mbuf *copy;
+	int err;
+
+	copy = mbuf_alloc(mbuf_get_left(mb));
+	if (!copy)
+		return ENOMEM;
+
+	err = mbuf_write_mem(copy, mbuf_buf(mb), mbuf_get_left(mb));
+	if (err) {
+		mem_deref(copy);
+		return err;
+	}
+	copy->pos = 0;
+
+	mem_deref(test->sent);
+	test->sent = copy;
+	++test->sends;
+	return 0;
+}
+
+
+static bool shared_socket_send_handler(int *err, struct sa *dst,
+				       struct mbuf *mb, void *arg)
+{
+	struct shared_socket_test *test = arg;
+	(void)dst;
+
+	*err = shared_socket_send_capture(test, mb);
+	return true;
+}
+
+
+static void shared_socket_recv_handler(const struct sa *src,
+				       struct mbuf *mb, void *arg)
+{
+	struct shared_socket_test *test = arg;
+	(void)src;
+	(void)mb;
+
+	++test->receives;
+}
+
+
+static void shared_socket_response_handler(int err, uint16_t scode,
+					   const char *reason,
+					   const struct stun_msg *msg,
+					   void *arg)
+{
+	struct shared_socket_test *test = arg;
+	(void)reason;
+	(void)msg;
+
+	++test->candidate_responses;
+	test->response_err = err ? err : (scode ? EPROTO : 0);
+}
+
+
+static int shared_socket_add_valid_peer(struct icem *icem,
+					const struct sa *local,
+					const struct sa *peer)
+{
+	struct ice_candpair *pair = NULL;
+	struct ice_cand *lcand;
+	struct ice_cand *rcand;
+	struct pl foundation = PL("peer");
+	int err;
+
+	err = icem_lcand_add_base(icem, ICE_CAND_TYPE_HOST, ICE_COMPID_RTP,
+				   0, "loopback", ICE_TRANSP_UDP, local);
+	if (err)
+		return err;
+
+	err = icem_rcand_add(icem, ICE_CAND_TYPE_HOST, ICE_COMPID_RTP,
+			      ice_cand_calc_prio(ICE_CAND_TYPE_HOST, 0,
+					 ICE_COMPID_RTP),
+			      peer, NULL, &foundation);
+	if (err)
+		return err;
+
+	lcand = list_ledata(list_head(icem_lcandl(icem)));
+	rcand = icem_cand_find(icem_rcandl(icem), ICE_COMPID_RTP, peer);
+	if (!lcand || !rcand)
+		return ENOENT;
+
+	err = icem_candpair_alloc(&pair, icem, lcand, rcand);
+	if (err)
+		return err;
+
+	icem_candpair_make_valid(pair);
+	return 0;
+}
+
+
+static int shared_socket_icem_alloc(struct icem **icemp,
+				    struct shared_socket_test *test,
+				    int layer, uint64_t tiebrk,
+				    const char *ufrag, const char *pwd,
+				    const struct sa *peer)
+{
+	int err;
+
+	err = icem_alloc(icemp, ICE_ROLE_CONTROLLED, IPPROTO_UDP, layer,
+			 tiebrk, ufrag, pwd, NULL, NULL);
+	if (err)
+		return err;
+
+	err = icem_comp_add(*icemp, ICE_COMPID_RTP, test->us);
+	if (err)
+		return err;
+	err = icem_sdp_decode(*icemp, "ice-ufrag", "remote");
+	if (err)
+		return err;
+
+	return shared_socket_add_valid_peer(*icemp, &test->local, peer);
+}
+
+
+static void shared_socket_test_destructor(void *arg)
+{
+	struct shared_socket_test *test = arg;
+
+	mem_deref(test->candidate_ct);
+	mem_deref(test->candidate);
+	mem_deref(test->old);
+	mem_deref(test->capture);
+	mem_deref(test->sent);
+	mem_deref(test->us);
+}
+
+
+static int shared_socket_test_alloc(struct shared_socket_test **testp)
+{
+	static const char old_pwd[] = "old-password-0123456789abcdef";
+	static const char new_pwd[] = "new-password-0123456789abcdef";
+	struct shared_socket_test *test;
+	int err;
+
+	test = mem_zalloc(sizeof(*test), shared_socket_test_destructor);
+	if (!test)
+		return ENOMEM;
+
+	err = sa_set_str(&test->local, "127.0.0.1", 0);
+	if (err)
+		goto out;
+	err = sa_set_str(&test->old_peer, "127.0.0.1", 41001);
+	if (err)
+		goto out;
+	err = sa_set_str(&test->new_peer, "127.0.0.1", 41002);
+	if (err)
+		goto out;
+	err = sa_set_str(&test->third_peer, "127.0.0.1", 41003);
+	if (err)
+		goto out;
+
+	err = udp_listen(&test->us, &test->local,
+			 shared_socket_recv_handler, test);
+	if (err)
+		goto out;
+	err = udp_local_get(test->us, &test->local);
+	if (err)
+		goto out;
+
+	err = shared_socket_icem_alloc(&test->old, test, 20, 1,
+				       "old-ufrag", old_pwd,
+				       &test->old_peer);
+	if (err)
+		goto out;
+	err = shared_socket_icem_alloc(&test->candidate, test, 20, 2,
+				       "new-ufrag", new_pwd,
+				       &test->new_peer);
+	if (err)
+		goto out;
+
+	/* Capture replies and requests without sending them to the network. */
+	err = udp_register_helper(&test->capture, test->us, 100,
+				  shared_socket_send_handler, NULL, test);
+	if (err)
+		goto out;
+
+	icem_shared_socket_candidate(test->candidate, true);
+	icem_shared_socket_route(test->old, true);
+	icem_shared_socket_route(test->candidate, true);
+
+out:
+	if (err)
+		mem_deref(test);
+	else
+		*testp = test;
+	return err;
+}
+
+
+static int shared_socket_inject(struct shared_socket_test *test,
+				const struct sa *src, struct mbuf *mb)
+{
+	if (!test || !src || !mb)
+		return EINVAL;
+
+	mb->pos = 0;
+	udp_recv_packet(test->us, src, mb);
+	return 0;
+}
+
+
+static int shared_socket_request(struct mbuf **mbp, const char *username,
+				 const char *pwd)
+{
+	static const uint32_t priority = 0x6e0001ff;
+	static const uint64_t controlling = 0x932ff9b151263b36ULL;
+	uint8_t tid[STUN_TID_SIZE];
+	struct mbuf *mb;
+	int err;
+
+	mb = mbuf_alloc(256);
+	if (!mb)
+		return ENOMEM;
+
+	stun_generate_tid(tid);
+	err = stun_msg_encode(mb, STUN_METHOD_BINDING, STUN_CLASS_REQUEST,
+			      tid, NULL, (const uint8_t *)pwd, strlen(pwd),
+			      true, 0, 3,
+			      STUN_ATTR_PRIORITY, &priority,
+			      STUN_ATTR_CONTROLLING, &controlling,
+			      STUN_ATTR_USERNAME, username);
+	if (err)
+		mem_deref(mb);
+	else
+		*mbp = mb;
+	return err;
+}
 
 
 static void icetest_check_gatherings(struct ice_test *it);
@@ -894,6 +1153,277 @@ static int test_ice_cand_attribute(void)
 	}
 
  out:
+	return err;
+}
+
+
+static int test_ice_shared_socket_stun_request(void)
+{
+	static const char new_pwd[] = "new-password-0123456789abcdef";
+	struct shared_socket_test *test = NULL;
+	struct stun_msg *response = NULL;
+	struct mbuf *request = NULL;
+	unsigned receives;
+	int err;
+
+	err = shared_socket_test_alloc(&test);
+	TEST_ERR(err);
+
+	/* The old helper sees this first, but only the matching local ufrag may
+	 * authenticate and answer it. */
+	err = shared_socket_request(&request, "new-ufrag:remote", new_pwd);
+	TEST_ERR(err);
+	err = shared_socket_inject(test, &test->new_peer, request);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->sends);
+	TEST_EQUALS(0, test->receives);
+	TEST_ASSERT(test->sent != NULL);
+	err = stun_msg_decode(&response, test->sent, NULL);
+	TEST_ERR(err);
+	TEST_EQUALS(STUN_METHOD_BINDING, stun_msg_method(response));
+	TEST_EQUALS(STUN_CLASS_SUCCESS_RESP, stun_msg_class(response));
+
+	mem_deref(response);
+	response = NULL;
+	mem_deref(request);
+	request = NULL;
+
+	/* No generation owns this ufrag, so every ICE helper must fall through
+	 * without manufacturing an authentication error. */
+	receives = test->receives;
+	err = shared_socket_request(&request, "unknown:remote", new_pwd);
+	TEST_ERR(err);
+	err = shared_socket_inject(test, &test->third_peer, request);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->sends);
+	TEST_EQUALS(receives + 1, test->receives);
+
+	mem_deref(request);
+	request = NULL;
+
+	/* Matching a provisional generation's local ufrag is insufficient when
+	 * the peer still sends with its active generation.  The pair of ufrags
+	 * identifies the generation, so this must route without a stale 401. */
+	receives = test->receives;
+	err = shared_socket_request(&request, "new-ufrag:stale-remote",
+				    new_pwd);
+	TEST_ERR(err);
+	err = shared_socket_inject(test, &test->old_peer, request);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->sends);
+	TEST_EQUALS(receives + 1, test->receives);
+
+out:
+	mem_deref(response);
+	mem_deref(request);
+	mem_deref(test);
+	return err;
+}
+
+
+static int test_ice_single_socket_stun_request(void)
+{
+	static const char old_pwd[] = "old-password-0123456789abcdef";
+	struct shared_socket_test *test = NULL;
+	struct stun_attr *error_code;
+	struct stun_msg *response = NULL;
+	struct mbuf *request = NULL;
+	int err;
+
+	err = shared_socket_test_alloc(&test);
+	TEST_ERR(err);
+	test->candidate = mem_deref(test->candidate);
+	icem_shared_socket_route(test->old, false);
+	err = shared_socket_request(&request, "unknown:remote", old_pwd);
+	TEST_ERR(err);
+	err = shared_socket_inject(test, &test->third_peer, request);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->sends);
+	TEST_EQUALS(0, test->receives);
+	TEST_ASSERT(test->sent != NULL);
+	err = stun_msg_decode(&response, test->sent, NULL);
+	TEST_ERR(err);
+	TEST_EQUALS(STUN_METHOD_BINDING, stun_msg_method(response));
+	TEST_EQUALS(STUN_CLASS_ERROR_RESP, stun_msg_class(response));
+	error_code = stun_msg_attr(response, STUN_ATTR_ERR_CODE);
+	TEST_ASSERT(error_code != NULL);
+	TEST_EQUALS(401, error_code->v.err_code.code);
+
+out:
+	mem_deref(response);
+	mem_deref(request);
+	mem_deref(test);
+	return err;
+}
+
+
+static int test_ice_retired_socket_stun_request(void)
+{
+	static const char old_pwd[] = "old-password-0123456789abcdef";
+	struct shared_socket_test *test = NULL;
+	struct mbuf *request = NULL;
+	unsigned receives;
+	int err;
+
+	err = shared_socket_test_alloc(&test);
+	TEST_ERR(err);
+
+	/* A retired generation may still share the live UDP helper chain.  Even
+	 * a request matching its former local ufrag must continue to the active
+	 * generation instead of producing a stale-remote-ufrag 401 response. */
+	icem_shared_socket_candidate(test->old, true);
+	icem_shared_socket_retired(test->old, true);
+	receives = test->receives;
+	err = shared_socket_request(&request, "old-ufrag:stale-remote", old_pwd);
+	TEST_ERR(err);
+	err = shared_socket_inject(test, &test->old_peer, request);
+	TEST_ERR(err);
+	TEST_EQUALS(0, test->sends);
+	TEST_EQUALS(receives + 1, test->receives);
+
+out:
+	mem_deref(request);
+	mem_deref(test);
+	return err;
+}
+
+
+static int test_ice_shared_socket_stun_response(void)
+{
+	struct shared_socket_test *test = NULL;
+	struct stun_msg *outgoing = NULL;
+	struct mbuf *response = NULL;
+	uint8_t tid[STUN_TID_SIZE];
+	unsigned receives;
+	int err;
+
+	err = shared_socket_test_alloc(&test);
+	TEST_ERR(err);
+
+	/* Register a transaction only on the candidate generation.  The response
+	 * reaches the old helper first and must continue until its TID owner. */
+	err = stun_request(&test->candidate_ct, icem_stun(test->candidate),
+			   IPPROTO_UDP, test->us, &test->new_peer, 0,
+			   STUN_METHOD_BINDING, NULL, 0, true,
+			   shared_socket_response_handler, test, 0);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->sends);
+	TEST_ASSERT(test->sent != NULL);
+	err = stun_msg_decode(&outgoing, test->sent, NULL);
+	TEST_ERR(err);
+	memcpy(tid, stun_msg_tid(outgoing), sizeof(tid));
+
+	response = mbuf_alloc(128);
+	if (!response) {
+		err = ENOMEM;
+		goto out;
+	}
+	err = stun_msg_encode(response, STUN_METHOD_BINDING,
+			      STUN_CLASS_SUCCESS_RESP, tid, NULL,
+			      NULL, 0, true, 0, 0);
+	TEST_ERR(err);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->new_peer, response);
+	TEST_ERR(err);
+	TEST_EQUALS(1, test->candidate_responses);
+	err = test->response_err;
+	TEST_ERR(err);
+	TEST_EQUALS(receives, test->receives);
+
+out:
+	mem_deref(outgoing);
+	mem_deref(response);
+	mem_deref(test);
+	return err;
+}
+
+
+static int test_ice_shared_socket_publication(void)
+{
+	struct shared_socket_test *test = NULL;
+	struct mbuf *packet = NULL;
+	unsigned receives;
+	int err;
+
+	err = shared_socket_test_alloc(&test);
+	TEST_ERR(err);
+	packet = mbuf_alloc(4);
+	if (!packet) {
+		err = ENOMEM;
+		goto out;
+	}
+	err = mbuf_write_str(packet, "DTLS");
+	TEST_ERR(err);
+
+	/* Prepared candidate is provisional.  It must not consume an old-path
+	 * authenticated packet, while the active strict generation still drops an
+	 * unauthenticated packet from a third source. */
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->old_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives + 1, test->receives);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->third_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives, test->receives);
+
+	/* Publish candidate strict and make old dormant.  Only the candidate's
+	 * authenticated path is now admitted to the application. */
+	icem_shared_socket_candidate(test->old, true);
+	icem_shared_socket_retired(test->old, true);
+	icem_shared_socket_candidate(test->candidate, false);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->new_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives + 1, test->receives);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->old_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives, test->receives);
+
+	/* Rollback restores the old strict generation and candidate provisional
+	 * state without changing the shared socket or either valid list. */
+	icem_shared_socket_candidate(test->candidate, true);
+	icem_shared_socket_retired(test->candidate, true);
+	icem_shared_socket_candidate(test->old, false);
+	icem_shared_socket_retired(test->old, false);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->old_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives + 1, test->receives);
+	receives = test->receives;
+	err = shared_socket_inject(test, &test->new_peer, packet);
+	TEST_ERR(err);
+	TEST_EQUALS(receives, test->receives);
+
+out:
+	mem_deref(packet);
+	mem_deref(test);
+	return err;
+}
+
+
+int test_ice_shared_socket(void)
+{
+	int err;
+
+	/* Reply generation is intentionally void at the UDP helper boundary, so
+	 * an injected allocator failure cannot be reported to this white-box test. */
+	if (test_mode == TEST_MEMORY)
+		return ESKIPPED;
+
+	err = test_ice_shared_socket_stun_request();
+	TEST_ERR(err);
+	err = test_ice_single_socket_stun_request();
+	TEST_ERR(err);
+	err = test_ice_retired_socket_stun_request();
+	TEST_ERR(err);
+	err = test_ice_shared_socket_stun_response();
+	TEST_ERR(err);
+	err = test_ice_shared_socket_publication();
+	TEST_ERR(err);
+
+out:
 	return err;
 }
 

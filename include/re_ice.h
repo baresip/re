@@ -111,6 +111,9 @@ int icem_set_turn_client(struct icem *icem, unsigned compid,
 
 
 bool ice_remotecands_avail(const struct icem *icem);
+void icem_shared_socket_candidate(struct icem *icem, bool enabled);
+void icem_shared_socket_route(struct icem *icem, bool enabled);
+void icem_shared_socket_retired(struct icem *icem, bool enabled);
 int  ice_cand_encode(struct re_printf *pf, const struct ice_cand *cand);
 int  ice_remotecands_encode(struct re_printf *pf, const struct icem *icem);
 struct ice_cand *icem_cand_find(const struct list *lst, unsigned compid,

@@ -72,6 +72,9 @@ struct icem {
 	void *arg;                   /**< Handler argument                   */
 	char name[32];               /**< Name of the media stream           */
 	bool rcand_wait;             /**< Waiting for remote candidate       */
+	bool shared_socket_candidate; /**< Pass application until publication */
+	bool shared_socket_route;    /**< Route STUN between generations     */
+	bool shared_socket_retired;  /**< Never consume as retired generation */
 };
 
 /** Defines a candidate */
