@@ -86,11 +86,21 @@ struct udp_sock {
 /** Defines a UDP helper */
 struct udp_helper {
 	struct le le;
+	struct list calll;
 	int layer;
 	udp_helper_send_h *sendh;
 	udp_helper_recv_h *recvh;
 	mtx_t *lock;         /**< A lock for the helpers list */
+	cnd_t wait;
 	void *arg;
+	bool closing;
+	bool wait_initialized;
+};
+
+struct udp_helper_call {
+	struct le le;
+	struct udp_helper *helper;
+	thrd_t thread;
 };
 
 
@@ -123,6 +133,101 @@ static bool helper_recv_handler(struct sa *src,
 	return false;
 }
 
+static struct udp_helper *helper_reserve(struct le *le, bool reverse,
+					 struct udp_helper_call *call)
+{
+	while (le) {
+		struct udp_helper *uh = le->data;
+
+		le = reverse ? le->prev : le->next;
+		if (uh->closing)
+			continue;
+
+		call->helper = uh;
+		call->thread = thrd_current();
+		mem_ref(uh);
+		list_append(&uh->calll, &call->le, call);
+		return uh;
+	}
+
+	call->helper = NULL;
+	return NULL;
+}
+
+
+static struct udp_helper *helper_release(struct udp_helper_call *call)
+{
+	struct udp_helper *uh = call->helper;
+
+	if (!uh)
+		return NULL;
+
+	list_unlink(&call->le);
+	call->helper = NULL;
+	if (uh->closing && list_isempty(&uh->calll))
+		cnd_broadcast(&uh->wait);
+
+	return uh;
+}
+
+
+static bool helper_called_on_current_thread(const struct udp_helper *uh)
+{
+	for (struct le *le = uh->calll.head; le; le = le->next) {
+		const struct udp_helper_call *call = le->data;
+
+		if (thrd_equal(call->thread, thrd_current()))
+			return true;
+	}
+
+	return false;
+}
+
+
+static bool udp_helpers_recv(struct udp_sock *us, struct sa *src,
+			     struct mbuf *mb, struct udp_helper *boundary)
+{
+	struct udp_helper_call callv[2];
+	struct udp_helper_call *call = &callv[0];
+	struct udp_helper *uh;
+
+	memset(callv, 0, sizeof(callv));
+	mtx_lock(us->lock);
+	if (boundary &&
+	    (boundary->closing || boundary->le.list != &us->helpers)) {
+		mtx_unlock(us->lock);
+		return true;
+	}
+	uh = helper_reserve(boundary ? boundary->le.next : us->helpers.head,
+			    false, call);
+	mtx_unlock(us->lock);
+
+	while (uh) {
+		struct udp_helper_call *next =
+			call == &callv[0] ? &callv[1] : &callv[0];
+		bool handled;
+
+		handled = uh->recvh(src, mb, uh->arg);
+
+		mtx_lock(us->lock);
+		if (handled) {
+			struct udp_helper *released = helper_release(call);
+
+			mtx_unlock(us->lock);
+			mem_deref(released);
+			return true;
+		}
+		uh = helper_reserve(uh->le.next, false, next);
+		struct udp_helper *released = helper_release(call);
+
+		mtx_unlock(us->lock);
+		mem_deref(released);
+		call = next;
+	}
+
+	return false;
+}
+
 
 static void udp_destructor(void *data)
 {
@@ -150,12 +255,12 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 {
 	struct mbuf *mb = mbuf_alloc(us->rxsz);
 	struct sa src;
-	struct le *le;
 	int err = 0;
 	ssize_t n;
 
 	if (!mb)
 		return;
+	mem_ref(us);
 
 	src.len = sizeof(src.u);
 	n = recvfrom(fd, BUF_CAST mb->buf + us->rx_presz,
@@ -187,27 +292,14 @@ static void udp_read(struct udp_sock *us, re_sock_t fd)
 
 	(void)mbuf_resize(mb, mb->end);
 
-	/* call helpers */
-	mtx_lock(us->lock);
-	le = us->helpers.head;
-	mtx_unlock(us->lock);
-	while (le) {
-		struct udp_helper *uh = le->data;
-		bool hdld;
-
-		mtx_lock(us->lock);
-		le = le->next;
-		mtx_unlock(us->lock);
-
-		hdld = uh->recvh(&src, mb, uh->arg);
-		if (hdld)
-			goto out;
-	}
+	if (udp_helpers_recv(us, &src, mb, NULL))
+		goto out;
 
 	us->rh(&src, mb, us->arg);
 
  out:
 	mem_deref(mb);
+	mem_deref(us);
 }
 
 
@@ -482,48 +574,84 @@ int udp_connect(struct udp_sock *us, const struct sa *peer)
 
 
 static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
-			     struct mbuf *mb, struct le *le)
+			     struct mbuf *mb, struct udp_helper *boundary)
 {
+	struct udp_helper_call callv[2];
+	struct udp_helper_call *call = &callv[0];
+	struct udp_helper *uh;
 	struct sa hdst;
 	int err = 0;
 	re_sock_t fd = us->fd;
 
-	/* call helpers in reverse order */
-	while (le) {
-		struct udp_helper *uh = le->data;
-
-		mtx_lock(us->lock);
-		le = le->prev;
+	mem_ref(us);
+	memset(callv, 0, sizeof(callv));
+	mtx_lock(us->lock);
+	if (boundary &&
+	    (boundary->closing || boundary->le.list != &us->helpers)) {
 		mtx_unlock(us->lock);
+		err = ENOTCONN;
+		goto out;
+	}
+	uh = helper_reserve(boundary ? boundary->le.prev : us->helpers.tail,
+			    true, call);
+	mtx_unlock(us->lock);
+
+	/* call helpers in reverse order */
+	while (uh) {
+		struct udp_helper_call *next =
+			call == &callv[0] ? &callv[1] : &callv[0];
+		bool handled;
 
 		if (dst != &hdst) {
 			sa_cpy(&hdst, dst);
 			dst = &hdst;
 		}
 
-		if (uh->sendh(&err, &hdst, mb, uh->arg) || err)
-			return err;
+		handled = uh->sendh(&err, &hdst, mb, uh->arg);
+
+		mtx_lock(us->lock);
+		if (handled || err) {
+			struct udp_helper *released = helper_release(call);
+
+			mtx_unlock(us->lock);
+			mem_deref(released);
+			goto out;
+		}
+		uh = helper_reserve(uh->le.prev, true, next);
+		struct udp_helper *released = helper_release(call);
+
+		mtx_unlock(us->lock);
+		mem_deref(released);
+		call = next;
 	}
 
 	/* external send handler */
-	if (us->sendh)
-		return us->sendh(dst, mb, us->arg);
+	if (us->sendh) {
+		err = us->sendh(dst, mb, us->arg);
+		goto out;
+	}
 
 	/* Connected socket? */
 	if (us->conn) {
 		if (send(fd, BUF_CAST mb->buf + mb->pos,
 			 SIZ_CAST (mb->end - mb->pos),
-			 0) < 0)
-			return RE_ERRNO_SOCK;
+			 0) < 0) {
+			err = RE_ERRNO_SOCK;
+			goto out;
+		}
 	}
 	else {
 		if (sendto(fd, BUF_CAST mb->buf + mb->pos,
 			   SIZ_CAST (mb->end - mb->pos),
-			   0, &dst->u.sa, dst->len) < 0)
-			return RE_ERRNO_SOCK;
+			   0, &dst->u.sa, dst->len) < 0) {
+			err = RE_ERRNO_SOCK;
+			goto out;
+		}
 	}
 
-	return 0;
+out:
+	mem_deref(us);
+	return err;
 }
 
 
@@ -538,14 +666,10 @@ static int udp_send_internal(struct udp_sock *us, const struct sa *dst,
  */
 int udp_send(struct udp_sock *us, const struct sa *dst, struct mbuf *mb)
 {
-	struct le *le;
 	if (!us || !dst || !mb)
 		return EINVAL;
 
-	mtx_lock(us->lock);
-	le = us->helpers.tail;
-	mtx_unlock(us->lock);
-	return udp_send_internal(us, dst, mb, le);
+	return udp_send_internal(us, dst, mb, NULL);
 }
 
 
@@ -799,10 +923,13 @@ void udp_thread_detach(struct udp_sock *us)
 static void helper_destructor(void *data)
 {
 	struct udp_helper *uh = data;
+	int err;
 
-	mtx_lock(uh->lock);
-	list_unlink(&uh->le);
-	mtx_unlock(uh->lock);
+	err = udp_helper_quiesce(uh);
+	if (err)
+		DEBUG_WARNING("helper destroyed from its own callback\n");
+	if (uh->wait_initialized)
+		cnd_destroy(&uh->wait);
 }
 
 
@@ -841,6 +968,14 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 	if (!uh)
 		return ENOMEM;
 
+	list_init(&uh->calll);
+	if (cnd_init(&uh->wait) != thrd_success) {
+		mem_destructor(uh, NULL);
+		mem_deref(uh);
+		return ENOMEM;
+	}
+	uh->wait_initialized = true;
+
 	mtx_lock(us->lock);
 	list_append(&us->helpers, &uh->le, uh);
 
@@ -861,6 +996,46 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 
 
 /**
+ * Stop a UDP helper and wait for all of its callbacks to return.
+ *
+ * No new callback can start after this function marks the helper as closing.
+ * The caller may release the callback argument and helper after this function
+ * succeeds. Calling it from one of the helper's own callbacks returns
+ * EDEADLK without changing the helper state.
+ *
+ * @param uh UDP helper
+ *
+ * @return 0 if quiesced, otherwise an errorcode
+ */
+int udp_helper_quiesce(struct udp_helper *uh)
+{
+	int err = 0;
+
+	if (!uh)
+		return EINVAL;
+
+	mtx_lock(uh->lock);
+	if (!list_isempty(&uh->calll) &&
+	    helper_called_on_current_thread(uh)) {
+		err = EDEADLK;
+		goto out;
+	}
+	uh->closing = true;
+	while (!list_isempty(&uh->calll)) {
+		if (cnd_wait(&uh->wait, uh->lock) != thrd_success) {
+			err = EPROTO;
+			goto out;
+		}
+	}
+	list_unlink(&uh->le);
+
+out:
+	mtx_unlock(uh->lock);
+	return err;
+}
+
+
+/**
  * Send a UDP Datagram to a remote peer bypassing this helper and
  * the helpers above it.
  *
@@ -874,15 +1049,10 @@ int udp_register_helper(struct udp_helper **uhp, struct udp_sock *us,
 int udp_send_helper(struct udp_sock *us, const struct sa *dst,
 		    struct mbuf *mb, struct udp_helper *uh)
 {
-	struct le *le;
-
 	if (!us || !dst || !mb || !uh)
 		return EINVAL;
 
-	mtx_lock(us->lock);
-	le = uh->le.prev;
-	mtx_unlock(us->lock);
-	return udp_send_internal(us, dst, mb, le);
+	return udp_send_internal(us, dst, mb, uh);
 }
 
 
@@ -898,33 +1068,19 @@ void udp_recv_helper(struct udp_sock *us, const struct sa *src,
 		     struct mbuf *mb, struct udp_helper *uhx)
 {
 	struct sa hsrc;
-	struct le *le;
 
 	if (!us || !src || !mb)
 		return;
 
-	mtx_lock(us->lock);
-	le = uhx ? uhx->le.next : us->helpers.head;
-	mtx_unlock(us->lock);
-	while (le) {
-		struct udp_helper *uh = le->data;
-		bool hdld;
+	mem_ref(us);
+	sa_cpy(&hsrc, src);
+	if (udp_helpers_recv(us, &hsrc, mb, uhx))
+		goto out;
 
-		mtx_lock(us->lock);
-		le = le->next;
-		mtx_unlock(us->lock);
+	us->rh(&hsrc, mb, us->arg);
 
-		if (src != &hsrc) {
-			sa_cpy(&hsrc, src);
-			src = &hsrc;
-		}
-
-		hdld = uh->recvh(&hsrc, mb, uh->arg);
-		if (hdld)
-			return;
-	}
-
-	us->rh(src, mb, us->arg);
+out:
+	mem_deref(us);
 }
 
 
@@ -944,19 +1100,15 @@ struct udp_helper *udp_helper_find(const struct udp_sock *us, int layer)
 		return NULL;
 
 	mtx_lock(us->lock);
-	le = us->helpers.head;
-	mtx_unlock(us->lock);
-	while (le) {
-
+	for (le = us->helpers.head; le; le = le->next) {
 		struct udp_helper *uh = le->data;
 
-		mtx_lock(us->lock);
-		le = le->next;
-		mtx_unlock(us->lock);
-
-		if (layer == uh->layer)
+		if (!uh->closing && layer == uh->layer) {
+			mtx_unlock(us->lock);
 			return uh;
+		}
 	}
+	mtx_unlock(us->lock);
 
 	return NULL;
 }
