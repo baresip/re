@@ -15,6 +15,19 @@
 #include "sdp.h"
 
 
+struct sdp_media_lattr_state {
+	struct list attrs;
+};
+
+
+static void lattr_state_destructor(void *arg)
+{
+	struct sdp_media_lattr_state *state = arg;
+
+	list_flush(&state->attrs);
+}
+
+
 static void destructor(void *arg)
 {
 	struct sdp_media *m = arg;
@@ -463,6 +476,24 @@ void sdp_media_set_lport(struct sdp_media *m, uint16_t port)
 
 
 /**
+ * Set the remote port of an SDP media line
+ *
+ * This is useful when a session-level extension supplies transport semantics
+ * for an otherwise zero-port media description, such as BUNDLE-only.
+ *
+ * @param m    SDP media line
+ * @param port Remote transport port
+ */
+void sdp_media_set_rport(struct sdp_media *m, uint16_t port)
+{
+	if (!m)
+		return;
+
+	sa_set_port(&m->raddr, port);
+}
+
+
+/**
  * Set the local network address of an SDP media line
  *
  * @param m     SDP Media line
@@ -540,6 +571,24 @@ void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir)
 
 
 /**
+ * Set the remote direction flag of an SDP media line
+ *
+ * This is useful when a session-level extension gives a zero-port media
+ * description semantics other than rejection, such as BUNDLE-only.
+ *
+ * @param m   SDP media line
+ * @param dir Media direction flag
+ */
+void sdp_media_set_rdir(struct sdp_media *m, enum sdp_dir dir)
+{
+	if (!m)
+		return;
+
+	m->rdir = dir;
+}
+
+
+/**
  * Set a local attribute of an SDP Media line
  *
  * @param m       SDP Media line
@@ -581,6 +630,103 @@ void sdp_media_del_lattr(struct sdp_media *m, const char *name)
 		return;
 
 	sdp_attr_del(&m->lattrl, name);
+}
+
+
+/**
+ * Save all local attributes of an SDP media line.
+ *
+ * The returned state owns a complete copy.  It can be discarded with
+ * mem_deref() to commit later mutations, or passed to
+ * sdp_media_restore_lattrs() for allocation-free rollback.
+ *
+ * @param statep Pointer to allocated attribute state
+ * @param m      SDP media line
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sdp_media_save_lattrs(struct sdp_media_lattr_state **statep,
+			  const struct sdp_media *m)
+{
+	struct sdp_media_lattr_state *state;
+	int err;
+
+	if (!statep || !m)
+		return EINVAL;
+
+	state = mem_zalloc(sizeof(*state), lattr_state_destructor);
+	if (!state)
+		return ENOMEM;
+
+	err = sdp_attr_clone(&state->attrs, &m->lattrl);
+	if (err) {
+		mem_deref(state);
+		return err;
+	}
+
+	*statep = state;
+	return 0;
+}
+
+
+/**
+ * Apply a saved set of local SDP media attributes without consuming it.
+ *
+ * The replacement is transactional: allocation is completed before the
+ * media's current attributes are changed.
+ *
+ * @param m     SDP media line
+ * @param state Saved local attribute state
+ *
+ * @return 0 if successful, otherwise errorcode
+ */
+int sdp_media_apply_lattrs(struct sdp_media *m,
+			   const struct sdp_media_lattr_state *state)
+{
+	struct list attrs = LIST_INIT;
+	int err;
+
+	if (!m || !state)
+		return EINVAL;
+
+	err = sdp_attr_clone(&attrs, &state->attrs);
+	if (err) {
+		list_flush(&attrs);
+		return err;
+	}
+
+	list_flush(&m->lattrl);
+	while (attrs.head)
+		list_move(attrs.head, &m->lattrl);
+
+	return 0;
+}
+
+
+/**
+ * Restore a saved set of local SDP media attributes without allocating.
+ *
+ * The state is consumed and dereferenced.  Passing NULL is safe.
+ *
+ * @param m     SDP media line
+ * @param state Saved local attribute state
+ */
+void sdp_media_restore_lattrs(struct sdp_media *m,
+			      struct sdp_media_lattr_state *state)
+{
+	if (!state)
+		return;
+
+	if (!m) {
+		mem_deref(state);
+		return;
+	}
+
+	list_flush(&m->lattrl);
+	while (state->attrs.head)
+		list_move(state->attrs.head, &m->lattrl);
+
+	mem_deref(state);
 }
 
 

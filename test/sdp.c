@@ -212,15 +212,410 @@ static bool sdp_cmp(struct mbuf *mb, const char *msg)
 }
 
 
+struct attr_values {
+	const char *values[4];
+	size_t count;
+};
+
+
+static bool collect_attr(const char *name, const char *value, void *arg)
+{
+	struct attr_values *values = arg;
+
+	(void)name;
+	if (values->count < RE_ARRAY_SIZE(values->values))
+		values->values[values->count++] = value;
+	return false;
+}
+
+
+static int test_sdp_session_state(void)
+{
+	static const char initial_remote[] =
+		"v=0\r\n"
+		"o=- 1 1 IN IP4 192.0.2.1\r\n"
+		"s=-\r\n"
+		"c=IN IP4 192.0.2.1\r\n"
+		"b=AS:96\r\n"
+		"t=0 0\r\n"
+		"a=x-session:first\r\n"
+		"a=x-session:second\r\n"
+		"m=audio 4000 RTP/AVP 109 0\r\n"
+		"c=IN IP4 192.0.2.2\r\n"
+		"b=TIAS:64000\r\n"
+		"a=rtpmap:109 opus/48000/2\r\n"
+		"a=fmtp:109 minptime=10\r\n"
+		"a=rtpmap:0 PCMU/8000\r\n"
+		"a=rtcp:4001 IN IP4 192.0.2.3\r\n"
+		"a=recvonly\r\n"
+		"a=x-media:first\r\n"
+		"a=x-media:second\r\n";
+	static const char replacement_remote[] =
+		"v=0\r\n"
+		"o=- 2 2 IN IP4 198.51.100.1\r\n"
+		"s=-\r\n"
+		"c=IN IP4 198.51.100.1\r\n"
+		"t=0 0\r\n"
+		"a=x-session:replacement\r\n"
+		"m=audio 9000 RTP/SAVP 112 0\r\n"
+		"a=rtpmap:112 opus/48000/2\r\n"
+		"a=rtpmap:0 PCMU/8000\r\n"
+		"a=sendonly\r\n"
+		"a=x-media:replacement\r\n"
+		"m=video 9002 RTP/AVP 96\r\n"
+		"a=rtpmap:96 VP8/90000\r\n";
+	static const char malformed_remote[] =
+		"v=0\r\n"
+		"o=- 3 3 IN IP4 203.0.113.1\r\n"
+		"s=-\r\n"
+		"t=0 0\r\n"
+		"a=x-session:partial\r\n"
+		"m=audio 7000 RTP/SAVP 113 0\r\n"
+		"a=rtpmap:113 opus/48000/2\r\n"
+		"m=video 7002 RTP/AVP 96\r\n"
+		"a=rtpmap:96 VP8/90000\r\n"
+		"malformed-line\r\n";
+	struct sdp_session_state *baseline_state = NULL;
+	struct sdp_session_state *state = NULL;
+	struct sdp_session *sess = NULL;
+	struct sdp_media *audio = NULL;
+	struct sdp_format *opus = NULL;
+	const struct sdp_format *remote_opus;
+	const struct sdp_format *saved_remote_pcmu;
+	const struct sdp_format *saved_remote_opus;
+	struct mbuf *remote = NULL;
+	struct mbuf *baseline = NULL;
+	struct mbuf *actual = NULL;
+	struct attr_values attrs = {0};
+	struct sa laddr;
+	struct sa media_addr;
+	struct sa rtcp_addr;
+	struct sa expected_local;
+	struct sa expected_media;
+	struct sa expected_remote;
+	struct sa expected_remote_rtcp;
+	struct sa remote_rtcp;
+	size_t negotiated_count;
+	bool allocation_blocked = false;
+	int err;
+
+	err = sa_set_str(&laddr, "10.0.0.1", 0);
+	if (err)
+		goto out;
+	err = sdp_session_alloc(&sess, &laddr);
+	if (err)
+		goto out;
+	err = sdp_session_set_lattr(sess, false, "x-local", "first");
+	err |= sdp_session_set_lattr(sess, false, "x-local", "second");
+	sdp_session_set_lbandwidth(sess, SDP_BANDWIDTH_AS, 128);
+	if (err)
+		goto out;
+
+	err = sa_set_str(&media_addr, "10.0.0.2", 5004);
+	err |= sa_set_str(&rtcp_addr, "10.0.0.3", 5005);
+	if (err)
+		goto out;
+	err = sdp_media_add(&audio, sess, sdp_media_audio,
+			    sa_port(&media_addr), sdp_proto_rtpavp);
+	if (err)
+		goto out;
+	sdp_media_set_laddr(audio, &media_addr);
+	sdp_media_set_laddr_rtcp(audio, &rtcp_addr);
+	sdp_media_set_lbandwidth(audio, SDP_BANDWIDTH_TIAS, 96000);
+	sdp_media_set_ldir(audio, SDP_SENDRECV);
+	err = sdp_media_set_alt_protos(audio, 1, "RTP/SAVP");
+	err |= sdp_media_set_lattr(audio, false, "x-local-media", "first");
+	err |= sdp_media_set_lattr(audio, false, "x-local-media", "second");
+	err |= sdp_format_add(&opus, audio, false, "111", "opus",
+			      48000, 2, NULL, NULL, NULL, false,
+			      "stereo=1");
+	err |= sdp_format_add(NULL, audio, false, "0", "PCMU",
+			      8000, 1, NULL, NULL, NULL, false, NULL);
+	if (err)
+		goto out;
+
+	remote = mbuf_alloc(sizeof(initial_remote));
+	if (!remote) {
+		err = ENOMEM;
+		goto out;
+	}
+	err = mbuf_write_mem(remote, (const uint8_t *)initial_remote,
+			     sizeof(initial_remote) - 1);
+	if (err)
+		goto out;
+	remote->pos = 0;
+	err = sdp_decode(sess, remote, true);
+	if (err)
+		goto out;
+
+	saved_remote_opus = sdp_media_rformat(audio, "opus");
+	saved_remote_pcmu = sdp_media_rformat(audio, "PCMU");
+	if (!saved_remote_opus || !saved_remote_pcmu) {
+		err = EPROTO;
+		goto out;
+	}
+	negotiated_count = list_count(sdp_session_medial(sess, false));
+	if (negotiated_count != 1) {
+		err = EPROTO;
+		goto out;
+	}
+
+	/*
+	 * Encode a reference from this exact state, then roll that encode back:
+	 * sdp_encode itself advances the origin version and can move media.
+	 */
+	err = sdp_session_state_save(&baseline_state, sess);
+	if (!err)
+		err = sdp_encode(&baseline, sess, false);
+	if (err)
+		goto out;
+	sdp_session_state_restore(baseline_state);
+	baseline_state = NULL;
+
+	err = sdp_session_state_save(&state, sess);
+	if (err)
+		goto out;
+
+	mbuf_reset(remote);
+	err = mbuf_write_mem(remote, (const uint8_t *)replacement_remote,
+			     sizeof(replacement_remote) - 1);
+	if (err)
+		goto out;
+	remote->pos = 0;
+	err = sdp_decode(sess, remote, true);
+	if (err)
+		goto out;
+
+	err = sa_set_str(&laddr, "10.9.9.1", 0);
+	if (err)
+		goto out;
+	sdp_session_set_laddr(sess, &laddr);
+	sdp_session_set_lbandwidth(sess, SDP_BANDWIDTH_AS, 1);
+	err = sdp_session_set_lattr(sess, true, "x-local", "changed");
+	if (err)
+		goto out;
+	err = sa_set_str(&media_addr, "10.9.9.2", 9998);
+	err |= sa_set_str(&rtcp_addr, "10.9.9.3", 9999);
+	if (err)
+		goto out;
+	sdp_media_set_laddr(audio, &media_addr);
+	sdp_media_set_laddr_rtcp(audio, &rtcp_addr);
+	sdp_media_set_lbandwidth(audio, SDP_BANDWIDTH_TIAS, 1);
+	sdp_media_set_ldir(audio, SDP_INACTIVE);
+	sdp_media_set_disabled(audio, true);
+	sdp_media_set_fmt_ignore(audio, true);
+	err = sdp_media_set_lattr(audio, true, "x-local-media", "changed");
+	err |= sdp_format_set_params(opus, "changed=1");
+	err |= sdp_format_add(NULL, audio, false, NULL, "new-format",
+			      16000, 1, NULL, NULL, NULL, false, NULL);
+	err |= sdp_media_add(NULL, sess, "application", 9996,
+			     "UDP/DTLS/SCTP");
+	if (err)
+		goto out;
+
+	/* Any allocation attempted by restore now fails. */
+	if (test_mode != TEST_MEMORY) {
+		mem_threshold_set(0);
+		allocation_blocked = true;
+	}
+	sdp_session_state_restore(state);
+	state = NULL;
+	if (allocation_blocked) {
+		mem_threshold_set(-1);
+		allocation_blocked = false;
+	}
+
+	if (list_count(sdp_session_medial(sess, false)) != negotiated_count ||
+	    list_count(sdp_session_medial(sess, true)) != 0 ||
+	    sdp_media_format(audio, true, NULL, 109, "opus",
+			     48000, 2) != opus ||
+	    sdp_media_format(audio, true, NULL, -1, "new-format",
+			     16000, 1)) {
+		err = EPROTO;
+		goto out;
+	}
+	remote_opus = sdp_media_rformat(audio, "opus");
+	if (remote_opus != saved_remote_opus ||
+	    sdp_media_rformat(audio, "PCMU") != saved_remote_pcmu ||
+	    list_head(sdp_media_format_lst(audio, false))->data !=
+		    saved_remote_opus ||
+	    list_tail(sdp_media_format_lst(audio, false))->data !=
+		    saved_remote_pcmu ||
+	    str_cmp(remote_opus->id, "109") ||
+	    str_cmp(remote_opus->params, "minptime=10") ||
+	    str_cmp(opus->params, "stereo=1") ||
+	    str_cmp(sdp_media_proto(audio), sdp_proto_rtpavp)) {
+		err = EPROTO;
+		goto out;
+	}
+
+	attrs.count = 0;
+	(void)sdp_session_lattr_apply(sess, "x-local",
+				      collect_attr, &attrs);
+	if (attrs.count != 2 ||
+	    str_cmp(attrs.values[0], "first") ||
+	    str_cmp(attrs.values[1], "second")) {
+		err = EPROTO;
+		goto out;
+	}
+	attrs.count = 0;
+	(void)sdp_session_rattr_apply(sess, "x-session",
+				      collect_attr, &attrs);
+	if (attrs.count != 2 ||
+	    str_cmp(attrs.values[0], "first") ||
+	    str_cmp(attrs.values[1], "second") ||
+	    sdp_session_lbandwidth(sess, SDP_BANDWIDTH_AS) != 128 ||
+	    sdp_session_rbandwidth(sess, SDP_BANDWIDTH_AS) != 96) {
+		err = EPROTO;
+		goto out;
+	}
+	attrs.count = 0;
+	(void)sdp_media_lattr_apply(audio, "x-local-media",
+				    collect_attr, &attrs);
+	if (attrs.count != 2 ||
+	    str_cmp(attrs.values[0], "first") ||
+	    str_cmp(attrs.values[1], "second")) {
+		err = EPROTO;
+		goto out;
+	}
+	attrs.count = 0;
+	(void)sdp_media_rattr_apply(audio, "x-media",
+				    collect_attr, &attrs);
+	err = sa_set_str(&expected_local, "10.0.0.1", 0);
+	err |= sa_set_str(&expected_media, "10.0.0.2", 5004);
+	err |= sa_set_str(&expected_remote, "192.0.2.2", 4000);
+	err |= sa_set_str(&expected_remote_rtcp, "192.0.2.3", 4001);
+	if (err)
+		goto out;
+	sdp_media_raddr_rtcp(audio, &remote_rtcp);
+	if (attrs.count != 2 ||
+	    str_cmp(attrs.values[0], "first") ||
+	    str_cmp(attrs.values[1], "second") ||
+	    !sa_cmp(sdp_session_laddr(sess), &expected_local, SA_ALL) ||
+	    !sa_cmp(sdp_media_laddr(audio), &expected_media, SA_ALL) ||
+	    !sa_cmp(sdp_media_raddr(audio), &expected_remote, SA_ALL) ||
+	    !sa_cmp(&remote_rtcp, &expected_remote_rtcp, SA_ALL) ||
+	    sdp_media_rbandwidth(audio, SDP_BANDWIDTH_TIAS) != 64000 ||
+	    sdp_media_rdir(audio) != SDP_SENDONLY ||
+	    sdp_media_ldir(audio) != SDP_SENDRECV ||
+	    sdp_media_disabled(audio)) {
+		err = EPROTO;
+		goto out;
+	}
+
+	/* A follow-up decode proves fmt_ignore was restored to false. */
+	err = sdp_session_state_save(&state, sess);
+	if (err)
+		goto out;
+	mbuf_reset(remote);
+	err = mbuf_write_mem(remote, (const uint8_t *)replacement_remote,
+			     sizeof(replacement_remote) - 1);
+	if (err)
+		goto out;
+	remote->pos = 0;
+	err = sdp_decode(sess, remote, true);
+	if (err)
+		goto out;
+	if (sdp_media_format(audio, true, NULL, 112, "opus",
+			     48000, 2) != opus) {
+		err = EPROTO;
+		goto out;
+	}
+	sdp_session_state_restore(state);
+	state = NULL;
+
+	/*
+	 * A decode error after session, audio and a new remote-only video
+	 * section have already been applied must still be fully reversible.
+	 */
+	err = sdp_session_state_save(&state, sess);
+	if (err)
+		goto out;
+	mbuf_reset(remote);
+	err = mbuf_write_mem(remote, (const uint8_t *)malformed_remote,
+			     sizeof(malformed_remote) - 1);
+	if (err)
+		goto out;
+	remote->pos = 0;
+	err = sdp_decode(sess, remote, true);
+	if (!err) {
+		err = EPROTO;
+		goto out;
+	}
+	err = 0;
+	sdp_session_state_restore(state);
+	state = NULL;
+	if (list_count(sdp_session_medial(sess, false)) != negotiated_count ||
+	    sdp_media_format(audio, true, NULL, 109, "opus",
+			     48000, 2) != opus ||
+	    sdp_media_rformat(audio, "opus") != saved_remote_opus) {
+		err = EPROTO;
+		goto out;
+	}
+
+	err = sdp_encode(&actual, sess, false);
+	if (err)
+		goto out;
+	if (baseline->end != actual->end ||
+	    memcmp(baseline->buf, actual->buf, baseline->end)) {
+		err = EPROTO;
+		goto out;
+	}
+
+	/*
+	 * Discarding a state commits the replacement.  Exercise ownership
+	 * release after the original remote formats have been displaced and
+	 * new local/remote objects have been added.
+	 */
+	err = sdp_session_state_save(&state, sess);
+	if (err)
+		goto out;
+	mbuf_reset(remote);
+	err = mbuf_write_mem(remote, (const uint8_t *)replacement_remote,
+			     sizeof(replacement_remote) - 1);
+	if (err)
+		goto out;
+	remote->pos = 0;
+	err = sdp_decode(sess, remote, true);
+	if (!err)
+		err = sdp_format_add(NULL, audio, false, NULL,
+				     "committed-format", 32000, 1,
+				     NULL, NULL, NULL, false, NULL);
+	if (!err)
+		err = sdp_media_add(NULL, sess, "application", 9994,
+				    "UDP/DTLS/SCTP");
+	if (err)
+		goto out;
+	state = mem_deref(state);
+
+out:
+	if (allocation_blocked)
+		mem_threshold_set(-1);
+	mem_deref(state);
+	mem_deref(baseline_state);
+	mem_deref(actual);
+	mem_deref(baseline);
+	mem_deref(remote);
+	mem_deref(audio);
+	mem_deref(sess);
+	return err;
+}
+
+
 int test_sdp_all(void)
 {
 	struct sdp_session *sess = NULL;
 	struct sdp_media *audio = NULL;
+	struct sdp_media_lattr_state *attrs = NULL;
 	struct mbuf *desc = NULL;
 	struct sa ref;
 	const struct sdp_format *rc = NULL, *sc;
 	struct sa laddr;
 	int err;
+
+	err = test_sdp_session_state();
+	if (err)
+		return err;
 
 	(void)sa_set_str(&laddr, ref_host, 0);
 
@@ -239,6 +634,59 @@ int test_sdp_all(void)
 			      16000, 2, NULL, NULL, NULL, false, NULL);
 	if (err)
 		goto out;
+
+	err = sdp_media_set_lattr(audio, false, "x-first", "one");
+	err |= sdp_media_set_lattr(audio, false, "x-second", "two");
+	err |= sdp_media_save_lattrs(&attrs, audio);
+	if (err)
+		goto out;
+
+	err = sdp_media_set_lattr(audio, true, "x-first", "changed");
+	err |= sdp_media_set_lattr(audio, false, "x-third", "three");
+	sdp_media_del_lattr(audio, "x-second");
+	if (err)
+		goto out;
+
+	err = sdp_media_apply_lattrs(audio, attrs);
+	if (err)
+		goto out;
+	if (0 != str_cmp(sdp_media_lattr_apply(audio, "x-first", NULL, NULL),
+			 "one") ||
+	    0 != str_cmp(sdp_media_lattr_apply(audio, "x-second", NULL, NULL),
+			 "two") ||
+	    sdp_media_lattr_apply(audio, "x-third", NULL, NULL)) {
+		err = EPROTO;
+		goto out;
+	}
+
+	err = sdp_media_set_lattr(audio, true, "x-first", "changed-again");
+	if (!err)
+		err = sdp_media_apply_lattrs(audio, attrs);
+	if (err)
+		goto out;
+	sdp_media_restore_lattrs(audio, attrs);
+	attrs = NULL;
+	if (0 != str_cmp(sdp_media_lattr_apply(audio, "x-first", NULL, NULL),
+			 "one") ||
+	    0 != str_cmp(sdp_media_lattr_apply(audio, "x-second", NULL, NULL),
+			 "two") ||
+	    sdp_media_lattr_apply(audio, "x-third", NULL, NULL)) {
+		err = EPROTO;
+		goto out;
+	}
+
+	sdp_media_del_lattr(audio, "x-first");
+	sdp_media_del_lattr(audio, "x-second");
+	err = sdp_media_save_lattrs(&attrs, audio);
+	err |= sdp_media_set_lattr(audio, false, "x-third", "three");
+	if (err)
+		goto out;
+	sdp_media_restore_lattrs(audio, attrs);
+	attrs = NULL;
+	if (sdp_media_lattr_apply(audio, "x-third", NULL, NULL)) {
+		err = EPROTO;
+		goto out;
+	}
 
 	/* find codec - expected */
 	sc = sdp_media_format(audio, true, NULL, 0, "PCMU", 8000, 1);
@@ -308,6 +756,7 @@ int test_sdp_all(void)
 	mem_deref(audio);
 	mem_deref(sess);
 	mem_deref(desc);
+	mem_deref(attrs);
 
 	return err;
 }
@@ -338,6 +787,14 @@ int test_sdp_parse(void)
 		err = sdp_session_alloc(&sess, &laddr);
 		if (err)
 			goto out;
+		err = sdp_session_set_lattr(sess, true, "test-local",
+					    "value");
+		if (err)
+			goto out;
+		TEST_STRCMP_LEN(
+			"value",
+			sdp_session_lattr_apply(sess, "test-local",
+						NULL, NULL));
 
 		err = sdp_media_add(&audio, sess, sdp_media_audio, 5004,
 				    sdp_proto_rtpavp);
@@ -362,6 +819,11 @@ int test_sdp_parse(void)
 		err = sdp_decode(sess, mb, true);
 		if (err)
 			goto out;
+
+		sdp_media_set_rdir(audio, SDP_SENDRECV);
+		ASSERT_EQ(SDP_SENDRECV, sdp_media_rdir(audio));
+		sdp_media_set_rport(audio, 9);
+		ASSERT_EQ(9, sdp_media_rport(audio));
 	}
 
  out:

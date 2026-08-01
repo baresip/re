@@ -80,6 +80,7 @@ struct sdp_attr;
 int  sdp_attr_add(struct list *lst, struct pl *name, struct pl *val);
 int  sdp_attr_addv(struct list *lst, const char *name, const char *val,
 		   va_list ap);
+int  sdp_attr_clone(struct list *dst, const struct list *src);
 void sdp_attr_del(const struct list *lst, const char *name);
 const char *sdp_attr_apply(const struct list *lst, const char *name,
 			   sdp_attr_h *attrh, void *arg);

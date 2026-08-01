@@ -60,8 +60,12 @@ struct sdp_format {
 
 /* session */
 struct sdp_session;
+struct sdp_session_state;
 
 int  sdp_session_alloc(struct sdp_session **sessp, const struct sa *laddr);
+int  sdp_session_state_save(struct sdp_session_state **statep,
+			    struct sdp_session *sess);
+void sdp_session_state_restore(struct sdp_session_state *state);
 void sdp_session_set_laddr(struct sdp_session *sess, const struct sa *laddr);
 const struct sa *sdp_session_laddr(struct sdp_session *sess);
 void sdp_session_set_lbandwidth(struct sdp_session *sess,
@@ -75,6 +79,9 @@ int32_t sdp_session_rbandwidth(const struct sdp_session *sess,
 			       enum sdp_bandwidth type);
 const char *sdp_session_rattr(const struct sdp_session *sess,
 			      const char *name);
+const char *sdp_session_lattr_apply(const struct sdp_session *sess,
+				    const char *name,
+				    sdp_attr_h *attrh, void *arg);
 const char *sdp_session_rattr_apply(const struct sdp_session *sess,
 				    const char *name,
 				    sdp_attr_h *attrh, void *arg);
@@ -85,6 +92,7 @@ int  sdp_session_debug(struct re_printf *pf, const struct sdp_session *sess);
 
 /* media */
 struct sdp_media;
+struct sdp_media_lattr_state;
 
 int  sdp_media_add(struct sdp_media **mp, struct sdp_session *sess,
 		   const char *name, uint16_t port, const char *proto);
@@ -92,18 +100,27 @@ int  sdp_media_set_alt_protos(struct sdp_media *m, unsigned protoc, ...);
 void sdp_media_set_encode_handler(struct sdp_media *m, sdp_media_enc_h *ench,
 				  void *arg);
 void sdp_media_set_fmt_ignore(struct sdp_media *m, bool fmt_ignore);
+void sdp_media_align_formats(struct sdp_media *m, bool offer);
 bool sdp_media_disabled(struct sdp_media *m);
 void sdp_media_set_disabled(struct sdp_media *m, bool disabled);
 void sdp_media_set_lport(struct sdp_media *m, uint16_t port);
+void sdp_media_set_rport(struct sdp_media *m, uint16_t port);
 void sdp_media_set_laddr(struct sdp_media *m, const struct sa *laddr);
 void sdp_media_set_lbandwidth(struct sdp_media *m, enum sdp_bandwidth type,
 			      int32_t bw);
 void sdp_media_set_lport_rtcp(struct sdp_media *m, uint16_t port);
 void sdp_media_set_laddr_rtcp(struct sdp_media *m, const struct sa *laddr);
 void sdp_media_set_ldir(struct sdp_media *m, enum sdp_dir dir);
+void sdp_media_set_rdir(struct sdp_media *m, enum sdp_dir dir);
 int  sdp_media_set_lattr(struct sdp_media *m, bool replace,
 			 const char *name, const char *value, ...);
 void sdp_media_del_lattr(struct sdp_media *m, const char *name);
+int  sdp_media_save_lattrs(struct sdp_media_lattr_state **statep,
+			   const struct sdp_media *m);
+int  sdp_media_apply_lattrs(struct sdp_media *m,
+			    const struct sdp_media_lattr_state *state);
+void sdp_media_restore_lattrs(struct sdp_media *m,
+			      struct sdp_media_lattr_state *state);
 const char *sdp_media_proto(const struct sdp_media *m);
 uint16_t sdp_media_rport(const struct sdp_media *m);
 const struct sa *sdp_media_raddr(const struct sdp_media *m);

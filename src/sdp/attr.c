@@ -78,6 +78,37 @@ int sdp_attr_addv(struct list *lst, const char *name, const char *val,
 }
 
 
+int sdp_attr_clone(struct list *dst, const struct list *src)
+{
+	struct le *le;
+
+	if (!dst || !src)
+		return EINVAL;
+
+	for (le = list_head(src); le; le = le->next) {
+		const struct sdp_attr *src_attr = le->data;
+		struct sdp_attr *attr;
+		int err;
+
+		attr = mem_zalloc(sizeof(*attr), destructor);
+		if (!attr)
+			return ENOMEM;
+
+		err = str_dup(&attr->name, src_attr->name);
+		if (!err && src_attr->val)
+			err = str_dup(&attr->val, src_attr->val);
+		if (err) {
+			mem_deref(attr);
+			return err;
+		}
+
+		list_append(dst, &attr->le, attr);
+	}
+
+	return 0;
+}
+
+
 void sdp_attr_del(const struct list *lst, const char *name)
 {
 	struct le *le = list_head(lst);
