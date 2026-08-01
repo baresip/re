@@ -55,10 +55,15 @@ option(USE_BFCP "Enable BFCP" ON)
 option(USE_PCP "Enable PCP" ON)
 option(USE_RTMP "Enable RTMP" ON)
 option(USE_SIP "Enable SIP" ON)
+option(USE_DATACHANNEL "Build WebRTC data-channel companion" OFF)
 option(LIBRE_BUILD_SHARED "Build shared library" ON)
 option(LIBRE_BUILD_STATIC "Build static library" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(USE_DATACHANNEL)
+  list(APPEND RE_DEFINITIONS -DUSE_DATACHANNEL)
+endif()
 
 if(MSVC)
   add_compile_options("/W3")
@@ -749,6 +754,11 @@ install(FILES cmake/re-config.cmake
   COMPONENT Development
 )
 
+set(LIBRE_DATACHANNEL_STATIC OFF)
+if(USE_DATACHANNEL AND NOT LIBRE_BUILD_SHARED)
+  set(LIBRE_DATACHANNEL_STATIC ON)
+endif()
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/libre-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/libre-config.cmake"
@@ -771,6 +781,148 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(packaging)
 endif()
 
+
+if(USE_DATACHANNEL)
+  find_package(USRSCTP REQUIRED)
+  include(CheckCSourceCompiles)
+  set(CMAKE_REQUIRED_INCLUDES ${USRSCTP_INCLUDE_DIRS})
+  set(CMAKE_REQUIRED_LIBRARIES ${USRSCTP_LIBRARIES} Threads::Threads)
+  check_c_source_compiles("
+    #include <stdint.h>
+    #include <usrsctp.h>
+    int main(void) {
+      struct sctp_sendv_spa spa = {0};
+      struct sockaddr_conn addr = {0};
+      spa.sendv_sndinfo.snd_flags = SCTP_EOR;
+      spa.sendv_prinfo.pr_policy = SCTP_PR_SCTP_TTL;
+      addr.sconn_family = AF_CONN;
+      usrsctp_init(0, 0, 0);
+      usrsctp_register_address(&addr);
+      usrsctp_conninput(&addr, &spa, sizeof(spa), 0);
+      usrsctp_deregister_address(&addr);
+      (void)usrsctp_sendv(0, 0, 0, 0, 0, &spa, sizeof(spa),
+                          SCTP_SENDV_SPA, 0);
+      return SCTP_EXPLICIT_EOR == SCTP_ENABLE_STREAM_RESET;
+    }"
+    USRSCTP_WEBRTC_PROFILE)
+  if(NOT USRSCTP_WEBRTC_PROFILE)
+    message(FATAL_ERROR
+      "usrsctp lacks the AF_CONN, PR-SCTP, EOR, or stream-reset APIs")
+  endif()
+
+  check_c_source_compiles("
+    #include <stdint.h>
+    #include <usrsctp.h>
+    int main(void) {
+      struct sctp_assoc_value value = {0};
+      value.assoc_value = SCTP_SS_FAIR_BANDWITH;
+      return SCTP_PLUGGABLE_SS == 0 || value.assoc_value == 0;
+    }"
+    USRSCTP_FAIR_BANDWIDTH_SCHEDULER)
+  check_c_source_compiles("
+    #include <stdint.h>
+    #include <usrsctp.h>
+    int main(void) {
+      struct sctp_assoc_value value = {0};
+      value.assoc_value = 1;
+      return SCTP_FRAGMENT_INTERLEAVE == 0 ||
+             SCTP_INTERLEAVING_SUPPORTED == 0;
+    }"
+    USRSCTP_MESSAGE_INTERLEAVING)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+
+  add_library(datachannel-objs OBJECT
+    src/datachannel/datachannel.c
+    src/datachannel/datachannel.h
+    src/datachannel/version.c
+    include/re_datachannel.h
+  )
+  target_include_directories(datachannel-objs
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${USRSCTP_INCLUDE_DIRS}
+  )
+  target_compile_definitions(datachannel-objs PRIVATE
+    ${RE_DEFINITIONS}
+    RE_DATACHANNEL_EXPORTS)
+  if(USRSCTP_FAIR_BANDWIDTH_SCHEDULER)
+    target_compile_definitions(datachannel-objs PRIVATE
+      DC_USRSCTP_FAIR_BANDWIDTH=1)
+    list(APPEND RE_DEFINITIONS -DDC_USRSCTP_FAIR_BANDWIDTH=1)
+  endif()
+  if(USRSCTP_MESSAGE_INTERLEAVING)
+    target_compile_definitions(datachannel-objs PRIVATE
+      DC_USRSCTP_INTERLEAVING=1)
+    list(APPEND RE_DEFINITIONS -DDC_USRSCTP_INTERLEAVING=1)
+  endif()
+  set_target_properties(datachannel-objs PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN YES
+  )
+  if(LIBRE_BUILD_SHARED)
+    add_library(datachannel SHARED
+      $<TARGET_OBJECTS:datachannel-objs>)
+  else()
+    add_library(datachannel STATIC
+      $<TARGET_OBJECTS:datachannel-objs>)
+  endif()
+  target_include_directories(datachannel
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/re>
+  )
+  if(UNIX AND NOT APPLE)
+    target_link_options(datachannel PRIVATE "LINKER:--exclude-libs,ALL")
+  endif()
+  if(LIBRE_BUILD_SHARED)
+    target_link_libraries(datachannel PRIVATE re-shared USRSCTP::USRSCTP)
+  else()
+    target_link_libraries(datachannel PRIVATE re USRSCTP::USRSCTP)
+  endif()
+  set_target_properties(datachannel PROPERTIES
+    VERSION 1.0.0
+    SOVERSION 1
+    OUTPUT_NAME "re-datachannel"
+  )
+  add_library(libre::datachannel ALIAS datachannel)
+
+  install(TARGETS datachannel
+    EXPORT libre
+    RUNTIME
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT Libraries
+    LIBRARY
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT Libraries
+      NAMELINK_SKIP
+    ARCHIVE
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT Development
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+  )
+  if(LIBRE_BUILD_SHARED)
+    install(TARGETS datachannel
+      LIBRARY
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        NAMELINK_ONLY
+        COMPONENT Development
+    )
+  endif()
+  install(FILES cmake/FindUSRSCTP.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libre
+    COMPONENT Development
+  )
+  install(FILES include/re_datachannel.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/re
+    COMPONENT Development
+  )
+  install(FILES third_party/usrsctp-LICENSE.md
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/libre-datachannel
+    COMPONENT Libraries
+  )
+endif()
 
 ##############################################################################
 # Test

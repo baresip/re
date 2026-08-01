@@ -381,6 +381,9 @@ int test_vidconv(void);
 int test_vidconv_scaling(void);
 int test_vidconv_pixel_formats(void);
 int test_websock(void);
+#ifdef USE_DATACHANNEL
+int test_datachannel(void);
+#endif
 int test_trace(void);
 #ifdef USE_TLS
 int test_dtls(void);

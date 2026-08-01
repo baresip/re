@@ -71,3 +71,56 @@ jobs:
     - name: retest
       run: |
         ./build/test/retest -r -v
+
+  datachannel:
+    runs-on: ubuntu-24.04
+    env:
+      CMAKE_GENERATOR: Ninja
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libusrsctp-dev ninja-build
+
+    - name: shared build and test
+      run: |
+        cmake -B build-datachannel-shared \
+          -DUSE_DATACHANNEL=ON \
+          -DCMAKE_C_FLAGS="-Werror" \
+          -DCMAKE_CXX_FLAGS="-Werror"
+        cmake --build build-datachannel-shared -t retest
+        ./build-datachannel-shared/test/retest -r -v test_datachannel
+
+    - name: shared installed consumer
+      run: |
+        cmake --install build-datachannel-shared \
+          --prefix "$RUNNER_TEMP/libre-datachannel-shared"
+        cmake -S test/cmake/datachannel-consumer \
+          -B build-datachannel-consumer-shared \
+          -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/libre-datachannel-shared"
+        cmake --build build-datachannel-consumer-shared
+        ./build-datachannel-consumer-shared/datachannel-consumer
+
+    - name: static build and test
+      run: |
+        cmake -B build-datachannel-static \
+          -DUSE_DATACHANNEL=ON \
+          -DLIBRE_BUILD_SHARED=OFF \
+          -DLIBRE_BUILD_STATIC=ON \
+          -DCMAKE_C_FLAGS="-Werror" \
+          -DCMAKE_CXX_FLAGS="-Werror"
+        cmake --build build-datachannel-static -t retest
+        ./build-datachannel-static/test/retest -r -v test_datachannel
+
+    - name: static installed consumer
+      run: |
+        cmake --install build-datachannel-static \
+          --prefix "$RUNNER_TEMP/libre-datachannel-static"
+        cmake -S test/cmake/datachannel-consumer \
+          -B build-datachannel-consumer-static \
+          -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/libre-datachannel-static"
+        cmake --build build-datachannel-consumer-static
+        ./build-datachannel-consumer-static/datachannel-consumer

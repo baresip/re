@@ -70,6 +70,9 @@ static const struct test tests[] = {
 	TEST(test_crc32),
 	TEST(test_dbg),
 	TEST(test_dd),
+#ifdef USE_DATACHANNEL
+	TEST(test_datachannel),
+#endif
 	TEST(test_dns_dname),
 	TEST(test_dns_hdr),
 	TEST(test_dns_proto),

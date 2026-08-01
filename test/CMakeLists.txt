@@ -153,6 +153,10 @@ set(SRCS
   websock.c
 )
 
+if(USE_DATACHANNEL)
+  list(APPEND SRCS datachannel.c)
+endif()
+
 if(USE_OPENSSL)
   list(APPEND SRCS
     tls.c
@@ -171,6 +175,9 @@ list(APPEND SRCS cplusplus.cpp)
 #
 
 set(LINKLIBS re ${OPENSSL_LIBRARIES})
+if(USE_DATACHANNEL AND LIBRE_BUILD_SHARED)
+  set(LINKLIBS re-shared ${OPENSSL_LIBRARIES})
+endif()
 if(WIN32)
   list(APPEND LINKLIBS qwave iphlpapi wsock32 ws2_32 crypt32)
 else()
@@ -185,6 +192,15 @@ add_executable(${PROJECT_NAME} ${SRCS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS 1)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINKLIBS})
+if(USE_DATACHANNEL)
+  target_sources(${PROJECT_NAME} PRIVATE
+    $<TARGET_OBJECTS:datachannel-objs>)
+  target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${USRSCTP_INCLUDE_DIRS}
+  )
+  target_link_libraries(${PROJECT_NAME} PRIVATE ${USRSCTP_LIBRARIES})
+endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${RE_DEFINITIONS})
 
 if(USE_OPENSSL)

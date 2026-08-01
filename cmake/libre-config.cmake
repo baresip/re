@@ -9,6 +9,12 @@ if("@LIBRE_BUILD_STATIC@")
     endif()
 endif()
 
+if("@LIBRE_DATACHANNEL_STATIC@")
+    include(CMakeFindDependencyMacro)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    find_dependency(USRSCTP)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/libre-targets.cmake")
 
 # convenience target libre::libre for uniform usage

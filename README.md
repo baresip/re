@@ -51,6 +51,18 @@ cmake -B build && cmake --build build -t retest -j
 build/test/retest -rv
 ```
 
+### Build the WebRTC data-channel companion
+
+Configure with `-DUSE_DATACHANNEL=ON` and provide a usrsctp installation.
+The companion uses fair-bandwidth scheduling and SCTP message interleaving
+when those APIs are exposed by the detected usrsctp headers. Its current
+constrained priority profile gives every channel the RFC 8864 default priority
+of 256: local non-default priorities return `ENOTSUP`; incoming DCEP priority
+zero (the de-facto default emitted by deployed RFC 8832 peers) is mapped to
+256, while other non-default values are rejected and the stream is reset. This avoids
+claiming RFC 8831 weighted priority behavior until the backend exposes usable
+RFC 8260 per-stream weights.
+
 On some distributions, /usr/local/lib may not be included in ld.so.conf. 
 You can check with `grep "/usr/local/lib" /etc/ld.so.conf.d/*.conf` 
 and add if necessary:
