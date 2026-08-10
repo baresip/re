@@ -265,7 +265,11 @@ void *mem_pool_release(struct mem_pool *pool, struct mem_pool_entry *e)
  */
 void mem_pool_flush(struct mem_pool *pool)
 {
+	if (!pool)
+		return;
+
 	mtx_lock(pool->lock);
+	pool->freel = NULL;
 	for (size_t i = 0; i < pool->nmemb; i++) {
 		struct mem_pool_entry *e = pool->objs[i];
 		if (pool->membdh)

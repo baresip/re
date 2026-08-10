@@ -51,6 +51,9 @@ int test_mem_pool(void)
 
 	TEST_ASSERT(!mem_pool_borrow(pool));
 
+	e = mem_pool_release(pool, e);
+	TEST_ASSERT(!e);
+
 	mem_pool_flush(pool);
 
 	for (int i = 0; i < NUM_OBJECTS; i++) {
