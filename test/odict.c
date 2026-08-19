@@ -110,7 +110,7 @@ int test_odict(void)
 	TEST_ASSERT(odict_type_isreal(ODICT_NULL));
 	TEST_ASSERT(!odict_type_isreal(ODICT_OBJECT));
 
-	err = odict_alloc(&dict, 64);
+	err = odict_alloc(&dict, 8);
 	if (err)
 		goto out;
 
