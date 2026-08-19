@@ -215,6 +215,9 @@ struct mem_pool_entry *mem_pool_borrow(struct mem_pool *pool)
  */
 struct mem_pool_entry *mem_pool_borrow_extend(struct mem_pool *pool)
 {
+	if (!pool)
+		return NULL;
+
 	struct mem_pool_entry *e = mem_pool_borrow(pool);
 	if (e)
 		return e;
