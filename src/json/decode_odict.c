@@ -12,6 +12,8 @@
 #include <re_odict.h>
 #include <re_json.h>
 
+enum { CONTAINER_HASH_SZ = 1u << 2 };
+
 
 static int container_add(const char *name, unsigned idx,
 			 enum odict_type type, struct json_handlers *h)
@@ -27,7 +29,7 @@ static int container_add(const char *name, unsigned idx,
 		name = index;
 	}
 
-	err = odict_alloc(&oc, hash_bsize(o->ht));
+	err = odict_alloc(&oc, CONTAINER_HASH_SZ);
 	if (err)
 		return err;
 

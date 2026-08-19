@@ -12,6 +12,8 @@
 #include "re_odict.h"
 #include "odict.h"
 
+enum { ENTRY_HASH_MAX = 1u << 16 };
+
 
 static void destructor(void *arg)
 {
@@ -35,6 +37,32 @@ static void destructor(void *arg)
 	hash_unlink(&e->he);
 	list_unlink(&e->le);
 	mem_deref(e->key);
+}
+
+
+static void odict_grow(struct odict *o)
+{
+	uint32_t bsize = hash_bsize(o->ht);
+
+	if (list_count(&o->lst) < bsize || bsize >= ENTRY_HASH_MAX)
+		return;
+
+	struct hash *ht;
+	int err = hash_alloc(&ht, bsize << 1);
+	if (err)
+		return;
+
+	struct le *le;
+	LIST_FOREACH(&o->lst, le)
+	{
+		struct odict_entry *e = le->data;
+
+		hash_unlink(&e->he);
+		hash_append(ht, hash_fast_str(e->key), &e->he, e);
+	}
+
+	mem_deref(o->ht);
+	o->ht = ht;
 }
 
 
@@ -98,6 +126,9 @@ int odict_entry_add(struct odict *o, const char *key,
 
 	list_append(&o->lst, &e->le, e);
 	hash_append(o->ht, hash_fast_str(e->key), &e->he, e);
+
+	/* grow hash table if needed */
+	odict_grow(o);
 
  out:
 	if (err)
