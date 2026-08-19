@@ -32,8 +32,10 @@ static int container_add(const char *name, unsigned idx,
 		return err;
 
 	err = odict_entry_add(o, name, type, oc);
+	if (!err)
+		h->arg = oc;
+
 	mem_deref(oc);
-	h->arg = oc;
 
 	return err;
 }
