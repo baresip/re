@@ -5,6 +5,21 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.11.0 - 2026-08-24
+
+## What's Changed
+* btrace: optimize addr2line handling by @sreimers in https://github.com/baresip/re/pull/1598
+* aubuf: remove adaptive mode by @cspiel1 in https://github.com/baresip/re/pull/1597
+* httpauth/basic: fix mem_seccmp cmp length by @sreimers in https://github.com/baresip/re/pull/1601
+* srtcp: fix/add AES-GCM no encryption flag auth by @sreimers in https://github.com/baresip/re/pull/1600
+* mem_pool: fix mem_pool_flush free list handling by @sreimers in https://github.com/baresip/re/pull/1604
+* mem/mem_pool: check mem_pool_borrow_extend empty pool param by @sreimers in https://github.com/baresip/re/pull/1606
+* json/decode_odict: fix possible container dangling pointer by @sreimers in https://github.com/baresip/re/pull/1605
+
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.10.0...v4.11.0
+
+
 ## v4.10.0 - 2026-07-22
 
 ### What's Changed
