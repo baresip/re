@@ -235,6 +235,8 @@ static const struct test tests[] = {
 	TEST(test_stun_reqltc),
 	TEST(test_stun_resp),
 	TEST(test_sys_endian),
+	TEST(test_sys_exec),
+	TEST(test_sys_exect),
 	TEST(test_sys_fs_fopen),
 	TEST(test_sys_fs_gethome),
 	TEST(test_sys_fs_isdir),

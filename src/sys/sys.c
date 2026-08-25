@@ -9,8 +9,16 @@
 #include <re_fmt.h>
 #include <re_mem.h>
 #include <re_sys.h>
+#include <re_list.h>
+#include <re_tmr.h>
+#ifdef HAVE_SIGNAL
+#include <signal.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#ifndef WIN32
+#include <sys/wait.h>
+#endif
 #endif
 #ifdef HAVE_UNAME
 #include <sys/utsname.h>
@@ -27,14 +35,28 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-#endif
 
-#ifdef WIN32
 enum {
 	MAX_ENVSZ = 32767
 };
+#else
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
+#ifndef environ
+extern char **environ;
+#endif
+#endif
 #endif
 
+
+#define DEBUG_MODULE "sys"
+#define DEBUG_LEVEL 5
+#include <re_dbg.h>
+
+
+enum { EXEC_SLEEP_US = 10 * 1000 };
 
 /**
  * Get kernel name and version
@@ -246,4 +268,146 @@ int sys_getenv(char **env, const char *name)
 
 	return str_dup(env, tmp);
 #endif
+}
+
+
+static int _sys_exect(uint64_t timeout_ms, const char *path, va_list ap)
+{
+#ifndef WIN32
+	char *argv[32];
+	size_t n = 0;
+
+	if (!path)
+		return EINVAL;
+
+	argv[n++] = (char *)path;
+	for (; n < RE_ARRAY_SIZE(argv) - 1; n++) {
+		char *arg = va_arg(ap, char *);
+		if (!arg)
+			break;
+		argv[n] = arg;
+	}
+
+	if (n == RE_ARRAY_SIZE(argv) - 1)
+		return E2BIG;
+
+	argv[n] = NULL;
+
+	pid_t pid = fork();
+	if (pid < 0)
+		return errno;
+
+	if (pid == 0) {
+		/* CHILD */
+		signal(SIGINT, SIG_DFL);
+		signal(SIGQUIT, SIG_DFL);
+
+		setpgid(0, 0);
+
+		execve(argv[0], argv, environ);
+
+		_exit(127);
+	}
+
+	/* PARENT */
+	setpgid(pid, pid);
+
+	int status;
+	uint64_t start = tmr_jiffies();
+	bool timedout  = false;
+
+	while (true) {
+		pid_t w = waitpid(pid, &status, WNOHANG);
+		if (w == -1) {
+			if (errno == EINTR)
+				continue;
+			return errno;
+		}
+		if (w == pid)
+			break;
+
+		if (timeout_ms > 0 && (tmr_jiffies() - start) > timeout_ms) {
+			timedout = true;
+			break;
+		}
+		sys_usleep(EXEC_SLEEP_US);
+	}
+
+	if (timedout) {
+		DEBUG_WARNING("exec/timeout: SIGTERM %s\n", path);
+		kill(-pid, SIGTERM);
+
+		for (int i = 0; i < 10; i++) {
+			if (waitpid(pid, &status, WNOHANG) == pid)
+				return ETIME;
+			sys_usleep(EXEC_SLEEP_US);
+		}
+
+		DEBUG_WARNING("exec/timeout: SIGKILL %s\n", path);
+		kill(-pid, SIGKILL);
+
+		waitpid(pid, &status, 0);
+		return ETIME;
+	}
+
+	if (WIFEXITED(status))
+		return -WEXITSTATUS(status);
+	else if (WIFSIGNALED(status)) {
+		DEBUG_WARNING("exec: killed by signal %d\n", WTERMSIG(status));
+		return ECANCELED;
+	}
+
+	return ENODATA;
+#else
+	(void)timeout_ms;
+	(void)path;
+	(void)ap;
+	return ENOSYS;
+#endif
+}
+
+
+/**
+ * Execute a program synchronously
+ *
+ * @param path       Full Path to executable
+ * @param ...        Variable argument list of program arguments, last arg must
+ *                   be NULL for termination
+ *
+ * @return 0 on success, negative program exit code on failure, otherwise
+ * errorcode
+ */
+int sys_exec(const char *path, ...)
+{
+	va_list ap;
+
+	va_start(ap, path);
+	int err = _sys_exect(0, path, ap);
+	va_end(ap);
+
+	return err;
+}
+
+
+/**
+ * Execute a program synchronously with optional timeout
+ *
+ * @param timeout_ms Timeout in milliseconds (0 = no timeout)
+ * @param path       Full Path to executable
+ * @param ...        Variable argument list of program arguments, last arg must
+ *                   be NULL for termination
+ *
+ * @return 0 on success, negative program exit code on failure, otherwise
+ * errorcode
+ *
+ */
+int sys_exect(uint64_t timeout_ms, const char *path, ...)
+{
+	va_list ap;
+
+	va_start(ap, path);
+	int err = _sys_exect(timeout_ms, path, ap);
+	va_end(ap);
+
+	return err;
 }

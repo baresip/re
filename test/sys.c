@@ -239,3 +239,49 @@ int test_sys_fs_gethome(void)
 out:
 	return err;
 }
+
+
+int test_sys_exec(void)
+{
+	int err = 0;
+
+#ifdef WIN32
+	err = sys_exec("not_implemented", "-c", "exit 0", NULL);
+	TEST_EQUALS(ENOSYS, err);
+	err = 0;
+#elif defined LINUX
+	err = sys_exec("/bin/sh", "-c", "exit 0", NULL);
+	TEST_ERR(err);
+	err = sys_exec("/bin/sh", "-c", "exit 127", NULL);
+	TEST_EQUALS(-127, err);
+	err = 0;
+#else
+	goto out;
+#endif
+
+out:
+	return err;
+}
+
+
+int test_sys_exect(void)
+{
+	int err = 0;
+
+#ifdef WIN32
+	err = sys_exect(1000, "not_implemented", NULL);
+	TEST_EQUALS(ENOSYS, err);
+	err = 0;
+#elif defined LINUX
+	err = sys_exect(1000, "/bin/sh", "-c", "exit 0", NULL);
+	TEST_ERR(err);
+	err = sys_exect(10, "/bin/sh", "-c", "sleep 1", NULL);
+	TEST_EQUALS(ETIME, err);
+	err = 0;
+#else
+	goto out;
+#endif
+
+out:
+	return err;
+}
