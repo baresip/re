@@ -239,3 +239,120 @@ int test_sys_fs_gethome(void)
 out:
 	return err;
 }
+
+
+int test_sys_exec(void)
+{
+	int err = 0;
+
+#ifdef WIN32
+	err = sys_exec("not_implemented", "-c", "exit 0", NULL);
+	TEST_EQUALS(ENOSYS, err);
+	err = 0;
+#elif defined LINUX
+	err = sys_exec("/bin/sh", "-c", "exit 0", NULL);
+	TEST_ERR(err);
+	err = sys_exec("/bin/sh", "-c", "exit 127", NULL);
+	TEST_EQUALS(-127, err);
+	err = 0;
+#else
+	goto out;
+#endif
+
+out:
+	return err;
+}
+
+
+int test_sys_texec(void)
+{
+	int err = 0;
+
+#ifdef WIN32
+	err = sys_texec(1000, "not_implemented", NULL);
+	TEST_EQUALS(ENOSYS, err);
+	err = 0;
+#elif defined LINUX
+	err = sys_texec(1000, "/bin/sh", "-c", "exit 0", NULL);
+	TEST_ERR(err);
+	err = sys_texec(10, "/bin/sh", "-c", "sleep 1", NULL);
+	TEST_EQUALS(ETIME, err);
+	err = 0;
+#else
+	goto out;
+#endif
+
+out:
+	return err;
+}
+
+
+int test_sys_cexec(void)
+{
+	struct mbuf *mb_out = mbuf_alloc(512);
+	struct mbuf *mb_err = mbuf_alloc(512);
+	char *str	    = NULL;
+	int err		    = 0;
+
+	if (!mb_out || !mb_err) {
+		err = ENOMEM;
+		goto out;
+	}
+
+#ifdef WIN32
+	err = sys_cexec(mb_out, mb_err, 1000, "not_implemented", NULL);
+	TEST_EQUALS(ENOSYS, err);
+	err = 0;
+#elif defined LINUX
+	/* stdout */
+	err = sys_cexec(mb_out, mb_err, 1000, "/bin/sh", "-c",
+			"printf 'hello re'", NULL);
+	TEST_ERR(err);
+	TEST_EQUALS(8, mbuf_get_left(mb_out));
+	TEST_EQUALS(0, mbuf_get_left(mb_err));
+
+	err = mbuf_strdup(mb_out, &str, mbuf_get_left(mb_out));
+	TEST_ERR(err);
+	TEST_STRCMP("hello re", 8, str, str_len(str));
+
+	/* stderr and exit code, output is appended */
+	mbuf_rewind(mb_out);
+	err = sys_cexec(mb_out, mb_err, 1000, "/bin/sh", "-c",
+			"printf 'oops' >&2; exit 3", NULL);
+	TEST_EQUALS(-3, err);
+	TEST_EQUALS(0, mbuf_get_left(mb_out));
+	TEST_EQUALS(4, mbuf_get_left(mb_err));
+
+	/* optional buffers */
+	err = sys_cexec(NULL, NULL, 1000, "/bin/sh", "-c", "echo ignored",
+			NULL);
+	TEST_ERR(err);
+
+	/* more data than a pipe buffer can hold (no deadlock) */
+	mbuf_rewind(mb_out);
+	mbuf_rewind(mb_err);
+	err = sys_cexec(mb_out, NULL, 10000, "/bin/sh", "-c",
+			"i=0; while [ $i -lt 4096 ]; do "
+			"printf '0123456789abcdef012345678901234567890123'"
+			"; i=$((i+1)); done", NULL);
+	TEST_ERR(err);
+	TEST_EQUALS(4096 * 40, mbuf_get_left(mb_out));
+
+	/* timeout keeps the output written so far */
+	mbuf_rewind(mb_out);
+	err = sys_cexec(mb_out, NULL, 500, "/bin/sh", "-c",
+			"printf 'partial'; sleep 5", NULL);
+	TEST_EQUALS(ETIME, err);
+	TEST_EQUALS(7, mbuf_get_left(mb_out));
+	err = 0;
+#else
+	goto out;
+#endif
+
+out:
+	mem_deref(str);
+	mem_deref(mb_out);
+	mem_deref(mb_err);
+
+	return err;
+}

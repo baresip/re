@@ -371,6 +371,7 @@ set(SRCS
 
   src/sys/daemon.c
   src/sys/endian.c
+  src/sys/exec.c
   src/sys/fs.c
   src/sys/rand.c
   src/sys/sleep.c
