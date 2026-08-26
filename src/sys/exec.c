@@ -68,6 +68,7 @@ static void exec_pipe_close(re_sock_t *fd)
 static int exec_pipe_init(struct exec_pipe *p, struct mbuf *mb)
 {
 	re_sock_t pfd[2];
+	int err;
 
 	p->fdr = RE_BAD_SOCK;
 	p->fdw = RE_BAD_SOCK;
@@ -100,7 +101,7 @@ static int exec_pipe_init(struct exec_pipe *p, struct mbuf *mb)
 	return 0;
 
 error:
-	int err = errno;
+	err = errno;
 	(void)close(pfd[0]);
 	(void)close(pfd[1]);
 	return err;
