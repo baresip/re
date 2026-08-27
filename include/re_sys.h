@@ -78,3 +78,11 @@ int  fs_fread(struct mbuf **mbp, const char *path);
 
 void fs_stdio_hide(void);
 void fs_stdio_restore(void);
+
+/* Exec */
+int sys_exec(const char *path, ...);
+int sys_texec(uint64_t timeout_ms, const char *path, ...);
+int sys_cexec(struct mbuf *mb_out, struct mbuf *mb_err, uint64_t timeout_ms,
+	      const char *path, ...);
+int sys_vexec(struct mbuf *mb_out, struct mbuf *mb_err, uint64_t timeout_ms,
+	      const char *path, va_list ap);
