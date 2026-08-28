@@ -121,6 +121,7 @@ set(SRCS
   odict.c
   pcp.c
   remain.c
+  red.c
   rtcp.c
   rtmp.c
   rtp.c
@@ -137,6 +138,7 @@ set(SRCS
   stun.c
   sys.c
   tcp.c
+  t140.c
   telev.c
   test.c
   thread.c
