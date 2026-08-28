@@ -1,7 +1,6 @@
 /**
  * @file t140.c  Testcode for ITU-T T.140 Real-Time Text (RFC 4103)
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <string.h>
 #include <re.h>

@@ -1,7 +1,6 @@
 /**
  * @file red.c  RTP Redundant Payload (RFC 2198)
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <string.h>
 #include <re_types.h>

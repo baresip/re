@@ -1,7 +1,6 @@
 /**
  * @file dc.c  T.140 Real-Time Text over data channels (RFC 8865)
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <re_types.h>
 #include <re_fmt.h>

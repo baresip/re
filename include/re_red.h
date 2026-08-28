@@ -1,7 +1,6 @@
 /**
  * @file re_red.h  Interface to RTP Redundant Payload (RFC 2198)
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 
 

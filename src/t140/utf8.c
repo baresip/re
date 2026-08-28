@@ -1,7 +1,6 @@
 /**
  * @file utf8.c  UTF-8 handling for ITU-T T.140 Real-Time Text
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <re_types.h>
 #include <re_fmt.h>

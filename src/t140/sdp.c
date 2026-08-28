@@ -1,7 +1,6 @@
 /**
  * @file sdp.c  SDP helpers for T.140 Real-Time Text over RTP (RFC 4103)
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <re_types.h>
 #include <re_fmt.h>

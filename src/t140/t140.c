@@ -1,7 +1,6 @@
 /**
  * @file t140.c  ITU-T T.140 Real-Time Text
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 #include <string.h>
 #include <re_types.h>

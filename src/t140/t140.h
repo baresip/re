@@ -1,7 +1,6 @@
 /**
  * @file t140.h  Internal interface to ITU-T T.140 Real-Time Text
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 
 

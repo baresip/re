@@ -1,7 +1,6 @@
 /**
  * @file re_t140.h  Interface to ITU-T T.140 Real-Time Text
  *
- * Copyright (C) 2026 Emmanuel BUU
  */
 
 struct sa;
