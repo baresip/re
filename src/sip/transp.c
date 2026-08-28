@@ -1008,7 +1008,7 @@ static void websock_close_handler(int err, void *arg)
 
 static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 			bool secure,
-			const struct sa *dst, struct mbuf *mb,
+			const struct sa *dst, char *host, struct mbuf *mb,
 			sip_transp_h *transph, void *arg)
 {
 	struct sip_conn *conn, *new_conn = NULL;
@@ -1018,6 +1018,10 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 	const char *prefix;
 	char ws_uri[256];
 	int err = 0;
+
+#ifndef USE_TLS
+	(void) host;
+#endif
 
 	if (secure) {
 		prefix = "wss";
@@ -1091,6 +1095,27 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 			http_client_set_tls(transp->http_cli, transp->tls);
 #endif
 	}
+
+#ifdef USE_TLS
+	/* The websock URI is built from the resolved address, so the server
+	   identity must be verified against the hostname. The HTTP client is
+	   allocated once per transport and reused, hence the name is updated
+	   (or cleared) for every new connection. */
+	if (secure) {
+		struct pl hostpl;
+		struct sa tmpsa;
+		bool named;
+
+		named = str_isset(host) && 0 != sa_set_str(&tmpsa, host, 0);
+		if (named)
+			pl_set_str(&hostpl, host);
+
+		err = http_client_set_tls_hostname(transp->http_cli,
+						   named ? &hostpl : NULL);
+		if (err)
+			goto out;
+	}
+#endif
 
 	re_printf("websock: connecting to '%s'\n", ws_uri);
 	err = websock_connect(&conn->websock_conn, sip->websock,
@@ -1616,8 +1641,8 @@ int sip_transp_send(struct sip_connqent **qentp, struct sip *sip, void *sock,
 			}
 		}
 		else {
-			err = ws_conn_send(qentp, sip, secure, &dsttmp, mb,
-					   transph, arg);
+			err = ws_conn_send(qentp, sip, secure, &dsttmp, host,
+					   mb, transph, arg);
 			if (err) {
 				re_fprintf(stderr, "ws_conn_send failed"
 					   " (%m)\n", err);

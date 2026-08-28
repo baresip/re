@@ -320,6 +320,7 @@ int test_sip_via(void);
 int test_sip_dns(void);
 #ifdef USE_TLS
 int test_sip_transp_add_client_cert(void);
+int test_sip_transp_wss_verify_host(void);
 #endif
 int test_sipevent(void);
 int test_sipreg_udp(void);
