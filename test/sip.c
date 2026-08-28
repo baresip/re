@@ -1035,3 +1035,197 @@ out:
 
 	return err;
 }
+
+
+#ifdef USE_TLS
+struct wss_test {
+	struct sip *cli;
+	struct dnsc *dnsc;
+	struct tls *tls;
+	struct tmr tmr;
+	unsigned n_recv;
+};
+
+
+static bool wss_msg_handler(const struct sip_msg *msg, void *arg)
+{
+	struct wss_test *wt = arg;
+	(void)msg;
+
+	++wt->n_recv;
+	re_cancel();
+
+	return true;
+}
+
+
+static void wss_timeout_handler(void *arg)
+{
+	(void)arg;
+
+	re_cancel();
+}
+
+
+static int wss_client_alloc(struct wss_test *wt)
+{
+	struct sa laddr;
+	int err;
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	if (err)
+		return err;
+
+	err = sip_alloc(&wt->cli, wt->dnsc, 32, 32, 32, "retest", NULL,
+			NULL);
+	if (err)
+		return err;
+
+	return sip_transp_add_websock(wt->cli, SIP_TRANSP_WSS, &laddr,
+				      false, NULL, wt->tls);
+}
+
+
+static int wss_send(struct wss_test *wt, const struct sa *dst, char *host)
+{
+	struct mbuf *mb;
+	int err;
+
+	mb = mbuf_alloc(512);
+	if (!mb)
+		return ENOMEM;
+
+	err = mbuf_printf(mb,
+			  "OPTIONS sip:retest.server.org SIP/2.0\r\n"
+			  "Via: SIP/2.0/WSS 127.0.0.1;branch=z9hG4bKretest\r\n"
+			  "Max-Forwards: 70\r\n"
+			  "To: <sip:retest.server.org>\r\n"
+			  "From: <sip:retest@example.com>;tag=1234\r\n"
+			  "Call-ID: 0123456789@retest\r\n"
+			  "CSeq: 1 OPTIONS\r\n"
+			  "Content-Length: 0\r\n"
+			  "\r\n");
+	if (err)
+		goto out;
+
+	mb->pos = 0;
+
+	err = sip_send_conn(wt->cli, NULL, SIP_TRANSP_WSS, dst, host, mb,
+			    NULL, NULL);
+
+ out:
+	mem_deref(mb);
+
+	return err;
+}
+
+
+/*
+ * Verify that the SIP/WSS transport validates the server identity against
+ * the target hostname, and not against the resolved address which is used
+ * to build the websock URI.
+ */
+int test_sip_transp_wss_verify_host(void)
+{
+	struct sip *srv = NULL;
+	struct sip_lsnr *lsnr = NULL;
+	struct wss_test wt;
+	struct sa laddr, dst, dns;
+	char cert[256], cafile[256];
+	char hostname[] = "retest.server.org";
+	char wrongname[] = "retest.attacker.org";
+	int err;
+
+	memset(&wt, 0, sizeof(wt));
+	tmr_init(&wt.tmr);
+
+	(void)re_snprintf(cert, sizeof(cert), "%s/sni/server-interm.pem",
+			  test_datapath());
+	(void)re_snprintf(cafile, sizeof(cafile), "%s/sni/root-ca.pem",
+			  test_datapath());
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	err = sa_set_str(&dns, "127.0.0.1", 53);    /* note: unused */
+	TEST_ERR(err);
+
+	err = dnsc_alloc(&wt.dnsc, NULL, &dns, 1);
+	TEST_ERR(err);
+
+	/* SIP/WSS server with a certificate for 'retest.server.org' */
+	err = sip_alloc(&srv, NULL, 32, 32, 32, "retest srv", NULL, NULL);
+	TEST_ERR(err);
+
+	err = sip_transp_add_websock(srv, SIP_TRANSP_WSS, &laddr, true,
+				     cert, NULL);
+	TEST_ERR(err);
+
+	err = sip_listen(&lsnr, srv, true, wss_msg_handler, &wt);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(srv, &dst, SIP_TRANSP_WSS, &laddr);
+	TEST_ERR(err);
+
+	err = tls_alloc(&wt.tls, TLS_METHOD_TLS, NULL, NULL);
+	TEST_ERR(err);
+
+	err = tls_add_ca(wt.tls, cafile);
+	TEST_ERR(err);
+
+	/* 1. matching hostname: the connection must be established */
+	err = wss_client_alloc(&wt);
+	TEST_ERR(err);
+
+	err = wss_send(&wt, &dst, hostname);
+	TEST_ERR(err);
+
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+	TEST_EQUALS(1, wt.n_recv);
+
+	sip_close(wt.cli, true);
+	wt.cli = mem_deref(wt.cli);
+
+	/* 2. hostname not covered by the certificate: must be rejected */
+	err = wss_client_alloc(&wt);
+	TEST_ERR(err);
+
+	err = wss_send(&wt, &dst, wrongname);
+	TEST_ERR(err);
+
+	tmr_start(&wt.tmr, 500, wss_timeout_handler, &wt);
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+	TEST_EQUALS(1, wt.n_recv);
+
+	/* 3. no hostname, on the transport (and HTTP client) used above:
+	 *    the previous hostname must not be inherited */
+	err = wss_send(&wt, &dst, NULL);
+	TEST_ERR(err);
+
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+	TEST_EQUALS(2, wt.n_recv);
+
+ out:
+	tmr_cancel(&wt.tmr);
+
+	sip_close(wt.cli, true);
+	wt.cli = mem_deref(wt.cli);
+
+	mem_deref(lsnr);
+	sip_close(srv, true);
+	mem_deref(srv);
+
+	/* let the pending websock connections close down */
+	tmr_start(&wt.tmr, 100, wss_timeout_handler, &wt);
+	(void)re_main_timeout(1000);
+	tmr_cancel(&wt.tmr);
+
+	mem_deref(wt.tls);
+	mem_deref(wt.dnsc);
+
+	return err;
+}
+#endif

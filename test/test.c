@@ -207,6 +207,7 @@ static const struct test tests[] = {
 	TEST(test_sip_via),
 #ifdef USE_TLS
 	TEST(test_sip_transp_add_client_cert),
+	TEST(test_sip_transp_wss_verify_host),
 #endif
 	TEST(test_fmt_trim),
 	TEST(test_sipevent),
