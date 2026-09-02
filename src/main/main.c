@@ -1294,6 +1294,13 @@ void re_thread_close(void)
 
 /**
  * Enter an 're' thread
+ *
+ * The mutex is acquired unconditionally (not gated by the polling flag)
+ * so that enter/leave stay paired even when the main loop transitions
+ * from not-polling to polling in between. Gating both sides on two
+ * independent reads of re->polling races with re_main() setting the
+ * flag: an enter that skipped the lock could be followed by a leave
+ * that unlocks a mutex the thread never held.
  */
 void re_thread_enter(void)
 {
@@ -1303,9 +1310,6 @@ void re_thread_enter(void)
 		DEBUG_WARNING("re_thread_enter: re not ready\n");
 		return;
 	}
-
-	if (!re_atomic_rlx(&re->polling))
-		return;
 
 	re_lock(re);
 
@@ -1327,9 +1331,6 @@ void re_thread_leave(void)
 		DEBUG_WARNING("re_thread_leave: re not ready\n");
 		return;
 	}
-
-	if (!re_atomic_rlx(&re->polling))
-		return;
 
 	/* Dummy async event, to ensure timers are properly handled */
 	if (re->async)
