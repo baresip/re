@@ -38,6 +38,8 @@ int test_fmt_pl(void)
 	const struct pl pl7_  = PL("Hei");
 	const struct pl pl7__ = PL("Duz");
 	const struct pl pl_empty = PL("");
+	const struct pl pl_aaab = PL("aaab");
+	const struct pl pl_cut = {"foobarX", 6};
 
 	/* pl_cmp() */
 	if (EINVAL != pl_cmp(NULL, NULL))
@@ -120,6 +122,8 @@ int test_fmt_pl(void)
 		goto out;
 	if (NULL != pl_strchr(&pl0, 'B'))
 		goto out;
+	if (NULL != pl_strchr(&pl_cut, 'X'))
+		goto out;
 
 	/* pl_strrchr() */
 	if (pl0.p + 5 != pl_strrchr(&pl0, 'r'))
@@ -127,6 +131,10 @@ int test_fmt_pl(void)
 	if (NULL != pl_strrchr(&pl0, 'B'))
 		goto out;
 	if (NULL != pl_strrchr(&pl_empty, 'r'))
+		goto out;
+	if (NULL != pl_strrchr(&pl_cut, 'X'))
+		goto out;
+	if (pl_cut.p + 5 != pl_strrchr(&pl_cut, 'r'))
 		goto out;
 
 	/* pl_strstr() */
@@ -141,6 +149,16 @@ int test_fmt_pl(void)
 	if (pl.p != pl_strstr(&pl, ""))
 		goto out;
 	if (NULL != pl_strstr(&pl1, str0))
+		goto out;
+	if (pl1.p + 5 != pl_strstr(&pl1, "r")) /* needle at the end */
+		goto out;
+	if (NULL != pl_strstr(&pl1, "foobarx")) /* one byte too long */
+		goto out;
+	if (pl_aaab.p + 1 != pl_strstr(&pl_aaab, "aab")) /* repeated prefix */
+		goto out;
+	if (pl_cut.p + 4 != pl_strstr(&pl_cut, "ar"))
+		goto out;
+	if (NULL != pl_strstr(&pl_cut, "arX")) /* past end of pl */
 		goto out;
 
 	/* pl_strip_html */
