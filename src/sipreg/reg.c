@@ -427,12 +427,16 @@ int sipreg_send(struct sipreg *reg)
  */
 void sipreg_unregister(struct sipreg *reg)
 {
+	int err;
+
 	if (!reg)
 		return;
 
 	reg->expires = 0;
 
-	(void)sipreg_send(reg);
+	err = sipreg_send(reg);
+	if (err)
+		reg->resph(err, NULL, reg->arg);
 }
 
 
