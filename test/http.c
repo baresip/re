@@ -556,6 +556,12 @@ static int test_http_loop_base(bool secure, const char *met, bool http_conn,
 			err |=  tls_add_ca(http_sock_tls(sock), path);
 			if (err)
 				goto out;
+
+			struct pl tlshn;
+			pl_set_str(&tlshn, "retest.server.org");
+			err = http_client_set_tls_hostname(cli, &tlshn);
+			if (err)
+				goto out;
 		}
 
 		if (http_conn && !t.cert_auth)

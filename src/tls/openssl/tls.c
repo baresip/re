@@ -1262,6 +1262,15 @@ int tls_set_verify_server(struct tls_conn *tc, const char *host)
 			return EPROTO;
 		}
 	}
+	else {
+		/* IP: check against iPAddress SAN, no SNI (RFC 6066) */
+		if (!X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(tc->ssl),
+						   host)) {
+			DEBUG_WARNING("X509_VERIFY_PARAM_set1_ip_asc error\n");
+			ERR_clear_error();
+			return EPROTO;
+		}
+	}
 
 	SSL_set_verify(tc->ssl, SSL_VERIFY_PEER, tls_verify_handler);
 

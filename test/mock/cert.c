@@ -10,29 +10,42 @@
 /**
  * X509/PEM certificate with ECDSA keypair
  *
+ * Subject/issuer CN and subjectAltName are both set to 127.0.0.1, so that
+ * this certificate can be used to verify a TLS server identified by that
+ * IP address (OpenSSL never falls back to the CN for IP address checks,
+ * only to a matching iPAddress entry in the subjectAltName extension).
+ *
+ * NOTE: keep this in sync with test/data/server-ecdsa.pem -- both must be
+ *       the exact same certificate/key, since the file is also used as a
+ *       CA to verify this self-signed certificate.
+ *
  *  $ openssl ecparam -out ec_key.pem -name prime256v1 -genkey
- *  $ openssl req -new -key ec_key.pem -x509 -nodes -days 3650 -out cert.pem
+ *  $ openssl req -new -key ec_key.pem -x509 -nodes -days 3650 -out cert.pem \
+ *      -addext "subjectAltName = IP:127.0.0.1" \
+ *      -addext "basicConstraints = critical, CA:TRUE" \
+ *      -subj "/C=NO/ST=Some-State/O=Internet Widgits Pty Ltd/CN=127.0.0.1"
  */
 const char test_certificate_ecdsa[] =
 "-----BEGIN CERTIFICATE-----\r\n"
-"MIICBzCCAa2gAwIBAgIUZy0UqzsDq7fGUsZh6QxkXgCa030wCgYIKoZIzj0EAwIw\r\n"
+"MIICGTCCAb6gAwIBAgIUeJ/ER0g77W04QN28O4XyijoFYEYwCgYIKoZIzj0EAwIw\r\n"
 "WTELMAkGA1UEBhMCTk8xEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGElu\r\n"
-"dGVybmV0IFdpZGdpdHMgUHR5IEx0ZDESMBAGA1UEAwwJMTI3LjAuMC4xMB4XDTE5\r\n"
-"MDUyNDE5NTM0OFoXDTI5MDUyMTE5NTM0OFowWTELMAkGA1UEBhMCTk8xEzARBgNV\r\n"
+"dGVybmV0IFdpZGdpdHMgUHR5IEx0ZDESMBAGA1UEAwwJMTI3LjAuMC4xMB4XDTI2\r\n"
+"MDkyMTE4NDcyNVoXDTM2MDkxODE4NDcyNVowWTELMAkGA1UEBhMCTk8xEzARBgNV\r\n"
 "BAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0\r\n"
 "ZDESMBAGA1UEAwwJMTI3LjAuMC4xMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\r\n"
-"inP/oBEqBbXRxDzyk7sbh8rRJbfbXBRG2uJl2g6YhSkYZkifGyEueJ7+A9D9LfBh\r\n"
-"b5+lKXuJc02XQW5IwUmToqNTMFEwHQYDVR0OBBYEFH1vSH2IBZvKYNDPfPOk41Dw\r\n"
-"hyTWMB8GA1UdIwQYMBaAFH1vSH2IBZvKYNDPfPOk41DwhyTWMA8GA1UdEwEB/wQF\r\n"
-"MAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIhAOm79QetPxioy/S0Rk9lhPgfBslgM6f4\r\n"
-"tihVBSpe0FdJAiAC6Usj7p3H8dvu9Oa1gtOXSJkh1MT6pkfW21YseRWP4A==\r\n"
+"5PRCNCNdhNSnpMMB+MUmEseHnhGhZA2EnLHKjOf/fGuwylnbQMc/5UD6pH286SaL\r\n"
+"xrcuF4arEaiO7DmKqqngIaNkMGIwDwYDVR0RBAgwBocEfwAAATAPBgNVHRMBAf8E\r\n"
+"BTADAQH/MB0GA1UdDgQWBBQYmwp6B2yjw+J1hL+u2xbEfVW8rzAfBgNVHSMEGDAW\r\n"
+"gBQYmwp6B2yjw+J1hL+u2xbEfVW8rzAKBggqhkjOPQQDAgNJADBGAiEAiuTv8TYJ\r\n"
+"p41dGXW/F+MRDM6B4eVzcvXwMhVqbJTWicYCIQD2KWKwT6TSZxY5h7e1kBXzJzAC\r\n"
+"xmnys/+XhMXSuXJDzw==\r\n"
 "-----END CERTIFICATE-----\r\n"
 "-----BEGIN EC PARAMETERS-----\r\n"
 "BggqhkjOPQMBBw==\r\n"
 "-----END EC PARAMETERS-----\r\n"
 "-----BEGIN EC PRIVATE KEY-----\r\n"
-"MHcCAQEEIMWTO9/z24fiq13MM5UF1CVD3yJjVXRe0qpTCmmZU5ppoAoGCCqGSM49\r\n"
-"AwEHoUQDQgAEinP/oBEqBbXRxDzyk7sbh8rRJbfbXBRG2uJl2g6YhSkYZkifGyEu\r\n"
-"eJ7+A9D9LfBhb5+lKXuJc02XQW5IwUmTog==\r\n"
+"MHcCAQEEIHLHKJoNeU1Z6VrgM3GXLT5uXiGKSDJD3fdVSWp4eZbloAoGCCqGSM49\r\n"
+"AwEHoUQDQgAE5PRCNCNdhNSnpMMB+MUmEseHnhGhZA2EnLHKjOf/fGuwylnbQMc/\r\n"
+"5UD6pH286SaLxrcuF4arEaiO7DmKqqngIQ==\r\n"
 "-----END EC PRIVATE KEY-----\r\n"
 	;

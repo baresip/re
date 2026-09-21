@@ -372,10 +372,10 @@ int test_tls_certificate(void)
 {
 	struct tls *tls = NULL;
 	re_nonstring static const uint8_t test_fingerprint[32] =
-		"\x50\x5d\x95\x2b\xef\x5b\x6f\x7f"
-		"\x2b\x4a\xa8\x1b\xdd\xe1\x99\xfd"
-		"\x4e\xb5\xc1\x04\xe7\x67\xa7\x48"
-		"\xb1\xf1\x66\x35\x98\xdc\x84\xc6";
+		"\xe2\x18\x4d\xf9\xf1\x7f\xa0\x18"
+		"\x16\xb3\x40\x3e\x7d\x47\xa4\x02"
+		"\x61\x9c\xec\x1b\xa7\x76\xac\xa1"
+		"\x4b\x70\xa5\x3d\x55\x1c\x52\xc7";
 	uint8_t fp[32];
 	struct mbuf *mb = NULL;
 	int err;
@@ -637,6 +637,80 @@ int test_tls_sni(void)
 
 	err = tls_peer_verify(tt.sc_cli);
 	ASSERT_EQ(0, err);
+
+ out:
+	/* NOTE: close context first */
+	mem_deref(tt.tls);
+	mem_deref(tt.tls2);
+	mem_deref(tt.sc_cli);
+	mem_deref(tt.sc_srv);
+	mem_deref(tt.tc_cli);
+	mem_deref(tt.tc_srv);
+	mem_deref(tt.ts);
+
+	return err;
+}
+
+
+/**
+ * Verify that tls_set_verify_server() rejects an IP-literal host when the
+ * peer certificate has no matching iPAddress subjectAltName -- a CN of
+ * "127.0.0.1" alone must not be accepted (OpenSSL never falls back to the
+ * CN for IP address checks, unlike hostname checks).
+ */
+int test_tls_verify_server_ip(void)
+{
+	struct tls_test tt;
+	struct sa srv;
+	const char *dp = test_datapath();
+	char path[256];
+	int err;
+
+	memset(&tt, 0, sizeof(tt));
+
+	err = sa_set_str(&srv, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	/* server cert for CN=retest.server.org, no IP SAN */
+	re_snprintf(path, sizeof(path), "%s/sni/server-interm.pem", dp);
+	err = tls_alloc(&tt.tls, TLS_METHOD_TLS, path, NULL);
+	TEST_ERR(err);
+
+	err = tls_alloc(&tt.tls2, TLS_METHOD_TLS, NULL, NULL);
+	TEST_ERR(err);
+
+	re_snprintf(path, sizeof(path), "%s/sni/root-ca.pem", dp);
+	err = tls_add_ca(tt.tls2, path);
+	TEST_ERR(err);
+
+	err = tcp_listen(&tt.ts, &srv, server_conn_handler, &tt);
+	TEST_ERR(err);
+
+	err = tcp_sock_local_get(tt.ts, &srv);
+	TEST_ERR(err);
+
+	err = tcp_connect(&tt.tc_cli, &srv, client_estab_handler,
+			  client_recv_handler, client_close_handler, &tt);
+	TEST_ERR(err);
+
+	err = tls_start_tcp(&tt.sc_cli, tt.tls2, tt.tc_cli, 0);
+	TEST_ERR(err);
+
+	err = tls_set_verify_server(tt.sc_cli, "127.0.0.1");
+	TEST_ERR(err);
+
+	err = re_main_timeout(800);
+	TEST_ERR(err);
+
+	if (tt.err == ENOMEM) {
+		err = ENOMEM;
+		goto out;
+	}
+	/* the handshake must fail; connect must never be established */
+	ASSERT_EQ(EPROTO, tt.err);
+	ASSERT_TRUE(!tt.estab_cli);
+
+	err = 0;
 
  out:
 	/* NOTE: close context first */

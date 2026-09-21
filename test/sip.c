@@ -1139,10 +1139,13 @@ int test_sip_transp_wss_verify_host(void)
 	memset(&wt, 0, sizeof(wt));
 	tmr_init(&wt.tmr);
 
-	(void)re_snprintf(cert, sizeof(cert), "%s/sni/server-interm.pem",
-			  test_datapath());
-	(void)re_snprintf(cafile, sizeof(cafile), "%s/sni/root-ca.pem",
-			  test_datapath());
+	/* self-signed cert for 'retest.server.org' that also carries an
+	 * IP:127.0.0.1 subjectAltName, so that case 3 below (no explicit
+	 * hostname, verified against the numeric peer address) succeeds */
+	(void)re_snprintf(cert, sizeof(cert),
+			  "%s/sni/server-verifyhost.pem", test_datapath());
+	(void)re_snprintf(cafile, sizeof(cafile),
+			  "%s/sni/server-verifyhost.pem", test_datapath());
 
 	err = sa_set_str(&laddr, "127.0.0.1", 0);
 	TEST_ERR(err);

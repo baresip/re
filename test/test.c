@@ -258,6 +258,7 @@ static const struct test tests[] = {
 	TEST(test_tls_cli_conn_change_cert),
 	TEST(test_tls_session_reuse_tls_v12),
 	TEST(test_tls_sni),
+	TEST(test_tls_verify_server_ip),
 #endif
 	TEST(test_thread),
 	TEST(test_thread_tss),
