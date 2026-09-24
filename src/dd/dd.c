@@ -265,12 +265,13 @@ static int template_dependency_structure(struct dd *dd, struct getbit *gb)
 		return EBADMSG;
 
 	dd->template_id_offset = dd_f(6);
-	uint8_t dt_cnt_minus_one = dd_f(5);
+	uint8_t dt_cnt = dd_f(5) + 1;
 
-	dd->dt_cnt = dt_cnt_minus_one + 1;
-
-	if (dd->dt_cnt > DD_MAX_DECODE_TARGETS)
+	if (dt_cnt > DD_MAX_DECODE_TARGETS)
 		return EOVERFLOW;
+
+	dd->dt_cnt = dt_cnt;
+	dd->active_decode_targets_bitmask = (1u << dt_cnt) - 1;
 
 	int err = template_layers(dd, gb);
 	if (err)
@@ -320,8 +321,6 @@ static int extended_descriptor_fields(struct dd *dd, struct getbit *gb)
 		int err = template_dependency_structure(dd, gb);
 		if (err)
 			return err;
-
-		dd->active_decode_targets_bitmask = (1u << dd->dt_cnt) - 1;
 	}
 
 	if (dd->active_decode_targets_present_flag) {
