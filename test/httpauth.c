@@ -729,6 +729,14 @@ int test_httpauth_digest_verification(void)
 			"retest", "sec_passed",
 			"example.com/my/home/something", PL("GET"), NULL
 		},
+		/* no algorithm param, RFC 7616 3.3: defaults to MD5 */
+		{
+			"/my/home", "example.com",
+			"185803523d335c8fe52cf633391d47f7",
+			false, NULL, "auth", NULL, false,
+			"localhost:5060", NULL, "retest", "sec_passwd",
+			"example.com/my/home/something", PL("GET"), NULL
+		},
 	};
 
 	int err = 0;
@@ -788,6 +796,9 @@ int test_httpauth_digest_verification(void)
 				" Could not generate response (%m)\n", i, err);
 			goto out;
 		}
+
+		if (!testv[i].algorithm)
+			resp->algorithm = mem_deref(resp->algorithm);
 
 		err = mbuf_printf(mb_resp, "%H",
 			httpauth_digest_response_print, resp);
