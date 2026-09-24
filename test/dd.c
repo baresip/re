@@ -315,6 +315,77 @@ static int test_dd_chrome(void)
 }
 
 
+/*
+ * Malformed input: counts exceeding the struct dd array dimensions
+ * must be rejected, not written out of bounds.
+ */
+static int test_dd_bounds(void)
+{
+	struct mbuf *mb = mbuf_alloc(64);
+	struct putbit pb;
+	struct dd dd;
+	int err = 0;
+
+	if (!mb)
+		return ENOMEM;
+
+	/* 1: decode target count > DD_MAX_DECODE_TARGETS */
+	putbit_init(&pb, mb);
+	err |= putbit_write(&pb, 24, 0);  /* mandatory fields */
+	err |= putbit_write(&pb, 5, 0x10); /* template structure present */
+	err |= putbit_write(&pb, 6, 0);   /* template_id_offset */
+	err |= putbit_write(&pb, 5, 31);  /* dt_cnt_minus_one */
+	err |= putbit_write(&pb, 2, 3);   /* no more templates */
+	for (unsigned i = 0; i < 32; i++)
+		err |= putbit_write(&pb, 2, 0);
+	TEST_ERR(err);
+
+	err = dd_decode(&dd, mb->buf, mb->end);
+	ASSERT_EQ(EOVERFLOW, err);
+
+	/* 2: spatial layers > DD_MAX_SPATIAL_IDS */
+	mbuf_rewind(mb);
+	putbit_init(&pb, mb);
+	err  = putbit_write(&pb, 24, 0);
+	err |= putbit_write(&pb, 5, 0x10);
+	err |= putbit_write(&pb, 6, 0);
+	err |= putbit_write(&pb, 5, 0);   /* dt_cnt = 1 */
+	for (unsigned i = 0; i < 4; i++)
+		err |= putbit_write(&pb, 2, 2);  /* next spatial layer */
+	err |= putbit_write(&pb, 2, 3);
+	err |= putbit_write(&pb, 32, 0);
+	TEST_ERR(err);
+
+	err = dd_decode(&dd, mb->buf, mb->end);
+	ASSERT_EQ(EOVERFLOW, err);
+
+	/* 3: template fdiffs > DD_MAX_FDIFFS */
+	mbuf_rewind(mb);
+	putbit_init(&pb, mb);
+	err  = putbit_write(&pb, 24, 0);
+	err |= putbit_write(&pb, 5, 0x10);
+	err |= putbit_write(&pb, 6, 0);
+	err |= putbit_write(&pb, 5, 0);   /* dt_cnt = 1 */
+	err |= putbit_write(&pb, 2, 3);   /* one template */
+	err |= putbit_write(&pb, 2, 0);   /* dti */
+	err |= putbit_write(&pb, 1, 1);   /* fdiff_follows_flag */
+	for (unsigned i = 0; i < 64; i++) {
+		err |= putbit_write(&pb, 4, 0);  /* fdiff_minus_one */
+		err |= putbit_write(&pb, 1, 1);  /* fdiff_follows_flag */
+	}
+	TEST_ERR(err);
+
+	err = dd_decode(&dd, mb->buf, mb->end);
+	ASSERT_EQ(EOVERFLOW, err);
+
+	err = 0;
+
+ out:
+	mem_deref(mb);
+	return err;
+}
+
+
 int test_dd(void)
 {
 	int err;
@@ -328,6 +399,10 @@ int test_dd(void)
 		return err;
 
 	err = test_dd_chrome();
+	if (err)
+		return err;
+
+	err = test_dd_bounds();
 	if (err)
 		return err;
 

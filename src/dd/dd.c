@@ -100,6 +100,8 @@ static int template_layers(struct dd *dd, struct getbit *gb)
 		else if (next_layer_idc == DD_NEXT_SPATIAL_LAYER) {
 			temporalId = 0;
 			++spatialId;
+			if (spatialId >= DD_MAX_SPATIAL_IDS)
+				return EOVERFLOW;
 		}
 	}
 	while (next_layer_idc != DD_NO_MORE_TEMPLATES);
@@ -140,6 +142,9 @@ static int template_fdiffs(struct dd *dd, struct getbit *gb)
 	     templateIndex < dd->template_cnt;
 	     templateIndex++) {
 
+		if (templateIndex >= DD_MAX_TEMPLATES)
+			return EOVERFLOW;
+
 		uint8_t fdiffCnt = 0;
 
 		if (getbit_get_left(gb) < 1)
@@ -148,6 +153,9 @@ static int template_fdiffs(struct dd *dd, struct getbit *gb)
 		bool fdiff_follows_flag = dd_f(1);
 
 		while (fdiff_follows_flag) {
+
+			if (fdiffCnt >= DD_MAX_FDIFFS)
+				return EOVERFLOW;
 
 			if (getbit_get_left(gb) < 5)
 				return EBADMSG;
@@ -169,22 +177,49 @@ static int template_fdiffs(struct dd *dd, struct getbit *gb)
 }
 
 
+/* ns(n) reads w-1 or w bits, where w is the bit-width of n */
+static int read_ns(struct getbit *gb, unsigned n, uint8_t *valp)
+{
+	unsigned w = 0;
+
+	for (unsigned x = n; x != 0; x >>= 1)
+		++w;
+
+	if (getbit_get_left(gb) < w)
+		return EBADMSG;
+
+	*valp = getbit_read_ns(gb, n);
+
+	return 0;
+}
+
+
 static int template_chains(struct dd *dd, struct getbit *gb)
 {
-	/* todo: check bits left */
-	dd->chain_cnt = getbit_read_ns(gb, dd->dt_cnt + 1);
+	int err = read_ns(gb, dd->dt_cnt + 1, &dd->chain_cnt);
+	if (err)
+		return err;
 
 	if (dd->chain_cnt == 0)
 		return 0;
 
+	if (dd->chain_cnt > DD_MAX_CHAINS)
+		return EOVERFLOW;
+
 	for (uint8_t dtIndex = 0; dtIndex < dd->dt_cnt; dtIndex++) {
-		uint8_t v = getbit_read_ns(gb, dd->chain_cnt);
-		dd->decode_target_protected_by[dtIndex] = v;
+
+		err = read_ns(gb, dd->chain_cnt,
+			      &dd->decode_target_protected_by[dtIndex]);
+		if (err)
+			return err;
 	}
 
 	for (uint8_t templateIndex = 0;
 	     templateIndex < dd->template_cnt;
 	     templateIndex++) {
+
+		if (templateIndex >= DD_MAX_TEMPLATES)
+			return EOVERFLOW;
 
 		for (uint8_t chainIndex = 0;
 		     chainIndex < dd->chain_cnt;
@@ -207,6 +242,9 @@ static int render_resolutions(struct dd *dd, struct getbit *gb)
 	for (uint8_t spatial_id = 0;
 	     spatial_id <= dd->max_spatial_id;
 	     spatial_id++) {
+
+		if (spatial_id >= DD_MAX_SPATIAL_IDS)
+			return EOVERFLOW;
 
 		if (getbit_get_left(gb) < 32)
 			return EBADMSG;
@@ -231,6 +269,9 @@ static int template_dependency_structure(struct dd *dd, struct getbit *gb)
 
 	dd->dt_cnt = dt_cnt_minus_one + 1;
 
+	if (dd->dt_cnt > DD_MAX_DECODE_TARGETS)
+		return EOVERFLOW;
+
 	int err = template_layers(dd, gb);
 	if (err)
 		return err;
@@ -243,7 +284,9 @@ static int template_dependency_structure(struct dd *dd, struct getbit *gb)
 	if (err)
 		return err;
 
-	template_chains(dd, gb);
+	err = template_chains(dd, gb);
+	if (err)
+		return err;
 
 	/* note:  decode_target_layers() */
 
@@ -282,6 +325,9 @@ static int extended_descriptor_fields(struct dd *dd, struct getbit *gb)
 	}
 
 	if (dd->active_decode_targets_present_flag) {
+
+		if (getbit_get_left(gb) < dd->dt_cnt)
+			return EBADMSG;
 
 		dd->active_decode_targets_bitmask = dd_f(dd->dt_cnt);
 	}
