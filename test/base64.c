@@ -134,6 +134,25 @@ int test_base64(void)
 	err    = base64_decode(&c, sizeof(c), b64_buf, &olen);
 	TEST_ERR(err);
 
+	/* Output overflow */
+	char in[343];
+	memset(in, 'A', sizeof(in));
+	uint8_t out[255];
+	olen = sizeof(out);
+	err  = base64_decode(in, sizeof(in), out, &olen);
+	TEST_EQUALS(EOVERFLOW, err);
+
+	olen = sizeof(out);
+	err  = base64_decode(in, sizeof(in) - 1, out, &olen);
+	TEST_EQUALS(EOVERFLOW, err);
+
+	/* Exact fit */
+	uint8_t out2[257];
+	olen = sizeof(out2);
+	err  = base64_decode(in, sizeof(in), out2, &olen);
+	TEST_ERR(err);
+	TEST_EQUALS(sizeof(out2), olen);
+
 	struct pl inv;
 	pl_set_str(&inv, "Zm8=");
 	olen = 1;
