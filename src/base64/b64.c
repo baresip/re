@@ -191,7 +191,10 @@ int base64_decode(const char *in, size_t ilen, uint8_t *out, size_t *olen)
 	const char *in_end = in + ilen;
 	const uint8_t *o = out;
 
-	if (*olen < 3 * (ilen/4))
+	size_t rem    = ilen % 4;
+	size_t maxout = 3 * (ilen / 4) + (rem ? rem - 1 : 0);
+
+	if (*olen < maxout)
 		return EOVERFLOW;
 
 	for (;in+1 < in_end; ) {
