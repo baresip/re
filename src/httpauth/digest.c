@@ -195,6 +195,11 @@ int httpauth_digest_response_decode(struct httpauth_digest_resp *resp,
 
 	memset(resp, 0, sizeof(*resp));
 
+	/* rfc 7616 3.3
+	 * - algorithm: If this is not present, it is assumed to be "MD5". */
+	resp->hashh	  = &md5; /* keep a default handler */
+	resp->hash_length = MD5_SIZE;
+
 	err = digest_decode(hval, response_decode, resp);
 	if (err)
 		return err;
