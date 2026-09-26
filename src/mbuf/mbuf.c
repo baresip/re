@@ -468,25 +468,38 @@ uint64_t mbuf_read_u64(struct mbuf *mb)
 
 
 /**
- * Read a string from a memory buffer
+ * Read null-terminated string from a memory buffer
  *
  * @param mb   Memory buffer
- * @param str  Buffer to read string to
+ * @param str  Buffer to read null-terminated string to
  * @param size Size of buffer
  *
  * @return 0 if success, otherwise errorcode
  */
 int mbuf_read_str(struct mbuf *mb, char *str, size_t size)
 {
-	if (!mb || !str)
+	if (!mb || !str || !size)
 		return EINVAL;
 
-	while (size--) {
-		const uint8_t c = mbuf_read_u8(mb);
-		*str++ = c;
-		if ('\0' == c)
-			break;
+	uint8_t *buf = mbuf_buf(mb);
+
+	size_t l = mbuf_get_left(mb);
+	size_t n = min(l, size - 1);
+	if (!n)
+		return EOVERFLOW;
+
+	char *c = memchr(buf, '\0', min(l, n + 1));
+	if (c) {
+		n = c - (char *)(buf);
+		mb->pos += n + 1;
 	}
+	else {
+		mb->pos += n;
+	}
+
+	memcpy(str, buf, n);
+
+	str[n] = '\0';
 
 	return 0;
 }
