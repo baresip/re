@@ -770,6 +770,51 @@ out:
 }
 
 
+int test_sip_transp_udp_sock(void)
+{
+	struct sip *sip = NULL;
+	struct udp_sock *us;
+	struct sa laddr, local;
+	int err;
+
+	ASSERT_TRUE(sip_transp_udp_sock(NULL) == NULL);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+
+	ASSERT_TRUE(sip_transp_udp_sock(sip) == NULL);
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	/* A TCP transport has no UDP socket */
+	err = sip_transp_add(sip, SIP_TRANSP_TCP, &laddr);
+	TEST_ERR(err);
+	ASSERT_TRUE(sip_transp_udp_sock(sip) == NULL);
+
+	err = sip_transp_add(sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	us = sip_transp_udp_sock(sip);
+	ASSERT_TRUE(us != NULL);
+
+	/* The socket is the one bound to the UDP transport address */
+	err = udp_local_get(us, &local);
+	TEST_ERR(err);
+	err = sip_transp_laddr(sip, &laddr, SIP_TRANSP_UDP, NULL);
+	TEST_ERR(err);
+	ASSERT_TRUE(sa_cmp(&local, &laddr, SA_ALL));
+
+out:
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+
+	return err;
+}
+
+
 #ifdef USE_TLS
 struct sip_transp_tls {
 	struct sip *sip;

@@ -1381,6 +1381,31 @@ int sip_transp_add_sock(struct sip *sip, enum sip_transp tp,
 
 
 /**
+ * Get the UDP socket of the first UDP transport, e.g. to bind its file
+ * descriptor to a network interface
+ *
+ * @param sip SIP stack instance
+ *
+ * @return UDP socket, or NULL if no UDP transport was added
+ */
+struct udp_sock *sip_transp_udp_sock(struct sip *sip)
+{
+	struct le *le;
+
+	if (!sip)
+		return NULL;
+
+	for (le = sip->transpl.head; le; le = le->next) {
+		struct sip_transport *transp = le->data;
+		if (transp->tp == SIP_TRANSP_UDP)
+			return transp->sock;
+	}
+
+	return NULL;
+}
+
+
+/**
  * Add a SIP websocket transport
  *
  * @param sip    SIP stack instance

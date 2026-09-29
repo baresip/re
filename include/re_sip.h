@@ -313,6 +313,7 @@ int  sip_transp_add(struct sip *sip, enum sip_transp tp,
 		    const struct sa *laddr, ...);
 int  sip_transp_add_sock(struct sip *sip, enum sip_transp tp,
 			 bool listen, const struct sa *laddr, ...);
+struct udp_sock *sip_transp_udp_sock(struct sip *sip);
 int  sip_transp_add_websock(struct sip *sip, enum sip_transp tp,
 			    const struct sa *laddr,
 			    bool server, const char *cert, struct tls *tls);
