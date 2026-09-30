@@ -5,9 +5,30 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.12.0 - 2026-09-30
+
+### What's Changed
+* json,odict: optimize memory and lookup performance by @sreimers in https://github.com/baresip/re/pull/1607
+* sys: add sys_exec, sys_texec and sys_cexec (UNIX only) by @sreimers in https://github.com/baresip/re/pull/1611
+* sip/transp: verify WSS server identity against the target host by @neutrino38 in https://github.com/baresip/re/pull/1612
+* fmt/pl: optimize pl_strstr, pl_strchr and pl_strrchr by @sreimers in https://github.com/baresip/re/pull/1577
+* cmake: use variable for libdir in libbaresip.pc.in by @fictitiousexistence in https://github.com/baresip/re/pull/1615
+* sipreg/sipreg_unregister: call response handler on error by @juha-h in https://github.com/baresip/re/pull/1616
+* tls,test: add strict IP-literal SAN TLS verification (no SNI) by @sreimers in https://github.com/baresip/re/pull/1618
+* dd: implement out of bound checks by @sreimers in https://github.com/baresip/re/pull/1619
+* base64: fix not detected base64_decode olen overflow by @sreimers in https://github.com/baresip/re/pull/1620
+* httpauth/digest: fix MD5 default hash handler by @sreimers in https://github.com/baresip/re/pull/1621
+
+## New Contributors
+* @neutrino38 made their first contribution in https://github.com/baresip/re/pull/1612
+* @fictitiousexistence made their first contribution in https://github.com/baresip/re/pull/1615
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.11.0...v4.12.0
+
+
 ## v4.11.0 - 2026-08-25
 
-## What's Changed
+### What's Changed
 * btrace: optimize addr2line handling by @sreimers in https://github.com/baresip/re/pull/1598
 * aubuf: remove adaptive mode by @cspiel1 in https://github.com/baresip/re/pull/1597
 * httpauth/basic: fix mem_seccmp cmp length by @sreimers in https://github.com/baresip/re/pull/1601
