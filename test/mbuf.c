@@ -160,6 +160,64 @@ out:
 }
 
 
+static int test_mbuf_str(void)
+{
+	char payload[]	= "PAYLOAD";
+	char payload2[] = "TEST";
+	char str[255]	= {0};
+	int err;
+
+	struct mbuf *mb = mbuf_alloc(sizeof(payload));
+	if (!mb)
+		return ENOMEM;
+
+	err = mbuf_write_str(mb, payload);
+	TEST_ERR(err);
+
+	err = mbuf_write_u8(mb, '\0');
+	TEST_ERR(err);
+
+	err = mbuf_write_str(mb, payload2);
+	TEST_ERR(err);
+
+	/* "PAYLOAD\0" */
+	mb->pos = 0;
+	err	= mbuf_read_str(mb, str, sizeof(str));
+	TEST_ERR(err);
+	TEST_STRCMP(payload, strlen(payload), str, strlen(str));
+
+	/* "TEST\0" */
+	err = mbuf_read_str(mb, str, sizeof(str));
+	TEST_ERR(err);
+	TEST_STRCMP(payload2, strlen(payload2), str, strlen(str));
+
+	/* "PAYLOA\0" */
+	mb->pos = 0;
+	err	= mbuf_read_str(mb, str, strlen(payload));
+	TEST_ERR(err);
+	TEST_STRCMP(payload, strlen(payload) - 1, str, strlen(str));
+
+	/* "PAYLOAD" - not null terminated mbuf */
+	mbuf_rewind(mb);
+	mbuf_write_mem(mb, (uint8_t *)payload, sizeof(payload) - 1);
+
+	mb->pos = 0;
+	err	= mbuf_read_str(mb, str, sizeof(str));
+	TEST_ERR(err);
+	TEST_STRCMP(payload, strlen(payload), str, strlen(str));
+
+	/* empty mbuf */
+	err = mbuf_read_str(mb, str, sizeof(str));
+	TEST_EQUALS(err, EOVERFLOW);
+
+	err = 0;
+
+out:
+	mem_deref(mb);
+	return err;
+}
+
+
 int test_mbuf(void)
 {
 	int err;
@@ -171,6 +229,9 @@ int test_mbuf(void)
 	TEST_ERR(err);
 
 	err = test_mbuf_ptr();
+	TEST_ERR(err);
+
+	err = test_mbuf_str();
 	TEST_ERR(err);
 
 out:
