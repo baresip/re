@@ -59,6 +59,7 @@ void tcp_reject(struct tcp_sock *ts);
 int  tcp_sock_local_get(const struct tcp_sock *ts, struct sa *local);
 int  tcp_settos(struct tcp_sock *ts, uint32_t tos);
 int  tcp_conn_settos(struct tcp_conn *tc, uint32_t tos);
+int  tcp_conn_set_nodelay(struct tcp_conn *tc, bool nodelay);
 
 
 /* TCP Connection */

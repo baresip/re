@@ -147,6 +147,12 @@ static void tcp_server_conn_handler(const struct sa *peer, void *arg)
 		abort_test(tt, err);
 		return;
 	}
+
+	err = tcp_conn_set_nodelay(tt->tc2, true);
+	if (err) {
+		abort_test(tt, err);
+		return;
+	}
 }
 
 
@@ -156,6 +162,12 @@ static void tcp_client_estab_handler(void *arg)
 	int err;
 
 	DEBUG_INFO("Client: TCP Established\n");
+
+	err = tcp_conn_set_nodelay(tt->tc, true);
+	if (err) {
+		abort_test(tt, err);
+		return;
+	}
 
 	err = send_data(tt->tc, ping);
 	if (err)
@@ -219,8 +231,18 @@ int test_tcp(void)
 	if (err)
 		goto out;
 
-	if (tt->err)
+	if (tt->err) {
 		err = tt->err;
+		goto out;
+	}
+
+	/* can be switched back, and needs a connection */
+	err = tcp_conn_set_nodelay(tt->tc, false);
+	if (err)
+		goto out;
+
+	if (EINVAL != tcp_conn_set_nodelay(NULL, true))
+		err = EINVAL;
 
  out:
 	mem_deref(tt);

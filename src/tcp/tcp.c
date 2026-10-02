@@ -12,6 +12,7 @@
 #endif
 #if !defined(WIN32)
 #include <netdb.h>
+#include <netinet/tcp.h>
 #endif
 #include <string.h>
 #include <re_types.h>
@@ -1504,4 +1505,34 @@ int tcp_conn_settos(struct tcp_conn *tc, uint32_t tos)
 bool tcp_sendq_used(struct tcp_conn *tc)
 {
 	return tc->sendq.head != NULL;
+}
+
+
+/**
+ * Enable or disable Nagle's algorithm (TCP_NODELAY) on a TCP Connection
+ *
+ * With nodelay enabled, small writes are sent right away instead of
+ * waiting for the ACK of the previous segment. Useful for protocols
+ * that send several small messages back to back (e.g. WebSocket frames)
+ *
+ * @param tc      TCP Connection
+ * @param nodelay True to disable Nagle's algorithm, false to enable it
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int tcp_conn_set_nodelay(struct tcp_conn *tc, bool nodelay)
+{
+	int v = nodelay;
+
+	if (!tc)
+		return EINVAL;
+
+	if (tc->fdc == RE_BAD_SOCK)
+		return ENOTCONN;
+
+	if (0 != setsockopt(tc->fdc, IPPROTO_TCP, TCP_NODELAY,
+			    BUF_CAST &v, sizeof(v)))
+		return RE_ERRNO_SOCK;
+
+	return 0;
 }
