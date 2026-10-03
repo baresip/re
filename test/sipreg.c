@@ -204,6 +204,95 @@ static int reg_test(enum sip_transp tp, uint16_t srcport)
 }
 
 
+/*
+ * Contact rewrite behind a NAT: the mock NAT makes the registrar see us at
+ * a public address, so the client must register that address and remove
+ * the binding to its local one in the same, second, request.
+ */
+int test_sipreg_contact_rewrite(void)
+{
+	struct test test;
+	struct sip_server *srv = NULL;
+	struct sipreg *reg = NULL;
+	struct sip *sip = NULL;
+	struct nat *nat = NULL;
+	struct sa public_addr;
+	const struct sip_msg *req;
+	const struct sip_hdr *contact;
+	char reg_uri[256];
+	int err;
+
+	memset(&test, 0, sizeof(test));
+	test.tp = SIP_TRANSP_UDP;
+
+	err = sip_server_alloc(&srv);
+	TEST_ERR(err);
+
+	err = sa_set_str(&public_addr, "192.0.2.10", 0);
+	TEST_ERR(err);
+
+	err = nat_alloc(&nat, NAT_INBOUND_SNAT,
+			sip_transp_udp_sock(srv->sip), &public_addr);
+	TEST_ERR(err);
+
+	err = sipstack_fixture(&sip);
+	TEST_ERR(err);
+
+	err = sip_server_uri(srv, reg_uri, sizeof(reg_uri), SIP_TRANSP_UDP);
+	TEST_ERR(err);
+
+	err = sipreg_alloc(&reg, sip, reg_uri, "sip:x@test", NULL,
+			   "sip:x@test", 3600, "x", NULL, 0, 0, NULL, NULL,
+			   false, sip_resp_handler, &test, NULL, NULL);
+	TEST_ERR(err);
+
+	err = sipreg_set_contact_rewrite(reg, true);
+	TEST_ERR(err);
+
+	err = sipreg_send(reg);
+	TEST_ERR(err);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+	TEST_ERR(test.err);
+
+	/* One REGISTER to learn the address, one to register it */
+	ASSERT_EQ(2, srv->n_register_req);
+	ASSERT_EQ(1, test.n_resp);
+	ASSERT_TRUE(sipreg_registered(reg));
+
+	ASSERT_TRUE(sa_cmp(sipreg_contact_addr(reg), &public_addr, SA_ADDR));
+	ASSERT_TRUE(!sa_cmp(sipreg_contact_addr(reg), sipreg_laddr(reg),
+			    SA_ADDR));
+
+	/* The second request: stale local binding first, then the new one */
+	req = srv->sip_msgs[1];
+	ASSERT_EQ(2, sip_msg_hdr_count(req, SIP_HDR_CONTACT));
+
+	contact = sip_msg_hdr(req, SIP_HDR_CONTACT);
+	err = re_regex(contact->val.p, contact->val.l,
+		       "<sip:x@127.0.0.1:[0-9]+>;expires=0", NULL);
+	TEST_ERR(err);
+
+	contact = sip_msg_hdr_apply(req, false, SIP_HDR_CONTACT, NULL, NULL);
+	ASSERT_TRUE(contact != NULL);
+	err = re_regex(contact->val.p, contact->val.l,
+		       "<sip:x@192.0.2.10:[0-9]+>;expires=3600", NULL);
+	TEST_ERR(err);
+
+ out:
+	tmr_cancel(&test.tmr);
+
+	mem_deref(reg);
+	sip_close(sip, true);
+	mem_deref(sip);
+	mem_deref(nat);
+	mem_deref(srv);
+
+	return err;
+}
+
+
 int test_sipreg_udp(void)
 {
 	return reg_test(SIP_TRANSP_UDP, 0);
