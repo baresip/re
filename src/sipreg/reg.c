@@ -21,6 +21,7 @@
 
 enum {
 	DEFAULT_EXPIRES = 3600,
+	MAX_REWRITES    = 2,
 };
 
 
@@ -28,6 +29,8 @@ enum {
 struct sipreg {
 	struct sip_loopstate ls;
 	struct sa laddr;
+	struct sa caddr;     /**< Contact address learned from Via */
+	struct sa oldaddr;   /**< Stale binding to remove, if any  */
 	struct tmr tmr;
 	struct sip *sip;
 	struct sip_keepalive *ka;
@@ -51,10 +54,76 @@ struct sipreg {
 	char *params;
 	int regid;
 	uint16_t srcport;
+	bool rewrite;        /**< Rewrite Contact from Via         */
+	bool rewritten;      /**< caddr is in use                  */
+	uint8_t rewrites;    /**< Consecutive rewrites             */
 };
 
 
 static int request(struct sipreg *reg, bool reset_ls);
+
+
+/* The address in our Contact header */
+static const struct sa *contact_addr(const struct sipreg *reg)
+{
+	return reg->rewritten ? &reg->caddr : &reg->laddr;
+}
+
+
+/*
+ * The address the registrar saw the request come from, as reported in the
+ * received and rport parameters of the top Via (RFC 3261 18.2.1,
+ * RFC 3581). Without rport the port of our own Via is kept.
+ */
+static int via_public_addr(const struct sip_msg *msg, struct sa *addr)
+{
+	struct pl received, rport;
+	uint16_t port = sa_port(&msg->via.addr);
+
+	if (msg_param_decode(&msg->via.params, "received", &received))
+		return ENOENT;
+
+	if (!msg_param_decode(&msg->via.params, "rport", &rport) &&
+	    pl_isset(&rport))
+		port = pl_u32(&rport);
+
+	return sa_set(addr, &received, port);
+}
+
+
+/*
+ * Contact rewrite: when the registrar sees us at another address than the
+ * one in our Contact (we are behind a NAT), register that address instead
+ * and remove the stale binding in the same request. Returns true if a new
+ * REGISTER was sent.
+ */
+static bool contact_rewrite(struct sipreg *reg, const struct sip_msg *msg)
+{
+	struct sa pub;
+
+	if (!reg->rewrite || !reg->expires || reg->terminated)
+		return false;
+
+	if (via_public_addr(msg, &pub) ||
+	    sa_cmp(&pub, contact_addr(reg), SA_ALL)) {
+		reg->rewrites = 0;
+		sa_init(&reg->oldaddr, AF_UNSPEC);
+		return false;
+	}
+
+	/* Two addresses taking turns: keep the current one */
+	if (reg->rewrites >= MAX_REWRITES) {
+		sa_init(&reg->oldaddr, AF_UNSPEC);
+		return false;
+	}
+
+	reg->oldaddr   = *contact_addr(reg);
+	reg->caddr     = pub;
+	reg->rewritten = true;
+	++reg->rewrites;
+
+	return 0 == request(reg, true);
+}
 
 
 static void dummy_handler(int err, const struct sip_msg *msg, void *arg)
@@ -166,7 +235,7 @@ static bool contact_handler(const struct sip_hdr *hdr,
 	if (err)
 		return false;
 
-	if (!sa_cmp(&host, &reg->laddr, SA_ADDR))
+	if (!sa_cmp(&host, contact_addr(reg), SA_ADDR))
 		return false;
 
 	err = uri_param_get(&c.auri, &transp, &pval);
@@ -205,6 +274,11 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 		return;
 	}
 	else if (msg->scode < 300) {
+		if (contact_rewrite(reg, msg)) {
+			reg->registered = true;
+			return;
+		}
+
 		reg->wait = reg->expires;
 		sip_msg_hdr_apply(msg, true, SIP_HDR_CONTACT, contact_handler,
 				  reg);
@@ -308,8 +382,21 @@ static int send_handler(enum sip_transp tp, struct sa *src,
 		sa_set_port(src, reg->srcport);
 
 	reg->laddr = *src;
+
+	if (sa_isset(&reg->oldaddr, SA_ALL)) {
+		err = mbuf_printf(mb,
+				  "Contact: <sip:%s@%J%s%s%s>;expires=0\r\n",
+				  reg->cuser, &reg->oldaddr,
+				  sip_transp_param(reg->tp),
+				  reg->cparams ? ";" : "",
+				  reg->cparams ? reg->cparams : "");
+		if (err)
+			return err;
+	}
+
 	err = mbuf_printf(mb, "Contact: <sip:%s@%J%s%s%s>;expires=%u%s%s",
-			  reg->cuser, &reg->laddr, sip_transp_param(reg->tp),
+			  reg->cuser, contact_addr(reg),
+			  sip_transp_param(reg->tp),
 			  reg->cparams ? ";" : "",
 			  reg->cparams ? reg->cparams : "",
 			  reg->expires,
@@ -519,6 +606,21 @@ const struct sa *sipreg_laddr(const struct sipreg *reg)
 
 
 /**
+ * Get the address in the Contact header of a SIP Registration client: the
+ * address learned from the registrar when the Contact was rewritten (see
+ * sipreg_set_contact_rewrite()), otherwise the local socket address
+ *
+ * @param reg SIP Registration client
+ *
+ * @return Contact address
+ */
+const struct sa *sipreg_contact_addr(const struct sipreg *reg)
+{
+	return reg ? contact_addr(reg) : NULL;
+}
+
+
+/**
  * Get the proxy expires value of a SIP registration client
  *
  * @param reg SIP registration client
@@ -593,4 +695,28 @@ int sipreg_set_contact_params(struct sipreg *reg, const char *cparams)
 		return EINVAL;
 
 	return str_dup(&reg->cparams, cparams);
+}
+
+
+/**
+ * Enable or disable Contact rewrite for the SIP registration client
+ *
+ * Behind a NAT the local address in the Contact header is not reachable
+ * from the registrar. With Contact rewrite enabled, the address the
+ * registrar reports in the received and rport parameters of the response's
+ * top Via is registered instead, and the stale binding is removed in the
+ * same request.
+ *
+ * @param reg     SIP registration client
+ * @param enable  True to enable, false to disable
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sipreg_set_contact_rewrite(struct sipreg *reg, bool enable)
+{
+	if (!reg)
+		return EINVAL;
+
+	reg->rewrite = enable;
+	return 0;
 }
