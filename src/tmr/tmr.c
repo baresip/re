@@ -284,7 +284,7 @@ int tmr_timespec_get(struct timespec *tp, uint64_t offset)
 	if (offset) {
 		tp->tv_sec += (offset / 1000);
 		tp->tv_nsec += ((offset * 1000000) % 1000000000LL);
-		while (tp->tv_nsec > 1000000000LL) {
+		while (tp->tv_nsec >= 1000000000LL) {
 			tp->tv_sec += 1;
 			tp->tv_nsec -= 1000000000LL;
 		}
