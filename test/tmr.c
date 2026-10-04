@@ -48,3 +48,39 @@ int test_tmr_jiffies_usec(void)
 out:
 	return err;
 }
+
+
+static void tmr_cancel_handler(void *arg)
+{
+	(void)arg;
+}
+
+
+int test_tmr_cancel(void)
+{
+	struct tmr tmr;
+	int err = 0;
+
+	tmr_init(&tmr);
+	TEST_ASSERT(!tmr_isrunning(&tmr));
+
+	tmr_start(&tmr, 1000, tmr_cancel_handler, NULL);
+	TEST_ASSERT(tmr_isrunning(&tmr));
+	TEST_ASSERT(tmr_get_expire(&tmr) > 0);
+
+	tmr_cancel(&tmr);
+	TEST_ASSERT(!tmr_isrunning(&tmr));
+	TEST_EQUALS(0, tmr_get_expire(&tmr));
+
+	/* a canceled timer can be started and canceled again */
+	tmr_start(&tmr, 1000, tmr_cancel_handler, NULL);
+	TEST_ASSERT(tmr_isrunning(&tmr));
+
+	tmr_cancel(&tmr);
+	TEST_ASSERT(!tmr_isrunning(&tmr));
+
+out:
+	tmr_cancel(&tmr);
+
+	return err;
+}

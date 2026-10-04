@@ -406,8 +406,10 @@ static void tmr_startcont_dbg(struct tmr *tmr, uint64_t delay, bool syncnow,
 
 	mtx_lock(lock);
 
-	if (tmr->th)
+	if (tmr->th) {
 		list_unlink(&tmr->le);
+		tmr->th = NULL;
+	}
 
 	mtx_unlock(lock);
 
