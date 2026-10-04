@@ -365,6 +365,7 @@ int test_text2pcap(void);
 int test_thread(void);
 int test_thread_cnd_timedwait(void);
 int test_thread_tss(void);
+int test_tmr_cancel(void);
 int test_tmr_jiffies(void);
 int test_tmr_jiffies_usec(void);
 int test_try_into(void);

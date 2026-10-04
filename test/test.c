@@ -264,6 +264,7 @@ static const struct test tests[] = {
 	TEST(test_thread),
 	TEST(test_thread_tss),
 	TEST(test_trace),
+	TEST(test_tmr_cancel),
 	TEST(test_trice_cand),
 	TEST(test_trice_candpair),
 	TEST(test_trice_checklist),
