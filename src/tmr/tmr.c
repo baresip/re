@@ -44,14 +44,14 @@ struct tmrl {
 static void tmrl_destructor(void *arg)
 {
 	struct tmrl *tmrl = arg;
-	struct le *le;
 
 	mtx_lock(tmrl->lock);
-	LIST_FOREACH(&tmrl->list, le) {
-		struct tmr *tmr = le->data;
+	while (tmrl->list.head) {
+		struct tmr *tmr = tmrl->list.head->data;
+		tmr->th = NULL;
 		re_atomic_rls_set(&tmr->llock, (uintptr_t)NULL);
+		list_unlink(tmrl->list.head);
 	}
-	list_clear(&tmrl->list);
 	mtx_unlock(tmrl->lock);
 
 	mem_deref(tmrl->lock);
