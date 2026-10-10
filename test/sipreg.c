@@ -204,7 +204,7 @@ static int reg_test(enum sip_transp tp, uint16_t srcport)
 }
 
 
-/*
+/**
  * Contact rewrite behind a NAT: the mock NAT makes the registrar see us at
  * a public address, so the client must register that address and remove
  * the binding to its local one in the same, second, request.
