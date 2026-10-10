@@ -63,18 +63,12 @@ struct sipreg {
 static int request(struct sipreg *reg, bool reset_ls);
 
 
-/* The address in our Contact header */
 static const struct sa *contact_addr(const struct sipreg *reg)
 {
 	return reg->rewritten ? &reg->caddr : &reg->laddr;
 }
 
 
-/*
- * The address the registrar saw the request come from, as reported in the
- * received and rport parameters of the top Via (RFC 3261 18.2.1,
- * RFC 3581). Without rport the port of our own Via is kept.
- */
 static int via_public_addr(const struct sip_msg *msg, struct sa *addr)
 {
 	struct pl received, rport;
@@ -91,13 +85,7 @@ static int via_public_addr(const struct sip_msg *msg, struct sa *addr)
 }
 
 
-/*
- * Contact rewrite: when the registrar sees us at another address than the
- * one in our Contact (we are behind a NAT), register that address instead
- * and remove the stale binding in the same request. Returns true if a new
- * REGISTER was sent.
- */
-static bool contact_rewrite(struct sipreg *reg, const struct sip_msg *msg)
+static bool rewrite_contact(struct sipreg *reg, const struct sip_msg *msg)
 {
 	struct sa pub;
 
@@ -274,7 +262,7 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 		return;
 	}
 	else if (msg->scode < 300) {
-		if (contact_rewrite(reg, msg)) {
+		if (rewrite_contact(reg, msg)) {
 			reg->registered = true;
 			return;
 		}
@@ -704,8 +692,8 @@ int sipreg_set_contact_params(struct sipreg *reg, const char *cparams)
  * Behind a NAT the local address in the Contact header is not reachable
  * from the registrar. With Contact rewrite enabled, the address the
  * registrar reports in the received and rport parameters of the response's
- * top Via is registered instead, and the stale binding is removed in the
- * same request.
+ * top Via (RFC 3261 18.2.1, RFC 3581) is registered instead, and the stale
+ * binding is removed in the same request.
  *
  * @param reg     SIP registration client
  * @param enable  True to enable, false to disable
