@@ -138,7 +138,7 @@ static int prack_request(struct sipsess_prack *prack)
 	return sip_drequestf(&req->req, req->sess->sip, true, "PRACK",
 			     req->sess->dlg, 0, req->sess->auth, NULL,
 			     prack_resp_handler, prack,
-			     "RAck: %s\n"
+			     "RAck: %s\r\n"
 			     "%s%s%s"
 			     "Content-Length: %zu\r\n"
 			     "\r\n"
