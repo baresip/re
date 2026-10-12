@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifndef RE_VERSION
 #define RE_VERSION "?"
