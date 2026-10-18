@@ -26,6 +26,7 @@
 enum {
 	TIMEOUT_CLOSE = 10000,
 	BUFSIZE_MAX   = 131072,
+	KA_MISSED_MAX = 2
 };
 
 enum websock_state {
@@ -56,6 +57,7 @@ struct websock_conn {
 	void *arg;
 	enum websock_state state;
 	unsigned kaint;
+	uint8_t ka_missed;
 	bool active;
 };
 
@@ -150,6 +152,11 @@ static void keepalive_handler(void *arg)
 {
 	struct websock_conn *conn = arg;
 
+	if (++conn->ka_missed > KA_MISSED_MAX) {
+		conn_close(conn, ETIMEDOUT);
+		return;
+	}
+
 	tmr_start(&conn->tmr, conn->kaint, keepalive_handler, conn);
 
 	(void)websock_send(conn, WEBSOCK_PING, NULL);
@@ -229,6 +236,8 @@ static void recv_handler(struct mbuf *mb, void *arg)
 {
 	struct websock_conn *conn = arg;
 	int err = 0;
+
+	conn->ka_missed = 0; /* reset keepalive missing on all packets */
 
 	if (conn->mb) {
 
