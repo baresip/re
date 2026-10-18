@@ -246,8 +246,7 @@ int test_sipreg_contact_rewrite(void)
 			   false, sip_resp_handler, &test, NULL, NULL);
 	TEST_ERR(err);
 
-	err = sipreg_set_contact_rewrite(reg, true);
-	TEST_ERR(err);
+	sipreg_set_contact_rewrite(reg, true);
 
 	err = sipreg_send(reg);
 	TEST_ERR(err);

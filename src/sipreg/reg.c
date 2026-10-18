@@ -55,7 +55,6 @@ struct sipreg {
 	int regid;
 	uint16_t srcport;
 	bool rewrite;        /**< Rewrite Contact from Via         */
-	bool rewritten;      /**< caddr is in use                  */
 	uint8_t rewrites;    /**< Consecutive rewrites             */
 };
 
@@ -65,7 +64,7 @@ static int request(struct sipreg *reg, bool reset_ls);
 
 static const struct sa *contact_addr(const struct sipreg *reg)
 {
-	return reg->rewritten ? &reg->caddr : &reg->laddr;
+	return sa_isset(&reg->caddr, SA_ALL) ? &reg->caddr : &reg->laddr;
 }
 
 
@@ -105,9 +104,8 @@ static bool rewrite_contact(struct sipreg *reg, const struct sip_msg *msg)
 		return false;
 	}
 
-	reg->oldaddr   = *contact_addr(reg);
-	reg->caddr     = pub;
-	reg->rewritten = true;
+	reg->oldaddr = *contact_addr(reg);
+	reg->caddr   = pub;
 	++reg->rewrites;
 
 	return 0 == request(reg, true);
@@ -697,14 +695,11 @@ int sipreg_set_contact_params(struct sipreg *reg, const char *cparams)
  *
  * @param reg     SIP registration client
  * @param enable  True to enable, false to disable
- *
- * @return 0 if success, otherwise errorcode
  */
-int sipreg_set_contact_rewrite(struct sipreg *reg, bool enable)
+void sipreg_set_contact_rewrite(struct sipreg *reg, bool enable)
 {
 	if (!reg)
-		return EINVAL;
+		return;
 
 	reg->rewrite = enable;
-	return 0;
 }
