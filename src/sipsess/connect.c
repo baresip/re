@@ -208,17 +208,18 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 		if (sess->terminated)
 			goto out;
 
+		contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
+		if (!contact) {
+			err = EBADMSG;
+			goto out;
+		}
+		if (sip_addr_decode(&addr, &contact->val)) {
+			err = EBADMSG;
+			goto out;
+		}
+
 		if (sess->redirecth) {
 
-			contact = sip_msg_hdr(msg, SIP_HDR_CONTACT);
-			if (!contact) {
-				err = EBADMSG;
-				goto out;
-			}
-			if (sip_addr_decode(&addr, &contact->val)) {
-				err = EBADMSG;
-				goto out;
-			}
 			err = pl_strdup(&uri, &addr.auri);
 			if (err)
 				goto out;
@@ -228,9 +229,11 @@ static void invite_resp_handler(int err, const struct sip_msg *msg, void *arg)
 			mem_deref(uri);
 		}
 		else {
-			/* Redirect to first Contact */
+			/* Redirect to first Contact. A 3xx does not create
+			 * a dialog, so keep To (without tag), From and
+			 * Call-ID (RFC 3261 8.1.3.4) */
 
-			err = sip_dialog_update(sess->dlg, msg);
+			err = sip_dialog_set_uri(sess->dlg, &addr.auri);
 			if (err)
 				goto out;
 

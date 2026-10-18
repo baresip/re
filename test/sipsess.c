@@ -85,6 +85,7 @@ struct test {
 	bool upd_b;
 	struct mbuf *desc;
 	bool blind_transfer;
+	bool redirected;
 	uint16_t altaddr_port;
 	int err;
 };
@@ -558,6 +559,34 @@ static void conn_transfer_handler(const struct sip_msg *msg, void *arg)
 }
 
 
+static void conn_redirect_handler(const struct sip_msg *msg, void *arg)
+{
+	struct test *test = arg;
+	int err;
+
+	if (!test->redirected) {
+		test->redirected = true;
+		err = sip_replyf(test->sip, msg, 302, "Moved Temporarily",
+			"Contact: <sip:b@127.0.0.1:%u>\r\n\r\n",
+			test->altaddr_port);
+		if (err)
+			abort_test(test, err);
+		return;
+	}
+
+	/* The 3xx did not create a dialog: the INVITE to the new target
+	 * must have no To-tag and keep the Call-ID (RFC 3261 8.1.3.4) */
+	if (pl_isset(&msg->to.tag) ||
+	    pl_strcmp(&msg->callid,
+		      sip_dialog_callid(sipsess_dialog(test->a)))) {
+		abort_test(test, EPROTO);
+		return;
+	}
+
+	conn_handler(msg, arg);
+}
+
+
 int test_sipsess(void)
 {
 	struct test test;
@@ -803,6 +832,95 @@ int test_sipsess_blind_transfer(void)
 
 	/* okay here -- verify */
 	ASSERT_TRUE(test.blind_transfer);
+	ASSERT_TRUE(test.estab_a);
+	ASSERT_TRUE(test.estab_b);
+	ASSERT_TRUE(test.desc);
+	ASSERT_TRUE(test.answr_a);
+	ASSERT_TRUE(test.offer_b);
+	ASSERT_TRUE(!test.offer_a);
+	ASSERT_TRUE(!test.answr_b);
+
+ out:
+	test.a = mem_deref(test.a);
+	test.b = mem_deref(test.b);
+
+	sipsess_close_all(test.sock);
+	test.sock = mem_deref(test.sock);
+
+	sip_close(test.sip, false);
+	test.sip = mem_deref(test.sip);
+
+	return err;
+}
+
+
+int test_sipsess_redirect(void)
+{
+	struct test test;
+	struct sa laddr, altaddr;
+	char to_uri[256];
+	int err;
+	uint16_t port;
+	char *callid;
+
+	memset(&test, 0, sizeof(test));
+
+	test.rel100_a = REL100_ENABLED;
+	test.rel100_b = REL100_ENABLED;
+	test.conn_action = CONN_ANSWER;
+
+	err = sip_alloc(&test.sip, NULL, 32, 32, 32,
+			"retest", exit_handler, NULL);
+	TEST_ERR(err);
+
+	(void)sa_set_str(&laddr, "127.0.0.1", 0);
+	err = sip_transp_add(test.sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(test.sip, &laddr, SIP_TRANSP_UDP, NULL);
+	TEST_ERR(err);
+
+	port = sa_port(&laddr);
+
+	err = sipsess_listen(&test.sock, test.sip, 32, conn_redirect_handler,
+		&test);
+	TEST_ERR(err);
+
+	(void)sa_set_str(&altaddr, "127.0.0.1", 0);
+	err = sip_transp_add(test.sip, SIP_TRANSP_UDP, &altaddr);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(test.sip, &altaddr, SIP_TRANSP_UDP, NULL);
+	TEST_ERR(err);
+
+	test.altaddr_port = sa_port(&altaddr);
+
+	err = str_x64dup(&callid, rand_u64());
+	if (err)
+		goto out;
+
+	/* Connect to "b" */
+	(void)re_snprintf(to_uri, sizeof(to_uri), "sip:b@127.0.0.1:%u", port);
+	err = sipsess_connect(&test.a, test.sock, to_uri, NULL,
+			      "sip:a@127.0.0.1", "a", NULL, 0,
+			      "application/sdp", NULL, NULL, false,
+			      callid, desc_handler_a,
+			      offer_handler_a, answer_handler_a, NULL,
+			      estab_handler_a, NULL, NULL,
+			      close_handler, &test, NULL);
+	mem_deref(callid);
+	TEST_ERR(err);
+
+	err = re_main_timeout(200);
+	TEST_ERR(err);
+
+	if (test.err) {
+		err = test.err;
+		TEST_ERR(err);
+	}
+
+	/* okay here -- verify */
+	ASSERT_TRUE(test.redirected);
 	ASSERT_TRUE(test.estab_a);
 	ASSERT_TRUE(test.estab_b);
 	ASSERT_TRUE(test.desc);
