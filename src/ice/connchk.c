@@ -199,7 +199,9 @@ static void stunc_resp_handler(int err, uint16_t scode, const char *reason,
 	}
 
  out:
-	pace_next(icem);
+	/* Only the pacing timer sends ordinary checks */
+	if (icem->state == ICE_CHECKLIST_RUNNING)
+		icem_checklist_update(icem);
 }
 
 
@@ -385,6 +387,7 @@ void icem_conncheck_schedule_check(struct icem *icem)
 	/* If there is no such pair: */
 
 	/* Terminate the timer for that check list. */
+	tmr_cancel(&icem->tmr_pace);
 
 #if 0
 	icem->state = ICE_CHECKLIST_COMPLETED;
@@ -395,6 +398,11 @@ void icem_conncheck_schedule_check(struct icem *icem)
 static void pace_timeout(void *arg)
 {
 	struct icem *icem = arg;
+
+	/* Scheduling Checks: the timer fires every Ta */
+	if (icem->state == ICE_CHECKLIST_RUNNING)
+		tmr_start(&icem->tmr_pace, ICE_DEFAULT_Ta_RTP,
+			  pace_timeout, icem);
 
 	pace_next(icem);
 }
