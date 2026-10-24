@@ -36,16 +36,18 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 
 	return 0;
 #elif defined(WIN32)
-	SYMBOL_INFO *symbol;
+	/* On the stack, not mem_zalloc(): mem_debug() calls this with the
+	 * mem lock held */
+	ULONG64 buf[(sizeof(SYMBOL_INFO) + 256 * sizeof(char) +
+		     sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+	SYMBOL_INFO *symbol = (SYMBOL_INFO *)buf;
 	DWORD displacement = 0;
 	IMAGEHLP_LINE line;
 	HANDLE hProcess = GetCurrentProcess();
 	(void)type;
 
 	/* Initialize the symbol buffer. */
-	symbol = mem_zalloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), NULL);
-	if (!symbol)
-		return ENOMEM;
+	ZeroMemory(buf, sizeof(buf));
 
 	SymInitialize(hProcess, NULL, TRUE);
 
@@ -57,14 +59,21 @@ static int print_debug(struct re_printf *pf, struct btrace *bt,
 	line.SizeOfStruct = sizeof(line);
 
 	for (size_t i = 0; i < bt->len; i++) {
-		SymFromAddr(hProcess, (DWORD64)(bt->stack[i]), NULL, symbol);
-		SymGetLineFromAddr(hProcess, (DWORD64)(bt->stack[i]),
-				   &displacement, &line);
-		re_hprintf(pf, "%zu: %s (%s:%lu)\n", i, symbol->Name,
-			   line.FileName, line.LineNumber);
+		DWORD64 addr = (DWORD64)(bt->stack[i]);
+
+		/* both keep the previous frame's result on failure */
+		if (!SymFromAddr(hProcess, addr, NULL, symbol)) {
+			re_hprintf(pf, "%zu: %p\n", i, bt->stack[i]);
+			continue;
+		}
+
+		if (SymGetLineFromAddr(hProcess, addr, &displacement, &line))
+			re_hprintf(pf, "%zu: %s (%s:%lu)\n", i, symbol->Name,
+				   line.FileName, line.LineNumber);
+		else
+			re_hprintf(pf, "%zu: %s\n", i, symbol->Name);
 	}
 
-	mem_deref(symbol);
 	SymCleanup(hProcess);
 
 	return 0;
