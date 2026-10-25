@@ -1135,13 +1135,13 @@ int re_debug(struct re_printf *pf, void *unused)
 	err |= re_hprintf(pf, "  method:       %s\n",
 			  poll_method_name(re->method));
 	err |= re_hprintf(pf, "  polling:      %d\n",
-			  re_atomic_rlx(&re->polling));
+			  (int)re_atomic_rlx(&re->polling));
 	err |= re_hprintf(pf, "  sig:          %d\n", re->sig);
 	err |= re_hprintf(pf, "  timers:       %u\n", tmrl_count(re->tmrl));
 	err |= re_hprintf(pf, "  mutex:        %p\n", re->mutex);
 	err |= re_hprintf(pf, "  tid:          %p\n", re->tid);
 	err |= re_hprintf(pf, "  thread_enter: %d\n",
-			  re_atomic_rlx(&re->thread_enter));
+			  (int)re_atomic_rlx(&re->thread_enter));
 	err |= re_hprintf(pf, "  async:        %p\n", re->async);
 
 	return err;
