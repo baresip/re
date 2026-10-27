@@ -122,7 +122,7 @@ static void bye_handler(struct sipsess_sock *sock, const struct sip_msg *msg)
 				 487, "Request Terminated");
 	}
 
-	sipsess_terminate(sess, ECONNRESET, NULL);
+	sipsess_terminate(sess, ECONNRESET, msg);
 }
 
 

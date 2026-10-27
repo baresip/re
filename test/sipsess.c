@@ -86,6 +86,7 @@ struct test {
 	struct mbuf *desc;
 	bool blind_transfer;
 	uint16_t altaddr_port;
+	char close_reason[64];
 	int err;
 };
 
@@ -421,7 +422,11 @@ static void estab_handler_b(const struct sip_msg *msg, void *arg)
 static void close_handler(int err, const struct sip_msg *msg, void *arg)
 {
 	struct test *test = arg;
-	(void)msg;
+	const struct sip_hdr *hdr = sip_msg_hdr(msg, SIP_HDR_REASON);
+
+	if (hdr)
+		(void)pl_strcpy(&hdr->val, test->close_reason,
+				sizeof(test->close_reason));
 
 	if (!err && test->conn_action == CONN_BUSY)
 		err = EBUSY;
@@ -648,6 +653,19 @@ int test_sipsess(void)
 	ASSERT_TRUE(!sipsess_ack_pending(test.a));
 	ASSERT_TRUE(!sipsess_ack_pending(test.b));
 	ASSERT_TRUE(test.sdp_state == ANSWER_RECEIVED);
+
+	/* "a" hangs up, "b" gets the Reason of the BYE */
+	err = sipsess_set_close_headers(test.a,
+					"Reason: Q.850;cause=16\r\n");
+	TEST_ERR(err);
+	test.a = mem_deref(test.a);
+
+	err = re_main_timeout(200);
+	TEST_ERR(err);
+
+	ASSERT_EQ(ECONNRESET, test.err);
+	TEST_STRCMP("Q.850;cause=16", 14,
+		    test.close_reason, str_len(test.close_reason));
 
  out:
 	test.a = mem_deref(test.a);
