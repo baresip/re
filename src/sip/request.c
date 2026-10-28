@@ -258,6 +258,9 @@ static int request_next(struct sip_request *req)
 	struct sa dst;
 	int err;
 
+	if (req->canceled)
+		return ECANCELED;
+
  again:
 	rr = list_ledata(req->addrl.head);
 	if (!rr) {
