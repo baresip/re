@@ -304,7 +304,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	pl_set_str(&resp->uri, path);
 	resp->qop = chall->qop;
 
-	err = mbuf_printf(mb, "%x", re_atomic_rlx(&nc));
+	err = mbuf_printf(mb, "%x", (uint32_t)re_atomic_rlx(&nc));
 	err |= mbuf_write_u8(mb, 0);
 	if (err)
 		goto out;
@@ -376,7 +376,7 @@ int httpauth_digest_make_response(struct httpauth_digest_resp **presp,
 	/* response = MD5(HA1:nonce:nonceCount:cnonce:qop:HA2) */
 		err = mbuf_printf(mb, "%w:%r:%x:%x:%r:%w",
 				ha1, sizeof(ha1), &resp->nonce,
-				re_atomic_rlx(&nc), cnonce,
+				(uint32_t)re_atomic_rlx(&nc), cnonce,
 				&resp->qop, ha2, sizeof(ha2));
 	}
 	else {
