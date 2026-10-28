@@ -201,6 +201,7 @@ static const struct test tests[] = {
 	TEST(test_sip_auth),
 	TEST(test_sip_drequestf),
 	TEST(test_sip_dns),
+	TEST(test_sip_dns_cancel),
 	TEST(test_sip_hdr),
 	TEST(test_sip_param),
 	TEST(test_sip_parse),
