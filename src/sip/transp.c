@@ -789,7 +789,13 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 			   conn,
 			   dst, mb);
 
-		return tcp_send(conn->tc, mb);
+		err = tcp_send(conn->tc, mb);
+		if (err || !qentp)
+			return err;
+
+		/* keep the transport handler for conn_close() */
+		mb = NULL;
+		goto enqueue;
 	}
 
 	new_conn = conn = mem_zalloc(sizeof(*conn), conn_destructor);
