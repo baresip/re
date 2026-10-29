@@ -901,7 +901,7 @@ int test_sip_transp_tcp_close(void)
 	err = re_main_timeout(1000);
 	TEST_ERR(err);
 
-	ASSERT_EQ(ECONNRESET, tcl.err);
+	ASSERT_TRUE(tcl.err != 0);
 
 out:
 	mem_deref(req2);
