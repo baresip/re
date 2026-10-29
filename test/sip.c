@@ -815,6 +815,109 @@ out:
 }
 
 
+struct tcp_close {
+	struct tcp_sock *ts;
+	struct tcp_conn *tc;
+	int err;
+};
+
+
+static void tcp_close_recv_handler(struct mbuf *mb, void *arg)
+{
+	(void)mb;
+	(void)arg;
+
+	re_cancel();
+}
+
+
+static void tcp_close_conn_handler(const struct sa *peer, void *arg)
+{
+	struct tcp_close *tcl = arg;
+	(void)peer;
+
+	(void)tcp_accept(&tcl->tc, tcl->ts, NULL, tcp_close_recv_handler,
+			 NULL, tcl);
+}
+
+
+static void tcp_close_resp_handler(int err, const struct sip_msg *msg,
+				   void *arg)
+{
+	struct tcp_close *tcl = arg;
+	(void)msg;
+
+	tcl->err = err;
+	re_cancel();
+}
+
+
+/* A request sent on an established TCP connection fails when the
+ * connection is closed. */
+int test_sip_transp_tcp_close(void)
+{
+	struct tcp_close tcl = {0};
+	struct sip *sip = NULL;
+	struct sip_dialog *dlg = NULL;
+	struct sip_request *req1 = NULL;
+	struct sip_request *req2 = NULL;
+	struct sa laddr, srv;
+	char uri[64];
+	int err;
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	err = tcp_listen(&tcl.ts, &laddr, tcp_close_conn_handler, &tcl);
+	TEST_ERR(err);
+	err = tcp_local_get(tcl.ts, &srv);
+	TEST_ERR(err);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_TCP, &laddr);
+	TEST_ERR(err);
+
+	re_snprintf(uri, sizeof(uri), "sip:test@%J;transport=tcp", &srv);
+	err = sip_dialog_alloc(&dlg, uri, uri, NULL, uri, NULL, 0);
+	TEST_ERR(err);
+
+	/* sets up the connection */
+	err = sip_drequestf(&req1, sip, true, "OPTIONS", dlg, 0, NULL, NULL,
+			    NULL, NULL, "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	/* sent at once on the established connection */
+	err = sip_drequestf(&req2, sip, true, "OPTIONS", dlg, 0, NULL, NULL,
+			    tcp_close_resp_handler, &tcl,
+			    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	tcl.tc = mem_deref(tcl.tc);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	ASSERT_EQ(ECONNRESET, tcl.err);
+
+out:
+	mem_deref(req2);
+	mem_deref(req1);
+	mem_deref(dlg);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+	mem_deref(tcl.tc);
+	mem_deref(tcl.ts);
+
+	return err;
+}
+
+
 #ifdef USE_TLS
 struct sip_transp_tls {
 	struct sip *sip;
