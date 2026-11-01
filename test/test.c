@@ -200,6 +200,9 @@ static const struct test tests[] = {
 	TEST(test_sip_apply),
 	TEST(test_sip_auth),
 	TEST(test_sip_drequestf),
+#ifdef USE_TLS
+	TEST(test_sip_drequestf_sips_route),
+#endif
 	TEST(test_sip_dns),
 	TEST(test_sip_hdr),
 	TEST(test_sip_param),

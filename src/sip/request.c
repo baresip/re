@@ -646,12 +646,15 @@ static int sip_request_alloc(struct sip_request **reqp,
 {
 	struct sip_request *req;
 	struct pl pl;
+	bool sips;
 	int err;
 
 	if (!sip || !met || !uri || !route || !mb)
 		return EINVAL;
 
-	if (pl_strcasecmp(&route->scheme, "sip"))
+	sips = !pl_strcasecmp(&route->scheme, "sips");
+
+	if (pl_strcasecmp(&route->scheme, "sip") && !sips)
 		return ENOSYS;
 
 	req = mem_zalloc(sizeof(*req), destructor);
@@ -689,6 +692,11 @@ static int sip_request_alloc(struct sip_request **reqp,
 	else if (!msg_param_decode(&route->params, "transport", &pl)) {
 
 		req->tp = sip_transp_decode(&pl);
+
+		/* RFC 3261 26.2.2: transport=tcp in a SIPS URI means TLS */
+		if (sips && req->tp == SIP_TRANSP_TCP)
+			req->tp = SIP_TRANSP_TLS;
+
 		if (req->tp  == SIP_TRANSP_NONE) {
 			err = EPROTONOSUPPORT;
 			goto out;
@@ -699,6 +707,16 @@ static int sip_request_alloc(struct sip_request **reqp,
 			goto out;
 		}
 
+		req->tp_selected = true;
+	}
+	else if (sips) {
+		/* RFC 3261 19.1.2: a SIPS URI is reached over TLS */
+		if (!sip_transp_supported(sip, SIP_TRANSP_TLS, AF_UNSPEC)) {
+			err = EPROTONOSUPPORT;
+			goto out;
+		}
+
+		req->tp = SIP_TRANSP_TLS;
 		req->tp_selected = true;
 	}
 	else {

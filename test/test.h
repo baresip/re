@@ -311,6 +311,9 @@ int test_sha1(void);
 int test_sip_addr(void);
 int test_sip_auth(void);
 int test_sip_drequestf(void);
+#ifdef USE_TLS
+int test_sip_drequestf_sips_route(void);
+#endif
 int test_sip_apply(void);
 int test_sip_hdr(void);
 int test_sip_msg(void);

@@ -752,6 +752,73 @@ out:
 }
 
 
+#ifdef USE_TLS
+static int sips_route_request(struct sip *sip, const char *route)
+{
+	struct sip_request *req = NULL;
+	struct sip_dialog *dlg = NULL;
+	struct sip_auth *auth = NULL;
+	int err;
+
+	err = sip_dialog_alloc(&dlg, route, "sip:test@127.0.0.1", NULL,
+			       "sip:test@127.0.0.1", NULL, 0);
+	TEST_ERR(err);
+
+	err = sip_auth_alloc(&auth, NULL, NULL, false);
+	TEST_ERR(err);
+
+	err = sip_drequestf(&req, sip, true, "OPTIONS", dlg, 0, auth,
+			    NULL, NULL, NULL, "");
+	TEST_ERR(err);
+
+ out:
+	mem_deref(req);
+	mem_deref(dlg);
+	mem_deref(auth);
+
+	return err;
+}
+
+
+/* A sips: route is sent over TLS (RFC 3261 19.1.2), not refused with ENOSYS.
+ * Flexisip (sip.linphone.org) Record-Routes as <sips:...;lr>. */
+int test_sip_drequestf_sips_route(void)
+{
+	struct sip *sip = NULL;
+	struct tls *tls = NULL;
+	struct sa laddr;
+	int err;
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	err = tls_alloc(&tls, TLS_METHOD_TLS, NULL, NULL);
+	TEST_ERR(err);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+
+	/* TLS only: a request that picks UDP or TCP fails */
+	err = sip_transp_add(sip, SIP_TRANSP_TLS, &laddr, tls);
+	TEST_ERR(err);
+
+	err = sips_route_request(sip, "sips:test@127.0.0.1:5061");
+	TEST_ERR(err);
+
+	/* RFC 3261 26.2.2: transport=tcp in a SIPS URI means TLS */
+	err = sips_route_request(sip,
+				 "sips:test@127.0.0.1:5061;transport=tcp");
+	TEST_ERR(err);
+
+ out:
+	mem_deref(sip);
+	mem_deref(tls);
+
+	return err;
+}
+#endif
+
+
 int test_sip_drequestf_network(void)
 {
 	struct sa laddr;
