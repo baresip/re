@@ -42,8 +42,13 @@ static bool x509_match_common_name(X509 *x509, const char *sni)
 		if (!astr)
 			continue;
 
+#if OPENSSL_VERSION_NUMBER >= 0x40100000L
+		struct pl cn = {(char *)ASN1_STRING_get0_data(astr),
+				ASN1_STRING_get_length(astr)};
+#else
 		struct pl cn = {(char *)ASN1_STRING_get0_data(astr),
 				ASN1_STRING_length(astr)};
+#endif
 
 		if (!pl_strcasecmp(&cn, sni))
 			return true;
@@ -71,9 +76,13 @@ static bool x509_match_alt_name(X509 *x509, const char *sni)
 			astr = ASN1_IA5STRING_new();
 			if (!astr)
 				goto out;
-
+#if OPENSSL_VERSION_NUMBER >= 0x40100000L
+			if (!ASN1_STRING_set1_string(astr, sni))
+				goto out;
+#else
 			if (!ASN1_STRING_set(astr, sni, -1))
 				goto out;
+#endif
 
 			if (!ASN1_STRING_cmp(astr, g->d.dNSName)) {
 				match = true;
