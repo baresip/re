@@ -1034,7 +1034,12 @@ int tls_peer_common_name(const struct tls_conn *tc, char *cn, size_t size)
 		if (astr) {
 			str_ncpy(cn, (char *)ASN1_STRING_get0_data(astr),
 				 size);
+
+#if OPENSSL_VERSION_NUMBER >= 0x40100000L
+			n = (int)ASN1_STRING_get_length(astr);
+#else
 			n = ASN1_STRING_length(astr);
+#endif
 		}
 	}
 
