@@ -282,6 +282,8 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			ab->cur_sz -= mbuf_get_left(f->mb);
 			mem_pool_release(ab->pool, f->e);
 		}
+		if (ab->live)
+			ab->started = false;
 	}
 
 	mtx_unlock(ab->lock);
@@ -365,8 +367,11 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 			RE_TRACE_ID_INSTANT("aubuf", "filling", ab->id);
 			goto out;
 		}
-		else
+		else {
 			ab->fill_sz = ab->wish_sz;
+			ab->started = false;
+			goto out;
+		}
 	}
 
 	/* on first read drop old frames */
@@ -455,6 +460,7 @@ void aubuf_flush(struct aubuf *ab)
 	list_clear(&ab->afl);
 	mem_pool_flush(ab->pool);
 	ab->fill_sz = ab->wish_sz;
+	ab->started = false;
 	ab->cur_sz  = 0;
 	ab->wr_sz   = 0;
 	ab->ts      = 0;
