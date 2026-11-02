@@ -1082,6 +1082,83 @@ out:
 }
 
 
+/* A request canceled while its target is being resolved is not sent. */
+int test_sip_dns_cancel(void)
+{
+	char uri[256];
+	struct sip_server *sipsrv = NULL;
+	struct dns_server *dnssrv = NULL;
+	struct dnsc *dnsc = NULL;
+	struct sip *sip = NULL;
+	struct sip_dialog *dlg = NULL;
+	struct sip_request *req = NULL;
+	struct sa laddr, sipsrv_addr;
+	struct sip_dns sipdns;
+	int err;
+
+	memset(&sipdns, 0, sizeof(sipdns));
+
+	err = sip_server_alloc(&sipsrv);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(sipsrv->sip, &sipsrv_addr, SIP_TRANSP_UDP,
+			       NULL);
+	TEST_ERR(err);
+
+	err = dns_server_alloc(&dnssrv, "127.0.0.1");
+	TEST_ERR(err);
+
+	err = dns_server_add_a(dnssrv, "example.com",
+			       sa_in(&sipsrv_addr), 1);
+	TEST_ERR(err);
+
+	err = dnsc_alloc(&dnsc, NULL, &dnssrv->addr, 1);
+	TEST_ERR(err);
+
+	err = sip_alloc(&sip, dnsc, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+
+	re_snprintf(uri, sizeof(uri), "sip:user@example.com:%u",
+		    sa_port(&sipsrv_addr));
+
+	err = sip_dialog_alloc(&dlg, uri, uri, NULL, "sip:test@127.0.0.1",
+			       NULL, 0);
+	TEST_ERR(err);
+
+	err = sip_drequestf(&req, sip, true, "OPTIONS", dlg, 0, NULL, NULL,
+			    req1_handler, &sipdns,
+			    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	sip_request_cancel(req);
+
+	err = re_main_timeout(500);
+	TEST_ERR(err);
+
+	ASSERT_TRUE(sipdns.req1_done);
+	ASSERT_EQ(ECANCELED, sipdns.req1_err);
+	ASSERT_EQ(0, sipsrv->n_options_req);
+
+out:
+	mem_deref(req);
+	mem_deref(dlg);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+	mem_deref(dnsc);
+	mem_deref(dnssrv);
+	mem_deref(sipsrv);
+
+	return err;
+}
+
+
 #ifdef USE_TLS
 struct wss_test {
 	struct sip *cli;
