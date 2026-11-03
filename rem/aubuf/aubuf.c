@@ -32,6 +32,7 @@ struct aubuf {
 	size_t pkt_sz;          /**< Packet size                             */
 	size_t wr_sz;           /**< Written size                            */
 	bool started;
+	bool trim;
 	uint64_t ts;
 
 	struct {
@@ -283,7 +284,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			mem_pool_release(ab->pool, f->e);
 		}
 		if (ab->live)
-			ab->started = false;
+			ab->trim = true;
 	}
 
 	mtx_unlock(ab->lock);
@@ -369,13 +370,16 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		}
 		else {
 			ab->fill_sz = ab->wish_sz;
-			ab->started = false;
-			goto out;
+			if (ab->live) {
+				ab->trim = true;
+				goto out;
+			}
 		}
 	}
 
-	/* on first read drop old frames */
-	drop = ab->live && !ab->started && ab->wish_sz;
+	/* on first read, and after an overrun, underrun or flush in live
+	 * mode, drop old frames */
+	drop = ab->live && (!ab->started || ab->trim) && ab->wish_sz;
 	while (drop && ab->cur_sz > ab->wish_sz) {
 		struct frame *f = list_ledata(ab->afl.head);
 		if (f) {
@@ -385,6 +389,7 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 	}
 
 	ab->started = true;
+	ab->trim = false;
 	read_auframe(ab, af);
 
  out:
@@ -460,7 +465,7 @@ void aubuf_flush(struct aubuf *ab)
 	list_clear(&ab->afl);
 	mem_pool_flush(ab->pool);
 	ab->fill_sz = ab->wish_sz;
-	ab->started = false;
+	ab->trim    = true;
 	ab->cur_sz  = 0;
 	ab->wr_sz   = 0;
 	ab->ts      = 0;
