@@ -545,6 +545,51 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 
 
 /**
+ * Set a new remote target for a SIP Dialog that is not established yet,
+ * e.g. when following a 3xx redirect (RFC 3261 8.1.3.4). Only the
+ * Request-URI changes, To (without tag), From and Call-ID are kept.
+ *
+ * @param dlg SIP Dialog
+ * @param uri New remote target URI
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int sip_dialog_set_uri(struct sip_dialog *dlg, const struct pl *uri)
+{
+	char *nuri;
+	int err;
+
+	if (!dlg || !pl_isset(uri) || sip_dialog_established(dlg))
+		return EINVAL;
+
+	err = pl_strdup(&nuri, uri);
+	if (err)
+		return err;
+
+	/* Without an outbound route the route follows the target */
+	if (dlg->route.scheme.p == dlg->uri) {
+
+		struct uri tmp;
+		struct pl pl;
+
+		pl_set_str(&pl, nuri);
+		err = uri_decode(&tmp, &pl);
+		if (err) {
+			mem_deref(nuri);
+			return err;
+		}
+
+		dlg->route = tmp;
+	}
+
+	mem_deref(dlg->uri);
+	dlg->uri = nuri;
+
+	return 0;
+}
+
+
+/**
  * Check if a remote sequence number is valid
  *
  * @param dlg SIP Dialog

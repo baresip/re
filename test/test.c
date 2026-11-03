@@ -224,6 +224,7 @@ static const struct test tests[] = {
 	TEST(test_sipsess_100rel_caller_require),
 	TEST(test_sipsess_100rel_supported),
 	TEST(test_sipsess_blind_transfer),
+	TEST(test_sipsess_redirect),
 	TEST(test_sipsess_reject),
 	TEST(test_sipsess_update_no_sdp),
 	TEST(test_sipsess_update_uac),
