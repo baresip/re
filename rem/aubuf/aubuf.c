@@ -150,6 +150,7 @@ int aubuf_alloc(struct aubuf **abp, size_t min_sz, size_t max_sz)
 	ab->max_sz  = max_sz;
 	ab->fill_sz = min_sz;
 	ab->live    = true;
+	ab->trim    = true;
 
  out:
 	if (err)
@@ -283,8 +284,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			ab->cur_sz -= mbuf_get_left(f->mb);
 			mem_pool_release(ab->pool, f->e);
 		}
-		if (ab->live)
-			ab->trim = true;
+		ab->trim = true;
 	}
 
 	mtx_unlock(ab->lock);
@@ -356,30 +356,23 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 	RE_TRACE_ID_INSTANT_I("aubuf", "cur_sz_ms",
 			      auframe_bytes_to_ms(af, ab->cur_sz), ab->id);
 
-	if (ab->fill_sz || ab->cur_sz < sz) {
-		if (!ab->fill_sz) {
-			++ab->stats.ur;
-			RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
-		}
-
-		filling = ab->fill_sz > 0;
+	filling = ab->fill_sz > 0;
+	if (filling || ab->cur_sz < sz) {
 		memset(af->sampv, 0, sz);
 		if (filling) {
 			RE_TRACE_ID_INSTANT("aubuf", "filling", ab->id);
 			goto out;
 		}
-		else {
-			ab->fill_sz = ab->wish_sz;
-			if (ab->live) {
-				ab->trim = true;
-				goto out;
-			}
-		}
+
+		++ab->stats.ur;
+		RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
+		ab->fill_sz = ab->wish_sz;
+		ab->trim = true;
+		if (ab->live)
+			goto out;
 	}
 
-	/* on first read, and after an overrun, underrun or flush in live
-	 * mode, drop old frames */
-	drop = ab->live && (!ab->started || ab->trim) && ab->wish_sz;
+	drop = ab->live && ab->trim && ab->wish_sz;
 	while (drop && ab->cur_sz > ab->wish_sz) {
 		struct frame *f = list_ledata(ab->afl.head);
 		if (f) {
