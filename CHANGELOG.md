@@ -5,6 +5,32 @@ All notable changes to libre will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.13.0 - 2026-11-04
+
+### What's Changed
+* ci/win: use OpenSSL tools build (replaces unstable choco) by @sreimers in https://github.com/baresip/re/pull/1626
+* tcp: add tcp_conn_set_nodelay by @sreimers in https://github.com/baresip/re/pull/1627
+* sip: add sip_transp_udp_sock() by @a7asoft in https://github.com/baresip/re/pull/1624
+* mbuf/mbuf_read_str: optimize and fix null-terminated read by @sreimers in https://github.com/baresip/re/pull/1622
+* tmr,test: fix tmr_cancel and tmr_isrunning by @sreimers in https://github.com/baresip/re/pull/1629
+* tmr/tmr_timespec_get: fix tv_nsec max 999'999'999 by @sreimers in https://github.com/baresip/re/pull/1630
+* tmr: fix and optimize timer list destructing, fixes timer "running" by @sreimers in https://github.com/baresip/re/pull/1631
+* sipsess: properly CRLF terminate RAck header by @ExtremelyLazyCat in https://github.com/baresip/re/pull/1633
+* sys: add missing stdarg.h, fixes build on OpenBSD by @landryb in https://github.com/baresip/re/pull/1632
+* websock: close stale KEEPALIVE connections by @sreimers in https://github.com/baresip/re/pull/1634
+* btrace: fix mem_debug() deadlock and stale frames on Windows by @oldwired in https://github.com/baresip/re/pull/1637
+* sip: remove re_printf from transp/ws code by @alfredh in https://github.com/baresip/re/pull/1638
+* ci/valgrind: add openssl gcm suppression by @sreimers in https://github.com/baresip/re/pull/1640
+* tls/openssl: fix OpenSSL 4.1 deprecated warnings by @sreimers in https://github.com/baresip/re/pull/1646
+
+### New Contributors
+* @a7asoft made their first contribution in https://github.com/baresip/re/pull/1624
+* @ExtremelyLazyCat made their first contribution in https://github.com/baresip/re/pull/1633
+* @oldwired made their first contribution in https://github.com/baresip/re/pull/1637
+
+**Full Changelog**: https://github.com/baresip/re/compare/v4.12.0...v4.13.0
+
+
 ## v4.12.0 - 2026-09-30
 
 ### What's Changed
