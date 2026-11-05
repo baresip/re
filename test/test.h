@@ -325,6 +325,7 @@ int test_sip_transp_wss_verify_host(void);
 #endif
 int test_sipevent(void);
 int test_sipreg_udp(void);
+int test_sipreg_contact_rewrite(void);
 int test_sipreg_tcp(void);
 #ifdef USE_TLS
 int test_sipreg_tls(void);
