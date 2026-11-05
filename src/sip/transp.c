@@ -935,8 +935,6 @@ static void websock_estab_handler(void *arg)
 			   conn,
 			   &conn->paddr, qent->mb);
 
-		re_printf("--> send\n");
-
 		err = websock_send(conn->websock_conn, WEBSOCK_BIN,
 				   "%b",
 				   mbuf_buf(qent->mb),
@@ -1117,7 +1115,6 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 	}
 #endif
 
-	re_printf("websock: connecting to '%s'\n", ws_uri);
 	err = websock_connect(&conn->websock_conn, sip->websock,
 			      transp->http_cli, ws_uri, 15000,
 			      websock_estab_handler, websock_recv_handler,
@@ -1193,8 +1190,6 @@ static void http_req_handler(struct http_conn *hc, const struct http_msg *msg,
 	int err;
 
 	paddr = http_conn_peer(hc);
-
-	re_printf("http request from %J\n", paddr);
 
 	hdr = http_msg_hdr(msg, HTTP_HDR_SEC_WEBSOCKET_PROTOCOL);
 	if (!hdr) {

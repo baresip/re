@@ -33,4 +33,4 @@ jobs:
 
     - name: retest
       run: |
-        valgrind --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
+        valgrind --track-origins=yes --suppressions=test/valgrind.supp --leak-check=full --show-reachable=yes --error-exitcode=42 ./build/test/retest -r -v
