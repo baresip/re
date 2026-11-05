@@ -193,6 +193,7 @@ void aubuf_set_live(struct aubuf *ab, bool live)
 		return;
 
 	ab->live = live;
+	ab->trim = live && (ab->trim || !ab->started);
 }
 
 
@@ -284,7 +285,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			ab->cur_sz -= mbuf_get_left(f->mb);
 			mem_pool_release(ab->pool, f->e);
 		}
-		ab->trim = true;
+		ab->trim = ab->live;
 	}
 
 	mtx_unlock(ab->lock);
@@ -367,12 +368,12 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		++ab->stats.ur;
 		RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
 		ab->fill_sz = ab->wish_sz;
-		ab->trim = true;
+		ab->trim = ab->live;
 		if (ab->live)
 			goto out;
 	}
 
-	drop = ab->live && ab->trim && ab->wish_sz;
+	drop = ab->trim && ab->wish_sz;
 	while (drop && ab->cur_sz > ab->wish_sz) {
 		struct frame *f = list_ledata(ab->afl.head);
 		if (f) {
@@ -458,7 +459,7 @@ void aubuf_flush(struct aubuf *ab)
 	list_clear(&ab->afl);
 	mem_pool_flush(ab->pool);
 	ab->fill_sz = ab->wish_sz;
-	ab->trim    = true;
+	ab->trim    = ab->live;
 	ab->cur_sz  = 0;
 	ab->wr_sz   = 0;
 	ab->ts      = 0;
