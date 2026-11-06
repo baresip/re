@@ -319,6 +319,7 @@ int test_sip_parse(void);
 int test_sip_via(void);
 int test_sip_dns(void);
 int test_sip_transp_udp_sock(void);
+int test_sip_transp_tcp_close(void);
 #ifdef USE_TLS
 int test_sip_transp_add_client_cert(void);
 int test_sip_transp_wss_verify_host(void);
