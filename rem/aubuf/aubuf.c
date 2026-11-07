@@ -369,7 +369,7 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 		RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
 		ab->fill_sz = ab->wish_sz;
 		ab->trim = ab->live;
-		if (ab->live)
+		if (ab->live && ab->wish_sz)
 			goto out;
 	}
 
