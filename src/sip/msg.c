@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <ctype.h>
+#include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_sys.h>
@@ -268,7 +269,7 @@ static inline int hdr_add(struct sip_msg *msg, const struct pl *name,
 int sip_msg_decode(struct sip_msg **msgp, struct mbuf *mb)
 {
 	struct pl x, y, z, e, name;
-	const char *p, *v, *cv;
+	const char *p, *v, *cv, *nl;
 	struct sip_msg *msg;
 	bool comsep, quote;
 	enum sip_hdrid id = SIP_HDR_NONE;
@@ -282,9 +283,21 @@ int sip_msg_decode(struct sip_msg **msgp, struct mbuf *mb)
 	p = (const char *)mbuf_buf(mb);
 	l = mbuf_get_left(mb);
 
-	if (re_regex(p, l, "[^ \t\r\n]+ [^ \t\r\n]+ [^\r\n]*[\r]*[\n]1",
-		     &x, &y, &z, NULL, &e) || x.p != (char *)mbuf_buf(mb))
+	/*
+	 * Bound the start-line scan. The re_regex() below is unanchored, so
+	 * on a long line with no LF it rescans from every byte offset, which
+	 * is O(n^2); over TCP the buffer can reach TCP_BUFSIZE_MAX before the
+	 * STARTLINE_MAX check (which ran only after re_regex). Locate the
+	 * first LF within STARTLINE_MAX and match only that one line.
+	 */
+	nl = memchr(p, '\n', l > STARTLINE_MAX ? STARTLINE_MAX : l);
+	if (!nl)
 		return (l > STARTLINE_MAX) ? EBADMSG : ENODATA;
+
+	if (re_regex(p, (size_t)(nl - p) + 1,
+		     "[^ \t\r\n]+ [^ \t\r\n]+ [^\r\n]*[\r]*[\n]1",
+		     &x, &y, &z, NULL, &e) || x.p != (char *)mbuf_buf(mb))
+		return EBADMSG;
 
 	msg = mem_zalloc(sizeof(*msg), destructor);
 	if (!msg)

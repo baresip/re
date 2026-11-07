@@ -1232,3 +1232,57 @@ int test_sip_transp_wss_verify_host(void)
 	return err;
 }
 #endif
+
+
+/*
+ * Regression test for quadratic CPU cost parsing the SIP start line.
+ *
+ * A start line shaped "A...A B...B\r" with no '\n' made the unanchored
+ * re_regex() in sip_msg_decode() rescan from every byte offset, which is
+ * O(n^2); over TCP the buffer reached TCP_BUFSIZE_MAX (64 KiB) before the
+ * STARTLINE_MAX length check (which ran only after re_regex). On a typical
+ * core that one decode cost ~20 s. A bounded parse is well under a
+ * millisecond, so a 2 s budget both fails the quadratic code across machine
+ * speeds and leaves the fixed code wide margin.
+ */
+int test_sip_startline_dos(void)
+{
+	const size_t len = 65536; /* TCP_BUFSIZE_MAX: the real ceiling over TCP */
+	struct mbuf *mb = NULL;
+	struct sip_msg *msg = NULL;
+	uint64_t t0, t1;
+	int derr;
+	int err = 0;
+
+	/* a wall-clock bound is meaningless under forced-OOM, and the perf
+	   runner already loops and times the testcase itself */
+	if (test_mode == TEST_MEMORY || test_mode == TEST_PERF)
+		return ESKIPPED;
+
+	mb = mbuf_alloc(len);
+	if (!mb)
+		return ENOMEM;
+
+	/* "A...A B...B\r": two greedy tokens, a space, a bare CR, no LF */
+	memset(mb->buf, 'A', len);
+	mb->buf[len / 2] = ' ';
+	mb->buf[len - 1] = '\r';
+	mb->pos = 0;
+	mb->end = len;
+
+	t0   = tmr_jiffies_usec();
+	derr = sip_msg_decode(&msg, mb);
+	t1   = tmr_jiffies_usec();
+
+	/* no line end within STARTLINE_MAX: rejected, no partial message */
+	TEST_EQUALS(EBADMSG, derr);
+	TEST_ASSERT(msg == NULL);
+
+	/* the regression: parsing must not be quadratic */
+	TEST_ASSERT((t1 - t0) < 2000000);
+
+ out:
+	mem_deref(msg);
+	mem_deref(mb);
+	return err;
+}
