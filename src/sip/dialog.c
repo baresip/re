@@ -20,10 +20,6 @@
 #include "sip.h"
 
 
-enum {
-	ROUTE_OFFSET = 7,
-};
-
 struct sip_dialog {
 	struct uri route;
 	struct mbuf *mb;
@@ -37,6 +33,7 @@ struct sip_dialog {
 	uint32_t lseqinv;
 	size_t cpos;
 	size_t rpos;
+	size_t rend;
 	enum sip_transp tp;
 	uint32_t srcport;
 };
@@ -44,7 +41,7 @@ struct sip_dialog {
 
 struct route_enc {
 	struct mbuf *mb;
-	size_t end;
+	size_t *end;
 };
 
 
@@ -57,6 +54,36 @@ static void destructor(void *arg)
 	mem_deref(dlg->rtag);
 	mem_deref(dlg->uri);
 	mem_deref(dlg->mb);
+}
+
+
+static int route_decode(struct uri *route, const struct mbuf *mb,
+			size_t rend, const char *uri)
+{
+	struct sip_addr addr;
+	struct uri tmp;
+	struct pl pl;
+	int err;
+
+	if (rend) {
+		err = pl_set_mbuf_range(&pl, mb, sizeof("Route: ") - 1, rend);
+		if (err)
+			return err;
+
+		err = sip_addr_decode(&addr, &pl);
+		tmp = addr.uri;
+	}
+	else {
+		pl_set_str(&pl, uri);
+		err = uri_decode(&tmp, &pl);
+	}
+
+	if (err)
+		return err;
+
+	*route = tmp;
+
+	return 0;
 }
 
 
@@ -80,9 +107,6 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 {
 	const uint64_t ltag = rand_u64();
 	struct sip_dialog *dlg;
-	struct sip_addr addr;
-	size_t rend = 0;
-	struct pl pl;
 	uint32_t i;
 	int err;
 
@@ -118,7 +142,7 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 	for (i=0; i<routec; i++) {
 		err |= mbuf_printf(dlg->mb, "Route: <%s;lr>\r\n", routev[i]);
 		if (i == 0)
-			rend = dlg->mb->pos - 2;
+			dlg->rend = dlg->mb->pos - 2;
 	}
 	dlg->rpos = dlg->mb->pos;
 	err |= mbuf_printf(dlg->mb, "To: <%s>\r\n", to_uri);
@@ -132,16 +156,7 @@ int sip_dialog_alloc(struct sip_dialog **dlgp,
 
 	dlg->mb->pos = 0;
 
-	if (rend) {
-		pl.p = (const char *)mbuf_buf(dlg->mb) + ROUTE_OFFSET;
-		pl.l = rend - ROUTE_OFFSET;
-		err = sip_addr_decode(&addr, &pl);
-		dlg->route = addr.uri;
-	}
-	else {
-		pl_set_str(&pl, dlg->uri);
-		err = uri_decode(&dlg->route, &pl);
-	}
+	err = route_decode(&dlg->route, dlg->mb, dlg->rend, dlg->uri);
 
  out:
 	if (err)
@@ -163,8 +178,8 @@ static bool record_route_handler(const struct sip_hdr *hdr,
 	if (mbuf_printf(renc->mb, "Route: %r\r\n", &hdr->val))
 		return true;
 
-	if (!renc->end)
-	        renc->end = renc->mb->pos - 2;
+	if (!*renc->end)
+		*renc->end = renc->mb->pos - 2;
 
 	return false;
 }
@@ -184,7 +199,6 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 	struct sip_dialog *dlg;
 	struct route_enc renc;
 	struct sip_addr addr;
-	struct pl pl;
 	int err;
 
 	if (!dlgp || !msg || !msg->req)
@@ -230,7 +244,7 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 	}
 
 	renc.mb  = dlg->mb;
-	renc.end = 0;
+	renc.end = &dlg->rend;
 
 	err |= sip_msg_hdr_apply(msg, true, SIP_HDR_RECORD_ROUTE,
 				 record_route_handler, &renc) ? ENOMEM : 0;
@@ -244,16 +258,7 @@ int sip_dialog_accept(struct sip_dialog **dlgp, const struct sip_msg *msg)
 
 	dlg->mb->pos = 0;
 
-	if (renc.end) {
-		pl.p = (const char *)mbuf_buf(dlg->mb) + ROUTE_OFFSET;
-		pl.l = renc.end - ROUTE_OFFSET;
-		err = sip_addr_decode(&addr, &pl);
-		dlg->route = addr.uri;
-	}
-	else {
-		pl_set_str(&pl, dlg->uri);
-		err = uri_decode(&dlg->route, &pl);
-	}
+	err = route_decode(&dlg->route, dlg->mb, dlg->rend, dlg->uri);
 
  out:
 	if (err)
@@ -279,7 +284,7 @@ int sip_dialog_create(struct sip_dialog *dlg, const struct sip_msg *msg)
 	const struct sip_hdr *contact;
 	struct route_enc renc;
 	struct sip_addr addr;
-	struct pl pl;
+	size_t rend = 0, rpos, cpos;
 	int err;
 
 	if (!dlg || dlg->rtag || !dlg->cpos || !msg)
@@ -305,16 +310,16 @@ int sip_dialog_create(struct sip_dialog *dlg, const struct sip_msg *msg)
 	if (err)
 		goto out;
 
-	renc.end = 0;
+	renc.end = &rend;
 
 	err |= sip_msg_hdr_apply(msg, msg->req, SIP_HDR_RECORD_ROUTE,
 				 record_route_handler, &renc) ? ENOMEM : 0;
-	dlg->rpos = renc.mb->pos;
+	rpos = renc.mb->pos;
 	err |= mbuf_printf(renc.mb, "To: %r\r\n",
 			   msg->req ? &msg->from.val : &msg->to.val);
 
 	dlg->mb->pos = dlg->cpos;
-	dlg->cpos = renc.mb->pos;
+	cpos = renc.mb->pos;
 	err |= mbuf_write_mem(renc.mb, mbuf_buf(dlg->mb),
 			      mbuf_get_left(dlg->mb));
 	dlg->mb->pos = 0;
@@ -324,30 +329,17 @@ int sip_dialog_create(struct sip_dialog *dlg, const struct sip_msg *msg)
 
 	renc.mb->pos = 0;
 
-	if (renc.end) {
-		pl.p = (const char *)mbuf_buf(renc.mb) + ROUTE_OFFSET;
-		pl.l = renc.end - ROUTE_OFFSET;
-		err = sip_addr_decode(&addr, &pl);
-		if (err)
-			goto out;
-
-		dlg->route = addr.uri;
-	}
-	else {
-		struct uri tmp;
-
-		pl_set_str(&pl, uri);
-		err = uri_decode(&tmp, &pl);
-		if (err)
-			goto out;
-
-		dlg->route = tmp;
-	}
+	err = route_decode(&dlg->route, renc.mb, rend, uri);
+	if (err)
+		goto out;
 
 	mem_deref(dlg->mb);
 	mem_deref(dlg->uri);
 
 	dlg->mb   = mem_ref(renc.mb);
+	dlg->rend = rend;
+	dlg->rpos = rpos;
+	dlg->cpos = cpos;
 	dlg->rtag = mem_ref(rtag);
 	dlg->uri  = mem_ref(uri);
 	dlg->rseq = msg->req ? msg->cseq.num : 0;
@@ -378,7 +370,6 @@ int sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 	struct sip_dialog *dlg;
 	struct route_enc renc;
 	struct sip_addr addr;
-	struct pl pl;
 	int err;
 
 	if (!dlgp || !odlg || !odlg->cpos || !msg)
@@ -419,12 +410,14 @@ int sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 	}
 
 	renc.mb  = dlg->mb;
-	renc.end = 0;
+	renc.end = &dlg->rend;
 
 	err |= sip_msg_hdr_apply(msg, msg->req, SIP_HDR_RECORD_ROUTE,
 				 record_route_handler, &renc) ? ENOMEM : 0;
+	dlg->rpos = dlg->mb->pos;
 	err |= mbuf_printf(dlg->mb, "To: %r\r\n",
 			   msg->req ? &msg->from.val : &msg->to.val);
+	dlg->cpos = dlg->mb->pos;
 
 	odlg->mb->pos = odlg->cpos;
 	err |= mbuf_write_mem(dlg->mb, mbuf_buf(odlg->mb),
@@ -436,16 +429,7 @@ int sip_dialog_fork(struct sip_dialog **dlgp, struct sip_dialog *odlg,
 
 	dlg->mb->pos = 0;
 
-	if (renc.end) {
-		pl.p = (const char *)mbuf_buf(dlg->mb) + ROUTE_OFFSET;
-		pl.l = renc.end - ROUTE_OFFSET;
-		err = sip_addr_decode(&addr, &pl);
-		dlg->route = addr.uri;
-	}
-	else {
-		pl_set_str(&pl, dlg->uri);
-		err = uri_decode(&dlg->route, &pl);
-	}
+	err = route_decode(&dlg->route, dlg->mb, dlg->rend, dlg->uri);
 
  out:
 	if (err)
@@ -469,10 +453,11 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 {
 	const struct sip_hdr *contact;
 	struct sip_addr addr;
+	char *uri, *rtag = NULL;
+	struct uri route;
 	struct mbuf *mb;
 	struct pl pl;
 	size_t cpos;
-	char *uri;
 	int err;
 
 	if (!dlg || !msg)
@@ -495,49 +480,52 @@ int sip_dialog_update(struct sip_dialog *dlg, const struct sip_msg *msg)
 		goto out;
 	}
 
-	err = mbuf_write_mem(mb, mbuf_buf(dlg->mb), dlg->rpos);
-	err |= mbuf_printf(mb, "To: %r\r\n",
-		   msg->req ? &msg->from.val : &msg->to.val);
-	cpos = mb->pos;
-	err |= mbuf_write_mem(mb, mbuf_buf(dlg->mb) + dlg->cpos,
-			      mbuf_get_left(dlg->mb) - dlg->cpos);
-
+	/* Keep the route */
+	err = pl_set_mbuf_range(&pl, dlg->mb, 0, dlg->rpos);
 	if (err)
 		goto out;
 
-	dlg->cpos = cpos;
+	err = mbuf_write_pl(mb, &pl);
+	if (err)
+		goto out;
+
+	err = mbuf_printf(mb, "To: %r\r\n",
+			  msg->req ? &msg->from.val : &msg->to.val);
+	if (err)
+		goto out;
+
+	cpos = mb->pos;
+
+	err = pl_set_mbuf_range(&pl, dlg->mb, dlg->cpos, dlg->mb->end);
+	if (err)
+		goto out;
+
+	err = mbuf_write_pl(mb, &pl);
+	if (err)
+		goto out;
+
 	mb->pos = 0;
 
-	dlg->rtag = mem_deref(dlg->rtag);
-	err = pl_strdup(&dlg->rtag, msg->req ? &msg->from.tag : &msg->to.tag);
+	err = route_decode(&route, mb, dlg->rend, uri);
+	if (err)
+		goto out;
+
+	err = pl_strdup(&rtag, msg->req ? &msg->from.tag : &msg->to.tag);
 	if (err)
 		goto out;
 
 	mem_deref(dlg->mb);
-	dlg->mb = mem_ref(mb);
-
-	if (dlg->route.scheme.p == dlg->uri) {
-
-		struct uri tmp;
-
-		pl_set_str(&pl, uri);
-		err = uri_decode(&tmp, &pl);
-		if (err)
-			goto out;
-
-		dlg->route = tmp;
-	}
-	else {
-		pl.p = (const char *)mbuf_buf(dlg->mb) + ROUTE_OFFSET;
-		pl.l = dlg->rpos - ROUTE_OFFSET;
-		err = sip_addr_decode(&addr, &pl);
-		dlg->route = addr.uri;
-	}
-
+	mem_deref(dlg->rtag);
 	mem_deref(dlg->uri);
-	dlg->uri = mem_ref(uri);
+
+	dlg->mb    = mem_ref(mb);
+	dlg->rtag  = mem_ref(rtag);
+	dlg->uri   = mem_ref(uri);
+	dlg->route = route;
+	dlg->cpos  = cpos;
  out:
 	mem_deref(mb);
+	mem_deref(rtag);
 	mem_deref(uri);
 
 	return err;
