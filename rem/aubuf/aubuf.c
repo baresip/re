@@ -32,6 +32,7 @@ struct aubuf {
 	size_t pkt_sz;          /**< Packet size                             */
 	size_t wr_sz;           /**< Written size                            */
 	bool started;
+	bool trim;
 	uint64_t ts;
 
 	struct {
@@ -149,6 +150,7 @@ int aubuf_alloc(struct aubuf **abp, size_t min_sz, size_t max_sz)
 	ab->max_sz  = max_sz;
 	ab->fill_sz = min_sz;
 	ab->live    = true;
+	ab->trim    = true;
 
  out:
 	if (err)
@@ -191,6 +193,7 @@ void aubuf_set_live(struct aubuf *ab, bool live)
 		return;
 
 	ab->live = live;
+	ab->trim = live && (ab->trim || !ab->started);
 }
 
 
@@ -282,6 +285,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			ab->cur_sz -= mbuf_get_left(f->mb);
 			mem_pool_release(ab->pool, f->e);
 		}
+		ab->trim = ab->live;
 	}
 
 	mtx_unlock(ab->lock);
@@ -353,24 +357,23 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 	RE_TRACE_ID_INSTANT_I("aubuf", "cur_sz_ms",
 			      auframe_bytes_to_ms(af, ab->cur_sz), ab->id);
 
-	if (ab->fill_sz || ab->cur_sz < sz) {
-		if (!ab->fill_sz) {
-			++ab->stats.ur;
-			RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
-		}
-
-		filling = ab->fill_sz > 0;
+	filling = ab->fill_sz > 0;
+	if (filling || ab->cur_sz < sz) {
 		memset(af->sampv, 0, sz);
 		if (filling) {
 			RE_TRACE_ID_INSTANT("aubuf", "filling", ab->id);
 			goto out;
 		}
-		else
-			ab->fill_sz = ab->wish_sz;
+
+		++ab->stats.ur;
+		RE_TRACE_ID_INSTANT("aubuf", "underrun", ab->id);
+		ab->fill_sz = ab->wish_sz;
+		ab->trim = ab->live;
+		if (ab->live && ab->wish_sz)
+			goto out;
 	}
 
-	/* on first read drop old frames */
-	drop = ab->live && !ab->started && ab->wish_sz;
+	drop = ab->trim && ab->wish_sz;
 	while (drop && ab->cur_sz > ab->wish_sz) {
 		struct frame *f = list_ledata(ab->afl.head);
 		if (f) {
@@ -380,6 +383,7 @@ void aubuf_read_auframe(struct aubuf *ab, struct auframe *af)
 	}
 
 	ab->started = true;
+	ab->trim = false;
 	read_auframe(ab, af);
 
  out:
@@ -455,6 +459,7 @@ void aubuf_flush(struct aubuf *ab)
 	list_clear(&ab->afl);
 	mem_pool_flush(ab->pool);
 	ab->fill_sz = ab->wish_sz;
+	ab->trim    = ab->live;
 	ab->cur_sz  = 0;
 	ab->wr_sz   = 0;
 	ab->ts      = 0;
