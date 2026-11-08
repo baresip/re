@@ -922,6 +922,69 @@ out:
 }
 
 
+static void conn_close_resp_handler(int err, const struct sip_msg *msg,
+				    void *arg)
+{
+	struct sip_request **reqp = arg;
+	(void)err;
+	(void)msg;
+
+	*reqp = mem_deref(*reqp);
+	re_cancel();
+}
+
+
+/* A response handler may free other requests queued on the closing
+ * connection */
+int test_sip_transp_conn_close(void)
+{
+	struct tcp_sock *ts = NULL;
+	struct sip *sip = NULL;
+	struct sip_request *req1 = NULL, *req2 = NULL;
+	struct sa laddr, srv;
+	char uri[64];
+	int err;
+
+	/* a closed port, so the connection is refused */
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+	err = tcp_listen(&ts, &laddr, NULL, NULL);
+	TEST_ERR(err);
+	err = tcp_local_get(ts, &srv);
+	TEST_ERR(err);
+	ts = mem_deref(ts);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_TCP, &laddr);
+	TEST_ERR(err);
+
+	re_snprintf(uri, sizeof(uri), "sip:test@%J;transport=tcp", &srv);
+
+	err = sip_requestf(&req1, sip, true, "OPTIONS", uri, NULL, NULL,
+			   NULL, conn_close_resp_handler, &req2,
+			   "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+	err = sip_requestf(&req2, sip, true, "OPTIONS", uri, NULL, NULL,
+			   NULL, NULL, NULL, "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+
+out:
+	mem_deref(req2);
+	mem_deref(req1);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+	mem_deref(ts);
+
+	return err;
+}
+
+
 #ifdef USE_TLS
 struct sip_transp_tls {
 	struct sip *sip;
