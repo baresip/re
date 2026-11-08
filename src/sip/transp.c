@@ -276,8 +276,6 @@ static struct sip_conn *ws_conn_find(struct sip *sip, const struct sa *paddr,
 
 static void conn_close(struct sip_conn *conn, int err)
 {
-	struct le *le;
-
 	conn->websock_conn = mem_deref(conn->websock_conn);
 
 	conn->sc = mem_deref(conn->sc);
@@ -286,20 +284,17 @@ static void conn_close(struct sip_conn *conn, int err)
 	tmr_cancel(&conn->tmr);
 	hash_unlink(&conn->he);
 
-	le = list_head(&conn->ql);
+	/* a transport handler may free any other entry */
+	while (!list_isempty(&conn->ql)) {
 
-	while (le) {
-
-		struct sip_connqent *qent = le->data;
-		le = le->next;
+		struct sip_connqent *qent = list_ledata(list_head(&conn->ql));
 		bool qentp_set = qent->qentp ? true : false;
 
+		list_unlink(&qent->le);
 		qent->transph(err, qent->arg);
 
-		if (!qentp_set) {
-			list_unlink(&qent->le);
+		if (!qentp_set)
 			mem_deref(qent);
-		}
 	}
 
 	sip_keepalive_signal(&conn->kal, err);

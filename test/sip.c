@@ -770,6 +770,112 @@ out:
 }
 
 
+struct conn_close_free {
+	struct tcp_sock *ts;
+	struct tcp_conn *tc;
+	struct sip_request *req2;
+	unsigned n_resp;
+	int resp_err;
+};
+
+
+static void ccf_recv_handler(struct mbuf *mb, void *arg)
+{
+	(void)mb;
+	(void)arg;
+
+	re_cancel();
+}
+
+
+static void ccf_conn_handler(const struct sa *peer, void *arg)
+{
+	struct conn_close_free *ccf = arg;
+	(void)peer;
+
+	(void)tcp_accept(&ccf->tc, ccf->ts, NULL, ccf_recv_handler, NULL,
+			 ccf);
+}
+
+
+static void ccf_resp_handler(int err, const struct sip_msg *msg, void *arg)
+{
+	struct conn_close_free *ccf = arg;
+	(void)msg;
+
+	++ccf->n_resp;
+	ccf->resp_err = err;
+
+	/* frees the next entry of the connection's queue */
+	ccf->req2 = mem_deref(ccf->req2);
+
+	re_cancel();
+}
+
+
+int test_sip_transp_conn_close_free(void)
+{
+	struct conn_close_free ccf = {0};
+	struct sip *sip = NULL;
+	struct sip_dialog *dlg = NULL;
+	struct sip_request *req1 = NULL;
+	struct sa laddr, srv;
+	char uri[64];
+	int err;
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	err = tcp_listen(&ccf.ts, &laddr, ccf_conn_handler, &ccf);
+	TEST_ERR(err);
+	err = tcp_local_get(ccf.ts, &srv);
+	TEST_ERR(err);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_TCP, &laddr);
+	TEST_ERR(err);
+
+	re_snprintf(uri, sizeof(uri), "sip:test@%J;transport=tcp", &srv);
+	err = sip_dialog_alloc(&dlg, uri, uri, NULL, uri, NULL, 0);
+	TEST_ERR(err);
+
+	/* both requests are queued while the connection is set up */
+	err = sip_drequestf(&req1, sip, true, "OPTIONS", dlg, 0, NULL, NULL,
+			    ccf_resp_handler, &ccf,
+			    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+	err = sip_drequestf(&ccf.req2, sip, true, "OPTIONS", dlg, 0, NULL,
+			    NULL, ccf_resp_handler, &ccf,
+			    "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	ccf.tc = mem_deref(ccf.tc);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+
+	ASSERT_EQ(1, ccf.n_resp);
+	ASSERT_TRUE(ccf.resp_err != 0);
+
+out:
+	mem_deref(ccf.req2);
+	mem_deref(req1);
+	mem_deref(dlg);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+	mem_deref(ccf.tc);
+	mem_deref(ccf.ts);
+
+	return err;
+}
+
+
 int test_sip_transp_udp_sock(void)
 {
 	struct sip *sip = NULL;
