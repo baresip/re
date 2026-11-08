@@ -112,6 +112,28 @@ static bool rewrite_contact(struct sipreg *reg, const struct sip_msg *msg)
 }
 
 
+/*
+ * A challenge carries the address in its Via too: use it in the
+ * authenticated request, so no binding is made to the local address.
+ */
+static void challenge_contact(struct sipreg *reg, const struct sip_msg *msg)
+{
+	struct sa pub;
+
+	if (!reg->rewrite || !reg->expires || reg->terminated)
+		return;
+
+	if (via_public_addr(msg, &pub) ||
+	    sa_cmp(&pub, contact_addr(reg), SA_ALL))
+		return;
+
+	if (reg->registered && !sa_isset(&reg->oldaddr, SA_ALL))
+		reg->oldaddr = *contact_addr(reg);
+
+	reg->caddr = pub;
+}
+
+
 static void dummy_handler(int err, const struct sip_msg *msg, void *arg)
 {
 	(void)err;
@@ -296,6 +318,8 @@ static void response_handler(int err, const struct sip_msg *msg, void *arg)
 			err = (err == EAUTH) ? 0 : err;
 			break;
 		}
+
+		challenge_contact(reg, msg);
 
 		err = request(reg, false);
 		if (err)

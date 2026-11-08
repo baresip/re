@@ -204,12 +204,21 @@ static int reg_test(enum sip_transp tp, uint16_t srcport)
 }
 
 
-/**
- * Contact rewrite behind a NAT: the mock NAT makes the registrar see us at
- * a public address, so the client must register that address and remove
- * the binding to its local one in the same, second, request.
- */
-int test_sipreg_contact_rewrite(void)
+static int auth_handler(char **username, char **password,
+			const char *realm, void *arg)
+{
+	int err;
+	(void)realm;
+	(void)arg;
+
+	err  = str_dup(username, "x");
+	err |= str_dup(password, "secret");
+
+	return err;
+}
+
+
+static int contact_rewrite_test(bool auth)
 {
 	struct test test;
 	struct sip_server *srv = NULL;
@@ -220,6 +229,7 @@ int test_sipreg_contact_rewrite(void)
 	const struct sip_msg *req;
 	const struct sip_hdr *contact;
 	char reg_uri[256];
+	unsigned n;
 	int err;
 
 	memset(&test, 0, sizeof(test));
@@ -227,6 +237,8 @@ int test_sipreg_contact_rewrite(void)
 
 	err = sip_server_alloc(&srv);
 	TEST_ERR(err);
+
+	srv->auth = auth;
 
 	err = sa_set_str(&public_addr, "192.0.2.10", 0);
 	TEST_ERR(err);
@@ -242,8 +254,9 @@ int test_sipreg_contact_rewrite(void)
 	TEST_ERR(err);
 
 	err = sipreg_alloc(&reg, sip, reg_uri, "sip:x@test", NULL,
-			   "sip:x@test", 3600, "x", NULL, 0, 0, NULL, NULL,
-			   false, sip_resp_handler, &test, NULL, NULL);
+			   "sip:x@test", 3600, "x", NULL, 0, 0,
+			   auth ? auth_handler : NULL, NULL, false,
+			   sip_resp_handler, &test, NULL, NULL);
 	TEST_ERR(err);
 
 	sipreg_set_contact_rewrite(reg, true);
@@ -255,8 +268,9 @@ int test_sipreg_contact_rewrite(void)
 	TEST_ERR(err);
 	TEST_ERR(test.err);
 
-	/* One REGISTER to learn the address, one to register it */
-	ASSERT_EQ(2, srv->n_register_req);
+	/* Either way two requests: the address is learned from the first */
+	n = srv->n_register_req;
+	ASSERT_EQ(2, n);
 	ASSERT_EQ(1, test.n_resp);
 	ASSERT_TRUE(sipreg_registered(reg));
 
@@ -264,14 +278,21 @@ int test_sipreg_contact_rewrite(void)
 	ASSERT_TRUE(!sa_cmp(sipreg_contact_addr(reg), sipreg_laddr(reg),
 			    SA_ADDR));
 
-	/* The second request: stale local binding first, then the new one */
-	req = srv->sip_msgs[1];
-	ASSERT_EQ(2, sip_msg_hdr_count(req, SIP_HDR_CONTACT));
+	req = srv->sip_msgs[n - 1];
 
-	contact = sip_msg_hdr(req, SIP_HDR_CONTACT);
-	err = re_regex(contact->val.p, contact->val.l,
-		       "<sip:x@127.0.0.1:[0-9]+>;expires=0", NULL);
-	TEST_ERR(err);
+	if (auth) {
+		/* The challenge taught the address: nothing to remove */
+		ASSERT_EQ(1, sip_msg_hdr_count(req, SIP_HDR_CONTACT));
+	}
+	else {
+		/* Stale local binding first, then the new one */
+		ASSERT_EQ(2, sip_msg_hdr_count(req, SIP_HDR_CONTACT));
+
+		contact = sip_msg_hdr(req, SIP_HDR_CONTACT);
+		err = re_regex(contact->val.p, contact->val.l,
+			       "<sip:x@127.0.0.1:[0-9]+>;expires=0", NULL);
+		TEST_ERR(err);
+	}
 
 	contact = sip_msg_hdr_apply(req, false, SIP_HDR_CONTACT, NULL, NULL);
 	ASSERT_TRUE(contact != NULL);
@@ -289,6 +310,27 @@ int test_sipreg_contact_rewrite(void)
 	mem_deref(srv);
 
 	return err;
+}
+
+
+/**
+ * Contact rewrite behind a NAT: the mock NAT makes the registrar see us at
+ * a public address, so the client must register that address and remove
+ * the binding to its local one in the same, second, request.
+ */
+int test_sipreg_contact_rewrite(void)
+{
+	return contact_rewrite_test(false);
+}
+
+
+/**
+ * Contact rewrite with a challenge: the 401 already shows the public
+ * address, so the authenticated request registers it and nothing else.
+ */
+int test_sipreg_contact_rewrite_auth(void)
+{
+	return contact_rewrite_test(true);
 }
 
 

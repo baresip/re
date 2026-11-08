@@ -213,6 +213,7 @@ static const struct test tests[] = {
 	TEST(test_fmt_trim),
 	TEST(test_sipevent),
 	TEST(test_sipreg_contact_rewrite),
+	TEST(test_sipreg_contact_rewrite_auth),
 	TEST(test_sipreg_tcp),
 #ifdef USE_TLS
 	TEST(test_sipreg_tls),
