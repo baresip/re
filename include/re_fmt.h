@@ -33,6 +33,8 @@ struct pl *pl_alloc_str(const char *str);
 struct pl *pl_alloc_dup(const struct pl *src);
 void     pl_set_str(struct pl *pl, const char *str);
 void     pl_set_mbuf(struct pl *pl, const struct mbuf *mb);
+int      pl_set_mbuf_range(struct pl *pl, const struct mbuf *mb,
+			   size_t start, size_t end);
 int32_t  pl_i32(const struct pl *pl);
 int64_t  pl_i64(const struct pl *pl);
 uint32_t pl_u32(const struct pl *pl);

@@ -132,6 +132,34 @@ void pl_set_mbuf(struct pl *pl, const struct mbuf *mb)
 
 
 /**
+ * Initialise a pointer-length object from the absolute byte range
+ * (start, end) of a memory buffer, independent of the current position
+ *
+ * @param pl    Pointer-length object to be initialised
+ * @param mb    Memory buffer
+ * @param start Start offset
+ * @param end   End offset (exclusive)
+ *
+ * @return 0 if success, ERANGE if the range is outside the buffer,
+ *         otherwise errorcode
+ */
+int pl_set_mbuf_range(struct pl *pl, const struct mbuf *mb,
+		      size_t start, size_t end)
+{
+	if (!pl || !mb)
+		return EINVAL;
+
+	if (start > end || end > mb->end)
+		return ERANGE;
+
+	pl->p = (const char *)mb->buf + start;
+	pl->l = end - start;
+
+	return 0;
+}
+
+
+/**
  * Convert a pointer-length object to an int32_t.
  *
  * @param pl Pointer-length object
