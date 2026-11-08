@@ -516,12 +516,23 @@ int test_sip_parse(void)
 		"Content-Type: application/sdp\r\n"
 		"Content-Length: 142\r\n"
 		"\r\n";
+	/* No Record-Route and broken Contact URI */
+	const char str_dlg[] =
+		"INVITE sip:bob@biloxi.com SIP/2.0\r\n"
+		"Via: SIP/2.0/UDP 127.0.0.1:1234;branch=z9hG4bK.1\r\n"
+		"To: <sip:bob@biloxi.com>\r\n"
+		"From: <sip:alice@atlanta.com>;tag=1\r\n"
+		"Call-ID: 1\r\n"
+		"CSeq: 1 INVITE\r\n"
+		"Contact: : sip:alice@pc33.atlanta.com\r\n"
+		"\r\n";
 	const char hdr_maxf[]   = "70";
 	const char hdr_from[]   = "sip:alice@atlanta.com";
 	const char hdr_to[]     = "sip:bob@biloxi.com";
 	const char hdr_callid[] = "a84b4c76e66710@pc33.atlanta.com";
 	struct mbuf *mb;
 	struct sip_msg *msg = NULL;
+	struct sip_dialog *dlg = NULL;
 	int err = EINVAL;
 
 	mb = mbuf_alloc(1024);
@@ -592,9 +603,22 @@ int test_sip_parse(void)
 		goto out;
 	}
 
-	err = 0;
+	/* Dialog update */
+	msg = mem_deref(msg);
+	mbuf_rewind(mb);
+	err = mbuf_write_str(mb, str_dlg);
+	TEST_ERR(err);
+	mbuf_set_pos(mb, 0);
+	err = sip_msg_decode(&msg, mb);
+	TEST_ERR(err);
+
+	err = sip_dialog_accept(&dlg, msg);
+	TEST_ERR(err);
+	err = sip_dialog_update(dlg, msg);
+	TEST_ERR(err);
 
  out:
+	mem_deref(dlg);
 	mem_deref(mb);
 	mem_deref(msg);
 	return err;
