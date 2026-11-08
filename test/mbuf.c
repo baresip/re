@@ -218,6 +218,39 @@ out:
 }
 
 
+static int test_mbuf_pl_range(void)
+{
+	struct mbuf *mb = mbuf_alloc(16);
+	struct pl pl = PL_INIT;
+	int err;
+
+	if (!mb)
+		return ENOMEM;
+
+	err = mbuf_write_str(mb, "hei foo");
+	TEST_ERR(err);
+	mbuf_set_pos(mb, 2);  /* range must not depend on pos */
+
+	err = pl_set_mbuf_range(&pl, mb, 4, 7);
+	TEST_ERR(err);
+	TEST_STRCMP("foo", 3, pl.p, pl.l);
+
+	err = pl_set_mbuf_range(&pl, mb, 7, 7);
+	TEST_ERR(err);
+	TEST_ASSERT(pl.l == 0);
+
+	TEST_EQUALS(ERANGE, pl_set_mbuf_range(&pl, mb, 0, 8));
+	TEST_EQUALS(ERANGE, pl_set_mbuf_range(&pl, mb, 7, 0));
+	TEST_EQUALS(EINVAL, pl_set_mbuf_range(NULL, mb, 0, 1));
+	TEST_EQUALS(EINVAL, pl_set_mbuf_range(&pl, NULL, 0, 1));
+
+	err = 0;
+out:
+	mem_deref(mb);
+	return err;
+}
+
+
 int test_mbuf(void)
 {
 	int err;
@@ -232,6 +265,9 @@ int test_mbuf(void)
 	TEST_ERR(err);
 
 	err = test_mbuf_str();
+	TEST_ERR(err);
+
+	err = test_mbuf_pl_range();
 	TEST_ERR(err);
 
 out:
