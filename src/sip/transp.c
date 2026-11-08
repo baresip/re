@@ -286,20 +286,17 @@ static void conn_close(struct sip_conn *conn, int err)
 	tmr_cancel(&conn->tmr);
 	hash_unlink(&conn->he);
 
-	le = list_head(&conn->ql);
-
-	while (le) {
+	while ((le = list_head(&conn->ql))) {
 
 		struct sip_connqent *qent = le->data;
-		le = le->next;
-		bool qentp_set = qent->qentp ? true : false;
+		sip_transp_h *transph = qent->transph;
+		void *arg = qent->arg;
 
-		qent->transph(err, qent->arg);
-
-		if (!qentp_set) {
-			list_unlink(&qent->le);
+		list_unlink(&qent->le);
+		if (!qent->qentp)
 			mem_deref(qent);
-		}
+
+		transph(err, arg);
 	}
 
 	sip_keepalive_signal(&conn->kal, err);
@@ -633,6 +630,7 @@ static void trace_send(struct sip *sip, enum sip_transp tp,
 static void tcp_estab_handler(void *arg)
 {
 	struct sip_conn *conn = arg;
+	struct list ql = LIST_INIT;
 	struct le *le;
 	int err;
 
@@ -642,13 +640,17 @@ static void tcp_estab_handler(void *arg)
 
 	conn->established = true;
 
-	le = list_head(&conn->ql);
+	/* a handler may free entries, so work on a private list */
+	while ((le = list_head(&conn->ql)))
+		list_move(le, &ql);
 
-	while (le) {
+	while ((le = list_head(&ql))) {
 
 		struct sip_connqent *qent = le->data;
-		bool qentp_set = qent->qentp ? true : false;
-		le = le->next;
+		sip_transp_h *transph = qent->transph;
+		void *targ = qent->arg;
+
+		list_unlink(&qent->le);
 
 		trace_send(conn->sip,
 			   conn->sc ? SIP_TRANSP_TLS : SIP_TRANSP_TCP,
@@ -656,13 +658,15 @@ static void tcp_estab_handler(void *arg)
 			   &conn->paddr, qent->mb);
 
 		err = tcp_send(conn->tc, qent->mb);
-		if (err)
-			qent->transph(err, qent->arg);
 
-		if (!qentp_set) {
-			list_unlink(&qent->le);
+		/* an entry owned by a transaction stays for conn_close() */
+		if (qent->qentp)
+			list_append(&conn->ql, &qent->le, qent);
+		else
 			mem_deref(qent);
-		}
+
+		if (err)
+			transph(err, targ);
 	}
 }
 
@@ -915,6 +919,7 @@ static int conn_send(struct sip_connqent **qentp, struct sip *sip, bool secure,
 static void websock_estab_handler(void *arg)
 {
 	struct sip_conn *conn = arg;
+	struct list ql = LIST_INIT;
 	struct le *le;
 	int err;
 
@@ -928,13 +933,17 @@ static void websock_estab_handler(void *arg)
 	if (err)
 		return;
 
-	le = list_head(&conn->ql);
+	/* a handler may free entries, so work on a private list */
+	while ((le = list_head(&conn->ql)))
+		list_move(le, &ql);
 
-	while (le) {
+	while ((le = list_head(&ql))) {
 
 		struct sip_connqent *qent = le->data;
-		bool qentp_set = qent->qentp ? true : false;
-		le = le->next;
+		sip_transp_h *transph = qent->transph;
+		void *targ = qent->arg;
+
+		list_unlink(&qent->le);
 
 		trace_send(conn->sip,
 			   conn->tp,
@@ -945,13 +954,15 @@ static void websock_estab_handler(void *arg)
 				   "%b",
 				   mbuf_buf(qent->mb),
 				   mbuf_get_left(qent->mb));
-		if (err)
-			qent->transph(err, qent->arg);
 
-		if (!qentp_set) {
-			list_unlink(&qent->le);
+		/* an entry owned by a transaction stays for conn_close() */
+		if (qent->qentp)
+			list_append(&conn->ql, &qent->le, qent);
+		else
 			mem_deref(qent);
-		}
+
+		if (err)
+			transph(err, targ);
 	}
 }
 
