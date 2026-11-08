@@ -901,7 +901,11 @@ int test_sip_transp_tcp_close(void)
 	err = re_main_timeout(1000);
 	TEST_ERR(err);
 
-	ASSERT_TRUE(tcl.err != 0);
+#ifdef WIN32
+	ASSERT_EQ(WSAECONNRESET, tcl.err);
+#else
+	ASSERT_EQ(ECONNRESET, tcl.err);
+#endif
 
 out:
 	mem_deref(req2);
