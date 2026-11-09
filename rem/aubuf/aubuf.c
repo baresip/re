@@ -285,6 +285,7 @@ int aubuf_append_auframe(struct aubuf *ab, struct mbuf *mb,
 			ab->cur_sz -= mbuf_get_left(f->mb);
 			mem_pool_release(ab->pool, f->e);
 		}
+
 		ab->trim = ab->live;
 	}
 
