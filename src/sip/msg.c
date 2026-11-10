@@ -283,14 +283,7 @@ int sip_msg_decode(struct sip_msg **msgp, struct mbuf *mb)
 	p = (const char *)mbuf_buf(mb);
 	l = mbuf_get_left(mb);
 
-	/*
-	 * Bound the start-line scan. The re_regex() below is unanchored, so
-	 * on a long line with no LF it rescans from every byte offset, which
-	 * is O(n^2); over TCP the buffer can reach TCP_BUFSIZE_MAX before the
-	 * STARTLINE_MAX check (which ran only after re_regex). Locate the
-	 * first LF within STARTLINE_MAX and match only that one line.
-	 */
-	nl = memchr(p, '\n', l > STARTLINE_MAX ? STARTLINE_MAX : l);
+	nl = memchr(p, '\n', min(l, STARTLINE_MAX));
 	if (!nl)
 		return (l > STARTLINE_MAX) ? EBADMSG : ENODATA;
 
