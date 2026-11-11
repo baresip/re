@@ -320,6 +320,7 @@ int test_sip_via(void);
 int test_sip_dns(void);
 int test_sip_dns_cancel(void);
 int test_sip_transp_conn_close(void);
+int test_sip_transp_flush_held(void);
 int test_sip_transp_tcp_close(void);
 int test_sip_transp_udp_sock(void);
 #ifdef USE_TLS
