@@ -42,6 +42,13 @@ static bool sip_msg_handler(const struct sip_msg *msg, void *arg)
 
 	if (srv->terminate)
 		err = sip_reply(srv->sip, msg, 503, "Server Error");
+	else if (srv->auth && !sip_msg_hdr(msg, SIP_HDR_AUTHORIZATION)) {
+		err = sip_replyf(srv->sip, msg, 401, "Unauthorized",
+				 "WWW-Authenticate: Digest realm=\"test\", "
+				 "nonce=\"YZlVk2GZVGegVBZVKaMHpnxmUA\"\r\n"
+				 "Content-Length: 0\r\n"
+				 "\r\n");
+	}
 	else {
 
 		if (sip_msg_hdr_has_value(msg, SIP_HDR_SUPPORTED,
