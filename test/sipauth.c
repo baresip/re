@@ -114,7 +114,7 @@ static int test_sip_auth_encode(void)
 		TEST_ERR(err);
 
 		mbuf_set_pos(mb_enc, 0);
-		mbuf_read_str(mb_enc, buf, mbuf_get_left(mb_enc));
+		mbuf_read_str(mb_enc, buf, sizeof(buf));
 
 		err = re_regex(buf, str_len(buf), testr[i]);
 		TEST_ERR(err);
