@@ -920,3 +920,183 @@ int test_ice_loop(void)
 {
 	return _test_ice_loop(false, false);
 }
+
+
+/*
+ * A remote candidate that never answers, ahead of a working one by
+ * priority. RFC 5245 section 5.8 starts a check every Ta, so the
+ * working pair is checked at once and not only after the dead pair
+ * has timed out (2.3 s with rc 4). The 2 s limit stays below that
+ * timeout and leaves room for slow runs (valgrind, emulation).
+ */
+
+struct dead_test {
+	struct icem *icem_a;
+	struct icem *icem_b;
+	struct udp_sock *us_a;
+	struct udp_sock *us_b;
+	struct udp_sock *us_dead;
+	struct tmr tmr_poll;
+	struct tmr tmr_limit;
+	uint64_t start;
+	uint64_t valid_ms;
+	int err;
+};
+
+
+static void dead_connchk_handler(int err, bool update, void *arg)
+{
+	(void)err;
+	(void)update;
+	(void)arg;
+}
+
+
+static void dead_recv_handler(const struct sa *src, struct mbuf *mb,
+			      void *arg)
+{
+	(void)src;
+	(void)mb;
+	(void)arg;
+}
+
+
+static void dead_poll(void *arg)
+{
+	struct dead_test *t = arg;
+
+	if (list_count(icem_validl(t->icem_a))) {
+		t->valid_ms = tmr_jiffies() - t->start;
+		re_cancel();
+		return;
+	}
+
+	tmr_start(&t->tmr_poll, 5, dead_poll, t);
+}
+
+
+static void dead_limit(void *arg)
+{
+	struct dead_test *t = arg;
+
+	t->err = ETIMEDOUT;
+	re_cancel();
+}
+
+
+static int dead_agent(struct icem **icemp, struct udp_sock **usp,
+		      struct sa *laddr, enum ice_role role, uint64_t tiebrk,
+		      const char *ufrag, const char *pwd)
+{
+	int err;
+
+	err = sa_set_str(laddr, "127.0.0.1", 0);
+	if (err)
+		return err;
+
+	err = udp_listen(usp, laddr, NULL, NULL);
+	if (err)
+		return err;
+
+	err = udp_local_get(*usp, laddr);
+	if (err)
+		return err;
+
+	err = icem_alloc(icemp, role, IPPROTO_UDP, 0, tiebrk, ufrag, pwd,
+			 dead_connchk_handler, NULL);
+	if (err)
+		return err;
+
+	err = icem_comp_add(*icemp, 1, *usp);
+	if (err)
+		return err;
+
+	err = icem_lcand_add_base(*icemp, ICE_CAND_TYPE_HOST, 1, 0, "lo",
+				  ICE_TRANSP_UDP, laddr);
+	if (err)
+		return err;
+
+	return icem_comps_set_default_cand(*icemp);
+}
+
+
+int test_ice_dead_pair(void)
+{
+	struct dead_test t;
+	struct sa la, lb, ld;
+	char cand[128];
+	int err;
+
+	memset(&t, 0, sizeof(t));
+	tmr_init(&t.tmr_poll);
+	tmr_init(&t.tmr_limit);
+
+	err = dead_agent(&t.icem_a, &t.us_a, &la, ICE_ROLE_CONTROLLING, 2,
+			 "ufragA", "password-0123456789abcdef-A");
+	TEST_ERR(err);
+
+	err = dead_agent(&t.icem_b, &t.us_b, &lb, ICE_ROLE_CONTROLLED, 1,
+			 "ufragB", "password-0123456789abcdef-B");
+	TEST_ERR(err);
+
+	/* takes the checks and never answers */
+	err = sa_set_str(&ld, "127.0.0.1", 0);
+	TEST_ERR(err);
+	err = udp_listen(&t.us_dead, &ld, dead_recv_handler, NULL);
+	TEST_ERR(err);
+	err = udp_local_get(t.us_dead, &ld);
+	TEST_ERR(err);
+
+	/* baresip's setting */
+	icem_conf(t.icem_a)->rc = 4;
+	icem_set_conf(t.icem_a, icem_conf(t.icem_a));
+
+	err  = icem_sdp_decode(t.icem_a, "ice-ufrag", "ufragB");
+	err |= icem_sdp_decode(t.icem_a, "ice-pwd",
+			       "password-0123456789abcdef-B");
+	TEST_ERR(err);
+
+	re_snprintf(cand, sizeof(cand),
+		    "1 1 UDP 2130706431 127.0.0.1 %u typ host",
+		    sa_port(&ld));
+	err = icem_sdp_decode(t.icem_a, "candidate", cand);
+	TEST_ERR(err);
+
+	re_snprintf(cand, sizeof(cand),
+		    "2 1 UDP 2113929215 127.0.0.1 %u typ host",
+		    sa_port(&lb));
+	err = icem_sdp_decode(t.icem_a, "candidate", cand);
+	TEST_ERR(err);
+
+	/* B only answers: no checks of its own, so no triggered checks */
+	err  = icem_sdp_decode(t.icem_b, "ice-ufrag", "ufragA");
+	err |= icem_sdp_decode(t.icem_b, "ice-pwd",
+			       "password-0123456789abcdef-A");
+	TEST_ERR(err);
+
+	t.start = tmr_jiffies();
+	err = icem_conncheck_start(t.icem_a);
+	TEST_ERR(err);
+	TEST_EQUALS(2, list_count(icem_checkl(t.icem_a)));
+
+	tmr_start(&t.tmr_poll, 5, dead_poll, &t);
+	tmr_start(&t.tmr_limit, 2000, dead_limit, &t);
+
+	err = re_main_timeout(5000);
+	TEST_ERR(err);
+
+	err = t.err;
+	TEST_ERR(err);
+	TEST_ASSERT(t.valid_ms < 2000);
+
+ out:
+	tmr_cancel(&t.tmr_poll);
+	tmr_cancel(&t.tmr_limit);
+	mem_deref(t.icem_a);
+	mem_deref(t.icem_b);
+	mem_deref(t.us_a);
+	mem_deref(t.us_b);
+	mem_deref(t.us_dead);
+
+	return err;
+}
