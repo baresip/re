@@ -207,6 +207,7 @@ static const struct test tests[] = {
 	TEST(test_sip_parse),
 	TEST(test_sip_via),
 	TEST(test_sip_transp_conn_close),
+	TEST(test_sip_transp_flush_held),
 	TEST(test_sip_transp_tcp_close),
 	TEST(test_sip_transp_udp_sock),
 #ifdef USE_TLS
