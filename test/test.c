@@ -205,6 +205,7 @@ static const struct test tests[] = {
 	TEST(test_sip_hdr),
 	TEST(test_sip_param),
 	TEST(test_sip_parse),
+	TEST(test_sip_startline_dos),
 	TEST(test_sip_via),
 	TEST(test_sip_transp_conn_close),
 	TEST(test_sip_transp_tcp_close),

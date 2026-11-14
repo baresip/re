@@ -317,6 +317,7 @@ int test_sip_hdr(void);
 int test_sip_msg(void);
 int test_sip_param(void);
 int test_sip_parse(void);
+int test_sip_startline_dos(void);
 int test_sip_via(void);
 int test_sip_dns(void);
 int test_sip_dns_cancel(void);

@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Creytiv.com
  */
 #include <ctype.h>
+#include <string.h>
 #include <re_types.h>
 #include <re_mem.h>
 #include <re_sys.h>
@@ -268,7 +269,7 @@ static inline int hdr_add(struct sip_msg *msg, const struct pl *name,
 int sip_msg_decode(struct sip_msg **msgp, struct mbuf *mb)
 {
 	struct pl x, y, z, e, name;
-	const char *p, *v, *cv;
+	const char *p, *v, *cv, *nl;
 	struct sip_msg *msg;
 	bool comsep, quote;
 	enum sip_hdrid id = SIP_HDR_NONE;
@@ -282,9 +283,14 @@ int sip_msg_decode(struct sip_msg **msgp, struct mbuf *mb)
 	p = (const char *)mbuf_buf(mb);
 	l = mbuf_get_left(mb);
 
-	if (re_regex(p, l, "[^ \t\r\n]+ [^ \t\r\n]+ [^\r\n]*[\r]*[\n]1",
-		     &x, &y, &z, NULL, &e) || x.p != (char *)mbuf_buf(mb))
+	nl = memchr(p, '\n', min(l, STARTLINE_MAX));
+	if (!nl)
 		return (l > STARTLINE_MAX) ? EBADMSG : ENODATA;
+
+	if (re_regex(p, (size_t)(nl - p) + 1,
+		     "[^ \t\r\n]+ [^ \t\r\n]+ [^\r\n]*[\r]*[\n]1",
+		     &x, &y, &z, NULL, &e) || x.p != (char *)mbuf_buf(mb))
+		return EBADMSG;
 
 	msg = mem_zalloc(sizeof(*msg), destructor);
 	if (!msg)

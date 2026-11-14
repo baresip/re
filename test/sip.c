@@ -1548,3 +1548,60 @@ int test_sip_transp_wss_verify_host(void)
 	return err;
 }
 #endif
+
+
+/*
+ * Start-line bounds in sip_msg_decode(). A start line with no LF within
+ * STARTLINE_MAX must be rejected before it is matched, and a short start
+ * line without LF must be reported as incomplete. The worst-case input for
+ * the old unanchored match is "A...A B...B\r" at TCP_BUFSIZE_MAX (64 KiB).
+ */
+int test_sip_startline_dos(void)
+{
+	static const char req[] =
+		"OPTIONS sip:alice@example.com SIP/2.0\r\n"
+		"Content-Length: 0\r\n"
+		"\r\n";
+	const size_t len = 65536;
+	struct mbuf *mb = NULL;
+	struct sip_msg *msg = NULL;
+	int derr;
+	int err = 0;
+
+	mb = mbuf_alloc(len);
+	if (!mb)
+		return ENOMEM;
+
+	/* "A...A B...B\r": two greedy tokens, a space, a bare CR, no LF */
+	memset(mb->buf, 'A', len);
+	mb->buf[len / 2] = ' ';
+	mb->buf[len - 1] = '\r';
+	mb->pos = 0;
+	mb->end = len;
+
+	/* no line end within STARTLINE_MAX: rejected, no partial message */
+	derr = sip_msg_decode(&msg, mb);
+	TEST_EQUALS(EBADMSG, derr);
+	TEST_ASSERT(msg == NULL);
+
+	/* a short start line without LF is incomplete, not malformed */
+	mb->end = 64;
+	derr = sip_msg_decode(&msg, mb);
+	TEST_EQUALS(ENODATA, derr);
+	TEST_ASSERT(msg == NULL);
+
+	/* a valid start line still decodes */
+	mbuf_rewind(mb);
+	err = mbuf_write_str(mb, req);
+	TEST_ERR(err);
+	mb->pos = 0;
+
+	err = sip_msg_decode(&msg, mb);
+	TEST_ERR(err);
+	TEST_STRCMP("OPTIONS", 7, msg->met.p, msg->met.l);
+
+ out:
+	mem_deref(msg);
+	mem_deref(mb);
+	return err;
+}
