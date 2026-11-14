@@ -352,6 +352,92 @@ out:
 }
 
 
+static int test_aubuf_live_trim(void)
+{
+	struct aubuf *ab = NULL;
+	int16_t sampv[160] = {0};
+	struct auframe af;
+	const size_t frame = sizeof(sampv);
+	int err;
+
+	err = aubuf_alloc(&ab, 2 * frame, 4 * frame);
+	TEST_ERR(err);
+
+	aubuf_set_live(ab, true);
+	auframe_init(&af, AUFMT_S16LE, sampv, 160, 8000, 1);
+
+	/* first read trims to wish_sz */
+	for (int i = 0; i < 4; i++) {
+		err = aubuf_write_auframe(ab, &af);
+		TEST_ERR(err);
+	}
+	aubuf_read_auframe(ab, &af);
+	TEST_EQUALS(1 * frame, aubuf_cur_size(ab));
+
+	/* an overrun makes the next read trim again */
+	for (int i = 0; i < 4; i++) {
+		err = aubuf_write_auframe(ab, &af);
+		TEST_ERR(err);
+	}
+	TEST_EQUALS(4 * frame, aubuf_cur_size(ab));
+	aubuf_read_auframe(ab, &af);
+	TEST_EQUALS(1 * frame, aubuf_cur_size(ab));
+
+	/* a flush is a fresh start: the next read trims */
+	aubuf_flush(ab);
+	for (int i = 0; i < 3; i++) {
+		err = aubuf_write_auframe(ab, &af);
+		TEST_ERR(err);
+	}
+	aubuf_read_auframe(ab, &af);
+	TEST_EQUALS(1 * frame, aubuf_cur_size(ab));
+
+	/* an underrun makes the read after refilling trim again; started
+	 * keeps its meaning and stays set */
+	while (aubuf_cur_size(ab) >= frame)
+		aubuf_read_auframe(ab, &af);
+	aubuf_read_auframe(ab, &af);
+	TEST_ASSERT(aubuf_started(ab));
+	for (int i = 0; i < 4; i++) {
+		err = aubuf_write_auframe(ab, &af);
+		TEST_ERR(err);
+	}
+	aubuf_read_auframe(ab, &af);
+	TEST_EQUALS(1 * frame, aubuf_cur_size(ab));
+
+ out:
+	mem_deref(ab);
+	return err;
+}
+
+
+static int test_aubuf_nonlive_underrun(void)
+{
+	struct aubuf *ab = NULL;
+	int16_t sampv[160] = {0};
+	struct auframe af;
+	const size_t frame = sizeof(sampv);
+	int err;
+
+	err = aubuf_alloc(&ab, 0, 8 * frame);
+	TEST_ERR(err);
+
+	aubuf_set_live(ab, false);
+	auframe_init(&af, AUFMT_S16LE, sampv, 160, 8000, 1);
+
+	/* a non-live buffer (file playback) is emptied on underrun, the
+	 * remaining half frame is read out */
+	err = aubuf_write_samp(ab, sampv, 80);
+	TEST_ERR(err);
+	aubuf_read_auframe(ab, &af);
+	TEST_EQUALS(0, aubuf_cur_size(ab));
+
+ out:
+	mem_deref(ab);
+	return err;
+}
+
+
 int test_aubuf(void)
 {
 	int err;
@@ -369,6 +455,12 @@ int test_aubuf(void)
 	TEST_ERR(err);
 
 	err = test_aubuf_resize();
+	TEST_ERR(err);
+
+	err = test_aubuf_nonlive_underrun();
+	TEST_ERR(err);
+
+	err = test_aubuf_live_trim();
 	TEST_ERR(err);
 
 out:
