@@ -477,83 +477,117 @@ int test_fmt_regex(void)
 
 	/* Successful case */
 	err = re_regex(pl.p, pl.l, "Hei[0-9]+[^!]+", &pln, &pls);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	err = pl_cmp(&pln, &pl1);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_cmp(&pls, &pl2);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	/* Quoted strings */
 	err = re_regex(pl3.p, pl3.l, ";foo=\"[^\"]+\"", &foo);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_cmp(&foo, &pl4);
-	if (err) {
-		DEBUG_WARNING("regex quoted string failed (%r)\n", &foo);
-		goto out;
-	}
+	TEST_ERR(err);
 
 	err = re_regex(pl3.p, pl3.l, ";foo=[~]+", &foo);
-	if (err)
-		goto out;
+	TEST_ERR(err);
+
 	err = pl_cmp(&foo, &pl4);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	/* re_regex('a "b \"1123\"" c', "[^ ]+ [~ ]+ [^ ]+", &a, &b, &c);
 	   result:  a='a', b='b \"1123\"', c='c' */
 	err = re_regex(pl5.p, pl5.l, "[^ ]+ [~ ]+ [^ ]+", &a, &b, &c);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_cmp(&a, &pla);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_cmp(&b, &plb);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_cmp(&c, &plc);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	/* Failing case */
 	if (0 == re_regex(pl.p, pl.l, "tull")) {
 		err = EINVAL;
-		goto out;
+		TEST_ERR(err);
 	}
 
 	if (0 == re_regex(pl.p, pl.l, "[^\r\n]+\r\n", &pln)) {
 		err = EINVAL;
-		goto out;
+		TEST_ERR(err);
 	}
 
 	/* Test escaping */
 	if (0 == re_regex(pl.p, pl.l, "[\\^0-9]*\\]", NULL)) {
 		err = EINVAL;
-		goto out;
+		TEST_ERR(err);
 	}
 	err = re_regex(pl6.p, pl6.l, "[\\-0-9\\^]+", &pln);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	err = pl_strcmp(&pln, "-42");
-	if (err)
-		goto out;
+	TEST_ERR(err);
 
 	/* verify that optional matching sets the PL to zero
 	   if there is no match */
 	e.p = "x";
 	e.l = 42;
 	err = re_regex(pl4.p, pl4.l, "[a-z]+;[0-9]*", &d, &e);
-	if (err)
-		goto out;
+	TEST_ERR(err);
 	TEST_ASSERT(!pl_isset(&e));
+
+	/* a leading '^' anchors the match to the start of the string */
+	err = re_regex(pl.p, pl.l, "^hei[0-9]+", &pln);
+	TEST_ERR(err);
+	err = pl_cmp(&pln, &pl1);
+	TEST_ERR(err);
+
+	err = re_regex(pl.p, pl.l, "[0-9]+", &pln);
+	TEST_ERR(err);
+	TEST_EQUALS(ENOENT, re_regex(pl.p, pl.l, "^[0-9]+", &pln));
+	TEST_EQUALS(ENOENT, re_regex(pl.p, pl.l, "^sann"));
+
+	/* test escaped leading '^' */
+	err = re_regex("x^y", 3, "\\^y");
+	TEST_ERR(err);
+
+	/* a trailing '$' anchors the match to the end of the string */
+	err = re_regex("hei", 3, "^hei$");
+	TEST_ERR(err);
+	TEST_EQUALS(ENOENT, re_regex("heia", 4, "^hei$"));
+	TEST_EQUALS(ENOENT, re_regex("aheia", 5, "hei$"));
+
+	err = re_regex("42", 2, "^[0-9]+$", &pln);
+	TEST_ERR(err);
+	err = pl_strcmp(&pln, "42");
+	TEST_ERR(err);
+	TEST_EQUALS(ENOENT, re_regex("42abc", 5, "^[0-9]+$", &pln));
+
+	/* without '^' the match retries until it ends at the end */
+	err = re_regex("12a34", 5, "[0-9]+$", &pln);
+	TEST_ERR(err);
+	err = pl_strcmp(&pln, "34");
+	TEST_ERR(err);
+	TEST_EQUALS(ENOENT, re_regex("12a34b", 6, "[0-9]+$", &pln));
+
+	/* test escaped trailing '$' */
+	err = re_regex("x$y", 3, "x\\$");
+	TEST_ERR(err);
+	TEST_EQUALS(ENOENT, re_regex("xy", 2, "x\\$"));
+
+	/* '$' not at the end is a literal */
+	err = re_regex("a$b", 3, "^a$b$");
+	TEST_ERR(err);
+
+	/* '$' inside a character class */
+	err = re_regex("a$", 2, "[$]1$", &pln);
+	TEST_ERR(err);
+	err = pl_strcmp(&pln, "$");
+	TEST_ERR(err);
 
 	return 0;
 
  out:
-	DEBUG_WARNING("regex failed (%d)\n", err);
 
 	return err;
 }

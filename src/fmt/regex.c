@@ -46,6 +46,13 @@ static bool expr_match(const struct chr *chrv, uint32_t n, uint8_t c,
  *
  * @return 0 if success, otherwise errorcode
  *
+ * A leading '^' anchors the match to the start of the string, and a
+ * trailing '$' anchors it to the end. Use "\\^" and "\\$" to match the
+ * literal characters.
+ *
+ * A character class consumes as many characters as it can and never
+ * gives any back, so e.g. "[a-z]+b" does not match "ab".
+ *
  * Example:
  *
  *   We parse the buffer for any numerical values, to get a match we must have
@@ -64,7 +71,7 @@ static bool expr_match(const struct chr *chrv, uint32_t n, uint8_t c,
 int re_regex(const char *ptr, size_t len, const char *expr, ...)
 {
 	struct chr chrv[64];
-	const char *p, *ep;
+	const char *p, *ep, *ex;
 	bool fm, range = false, ec = false, neg = false, qesc = false;
 	uint32_t n = 0;
 	va_list ap;
@@ -74,12 +81,15 @@ int re_regex(const char *ptr, size_t len, const char *expr, ...)
 	if (!ptr || !expr)
 		return EINVAL;
 
+	bool anchor = ('^' == *expr);
+	ex = anchor ? expr + 1 : expr;
+
  again:
 	eesc = false;
 	fm = false;
 	l  = len--;
 	p  = ptr++;
-	ep = expr;
+	ep = ex;
 
 	va_start(ap, expr);
 
@@ -106,13 +116,18 @@ int re_regex(const char *ptr, size_t len, const char *expr, ...)
 				continue;
 			}
 
+			/* End anchor */
+			if ('$' == *ep && !eesc && !ep[1]) {
+				if (l)
+					goto nomatch;
+				continue;
+			}
+
 			if (!l)
 				break;
 
-			if (tolower(*ep) != tolower(*p)) {
-				va_end(ap);
-				goto again;
-			}
+			if (tolower(*ep) != tolower(*p))
+				goto nomatch;
 
 			eesc = false;
 			++p;
@@ -186,10 +201,8 @@ int re_regex(const char *ptr, size_t len, const char *expr, ...)
 				nm    -= 2;
 			}
 
-			if ((nm < nmin) || (nm > nmax)) {
-				va_end(ap);
-				goto again;
-			}
+			if ((nm < nmin) || (nm > nmax))
+				goto nomatch;
 
 			if (pl)
 				*pl = lpl;
@@ -257,4 +270,12 @@ int re_regex(const char *ptr, size_t len, const char *expr, ...)
 		return EINVAL;
 
 	return *ep ? ENOENT : 0;
+
+ nomatch:
+	va_end(ap);
+
+	if (anchor)
+		return ENOENT;
+
+	goto again;
 }
