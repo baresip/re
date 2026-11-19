@@ -833,7 +833,9 @@ int test_sip_request_release(void)
 			  0, NULL, NULL, NULL);
 	TEST_ERR(err);
 
-	req = mem_deref(req);
+	/* the destructor clears the owner's pointer */
+	mem_deref(req);
+	ASSERT_TRUE(req == NULL);
 	ASSERT_EQ(1, mem_nrefs(mb));
 
 out:
