@@ -74,10 +74,13 @@ static void destructor(void *arg)
 		/* user does deref before request has completed */
 		*req->reqp = NULL;
 		req->reqp  = NULL;
-		req->sendh = NULL;
-		req->resph = NULL;
-		sip_request_cancel(mem_ref(req));
-		return;
+
+		if (req->provrecv) {
+			req->sendh = NULL;
+			req->resph = NULL;
+			sip_request_cancel(mem_ref(req));
+			return;
+		}
 	}
 
 	list_flush(&req->cachel);

@@ -794,6 +794,62 @@ out:
 }
 
 
+/* A request released before any response is freed at once */
+int test_sip_request_release(void)
+{
+	struct sip *sip = NULL;
+	struct sip_request *req = NULL;
+	struct mbuf *mb = NULL;
+	struct sa laddr;
+	struct uri route;
+	struct pl pl;
+	char uri[64];
+	int err;
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_UDP, &laddr);
+	TEST_ERR(err);
+	err = sip_transp_laddr(sip, &laddr, SIP_TRANSP_UDP, NULL);
+	TEST_ERR(err);
+
+	re_snprintf(uri, sizeof(uri), "sip:test@%J", &laddr);
+	pl_set_str(&pl, uri);
+	err = uri_decode(&route, &pl);
+	TEST_ERR(err);
+
+	mb = mbuf_alloc(32);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
+	err = mbuf_write_str(mb, "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+	mb->pos = 0;
+
+	err = sip_request(&req, sip, true, "OPTIONS", -1, uri, -1, &route, mb,
+			  0, NULL, NULL, NULL);
+	TEST_ERR(err);
+
+	/* the destructor clears the owner's pointer */
+	mem_deref(req);
+	ASSERT_TRUE(req == NULL);
+	ASSERT_EQ(1, mem_nrefs(mb));
+
+out:
+	mem_deref(req);
+	mem_deref(mb);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+
+	return err;
+}
+
+
 int test_sip_transp_udp_sock(void)
 {
 	struct sip *sip = NULL;
