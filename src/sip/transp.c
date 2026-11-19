@@ -82,7 +82,6 @@ struct sip_conn {
 	struct sip *sip;
 	uint32_t ka_interval;
 	bool established;
-	bool flushed;
 
 	enum sip_transp tp;
 	struct websock_conn *websock_conn;
@@ -279,6 +278,11 @@ static void conn_close(struct sip_conn *conn, int err)
 {
 	struct le *le;
 
+	/* ht_conn's reference keeps the connection alive while the
+	 * handlers run; take our own if it was removed from ht_conn */
+	if (!conn->he.list)
+		mem_ref(conn);
+
 	conn->websock_conn = mem_deref(conn->websock_conn);
 
 	conn->sc = mem_deref(conn->sc);
@@ -301,14 +305,8 @@ static void conn_close(struct sip_conn *conn, int err)
 	}
 
 	sip_keepalive_signal(&conn->kal, err);
-}
 
-
-/* the table's reference to a flushed connection is already gone */
-static void conn_release(struct sip_conn *conn)
-{
-	if (!conn->flushed)
-		mem_deref(conn);
+	mem_deref(conn);
 }
 
 
@@ -317,7 +315,6 @@ static void conn_tmr_handler(void *arg)
 	struct sip_conn *conn = arg;
 
 	conn_close(conn, ETIMEDOUT);
-	conn_release(conn);
 }
 
 
@@ -335,7 +332,6 @@ static void conn_keepalive_handler(void *arg)
 	err = tcp_send(conn->tc, &mb);
 	if (err) {
 		conn_close(conn, err);
-		conn_release(conn);
 		return;
 	}
 
@@ -592,10 +588,8 @@ static void tcp_recv_handler(struct mbuf *mb, void *arg)
 	}
 
  out:
-	if (err) {
+	if (err)
 		conn_close(conn, err);
-		conn_release(conn);
-	}
 }
 
 
@@ -685,7 +679,6 @@ static void tcp_close_handler(int err, void *arg)
 	struct sip_conn *conn = arg;
 
 	conn_close(conn, err ? err : ECONNRESET);
-	conn_release(conn);
 }
 
 
@@ -1026,7 +1019,6 @@ static void websock_close_handler(int err, void *arg)
 
 	re_printf("sip: websock connection closed (%m)\n", err);
 	conn_close(conn, err ? err : ECONNRESET);
-	conn_release(conn);
 }
 
 
@@ -1576,17 +1568,6 @@ int sip_transp_add_ccert(struct sip *sip, const struct uri *uri,
 }
 
 
-static bool conn_flush_handler(struct le *le, void *arg)
-{
-	struct sip_conn *conn = le->data;
-	(void)arg;
-
-	conn->flushed = true;
-
-	return false;
-}
-
-
 /**
  * Flush all transports of a SIP stack instance
  *
@@ -1597,7 +1578,6 @@ void sip_transp_flush(struct sip *sip)
 	if (!sip)
 		return;
 
-	(void)hash_apply(sip->ht_conn, conn_flush_handler, NULL);
 	hash_flush(sip->ht_conn);
 	hash_flush(sip->ht_conncfg);
 	list_flush(&sip->transpl);
