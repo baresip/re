@@ -70,7 +70,7 @@ static void destructor(void *arg)
 {
 	struct sip_request *req = arg;
 
-	if (req->reqp && req->stateful) {
+	if (req->reqp && req->stateful && req->provrecv) {
 		/* user does deref before request has completed */
 		*req->reqp = NULL;
 		req->reqp  = NULL;
