@@ -131,19 +131,29 @@ bool ice_remotecands_avail(const struct icem *icem)
 int ice_remotecands_encode(struct re_printf *pf, const struct icem *icem)
 {
 	struct le *le;
+	bool first = true;
 	int err = 0;
 
 	if (!icem)
 		return EINVAL;
 
-	for (le = icem->rcandl.head; le && !err; le = le->next) {
+	/* RFC 8839 4.4.1.2.2: the remote candidate of each component's
+	 * selected pair, not every remote candidate */
+	for (le = icem->compl.head; le && !err; le = le->next) {
 
-		const struct ice_cand *rcand = le->data;
+		const struct icem_comp *comp = le->data;
+		const struct ice_cand *rcand;
+
+		if (!comp->cp_sel || !comp->cp_sel->rcand)
+			continue;
+
+		rcand = comp->cp_sel->rcand;
 
 		err = re_hprintf(pf, "%s%d %j %u",
-				 icem->rcandl.head==le ? "" : " ",
+				 first ? "" : " ",
 				 rcand->compid,
 				 &rcand->addr, sa_port(&rcand->addr));
+		first = false;
 	}
 
 	return err;
