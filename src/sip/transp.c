@@ -1027,6 +1027,7 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 			sip_transp_h *transph, void *arg)
 {
 	struct sip_conn *conn, *new_conn = NULL;
+	char *origin_hdr = NULL;
 	struct sip_connqent *qent;
 	struct sip_transport *transp;
 	enum sip_transp tp;
@@ -1111,20 +1112,24 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 #endif
 	}
 
+	struct pl hostpl = PL_INIT;
+	struct sa tmpsa;
+
+	bool named = str_isset(host) && 0 != sa_set_str(&tmpsa, host, 0);
+	if (named) {
+		pl_set_str(&hostpl, host);
+		err = re_sdprintf(&origin_hdr, "Origin: %s://%r\r\n",
+			    secure ? "https" : "http", &hostpl);
+		if (err)
+			goto out;
+	}
+
 #ifdef USE_TLS
 	/* The websock URI is built from the resolved address, so the server
 	   identity must be verified against the hostname. The HTTP client is
 	   allocated once per transport and reused, hence the name is updated
 	   (or cleared) for every new connection. */
 	if (secure) {
-		struct pl hostpl;
-		struct sa tmpsa;
-		bool named;
-
-		named = str_isset(host) && 0 != sa_set_str(&tmpsa, host, 0);
-		if (named)
-			pl_set_str(&hostpl, host);
-
 		err = http_client_set_tls_hostname(transp->http_cli,
 						   named ? &hostpl : NULL);
 		if (err)
@@ -1136,7 +1141,9 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 			      transp->http_cli, ws_uri, 15000,
 			      websock_estab_handler, websock_recv_handler,
 			      websock_close_handler, conn,
-			      "Sec-WebSocket-Protocol: sip\r\n");
+			      "Sec-WebSocket-Protocol: sip\r\n"
+			      "%s",
+			      origin_hdr);
 	if (err) {
 		re_printf("websock_connect: %m\n", err);
 		goto out;
@@ -1165,6 +1172,8 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
  out:
 	if (err)
 		mem_deref(new_conn);
+
+	mem_deref(origin_hdr);
 
 	return err;
 }
