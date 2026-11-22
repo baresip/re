@@ -1132,11 +1132,27 @@ static int ws_conn_send(struct sip_connqent **qentp, struct sip *sip,
 	}
 #endif
 
-	err = websock_connect(&conn->websock_conn, sip->websock,
-			      transp->http_cli, ws_uri, 15000,
-			      websock_estab_handler, websock_recv_handler,
-			      websock_close_handler, conn,
-			      "Sec-WebSocket-Protocol: sip\r\n");
+	/* Send an Origin built from the logical host, not the resolved
+	   address: some SIP servers refuse a WebSocket upgrade without an
+	   Origin, or check it against an allow-list of names. */
+	if (str_isset(host)) {
+		err = websock_connect(&conn->websock_conn, sip->websock,
+				      transp->http_cli, ws_uri, 15000,
+				      websock_estab_handler,
+				      websock_recv_handler,
+				      websock_close_handler, conn,
+				      "Sec-WebSocket-Protocol: sip\r\n"
+				      "Origin: %s://%s\r\n",
+				      secure ? "https" : "http", host);
+	}
+	else {
+		err = websock_connect(&conn->websock_conn, sip->websock,
+				      transp->http_cli, ws_uri, 15000,
+				      websock_estab_handler,
+				      websock_recv_handler,
+				      websock_close_handler, conn,
+				      "Sec-WebSocket-Protocol: sip\r\n");
+	}
 	if (err) {
 		re_printf("websock_connect: %m\n", err);
 		goto out;
