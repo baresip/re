@@ -39,6 +39,14 @@ static void bye_resp_handler(int err, const struct sip_msg *msg, void *arg)
 
 		case 401:
 		case 407:
+			/* The server may challenge the BYE with a new nonce
+			 * for a realm the INVITE already answered, without
+			 * stale=true (3CX does). sip_auth_authenticate()
+			 * treats that as rejected credentials (EAUTH) and the
+			 * BYE was never re-sent. Forget the cached realms so
+			 * the challenge is answered; sip_request_loops() still
+			 * ends a loop of real rejections. */
+			sip_auth_reset(sess->auth);
 			err = sip_auth_authenticate(sess->auth, msg);
 			if (err)
 				break;
