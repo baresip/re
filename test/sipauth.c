@@ -135,11 +135,124 @@ out:
 }
 
 
+static int challenge(struct sip_auth *auth, const char *nonce, bool stale)
+{
+	struct sip_msg *msg = NULL;
+	struct mbuf *mb;
+	int err;
+
+	mb = mbuf_alloc(512);
+	if (!mb)
+		return ENOMEM;
+
+	err = mbuf_printf(mb,
+			  "SIP/2.0 401 Unauthorized\r\n"
+			  "Via: SIP/2.0/UDP 10.0.0.1:5060;"
+			  "branch=z9hG4bK5625ce6f310a0fc8\r\n"
+			  "WWW-Authenticate: Digest realm=\"example.net\", "
+			  "nonce=\"%s\"%s\r\n"
+			  "Content-Length: 0\r\n\r\n",
+			  nonce, stale ? ", stale=TRUE" : "");
+	if (err)
+		goto out;
+
+	mbuf_set_pos(mb, 0);
+
+	err = sip_msg_decode(&msg, mb);
+	if (err)
+		goto out;
+
+	err = sip_auth_authenticate(auth, msg);
+
+out:
+	mem_deref(msg);
+	mem_deref(mb);
+
+	return err;
+}
+
+
+/* Send n authenticated requests with the current credentials */
+static int send_req(struct sip_auth *auth, unsigned n)
+{
+	struct mbuf *mb;
+	int err = 0;
+
+	mb = mbuf_alloc(512);
+	if (!mb)
+		return ENOMEM;
+
+	while (n-- && !err) {
+		mbuf_rewind(mb);
+		err = sip_auth_encode(mb, auth, "INVITE",
+				      "sip:bob@example.net");
+	}
+
+	mem_deref(mb);
+
+	return err;
+}
+
+
+static int test_sip_auth_rechallenge(void)
+{
+	struct sip_auth *auth = NULL;
+	int err;
+
+	err = sip_auth_alloc(&auth, auth_handler, NULL, false);
+	TEST_ERR(err);
+
+	/* Initial challenge */
+	err = challenge(auth, "nonce1", false);
+	TEST_ERR(err);
+	err = send_req(auth, 1);
+	TEST_ERR(err);
+
+	/* stale=true with new nonce must be accepted */
+	err = challenge(auth, "nonce2", true);
+	TEST_ERR(err);
+	err = send_req(auth, 1);
+	TEST_ERR(err);
+
+	/* Same nonce re-challenged without stale -> wrong credentials */
+	err = challenge(auth, "nonce2", false);
+	TEST_EQUALS(EAUTH, err);
+
+	/* New nonce without stale directly after first attempt is a
+	 * rejection of the credentials (no endless retry loop) */
+	sip_auth_reset(auth);
+	err = challenge(auth, "nonce3", false);
+	TEST_ERR(err);
+	err = send_req(auth, 1);
+	TEST_ERR(err);
+	err = challenge(auth, "nonce4", false);
+	TEST_EQUALS(EAUTH, err);
+
+	/* Broken server: nonce was used successfully, then rotated
+	 * without stale=true -> treat as stale */
+	sip_auth_reset(auth);
+	err = challenge(auth, "nonce5", false);
+	TEST_ERR(err);
+	err = send_req(auth, 2);
+	TEST_ERR(err);
+	err = challenge(auth, "nonce6", false);
+	TEST_ERR(err);
+
+out:
+	mem_deref(auth);
+
+	return err;
+}
+
+
 int test_sip_auth(void)
 {
 	int err;
 
 	err = test_sip_auth_encode();
+	TEST_ERR(err);
+
+	err = test_sip_auth_rechallenge();
 	TEST_ERR(err);
 
 out:

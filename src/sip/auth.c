@@ -214,7 +214,14 @@ static bool auth_handler(const struct sip_hdr *hdr, const struct sip_msg *msg,
 			goto out;
 	}
 	else {
-		if (!pl_isset(&ch.stale) || pl_strcasecmp(&ch.stale, "true")) {
+		bool stale = false;
+		pl_bool(&stale, &ch.stale);
+
+		/* Some broken servers forget to set stale=true */
+		if (!stale && realm->nc > 2)
+			stale = pl_strcmp(&ch.nonce, realm->nonce);
+
+		if (!stale) {
 			err = EAUTH;
 			goto out;
 		}
