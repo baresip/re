@@ -237,6 +237,28 @@ static int version_decode(const struct pl *pl)
 }
 
 
+/*
+ * An answer must have as many media lines as the offer (RFC 3264,
+ * section 6), but some servers answer an offered stream with an extra,
+ * declined (port 0) copy of it. A declined stream carries no media, so it
+ * is ignored rather than failing the answer.
+ */
+static bool declined_extra_media(const struct sdp_session *sess,
+				 const struct sdp_media *m,
+				 const struct pl *pl)
+{
+	struct pl name, port;
+
+	if (list_ledata(m ? m->le.next : sess->medial.head))
+		return false;
+
+	if (re_regex(pl->p, pl->l, "[a-z]+ [^ ]+ ", &name, &port))
+		return false;
+
+	return !pl_strcmp(&port, "0");
+}
+
+
 /**
  * Decode an SDP message into an SDP Session
  *
@@ -252,6 +274,7 @@ int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 	struct pl pl, val;
 	struct le *le;
 	char type = 0;
+	bool skip = false;
 	int err = 0;
 
 	if (!sess || !mb)
@@ -279,6 +302,15 @@ int sdp_decode(struct sdp_session *sess, struct mbuf *mb, bool offer)
 		case '\n':
 			if (!type)
 				break;
+
+			if (type == 'm')
+				skip = !offer &&
+					declined_extra_media(sess, m, &val);
+
+			if (skip) {
+				type = 0;
+				break;
+			}
 
 			switch (type) {
 

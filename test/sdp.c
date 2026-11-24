@@ -1326,3 +1326,94 @@ int test_sdp_interop(void)
  out:
 	return err;
 }
+
+
+/*
+ * An answer with an extra, declined (port 0) media line, as some servers
+ * send for a best-effort SRTP offer (RTP/AVP with a=crypto): RTP/SAVP,
+ * then a declined copy of the offered stream. The declined line and its
+ * attributes are ignored; an extra line that isn't declined is an error.
+ */
+int test_sdp_answer_declined_extra(void)
+{
+	static const char answer_declined[] =
+		"v=0\r\n"
+		"o=- 1 2 IN IP4 5.6.7.8\r\n"
+		"s=-\r\n"
+		"c=IN IP4 5.6.7.8\r\n"
+		"t=0 0\r\n"
+		"m=audio 30154 RTP/SAVP 0\r\n"
+		"a=crypto:1 AES_CM_128_HMAC_SHA1_80"
+		  " inline:WVNfX19zZW1jdGwgKCkgewkyMjA7fQp9CnVubGVz\r\n"
+		"a=rtpmap:0 PCMU/8000\r\n"
+		"a=sendrecv\r\n"
+		"m=audio 0 RTP/AVP 0\r\n"
+		"a=sendonly\r\n";
+	static const char answer_extra[] =
+		"v=0\r\n"
+		"o=- 1 3 IN IP4 5.6.7.8\r\n"
+		"s=-\r\n"
+		"c=IN IP4 5.6.7.8\r\n"
+		"t=0 0\r\n"
+		"m=audio 30154 RTP/AVP 0\r\n"
+		"a=rtpmap:0 PCMU/8000\r\n"
+		"m=audio 30156 RTP/AVP 0\r\n";
+	struct sdp_session *sess = NULL;
+	struct sdp_media *audio = NULL;
+	struct mbuf *mb = NULL;
+	struct sa laddr;
+	int err;
+
+	err = sa_set_str(&laddr, "1.2.3.4", 0);
+	TEST_ERR(err);
+
+	err = sdp_session_alloc(&sess, &laddr);
+	TEST_ERR(err);
+
+	err = sdp_media_add(&audio, sess, "audio", 49170, "RTP/AVP");
+	TEST_ERR(err);
+
+	err = sdp_media_set_alt_protos(audio, 2, "RTP/AVP", "RTP/SAVP");
+	TEST_ERR(err);
+
+	err = sdp_format_add(NULL, audio, false, "0", "PCMU", 8000, 1,
+			     NULL, NULL, NULL, false, NULL);
+	TEST_ERR(err);
+
+	err = sdp_encode(&mb, sess, true);
+	TEST_ERR(err);
+
+	mb = mem_deref(mb);
+	mb = mbuf_alloc(512);
+	if (!mb) {
+		err = ENOMEM;
+		goto out;
+	}
+
+	err = mbuf_write_str(mb, answer_declined);
+	TEST_ERR(err);
+	mbuf_set_pos(mb, 0);
+
+	err = sdp_decode(sess, mb, false);
+	TEST_ERR(err);
+
+	ASSERT_EQ(30154, sdp_media_rport(audio));
+	TEST_ASSERT(sdp_media_rattr(audio, "crypto") != NULL);
+	ASSERT_EQ(SDP_SENDRECV, sdp_media_rdir(audio));
+
+	mbuf_rewind(mb);
+	err = mbuf_write_str(mb, answer_extra);
+	TEST_ERR(err);
+	mbuf_set_pos(mb, 0);
+
+	err = sdp_decode(sess, mb, false);
+	ASSERT_EQ(EPROTO, err);
+	err = 0;
+
+ out:
+	mem_deref(mb);
+	mem_deref(audio);
+	mem_deref(sess);
+
+	return err;
+}
