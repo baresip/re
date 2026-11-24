@@ -278,8 +278,6 @@ static void conn_close(struct sip_conn *conn, int err)
 {
 	struct le *le;
 
-	/* ht_conn's reference keeps the connection alive while the
-	 * handlers run; take our own if it was removed from ht_conn */
 	if (!conn->he.list)
 		mem_ref(conn);
 
