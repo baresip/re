@@ -55,8 +55,8 @@ int bfcp_reply(struct bfcp_conn *bc, const struct bfcp_msg *req,
 		return ENOMEM;
 
 	va_start(ap, attrc);
-	err = bfcp_msg_vencode(bc->mb, req->ver, true, prim, req->confid,
-			       req->tid, req->userid, attrc, &ap);
+	err = bfcp_msg_vencode(bc->mb, req->ver, req->ver >= BFCP_VER2, prim,
+			       req->confid, req->tid, req->userid, attrc, &ap);
 	va_end(ap);
 
 	if (err)

@@ -252,6 +252,7 @@ struct test_bfcp_peer {
 	struct sa addr, peer;
 	int handler_err;
 	bool client;
+	bool resp_r;
 };
 
 
@@ -277,9 +278,10 @@ static void response_handler(int err, const struct bfcp_msg *msg, void *arg)
 {
 	struct test_bfcp_peer *p = (struct test_bfcp_peer *)arg;
 	(void)err;
-	(void)msg;
 
 	p->flags |= resp_handler_called;
+	if (msg)
+		p->resp_r = msg->r;
 
 	DEBUG_INFO("Response handler called, client: %d\n", (int)p->client);
 
@@ -337,18 +339,10 @@ static void connection_handler(const struct sa *peer, void *arg)
 }
 
 
-int test_bfcp_udp(void)
+static int test_bfcp_udp_hello(uint8_t ver)
 {
 	struct test_bfcp_peer *cli = NULL, *srv = NULL;
 	int err = 0;
-
-	if (test_mode == TEST_MEMORY) {
-		/* OOM testing fails because some mem_alloc fails on
-		 * the receiving side, and no packet gets received.
-		 * For UDP, this is not registered as a connection timeout. */
-		err = ESKIPPED;
-		goto out;
-	}
 
 	cli = (struct test_bfcp_peer *)mem_zalloc(sizeof(*cli),
 		&test_bfcp_peer_destructor);
@@ -381,7 +375,7 @@ int test_bfcp_udp(void)
 	TEST_ERR(err);
 	srv->peer = cli->addr;
 
-	err = bfcp_request(cli->bfcp, &cli->peer, BFCP_VER1, BFCP_HELLO, 0u,
+	err = bfcp_request(cli->bfcp, &cli->peer, ver, BFCP_HELLO, 0u,
 		0u, &response_handler, cli, 0u);
 	TEST_ERR(err);
 
@@ -390,6 +384,7 @@ int test_bfcp_udp(void)
 
 	TEST_EQUALS(resp_handler_called, cli->flags);
 	TEST_EQUALS(recv_handler_called, srv->flags);
+	TEST_EQUALS(ver == BFCP_VER2, cli->resp_r);
 
 	err = srv->handler_err;
 
@@ -398,6 +393,25 @@ out:
 	mem_deref(srv);
 
 	return err;
+}
+
+
+int test_bfcp_udp(void)
+{
+	int err;
+
+	if (test_mode == TEST_MEMORY) {
+		/* OOM testing fails because some mem_alloc fails on
+		 * the receiving side, and no packet gets received.
+		 * For UDP, this is not registered as a connection timeout. */
+		return ESKIPPED;
+	}
+
+	err = test_bfcp_udp_hello(BFCP_VER1);
+	if (err)
+		return err;
+
+	return test_bfcp_udp_hello(BFCP_VER2);
 }
 
 

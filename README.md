@@ -202,8 +202,6 @@ legend:
 * [RFC 3969](https://tools.ietf.org/html/rfc3969) - The IANA URI Parameter Registry for SIP
 * [RFC 3994](https://tools.ietf.org/html/rfc3994) - Indication of Message Composition for Instant Messaging
 * [RFC 4566](https://tools.ietf.org/html/rfc4566) - SDP: Session Description Protocol
-* [RFC 4582](https://tools.ietf.org/html/rfc4582) - The Binary Floor Control Protocol (BFCP)
-* [RFC 4582bis](https://tools.ietf.org/html/draft-ietf-bfcpbis-rfc4582bis-08) - The Binary Floor Control Protocol (BFCP)
 * [RFC 4585](https://tools.ietf.org/html/rfc4585) - Extended RTP Profile for RTCP-Based Feedback
 * [RFC 4733](https://tools.ietf.org/html/rfc4733) - RTP Payload for DTMF Digits, Telephony Tones, and Teleph. Signals
 * [RFC 4961](https://tools.ietf.org/html/rfc4961) - Symmetric RTP / RTP Control Protocol (RTCP)
@@ -225,6 +223,7 @@ legend:
 * [RFC 7350](https://tools.ietf.org/html/rfc7350) - DTLS as Transport for STUN
 * [RFC 7616](https://tools.ietf.org/html/rfc7616) - HTTP Digest Access Authentication
 * [RFC 7714](https://tools.ietf.org/html/rfc7714) - AES-GCM Authenticated Encryption in SRTP
+* [RFC 8855](https://tools.ietf.org/html/rfc8855) - The Binary Floor Control Protocol (BFCP)
 * [AV1-RTP](https://aomediacodec.github.io/av1-rtp-spec/) - RTP Payload Format For AV1
 
 
