@@ -1074,7 +1074,8 @@ int re_main(re_signal_h *signalh)
 
 #endif
 #ifdef WIN32
-			if (WSAEINVAL == err) {
+			/* WSAENOTSOCK: closed by another thread */
+			if (WSAEINVAL == err || WSAENOTSOCK == err) {
 				tmr_poll(re->tmrl);
 				continue;
 			}

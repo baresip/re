@@ -138,11 +138,78 @@ static int test_remain_thread(void)
 }
 
 
+#ifdef WIN32
+struct notsock {
+	struct re_fhs *fhs;
+	struct tmr tmr;
+	re_sock_t fd;
+};
+
+
+static void fd_handler(int flags, void *arg)
+{
+	(void)flags;
+	(void)arg;
+}
+
+
+static void close_handler(void *arg)
+{
+	struct notsock *data = arg;
+
+	if (data->fd != RE_BAD_SOCK) {
+		(void)closesocket(data->fd);
+		data->fd = RE_BAD_SOCK;
+		tmr_start(&data->tmr, 50, close_handler, data);
+		return;
+	}
+
+	data->fhs = fd_close(data->fhs);
+	re_cancel();
+}
+
+
+static int test_remain_notsock(void)
+{
+	struct notsock data = { 0 };
+	int err;
+
+	tmr_init(&data.tmr);
+
+	data.fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	TEST_ASSERT(data.fd != RE_BAD_SOCK);
+
+	err = fd_listen(&data.fhs, data.fd, FD_READ, fd_handler, NULL);
+	TEST_ERR(err);
+
+	tmr_start(&data.tmr, 1, close_handler, &data);
+
+	err = re_main(NULL);
+	TEST_ERR(err);
+
+ out:
+	tmr_cancel(&data.tmr);
+	data.fhs = fd_close(data.fhs);
+	if (data.fd != RE_BAD_SOCK)
+		(void)closesocket(data.fd);
+
+	return err;
+}
+#endif
+
+
 int test_remain(void)
 {
-	int err = 0;
+	int err;
 
 	err = test_remain_thread();
+	TEST_ERR(err);
 
+#ifdef WIN32
+	err = test_remain_notsock();
+	TEST_ERR(err);
+#endif
+
+ out:
 	return err;
 }
