@@ -633,6 +633,7 @@ static int agent_start(struct agent *agent)
 static int agent_verify_completed(struct agent *agent)
 {
 	struct agent *other = agent_other(agent);
+	char cand[64], expect[64], rcands[128];
 	uint32_t validc;
 	int err = 0;
 
@@ -643,6 +644,19 @@ static int agent_verify_completed(struct agent *agent)
 	validc = list_count(icem_validl(agent->icem));
 
 	TEST_EQUALS(agent->n_cand * other->n_cand, validc);
+
+	/* a=remote-candidates lists only the selected pair's remote
+	 * candidate (RFC 8839 4.4.1.2.2), not every remote candidate */
+	re_snprintf(cand, sizeof(cand), "2 %u UDP 1 192.0.2.1 9 typ host",
+		    agent->compid);
+	err = icem_sdp_decode(agent->icem, "candidate", cand);
+	TEST_ERR(err);
+
+	re_snprintf(expect, sizeof(expect), "%u %j %u", agent->compid,
+		    &other->laddr, sa_port(&other->laddr));
+	re_snprintf(rcands, sizeof(rcands), "%H", ice_remotecands_encode,
+		    agent->icem);
+	TEST_STRCMP(expect, str_len(expect), rcands, str_len(rcands));
 
 	/* verify state of STUN/TURN server */
 	if (agent->use_turn) {
