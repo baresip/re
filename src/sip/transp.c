@@ -278,6 +278,9 @@ static void conn_close(struct sip_conn *conn, int err)
 {
 	struct le *le;
 
+	if (!conn->he.list)
+		mem_ref(conn);
+
 	conn->websock_conn = mem_deref(conn->websock_conn);
 
 	conn->sc = mem_deref(conn->sc);
@@ -300,6 +303,8 @@ static void conn_close(struct sip_conn *conn, int err)
 	}
 
 	sip_keepalive_signal(&conn->kal, err);
+
+	mem_deref(conn);
 }
 
 
@@ -308,7 +313,6 @@ static void conn_tmr_handler(void *arg)
 	struct sip_conn *conn = arg;
 
 	conn_close(conn, ETIMEDOUT);
-	mem_deref(conn);
 }
 
 
@@ -326,7 +330,6 @@ static void conn_keepalive_handler(void *arg)
 	err = tcp_send(conn->tc, &mb);
 	if (err) {
 		conn_close(conn, err);
-		mem_deref(conn);
 		return;
 	}
 
@@ -583,10 +586,8 @@ static void tcp_recv_handler(struct mbuf *mb, void *arg)
 	}
 
  out:
-	if (err) {
+	if (err)
 		conn_close(conn, err);
-		mem_deref(conn);
-	}
 }
 
 
@@ -676,7 +677,6 @@ static void tcp_close_handler(int err, void *arg)
 	struct sip_conn *conn = arg;
 
 	conn_close(conn, err ? err : ECONNRESET);
-	mem_deref(conn);
 }
 
 
@@ -1017,7 +1017,6 @@ static void websock_close_handler(int err, void *arg)
 
 	re_printf("sip: websock connection closed (%m)\n", err);
 	conn_close(conn, err ? err : ECONNRESET);
-	mem_deref(conn);
 }
 
 

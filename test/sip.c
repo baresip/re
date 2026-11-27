@@ -1065,6 +1065,105 @@ out:
 }
 
 
+struct flush_held {
+	const struct sip_msg *msg;
+	bool failed;
+};
+
+
+static bool flush_held_req_handler(const struct sip_msg *msg, void *arg)
+{
+	struct flush_held *fh = arg;
+
+	fh->msg = mem_ref((void *)msg);
+	re_cancel();
+
+	return true;
+}
+
+
+static void flush_held_resp_handler(int err, const struct sip_msg *msg,
+				    void *arg)
+{
+	struct flush_held *fh = arg;
+	(void)err;
+	(void)msg;
+
+	fh->msg = mem_deref((void *)fh->msg);
+	fh->failed = true;
+	re_cancel();
+}
+
+
+/* A connection held by a received request outlives sip_transp_flush(),
+ * and a request sent on it fails when it closes */
+int test_sip_transp_flush_held(void)
+{
+	struct flush_held fh = {0};
+	struct sip *sip = NULL;
+	struct sip_lsnr *lsnr = NULL;
+	struct sip_request *req1 = NULL, *req2 = NULL;
+	struct sa laddr, srv;
+	char uri[64];
+	int err;
+
+	err = sa_set_str(&laddr, "127.0.0.1", 0);
+	TEST_ERR(err);
+
+	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", NULL, NULL);
+	TEST_ERR(err);
+	err = sip_transp_add(sip, SIP_TRANSP_TCP, &laddr);
+	TEST_ERR(err);
+	err = sip_listen(&lsnr, sip, true, flush_held_req_handler, &fh);
+	TEST_ERR(err);
+
+	err = sip_transp_laddr(sip, &srv, SIP_TRANSP_TCP, NULL);
+	TEST_ERR(err);
+	re_snprintf(uri, sizeof(uri), "sip:test@%J;transport=tcp", &srv);
+
+	err = sip_requestf(&req1, sip, true, "OPTIONS", uri, NULL, NULL,
+			   NULL, NULL, NULL,
+			   "From: <sip:test@127.0.0.1>;tag=a\r\n"
+			   "To: <%s>\r\n"
+			   "Call-ID: flushheld\r\n"
+			   "CSeq: 1 OPTIONS\r\n"
+			   "Content-Length: 0\r\n\r\n", uri);
+	TEST_ERR(err);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+	ASSERT_TRUE(fh.msg != NULL);
+
+	/* back to the client, on the connection the request came on */
+	re_snprintf(uri, sizeof(uri), "sip:test@%J;transport=tcp",
+		    &fh.msg->src);
+
+	err = sip_requestf(&req2, sip, true, "OPTIONS", uri, NULL, NULL,
+			   NULL, flush_held_resp_handler, &fh,
+			   "Content-Length: 0\r\n\r\n");
+	TEST_ERR(err);
+
+	/* the client side closes, and the server side gets the close */
+	sip_transp_flush(sip);
+
+	err = re_main_timeout(1000);
+	TEST_ERR(err);
+	ASSERT_TRUE(fh.failed);
+
+out:
+	mem_deref((void *)fh.msg);
+	mem_deref(req2);
+	mem_deref(req1);
+	mem_deref(lsnr);
+	if (sip) {
+		sip_close(sip, false);
+		mem_deref(sip);
+	}
+
+	return err;
+}
+
+
 #ifdef USE_TLS
 struct sip_transp_tls {
 	struct sip *sip;
