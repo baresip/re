@@ -458,6 +458,11 @@ static int test_exec(const struct test *test)
 		re_assert(false && "Test leaks memory bytes");
 	}
 
+	if (err == ESKIPPED) {
+		re_fprintf(stderr, "\x1b[33mSKIPPED\x1b[;m: %s\n", test->name);
+		return 0;
+	}
+
 	return err;
 }
 
