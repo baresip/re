@@ -186,10 +186,11 @@ uint64_t tmr_jiffies_usec(void)
 		QueryPerformanceFrequency(&freq);
 
 	QueryPerformanceCounter(&li);
-	li.QuadPart *= 1000000;
-	li.QuadPart /= freq.QuadPart;
 
-	jfs = li.QuadPart;
+	/* split to avoid an overflow */
+	jfs  = (uint64_t)(li.QuadPart / freq.QuadPart) * 1000000;
+	jfs += (uint64_t)(li.QuadPart % freq.QuadPart) * 1000000 /
+	       freq.QuadPart;
 #else
 	struct timespec now;
 	clockid_t clock_id;
